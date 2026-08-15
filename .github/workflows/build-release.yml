@@ -49,17 +49,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.2.0
-          name: "Buddho Timer v1.2.0"
+          tag_name: v1.3.0
+          name: "Buddho Timer v1.3.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v1.2.0
+            ## 🪷 Buddho Meditation Timer v1.3.0
             
-            - **🫁 Box Breathing Mode**: Dedicated anxiety and panic reset tool with real-time expanding/contracting radial visualizer, tactile haptic phase pulses, and preset protocols (*Box 4-4-4-4, 4-7-8 Deep Calm, Coherence 5-5, Gentle Box 3-3-3-3*).
+            - **🎨 Decluttered Minimalist Timer UI**: Pure timer focus starting directly with the big Target Duration card and stopwatch timer for open practice.
+            - **🌌 3D Volumetric Luminous Breathing Sphere**: Immersive 3D expanding/contracting sphere with specular light highlights, orbital particles, and spacious non-overlapping typography.
+            - **✨ Pre-Session Contemplation Dialog**: Clean, accessible daily wisdom dialog on app start or via the header contemplation button.
+            - **🫁 Box Breathing Protocols**: Box 4-4-4-4, 4-7-8 Deep Calm, Coherence 5-5, and Gentle 3-3-3-3.
             - **🧘 Teachings & Mantras Module**: 100% offline guidance from Ajahn Chah, Ajahn Lee, Ajahn Brahm, Thich Nhat Hanh, Mingyur Rinpoche, Bhante Gunaratana, and the Buddho Mantra.
-            - **🪷 Pre-Session Wisdom Card**: Rotatable daily contemplations on the Timer screen.
-            - **🔔 HD Sound Synthesizer**: Multi-harmonic Tibetan Singing Bowl, Zen Bronze Bell, Ting-Sha Cymbals, Woodblock Moktak, and Silent Retreat (Haptic Only) mode.
+            - **🔔 HD Sound Synthesizer Engine**: Multi-harmonic Tibetan Singing Bowl, Zen Bronze Bell, Ting-Sha Cymbals, Woodblock Moktak, and Silent Retreat (Haptic Only) mode.
             - **🌑 Zen OLED Deep Black Ambient Mode**: Pitch-black distraction-free clock display for night sits.
-            - **Zero Internet Permissions**: 100% offline and privacy-first.
           draft: false
           prerelease: false
           files: |

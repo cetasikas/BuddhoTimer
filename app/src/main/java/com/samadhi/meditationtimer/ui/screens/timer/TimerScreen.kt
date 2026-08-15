@@ -24,17 +24,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoNotDisturbOn
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SelfImprovement
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -52,8 +52,12 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,9 +74,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.samadhi.meditationtimer.service.SoundHelper
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenAmberDark
-import com.samadhi.meditationtimer.ui.theme.ZenAmberGlow
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
-import com.samadhi.meditationtimer.ui.theme.ZenDarkBackground
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenOverrunBlue
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
@@ -81,9 +83,6 @@ import com.samadhi.meditationtimer.ui.theme.ZenTeal
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
-
-import androidx.compose.material.icons.filled.Air
-import androidx.compose.material.icons.filled.ArrowForward
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -100,6 +99,8 @@ fun TimerScreen(
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    var showWisdomDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -124,165 +125,75 @@ fun TimerScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // App Brand Header
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.SelfImprovement,
-                contentDescription = null,
-                tint = ZenAmber,
-                modifier = Modifier.size(30.dp)
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "BUDDHO",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    letterSpacing = 4.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = ZenAmber
-                )
-            )
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Pre-Session Daily Wisdom Reflection Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .clickable { viewModel.cycleNextQuote() },
-            colors = CardDefaults.cardColors(containerColor = ZenSurface),
-            border = CardDefaults.outlinedCardBorder().copy(
-                brush = Brush.horizontalGradient(
-                    listOf(ZenAmber.copy(alpha = 0.35f), ZenBorder)
-                )
-            ),
-            shape = RoundedCornerShape(16.dp)
+        // Top Navigation Header: Brand on left, Wisdom button & Box Breathing pill on right
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = null,
-                            tint = ZenAmber,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "CONTEMPLATION",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.5.sp,
-                            color = ZenAmber
-                        )
-                    }
-                    IconButton(
-                        onClick = { viewModel.cycleNextQuote() },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Next Reflection",
-                            tint = ZenTextSecondary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "\"${currentQuote.quote}\"",
-                    fontSize = 13.sp,
-                    fontStyle = FontStyle.Italic,
-                    lineHeight = 19.sp,
-                    color = ZenTextPrimary
+            // Brand Logo & Wisdom Dialog trigger
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { showWisdomDialog = true }
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SelfImprovement,
+                    contentDescription = null,
+                    tint = ZenAmber,
+                    modifier = Modifier.size(28.dp)
                 )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "— ${currentQuote.author} (${currentQuote.sourceOrTradition})",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = ZenAmber
+                    text = "BUDDHO",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        letterSpacing = 3.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ZenAmber
+                    )
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = "Daily Contemplation",
+                    tint = ZenAmber.copy(alpha = 0.7f),
+                    modifier = Modifier.size(16.dp)
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Quick Reset Box Breathing Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .clickable { onOpenBreathing() },
-            colors = CardDefaults.cardColors(containerColor = ZenSurface),
-            border = CardDefaults.outlinedCardBorder().copy(
-                brush = Brush.horizontalGradient(listOf(ZenTeal.copy(alpha = 0.4f), ZenBorder))
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
+            // Quick Jump to Box Breathing Pill
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(ZenSurfaceVariant)
+                    .border(1.dp, ZenTeal.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
+                    .clickable { onOpenBreathing() }
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(ZenTeal.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Air,
-                            contentDescription = null,
-                            tint = ZenTeal,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Box Breathing (Panic & Stress Reset)",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ZenTextPrimary
-                        )
-                        Text(
-                            text = "4-4-4-4 visual guide for acute calm",
-                            fontSize = 11.sp,
-                            color = ZenTextSecondary
-                        )
-                    }
-                }
                 Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = "Open Breathing",
+                    imageVector = Icons.Default.Air,
+                    contentDescription = null,
                     tint = ZenTeal,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Breathing",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ZenTeal
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Target Duration Display Card
+        // Target Duration Display Card (Front & Center)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -293,27 +204,29 @@ fun TimerScreen(
                     )
                 )
                 .border(1.dp, ZenBorder, RoundedCornerShape(24.dp))
-                .padding(vertical = 28.dp, horizontal = 20.dp),
+                .padding(vertical = 32.dp, horizontal = 20.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = if (config.isOpenEnded) "OPEN PRACTICE (COUNT UP)" else "TARGET DURATION",
+                    text = if (config.isOpenEnded) "OPEN PRACTICE (STOPWATCH)" else "TARGET DURATION",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 2.sp,
                     color = ZenTextSecondary
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 if (config.isOpenEnded) {
+                    // Open practice timer starting clock format
                     Text(
-                        text = "∞",
-                        fontSize = 68.sp,
+                        text = "00:00",
+                        fontSize = 64.sp,
                         fontWeight = FontWeight.Light,
                         color = ZenTeal
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Open stopwatch • Count up freely",
+                        text = "Stopwatch count up • Uninterrupted absorption",
                         fontSize = 12.sp,
                         color = ZenTextMuted
                     )
@@ -321,14 +234,14 @@ fun TimerScreen(
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             text = "${config.targetDurationMinutes}",
-                            fontSize = 64.sp,
+                            fontSize = 68.sp,
                             fontWeight = FontWeight.Light,
                             color = ZenAmber
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "min",
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Normal,
                             color = ZenTextSecondary,
                             modifier = Modifier.padding(bottom = 12.dp)
@@ -345,7 +258,7 @@ fun TimerScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Quick Preset Chips
+        // Quick Preset Chips & Slider
         if (!config.isOpenEnded) {
             Text(
                 text = "Quick Presets",
@@ -431,7 +344,7 @@ fun TimerScreen(
                         modifier = Modifier.height(32.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenAmber),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(ZenAmber))
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenAmber))
                     ) {
                         Text("Preview", fontSize = 11.sp)
                     }
@@ -585,7 +498,7 @@ fun TimerScreen(
             }
         }
 
-        // DND Access Warning Banner (if enabled but permission missing)
+        // DND Access Warning Banner
         if (config.isAutoDndEnabled && !isDndGranted) {
             Spacer(modifier = Modifier.height(12.dp))
             Card(
@@ -665,5 +578,84 @@ fun TimerScreen(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+    }
+
+    // Daily Wisdom Contemplation Dialog
+    if (showWisdomDialog) {
+        AlertDialog(
+            onDismissRequest = { showWisdomDialog = false },
+            containerColor = ZenSurface,
+            titleContentColor = ZenTextPrimary,
+            textContentColor = ZenTextSecondary,
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = ZenAmber,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Daily Contemplation",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ZenAmber
+                        )
+                    }
+                    IconButton(
+                        onClick = { viewModel.cycleNextQuote() },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Next Quote",
+                            tint = ZenTextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "\"${currentQuote.quote}\"",
+                        fontSize = 14.sp,
+                        fontStyle = FontStyle.Italic,
+                        lineHeight = 22.sp,
+                        color = ZenTextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "— ${currentQuote.author}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ZenAmber
+                    )
+                    Text(
+                        text = currentQuote.sourceOrTradition,
+                        fontSize = 11.sp,
+                        color = ZenTextMuted
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showWisdomDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ZenAmber,
+                        contentColor = ZenObsidian
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Sit with Mind", fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 }
