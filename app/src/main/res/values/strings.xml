@@ -1,0 +1,71 @@
+<resources>
+    <string name="app_name">Buddho Timer</string>
+    <string name="timer_tab">Timer</string>
+    <string name="history_tab">History</string>
+    <string name="settings_tab">Settings</string>
+    
+    <!-- Timer -->
+    <string name="start_session">Begin Practice</string>
+    <string name="pause_session">Pause</string>
+    <string name="resume_session">Resume</string>
+    <string name="end_session">Finish Session</string>
+    <string name="cancel_session">Cancel</string>
+    <string name="preparing">Preparing…</string>
+    <string name="meditating">Meditating</string>
+    <string name="overrun_active">Samadhi Overrun Mode</string>
+    <string name="target_time">Target</string>
+    <string name="elapsed_time">Elapsed</string>
+    <string name="open_ended">Open-Ended Session</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_timer_name">Meditation Session</string>
+    <string name="notification_channel_timer_desc">Shows ongoing countdown and overrun timer progress during meditation practice.</string>
+    <string name="notification_title_meditating">Meditation in Progress</string>
+    <string name="notification_title_overrun">Samadhi Overrun (Extended)</string>
+    <string name="notification_title_paused">Session Paused</string>
+    <string name="notification_action_pause">Pause</string>
+    <string name="notification_action_resume">Resume</string>
+    <string name="notification_action_finish">Finish</string>
+    
+    <!-- DND & Permissions -->
+    <string name="dnd_permission_title">Do Not Disturb Access</string>
+    <string name="dnd_permission_desc">Enable DND access to automatically silence phone calls and notifications while you meditate.</string>
+    <string name="battery_opt_title">Unrestricted Battery</string>
+    <string name="battery_opt_desc">Allow background execution so your meditation session is never killed when the screen turns off.</string>
+    <string name="grant_permission">Grant Access</string>
+    <string name="permission_granted">Enabled</string>
+    <string name="permission_denied">Not Granted</string>
+    
+    <!-- Summary & Journal -->
+    <string name="session_complete_title">Practice Complete</string>
+    <string name="session_duration_label">Duration</string>
+    <string name="overrun_label">Overrun</string>
+    <string name="how_was_practice">How was your practice?</string>
+    <string name="journal_notes_hint">Write reflections, insights, or sensations (Markdown supported)…</string>
+    <string name="save_session">Save Reflection</string>
+    <string name="discard_session">Discard</string>
+    
+    <!-- History -->
+    <string name="history_title">Practice Journey</string>
+    <string name="total_sessions">Total Sessions</string>
+    <string name="total_time">Total Time</string>
+    <string name="current_streak">Current Streak</string>
+    <string name="longest_streak">Longest Streak</string>
+    <string name="days_unit">days</string>
+    <string name="no_sessions_yet">No meditation records yet.\nBegin your first practice today.</string>
+    <string name="delete_session_confirm">Delete this session record?</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Preferences</string>
+    <string name="prep_time_label">Preparation Warm-up</string>
+    <string name="prep_time_desc">Brief countdown before timer begins</string>
+    <string name="sound_bell_label">Ending Chime Sound</string>
+    <string name="auto_dnd_label">Automatic Do Not Disturb</string>
+    <string name="auto_dnd_desc">Silence notifications during practice</string>
+    <string name="backup_export_label">Export Data Backup (JSON)</string>
+    <string name="backup_export_csv_label">Export Records (CSV)</string>
+    <string name="backup_import_label">Import &amp; Restore Backup (JSON)</string>
+    <string name="export_success">Backup exported successfully</string>
+    <string name="import_success">Records restored successfully</string>
+    <string name="import_error">Failed to parse backup file</string>
+</resources>

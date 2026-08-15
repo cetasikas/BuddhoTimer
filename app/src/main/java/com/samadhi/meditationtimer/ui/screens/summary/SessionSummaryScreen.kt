@@ -1,0 +1,293 @@
+package com.samadhi.meditationtimer.ui.screens.summary
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.SelfImprovement
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.samadhi.meditationtimer.domain.model.MeditationSession
+import com.samadhi.meditationtimer.domain.model.TimerStatus
+import com.samadhi.meditationtimer.service.NotificationHelper
+import com.samadhi.meditationtimer.ui.components.MarkdownToolbar
+import com.samadhi.meditationtimer.ui.components.MoodSelector
+import com.samadhi.meditationtimer.ui.theme.ZenAmber
+import com.samadhi.meditationtimer.ui.theme.ZenAmberDark
+import com.samadhi.meditationtimer.ui.theme.ZenBorder
+import com.samadhi.meditationtimer.ui.theme.ZenObsidian
+import com.samadhi.meditationtimer.ui.theme.ZenOverrunBlue
+import com.samadhi.meditationtimer.ui.theme.ZenSurface
+import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
+import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
+import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
+import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
+
+@Composable
+fun SessionSummaryScreen(
+    completedStatus: TimerStatus.Completed?,
+    onSaveSession: (MeditationSession) -> Unit,
+    onDiscard: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (completedStatus == null) {
+        onDiscard()
+        return
+    }
+
+    var selectedMood by remember { mutableIntStateOf(3) }
+    var notesValue by remember { mutableStateOf(TextFieldValue("")) }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(ZenObsidian)
+            .padding(horizontal = 20.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Icon & Header
+        Icon(
+            imageVector = Icons.Default.SelfImprovement,
+            contentDescription = null,
+            tint = ZenAmber,
+            modifier = Modifier.size(40.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Practice Complete",
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            color = ZenTextPrimary
+        )
+        Text(
+            text = "May the peace of this session carry throughout your day",
+            style = MaterialTheme.typography.bodyMedium,
+            color = ZenTextSecondary
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Stats Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = ZenSurface),
+            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Actual Time
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = NotificationHelper.formatSeconds(completedStatus.actualDurationSec),
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ZenAmber
+                    )
+                    Text(
+                        text = "Total Practice",
+                        fontSize = 12.sp,
+                        color = ZenTextSecondary
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(36.dp)
+                        .background(ZenBorder)
+                )
+
+                // Overrun or Target
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (completedStatus.overrunSec > 0) {
+                        Text(
+                            text = "+${NotificationHelper.formatSeconds(completedStatus.overrunSec)}",
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ZenOverrunBlue
+                        )
+                        Text(
+                            text = "Samadhi Overrun",
+                            fontSize = 12.sp,
+                            color = ZenOverrunBlue
+                        )
+                    } else {
+                        Text(
+                            text = if (completedStatus.targetDurationSec > 0) "${completedStatus.targetDurationSec / 60}m" else "Open",
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ZenTextPrimary
+                        )
+                        Text(
+                            text = "Target Duration",
+                            fontSize = 12.sp,
+                            color = ZenTextSecondary
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Mood / Depth Rating Selector
+        Text(
+            text = "Quality of Focus & Stillness",
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
+            color = ZenTextPrimary,
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        MoodSelector(
+            selectedMood = selectedMood,
+            onMoodSelected = { selectedMood = it }
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Markdown Reflection Journal
+        Text(
+            text = "Practice Reflections (Markdown)",
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
+            color = ZenTextPrimary,
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        MarkdownToolbar(
+            textValue = notesValue,
+            onValueChange = { notesValue = it }
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(ZenSurface)
+                .border(1.dp, ZenBorder, RoundedCornerShape(12.dp))
+                .padding(12.dp)
+        ) {
+            if (notesValue.text.isEmpty()) {
+                Text(
+                    text = "Write reflections, insights, or sensations (Markdown supported)…",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = ZenTextMuted)
+                )
+            }
+            BasicTextField(
+                value = notesValue,
+                onValueChange = { notesValue = it },
+                textStyle = TextStyle(
+                    color = ZenTextPrimary,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
+                ),
+                cursorBrush = SolidColor(ZenAmber),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        // Action Buttons
+        Button(
+            onClick = {
+                val session = MeditationSession(
+                    startTimeEpochMs = completedStatus.startTimeEpochMs,
+                    completedTimeEpochMs = completedStatus.completedTimeEpochMs,
+                    targetDurationSec = completedStatus.targetDurationSec,
+                    actualDurationSec = completedStatus.actualDurationSec,
+                    overrunSec = completedStatus.overrunSec,
+                    rating = selectedMood,
+                    notesMarkdown = notesValue.text,
+                    completedSuccessfully = true
+                )
+                onSaveSession(session)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ZenAmber,
+                contentColor = ZenObsidian
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Save Reflection",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedButton(
+            onClick = onDiscard,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
+            border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(ZenBorder))
+        ) {
+            Text(text = "Discard", fontSize = 14.sp)
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}

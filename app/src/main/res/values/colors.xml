@@ -1,0 +1,8 @@
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="zen_bg">#FF0D1117</color>
+    <color name="zen_surface">#FF161B22</color>
+    <color name="zen_accent">#FFE5A93B</color>
+    <color name="zen_secondary">#FF58A6FF</color>
+</resources>

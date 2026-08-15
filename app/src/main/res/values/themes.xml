@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.SamadhiTimer" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/zen_bg</item>
+        <item name="android:navigationBarColor">@color/zen_bg</item>
+        <item name="android:windowBackground">@color/zen_bg</item>
+    </style>
+</resources>

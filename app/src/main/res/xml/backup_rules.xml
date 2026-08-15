@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include Room database and Shared Preferences in cloud backup -->
+    <include domain="database" path="samadhi_meditation.db" />
+    <include domain="sharedpref" path="." />
+</full-backup-content>
