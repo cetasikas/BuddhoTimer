@@ -26,6 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import com.samadhi.meditationtimer.domain.model.TimerStatus
 import com.samadhi.meditationtimer.service.MeditationTimerService
 import com.samadhi.meditationtimer.ui.navigation.Screen
+import com.samadhi.meditationtimer.ui.screens.breathing.BreathingScreen
 import com.samadhi.meditationtimer.ui.screens.history.HistoryScreen
 import com.samadhi.meditationtimer.ui.screens.history.HistoryViewModel
 import com.samadhi.meditationtimer.ui.screens.session.ActiveSessionScreen
@@ -140,6 +141,9 @@ fun MainAppScaffold() {
                     viewModel = timerViewModel,
                     onStartSession = {
                         navController.navigate(Screen.ActiveSession.route)
+                    },
+                    onOpenBreathing = {
+                        navController.navigate(Screen.Breathing.route)
                     }
                 )
             }
@@ -154,6 +158,14 @@ fun MainAppScaffold() {
                         navController.navigate(Screen.Timer.route) {
                             popUpTo(Screen.Timer.route) { inclusive = true }
                         }
+                    }
+                )
+            }
+
+            composable(Screen.Breathing.route) {
+                BreathingScreen(
+                    onClose = {
+                        navController.popBackStack()
                     }
                 )
             }

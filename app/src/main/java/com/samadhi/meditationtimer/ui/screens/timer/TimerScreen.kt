@@ -82,11 +82,15 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 
+import androidx.compose.material.icons.filled.Air
+import androidx.compose.material.icons.filled.ArrowForward
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TimerScreen(
     viewModel: TimerViewModel,
     onStartSession: () -> Unit,
+    onOpenBreathing: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val config by viewModel.config.collectAsState()
@@ -212,6 +216,66 @@ fun TimerScreen(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = ZenAmber
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Quick Reset Box Breathing Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .clickable { onOpenBreathing() },
+            colors = CardDefaults.cardColors(containerColor = ZenSurface),
+            border = CardDefaults.outlinedCardBorder().copy(
+                brush = Brush.horizontalGradient(listOf(ZenTeal.copy(alpha = 0.4f), ZenBorder))
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(ZenTeal.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Air,
+                            contentDescription = null,
+                            tint = ZenTeal,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Box Breathing (Panic & Stress Reset)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ZenTextPrimary
+                        )
+                        Text(
+                            text = "4-4-4-4 visual guide for acute calm",
+                            fontSize = 11.sp,
+                            color = ZenTextSecondary
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = "Open Breathing",
+                    tint = ZenTeal,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
