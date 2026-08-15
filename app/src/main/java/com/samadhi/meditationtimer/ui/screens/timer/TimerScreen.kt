@@ -27,10 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoNotDisturbOn
-import androidx.compose.material.icons.filled.FormatQuote
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SelfImprovement
@@ -44,7 +41,6 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -52,7 +48,6 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,7 +57,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -71,7 +65,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.samadhi.meditationtimer.service.SoundHelper
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenAmberDark
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
@@ -125,9 +118,9 @@ fun TimerScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Top Navigation Header: Brand on left, Wisdom button & Box Breathing pill on right
+        // Top Minimalist Brand Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -191,9 +184,9 @@ fun TimerScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Target Duration Display Card (Front & Center)
+        // Target Duration Display Card (Pristine, focused, front & center)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -204,188 +197,97 @@ fun TimerScreen(
                     )
                 )
                 .border(1.dp, ZenBorder, RoundedCornerShape(24.dp))
-                .padding(vertical = 32.dp, horizontal = 20.dp),
+                .padding(vertical = 34.dp, horizontal = 20.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = if (config.isOpenEnded) "OPEN PRACTICE (STOPWATCH)" else "TARGET DURATION",
+                    text = "TARGET DURATION",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 2.sp,
                     color = ZenTextSecondary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                if (config.isOpenEnded) {
-                    // Open practice timer starting clock format
+                Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = "00:00",
-                        fontSize = 64.sp,
+                        text = "${config.targetDurationMinutes}",
+                        fontSize = 72.sp,
                         fontWeight = FontWeight.Light,
-                        color = ZenTeal
+                        color = ZenAmber
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Stopwatch count up • Uninterrupted absorption",
-                        fontSize = 12.sp,
-                        color = ZenTextMuted
-                    )
-                } else {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            text = "${config.targetDurationMinutes}",
-                            fontSize = 68.sp,
-                            fontWeight = FontWeight.Light,
-                            color = ZenAmber
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "min",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = ZenTextSecondary,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
-                    }
-                    Text(
-                        text = "Auto-continues into Samadhi Overrun when time ends",
-                        fontSize = 11.sp,
-                        color = ZenOverrunBlue
+                        text = "min",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = ZenTextSecondary,
+                        modifier = Modifier.padding(bottom = 14.dp)
                     )
                 }
+                Text(
+                    text = "Runs past 00:00 into Samadhi Overrun without stopping",
+                    fontSize = 11.sp,
+                    color = ZenOverrunBlue
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Quick Preset Chips & Slider
-        if (!config.isOpenEnded) {
-            Text(
-                text = "Quick Presets",
-                style = MaterialTheme.typography.labelLarge,
-                color = ZenTextSecondary,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+        // Quick Preset Chips
+        Text(
+            text = "Quick Presets",
+            style = MaterialTheme.typography.labelLarge,
+            color = ZenTextSecondary,
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
 
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                presetDurations.forEach { duration ->
-                    val isSelected = config.targetDurationMinutes == duration
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.updateDurationMinutes(duration) },
-                        label = { Text("${duration}m") },
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = ZenSurface,
-                            labelColor = ZenTextSecondary,
-                            selectedContainerColor = ZenAmber,
-                            selectedLabelColor = ZenObsidian
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            borderColor = if (isSelected) ZenAmber else ZenBorder,
-                            enabled = true,
-                            selected = isSelected
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Duration Slider
-            Slider(
-                value = config.targetDurationMinutes.toFloat(),
-                onValueChange = { viewModel.updateDurationMinutes(it.toInt()) },
-                valueRange = 1f..120f,
-                steps = 118,
-                colors = SliderDefaults.colors(
-                    thumbColor = ZenAmber,
-                    activeTrackColor = ZenAmber,
-                    inactiveTrackColor = ZenSurfaceVariant
-                )
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Sound & Bell Selector Card
-        Card(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ZenSurface),
-            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-            shape = RoundedCornerShape(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.MusicNote,
-                            contentDescription = null,
-                            tint = ZenAmber,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Meditation Chime",
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                            color = ZenTextPrimary
-                        )
-                    }
-                    OutlinedButton(
-                        onClick = { viewModel.soundHelper.playChime(config.soundBellResName) },
-                        modifier = Modifier.height(32.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenAmber),
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenAmber))
-                    ) {
-                        Text("Preview", fontSize = 11.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SoundHelper.soundOptions.forEach { soundOption ->
-                        val isSelected = config.soundBellResName == soundOption.id
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                viewModel.updateSoundBell(soundOption.id)
-                                viewModel.soundHelper.playChime(soundOption.id)
-                            },
-                            label = { Text(soundOption.title, fontSize = 12.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = ZenSurfaceVariant,
-                                labelColor = ZenTextSecondary,
-                                selectedContainerColor = ZenAmber,
-                                selectedLabelColor = ZenObsidian
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                borderColor = if (isSelected) ZenAmber else ZenBorder,
-                                enabled = true,
-                                selected = isSelected
-                            )
-                        )
-                    }
-                }
+            presetDurations.forEach { duration ->
+                val isSelected = config.targetDurationMinutes == duration
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { viewModel.updateDurationMinutes(duration) },
+                    label = { Text("${duration}m") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = ZenSurface,
+                        labelColor = ZenTextSecondary,
+                        selectedContainerColor = ZenAmber,
+                        selectedLabelColor = ZenObsidian
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        borderColor = if (isSelected) ZenAmber else ZenBorder,
+                        enabled = true,
+                        selected = isSelected
+                    )
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // Session Options Card
+        // Duration Slider (1 min to 120 mins)
+        Slider(
+            value = config.targetDurationMinutes.toFloat(),
+            onValueChange = { viewModel.updateDurationMinutes(it.toInt()) },
+            valueRange = 1f..120f,
+            steps = 118,
+            colors = SliderDefaults.colors(
+                thumbColor = ZenAmber,
+                activeTrackColor = ZenAmber,
+                inactiveTrackColor = ZenSurfaceVariant
+            )
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        // Session Settings Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = ZenSurface),
@@ -393,38 +295,6 @@ fun TimerScreen(
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                // Open-Ended Toggle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Open-Ended Practice",
-                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                            color = ZenTextPrimary
-                        )
-                        Text(
-                            text = "Count up as a stopwatch without a fixed end-time",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp),
-                            color = ZenTextSecondary
-                        )
-                    }
-                    Switch(
-                        checked = config.isOpenEnded,
-                        onCheckedChange = { viewModel.toggleOpenEnded(it) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = ZenAmber,
-                            checkedTrackColor = ZenAmberDark,
-                            uncheckedThumbColor = ZenTextMuted,
-                            uncheckedTrackColor = ZenSurfaceVariant
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 // Preparation Warm-up
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -438,7 +308,7 @@ fun TimerScreen(
                             color = ZenTextPrimary
                         )
                         Text(
-                            text = "Settling time before session begins",
+                            text = "Gentle settling time before chime",
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp),
                             color = ZenTextSecondary
                         )
@@ -464,7 +334,7 @@ fun TimerScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Auto DND Toggle
                 Row(
@@ -479,7 +349,7 @@ fun TimerScreen(
                             color = ZenTextPrimary
                         )
                         Text(
-                            text = "Silence phone notifications during meditation",
+                            text = "Silence phone notifications during sit",
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp),
                             color = ZenTextSecondary
                         )
@@ -495,10 +365,53 @@ fun TimerScreen(
                         )
                     )
                 }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Box Breathing Relief Entry
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { onOpenBreathing() }
+                        .background(ZenSurfaceVariant.copy(alpha = 0.5f))
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(
+                            imageVector = Icons.Default.Air,
+                            contentDescription = null,
+                            tint = ZenTeal,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Box Breathing Exercise",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ZenTextPrimary
+                            )
+                            Text(
+                                text = "4-4-4-4 for acute stress & anxiety relief",
+                                fontSize = 11.sp,
+                                color = ZenTextSecondary
+                            )
+                        }
+                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Start Breathing",
+                        tint = ZenTeal,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
 
-        // DND Access Warning Banner
+        // DND Access Warning Banner (if permission missing)
         if (config.isAutoDndEnabled && !isDndGranted) {
             Spacer(modifier = Modifier.height(12.dp))
             Card(
@@ -526,7 +439,7 @@ fun TimerScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column {
                         Text(
                             text = "DND Access Required",
                             style = MaterialTheme.typography.titleLarge.copy(fontSize = 13.sp),

@@ -200,7 +200,12 @@ fun MainAppScaffold() {
             }
 
             composable(Screen.Settings.route) {
-                SettingsScreen(viewModel = settingsViewModel)
+                SettingsScreen(
+                    viewModel = settingsViewModel,
+                    onOpenBreathing = {
+                        navController.navigate(Screen.Breathing.route)
+                    }
+                )
             }
         }
     }

@@ -8,6 +8,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
@@ -75,6 +80,7 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
+    onOpenBreathing: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isDndGranted by viewModel.isDndGranted.collectAsState()
@@ -133,15 +139,90 @@ fun SettingsScreen(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Settings & Backup",
+            text = "Settings & Preferences",
             style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
             color = ZenTextPrimary
         )
         Text(
-            text = "System permissions and data portability",
+            text = "Meditation chimes, permissions, and data backup",
             style = MaterialTheme.typography.bodyMedium,
             color = ZenTextSecondary
         )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Mindfulness Exercises Section
+        Text(
+            text = "BREATHWORK & RELIEF",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp,
+            color = ZenTeal
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .clickable { onOpenBreathing() },
+            colors = CardDefaults.cardColors(containerColor = ZenSurface),
+            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenTeal.copy(alpha = 0.35f))),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(ZenTeal.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Air,
+                            contentDescription = null,
+                            tint = ZenTeal,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Box Breathing (Panic & Stress Reset)",
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
+                            color = ZenTextPrimary
+                        )
+                        Text(
+                            text = "4-4-4-4 visual guide for acute calm",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                            color = ZenTextSecondary
+                        )
+                    }
+                }
+                FilledTonalButton(
+                    onClick = onOpenBreathing,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = ZenTeal,
+                        contentColor = ZenObsidian
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Start", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         Spacer(modifier = Modifier.height(20.dp))
 

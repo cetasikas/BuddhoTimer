@@ -5,6 +5,7 @@ data class TeacherGuide(
     val teacherName: String,
     val title: String,
     val tradition: String,
+    val level: String, // "Beginner", "Intermediate", "Advanced"
     val summary: String,
     val keyConcept: String,
     val steps: List<PracticeStep>,
@@ -32,6 +33,7 @@ object MeditationGuides {
             teacherName = "Thai Forest Masters",
             title = "The 'Buddho' Breath Mantra",
             tradition = "Thai Forest Tradition (Luang Pu Mun Lineage)",
+            level = "Beginner",
             summary = "The classic anchor technique of the Thai Forest Tradition. Syncing the sacred name of the Awakened One with the in-and-out breath to unify awareness and calm discursive thinking.",
             keyConcept = "Bud (Awake) on the in-breath, Dho (Knowing) on the out-breath. Merge awareness with the syllable until silent stillness remains.",
             coreQuote = "Recite 'Buddho' continuously with each breath. Let the mind stick to 'Buddho' until 'Buddho' and the mind become one single knowing quality.",
@@ -64,69 +66,34 @@ object MeditationGuides {
             )
         ),
         TeacherGuide(
-            id = "ajahn_brahm",
-            teacherName = "Ajahn Brahm",
-            title = "Dropping Past & Future: Silent Awareness",
-            tradition = "Theravada / Forest Tradition (Bodhinyana Monastery)",
-            summary = "The art of letting go of the heavy baggage of the past and the anxiety of the future, abandoning all wanting and the 'doer', and resting in effortless silent awareness of the beautiful breath.",
-            keyConcept = "Meditation is not about achieving or getting something; it is the art of letting go, abandoning the 'doer', and allowing stillness to unfold naturally.",
-            coreQuote = "Drop the baggage of the past; don't pick up the burden of the future. When you abandon all wanting, the mind falls into profound, silent peace.",
+            id = "thich_nhat_hanh",
+            teacherName = "Thich Nhat Hanh",
+            title = "Mindful Breathing & Smiling to the Moment",
+            tradition = "Plum Village / Engaged Buddhism",
+            level = "Beginner",
+            summary = "Gentle, compassionate mindfulness practices using poetic gathas (recitations) to return home to the body, release tension, and embrace the wonder of life in the present moment.",
+            keyConcept = "There is no way to peace; peace is the way. Every breath is a celebration of life.",
+            coreQuote = "Breathing in, I calm body and mind. Breathing out, I smile. Dwelling in the present moment, I know this is the only moment.",
             steps = listOf(
                 PracticeStep(
                     stepNumber = 1,
-                    title = "Dropping Past & Future (Present Moment)",
-                    instruction = "Imagine taking off a heavy backpack filled with memories, regrets, and to-do lists. Leave behind the past completely—it is just a memory. Abandon the future—it is just an imagination. Give yourself total permission to only be here right now."
+                    title = "In, Out / Deep, Slow",
+                    instruction = "Breathing in: 'In'. Breathing out: 'Out'. Next breath: 'Deep... Slow'. Let the breath find its natural gentle depth without strain."
                 ),
                 PracticeStep(
                     stepNumber = 2,
-                    title = "Letting Go of the 'Doer' (Silent Awareness)",
-                    instruction = "Abandon all inner commentary and evaluation. You don't need to describe your experience or judge it as good or bad. Abandon the wanting for things to be different. Silence the inner voice and rest as a peaceful, silent observer."
+                    title = "Calm, Ease",
+                    instruction = "Breathing in: 'I calm my whole body'. Breathing out: 'I feel at ease'. Release any tension held in your face, jaw, eyes, and shoulders."
                 ),
                 PracticeStep(
                     stepNumber = 3,
-                    title = "Silent Awareness of the Breath",
-                    instruction = "Allow the breath to come into awareness effortlessly. You are not controlling, counting, or breathing deeply; you are just watching the body breathe itself with kindness and total acceptance."
+                    title = "Smile, Release",
+                    instruction = "Breathing in: 'I smile'. Breathing out: 'I release'. Allow a gentle, half-smile to illuminate your lips. Smiling relaxes hundreds of facial nerves."
                 ),
                 PracticeStep(
                     stepNumber = 4,
-                    title = "Full Sustained Attention on the Whole Breath",
-                    instruction = "Stay with the breath continuously from the very beginning of the in-breath, through the middle, to the end, and through the pause to the out-breath without a gap."
-                ),
-                PracticeStep(
-                    stepNumber = 5,
-                    title = "The Beautiful Breath (Pīti & Sukha)",
-                    instruction = "As mental struggle ceases, the breath begins to feel extraordinarily peaceful, soothing, and beautiful. Delight in this blissful stillness and let it deepen without grasping."
-                )
-            )
-        ),
-        TeacherGuide(
-            id = "ajahn_chah",
-            teacherName = "Ajahn Chah",
-            title = "The Middle Way & The Art of Letting Go",
-            tradition = "Thai Forest Tradition (Wat Nong Pah Pong)",
-            summary = "Direct, unpretentious wisdom on observing the mind without attachment, neither grasping after pleasant sensations nor pushing away unpleasant thoughts.",
-            keyConcept = "If you let go a little, you will have a little peace. If you let go a lot, you will have a lot of peace. If you let go completely, you will know complete peace.",
-            coreQuote = "Do not try to become anything. Do not make yourself into anything. Do not be a meditator. Just see whatever arises and let it go.",
-            steps = listOf(
-                PracticeStep(
-                    stepNumber = 1,
-                    title = "Natural Breath, No Straining",
-                    instruction = "Sit comfortably. Do not breathe too strongly or too weakly. Breathe naturally. Just know the in-breath and know the out-breath."
-                ),
-                PracticeStep(
-                    stepNumber = 2,
-                    title = "Watching Like a Still Forest Pool",
-                    instruction = "Think of your mind like a secluded forest pool. All kinds of wonderful and strange animals (thoughts, feelings, sensations) will come to drink. Just sit quietly and watch them come and go without chasing them."
-                ),
-                PracticeStep(
-                    stepNumber = 3,
-                    title = "Applying 'Mai Nae' (It's Uncertain)",
-                    instruction = "Whenever a thought, fear, or profound insight arises, recognize: 'It's uncertain, impermanent (Aniccha).' Do not cling to good states or fight bad ones."
-                ),
-                PracticeStep(
-                    stepNumber = 4,
-                    title = "The Peace of Non-Clinging",
-                    instruction = "When you stop wanting states to last or wanting distractions to disappear, the mind naturally settles into its true, unshakeable home."
+                    title = "Present Moment, Wonderful Moment",
+                    instruction = "Breathing in: 'Present moment'. Breathing out: 'Wonderful moment'. Know that the conditions for happiness are already present right here, right now."
                 )
             )
         ),
@@ -135,6 +102,7 @@ object MeditationGuides {
             teacherName = "Ajahn Lee Dhammadharo",
             title = "Refining the Breath Energy (7 Steps)",
             tradition = "Thai Forest Tradition (Wat Asokaram)",
+            level = "Intermediate",
             summary = "The definitive practical manual from 'Keeping the Breath in Mind'. Transforming the in-and-out breath into whole-body healing energy that pacifies the nervous system and deepens concentration.",
             keyConcept = "Spread the breath energy to circulate through the whole body, dissolving blockages and soothing all tension.",
             coreQuote = "When the breath is comfortable, adjust and expand it through every blood vessel and nerve until the entire body is filled with light and ease.",
@@ -177,33 +145,34 @@ object MeditationGuides {
             )
         ),
         TeacherGuide(
-            id = "thich_nhat_hanh",
-            teacherName = "Thich Nhat Hanh",
-            title = "Mindful Breathing & Smiling to the Moment",
-            tradition = "Plum Village / Engaged Buddhism",
-            summary = "Gentle, compassionate mindfulness practices using poetic gathas (recitations) to return home to the body, release tension, and embrace the wonder of life in the present moment.",
-            keyConcept = "There is no way to peace; peace is the way. Every breath is a celebration of life.",
-            coreQuote = "Breathing in, I calm body and mind. Breathing out, I smile. Dwelling in the present moment, I know this is the only moment.",
+            id = "bhante_gunaratana",
+            teacherName = "Bhante Henepola Gunaratana",
+            title = "Bare Attention & The 5 Hindrances",
+            tradition = "Theravada / Vipassana (Bhavana Society)",
+            level = "Intermediate",
+            summary = "Clear, practical, and direct instructions on developing non-judgmental bare attention, overcoming the five hindrances, and noting sensations without reacting.",
+            keyConcept = "Mindfulness is non-judgmental observation. It sees things as they truly are without adding concepts, opinions, or resistance.",
+            coreQuote = "Mindfulness is like a gentle light shining upon reality. It does not judge, it does not criticize; it simply observes with patience and clarity.",
             steps = listOf(
                 PracticeStep(
                     stepNumber = 1,
-                    title = "In, Out / Deep, Slow",
-                    instruction = "Breathing in: 'In'. Breathing out: 'Out'. Next breath: 'Deep... Slow'. Let the breath find its natural gentle depth without strain."
+                    title = "Bare Attention at the Nostril Tip",
+                    instruction = "Place attention precisely at the spot where the incoming air touches the rim of the nostrils or upper lip. Notice the subtle tingling, temperature change, and rhythm."
                 ),
                 PracticeStep(
                     stepNumber = 2,
-                    title = "Calm, Ease",
-                    instruction = "Breathing in: 'I calm my whole body'. Breathing out: 'I feel at ease'. Release any tension held in your face, jaw, eyes, and shoulders."
+                    title = "Cultivating Non-Judgmental Watching",
+                    instruction = "When the mind wanders, do not become frustrated or angry. Notice where it went without judgment, then gently and kindly escort your attention back to the breath."
                 ),
                 PracticeStep(
                     stepNumber = 3,
-                    title = "Smile, Release",
-                    instruction = "Breathing in: 'I smile'. Breathing out: 'I release'. Allow a gentle, half-smile to illuminate your lips. Smiling relaxes hundreds of facial nerves."
+                    title = "Recognizing the 5 Hindrances",
+                    instruction = "Observe desire, aversion, sluggishness, restlessness, or doubt when they arise. Label them clearly ('desire, desire' or 'restlessness, restlessness') and watch them dissolve on their own."
                 ),
                 PracticeStep(
                     stepNumber = 4,
-                    title = "Present Moment, Wonderful Moment",
-                    instruction = "Breathing in: 'Present moment'. Breathing out: 'Wonderful moment'. Know that the conditions for happiness are already present right here, right now."
+                    title = "Continuous, Patient Investigation",
+                    instruction = "Observe the micro-fluctuations in sensation. Sensation arises, stays briefly, and vanishes. See the truth of impermanence in every single breath."
                 )
             )
         ),
@@ -212,6 +181,7 @@ object MeditationGuides {
             teacherName = "Yongey Mingyur Rinpoche",
             title = "Open Awareness: Meditation Anywhere",
             tradition = "Tibetan Mahamudra & Dzogchen (Tergar)",
+            level = "Intermediate",
             summary = "Accessible, joy-filled guidance on resting in effortless awareness. Making friends with emotions, thoughts, and sounds rather than fighting them.",
             keyConcept = "Short moments, many times. You don't need to stop thoughts to meditate—simply be aware of them.",
             coreQuote = "Awareness is like space: thoughts and emotions are like clouds. Clouds pass, but space is never harmed or stained.",
@@ -239,33 +209,71 @@ object MeditationGuides {
             )
         ),
         TeacherGuide(
-            id = "bhante_gunaratana",
-            teacherName = "Bhante Henepola Gunaratana",
-            title = "Mindfulness in Plain English: Bare Attention",
-            tradition = "Theravada / Vipassana (Bhavana Society)",
-            summary = "Clear, practical, and direct instructions on developing non-judgmental bare attention, overcoming the five hindrances, and noting sensations without reacting.",
-            keyConcept = "Mindfulness is non-judgmental observation. It sees things as they truly are without adding concepts, opinions, or resistance.",
-            coreQuote = "Mindfulness is like a gentle light shining upon reality. It does not judge, it does not criticize; it simply observes with patience and clarity.",
+            id = "ajahn_brahm",
+            teacherName = "Ajahn Brahm",
+            title = "Dropping Past & Future: Silent Awareness",
+            tradition = "Theravada / Forest Tradition (Bodhinyana Monastery)",
+            level = "Advanced",
+            summary = "The art of letting go of the heavy baggage of the past and the anxiety of the future, abandoning all wanting and the 'doer', and resting in effortless silent awareness of the beautiful breath.",
+            keyConcept = "Meditation is not about achieving or getting something; it is the art of letting go, abandoning the 'doer', and allowing stillness to unfold naturally.",
+            coreQuote = "Drop the baggage of the past; don't pick up the burden of the future. When you abandon all wanting, the mind falls into profound, silent peace.",
             steps = listOf(
                 PracticeStep(
                     stepNumber = 1,
-                    title = "Bare Attention at the Nostril Tip",
-                    instruction = "Place attention precisely at the spot where the incoming air touches the rim of the nostrils or upper lip. Notice the subtle tingling, temperature change, and rhythm."
+                    title = "Dropping Past & Future (Present Moment)",
+                    instruction = "Imagine taking off a heavy backpack filled with memories, regrets, and to-do lists. Leave behind the past completely—it is just a memory. Abandon the future—it is just an imagination. Give yourself total permission to only be here right now."
                 ),
                 PracticeStep(
                     stepNumber = 2,
-                    title = "Cultivating Non-Judgmental Watching",
-                    instruction = "When the mind wanders, do not become frustrated or angry. Notice where it went without judgment, then gently and kindly escort your attention back to the breath."
+                    title = "Letting Go of the 'Doer' (Silent Awareness)",
+                    instruction = "Abandon all inner commentary and evaluation. You don't need to describe your experience or judge it as good or bad. Abandon the wanting for things to be different. Silence the inner voice and rest as a peaceful, silent observer."
                 ),
                 PracticeStep(
                     stepNumber = 3,
-                    title = "Recognizing the 5 Hindrances",
-                    instruction = "Observe desire, aversion, sluggishness, restlessness, or doubt when they arise. Label them clearly ('desire, desire' or 'restlessness, restlessness') and watch them dissolve on their own."
+                    title = "Silent Awareness of the Breath",
+                    instruction = "Allow the breath to come into awareness effortlessly. You are not controlling, counting, or breathing deeply; you are just watching the body breathe itself with kindness and total acceptance."
                 ),
                 PracticeStep(
                     stepNumber = 4,
-                    title = "Continuous, Patient Investigation",
-                    instruction = "Observe the micro-fluctuations in sensation. Sensation arises, stays briefly, and vanishes. See the truth of impermanence in every single breath."
+                    title = "Full Sustained Attention on the Whole Breath",
+                    instruction = "Stay with the breath continuously from the very beginning of the in-breath, through the middle, to the end, and through the pause to the out-breath without a gap."
+                ),
+                PracticeStep(
+                    stepNumber = 5,
+                    title = "The Beautiful Breath (Pīti & Sukha)",
+                    instruction = "As mental struggle ceases, the breath begins to feel extraordinarily peaceful, soothing, and beautiful. Delight in this blissful stillness and let it deepen without grasping."
+                )
+            )
+        ),
+        TeacherGuide(
+            id = "ajahn_chah",
+            teacherName = "Ajahn Chah",
+            title = "The Middle Way & The Art of Letting Go",
+            tradition = "Thai Forest Tradition (Wat Nong Pah Pong)",
+            level = "Advanced",
+            summary = "Direct, unpretentious wisdom on observing the mind without attachment, neither grasping after pleasant sensations nor pushing away unpleasant thoughts.",
+            keyConcept = "If you let go a little, you will have a little peace. If you let go a lot, you will have a lot of peace. If you let go completely, you will know complete peace.",
+            coreQuote = "Do not try to become anything. Do not make yourself into anything. Do not be a meditator. Just see whatever arises and let it go.",
+            steps = listOf(
+                PracticeStep(
+                    stepNumber = 1,
+                    title = "Natural Breath, No Straining",
+                    instruction = "Sit comfortably. Do not breathe too strongly or too weakly. Breathe naturally. Just know the in-breath and know the out-breath."
+                ),
+                PracticeStep(
+                    stepNumber = 2,
+                    title = "Watching Like a Still Forest Pool",
+                    instruction = "Think of your mind like a secluded forest pool. All kinds of wonderful and strange animals (thoughts, feelings, sensations) will come to drink. Just sit quietly and watch them come and go without chasing them."
+                ),
+                PracticeStep(
+                    stepNumber = 3,
+                    title = "Applying 'Mai Nae' (It's Uncertain)",
+                    instruction = "Whenever a thought, fear, or profound insight arises, recognize: 'It's uncertain, impermanent (Aniccha).' Do not cling to good states or fight bad ones."
+                ),
+                PracticeStep(
+                    stepNumber = 4,
+                    title = "The Peace of Non-Clinging",
+                    instruction = "When you stop wanting states to last or wanting distractions to disappear, the mind naturally settles into its true, unshakeable home."
                 )
             )
         )

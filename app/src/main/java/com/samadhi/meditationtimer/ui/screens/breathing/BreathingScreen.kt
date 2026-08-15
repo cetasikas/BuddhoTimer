@@ -1,6 +1,7 @@
 package com.samadhi.meditationtimer.ui.screens.breathing
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -52,8 +53,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
@@ -78,6 +81,7 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -122,12 +126,12 @@ fun BreathingScreen(
         }
     }
 
-    // 3D scale animation: Inhale -> 1.0f, Hold Full -> 1.0f (with subtle shimmer), Exhale -> 0.38f, Hold Empty -> 0.38f
+    // Dynamic scale expansion targets
     val targetScale = when (currentPhase) {
         BreathPhase.INHALE -> 1.0f
         BreathPhase.HOLD_FULL -> 1.0f
-        BreathPhase.EXHALE -> 0.38f
-        BreathPhase.HOLD_EMPTY -> 0.38f
+        BreathPhase.EXHALE -> 0.32f
+        BreathPhase.HOLD_EMPTY -> 0.32f
     }
 
     val currentPhaseDurationMs = (getPhaseDuration(currentPhase, selectedPattern) * 1000).coerceAtLeast(1000)
@@ -137,19 +141,19 @@ fun BreathingScreen(
             durationMillis = if (currentPhase == BreathPhase.HOLD_FULL || currentPhase == BreathPhase.HOLD_EMPTY) 400 else currentPhaseDurationMs,
             easing = FastOutSlowInEasing
         ),
-        label = "3dSphereScale"
+        label = "organicBloomScale"
     )
 
-    // Subtle 3D particle shimmer oscillation during hold
-    val shimmerTransition = rememberInfiniteTransition(label = "shimmer")
-    val shimmerPhase by shimmerTransition.animateFloat(
+    // Gentle slow rotation for organic floating sensation
+    val infiniteTransition = rememberInfiniteTransition(label = "mandalaRotation")
+    val slowRotation by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 6.28f,
+        targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween( durationMillis = 3000, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 24000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "shimmerPhase"
+        label = "rotationAngle"
     )
 
     val primaryColor = when (currentPhase) {
@@ -159,10 +163,10 @@ fun BreathingScreen(
         BreathPhase.HOLD_EMPTY -> ZenAmberDark
     }
 
-    val glowHighlightColor = when (currentPhase) {
-        BreathPhase.INHALE -> Color(0xFF80FFE8)
-        BreathPhase.HOLD_FULL -> Color(0xFFFFE082)
-        BreathPhase.EXHALE -> Color(0xFF90CAF9)
+    val bloomSecondaryColor = when (currentPhase) {
+        BreathPhase.INHALE -> Color(0xFF64FFDA)
+        BreathPhase.HOLD_FULL -> Color(0xFFFFD54F)
+        BreathPhase.EXHALE -> Color(0xFF81D4FA)
         BreathPhase.HOLD_EMPTY -> Color(0xFFFFB74D)
     }
 
@@ -197,7 +201,7 @@ fun BreathingScreen(
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "Box Breathing",
+                        text = "Box Breathing & Relief",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = ZenTextPrimary
                     )
@@ -258,110 +262,119 @@ fun BreathingScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // Pure 3D Breathing Sphere Visualizer (Unobstructed, zero overlapping text)
+        // Hypnotic Organic Breathing Flower / Mandala Visualizer (breathworktimer.net inspired)
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            Canvas(modifier = Modifier.size(260.dp)) {
+            Canvas(modifier = Modifier.size(270.dp)) {
                 val center = Offset(size.width / 2f, size.height / 2f)
-                val maxRadius = size.minDimension / 2f - 16.dp.toPx()
-                val currentRadius = maxRadius * animatedScale
+                val baseRadius = size.minDimension / 2f - 24.dp.toPx()
+                val currentRadius = baseRadius * animatedScale
 
-                // 1. Volumetric 3D Ambient Atmospheric Halo
+                // 1. Soft Outer Atmospheric Expansion Glow
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            primaryColor.copy(alpha = 0.30f),
+                            primaryColor.copy(alpha = 0.35f),
                             primaryColor.copy(alpha = 0.08f),
                             Color.Transparent
                         ),
                         center = center,
-                        radius = (currentRadius * 1.4f).coerceAtLeast(10f)
+                        radius = (currentRadius * 1.45f).coerceAtLeast(10f)
                     ),
-                    radius = currentRadius * 1.4f,
+                    radius = currentRadius * 1.45f,
                     center = center
                 )
 
-                // 2. Base Guide Ring (Outer Boundaries)
+                // 2. Base Guide Ring (Outer Calm Boundary)
                 drawCircle(
-                    color = ZenBorder.copy(alpha = 0.35f),
-                    radius = maxRadius,
+                    color = ZenBorder.copy(alpha = 0.30f),
+                    radius = baseRadius,
                     center = center,
                     style = Stroke(width = 1.5.dp.toPx())
                 )
 
-                // 3. Volumetric 3D Core Sphere with Realistic Light Gradient & Specular Highlight
-                val lightSourceOffset = Offset(
-                    center.x - currentRadius * 0.32f,
-                    center.y - currentRadius * 0.32f
-                )
+                // 3. Multi-Petal Organic Liquid Flower Blooming
+                val numPetals = 6
+                val petalOffsetDist = currentRadius * 0.42f
+                val petalRadius = currentRadius * 0.58f
 
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            glowHighlightColor.copy(alpha = 0.90f),
-                            primaryColor.copy(alpha = 0.75f),
-                            primaryColor.copy(alpha = 0.35f),
-                            Color.Black.copy(alpha = 0.50f)
-                        ),
-                        center = lightSourceOffset,
-                        radius = currentRadius.coerceAtLeast(10f)
-                    ),
-                    radius = currentRadius.coerceAtLeast(10f),
-                    center = center
-                )
+                for (i in 0 until numPetals) {
+                    val angleRad = Math.toRadians((i * (360.0 / numPetals) + slowRotation)).toFloat()
+                    val petalCenter = Offset(
+                        center.x + cos(angleRad) * petalOffsetDist,
+                        center.y + sin(angleRad) * petalOffsetDist
+                    )
 
-                // 4. Subtle Specular Highlight Dot (3D Glass Sheen)
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.85f),
-                            Color.White.copy(alpha = 0.15f),
-                            Color.Transparent
-                        ),
-                        center = lightSourceOffset,
-                        radius = (currentRadius * 0.35f).coerceAtLeast(4f)
-                    ),
-                    radius = (currentRadius * 0.35f).coerceAtLeast(4f),
-                    center = lightSourceOffset
-                )
-
-                // 5. Dynamic Orbital Particle Ring
-                val numParticles = 6
-                for (i in 0 until numParticles) {
-                    val angle = shimmerPhase + (i * (6.28f / numParticles))
-                    val particleX = center.x + cos(angle) * (currentRadius * 1.08f)
-                    val particleY = center.y + sin(angle) * (currentRadius * 1.08f)
                     drawCircle(
-                        color = glowHighlightColor.copy(alpha = 0.6f),
-                        radius = 2.5.dp.toPx(),
-                        center = Offset(particleX, particleY)
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                bloomSecondaryColor.copy(alpha = 0.55f),
+                                primaryColor.copy(alpha = 0.30f),
+                                primaryColor.copy(alpha = 0.05f)
+                            ),
+                            center = petalCenter,
+                            radius = petalRadius.coerceAtLeast(8f)
+                        ),
+                        radius = petalRadius.coerceAtLeast(8f),
+                        center = petalCenter
+                    )
+
+                    // Delicate petal stroke
+                    drawCircle(
+                        color = bloomSecondaryColor.copy(alpha = 0.35f),
+                        radius = petalRadius.coerceAtLeast(8f),
+                        center = petalCenter,
+                        style = Stroke(width = 1.5.dp.toPx())
                     )
                 }
 
-                // 6. Perimeter Breathing Ring
+                // 4. Luminous Center Core
                 drawCircle(
-                    color = primaryColor.copy(alpha = 0.7f),
-                    radius = currentRadius.coerceAtLeast(10f),
-                    center = center,
-                    style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.90f),
+                            bloomSecondaryColor.copy(alpha = 0.80f),
+                            primaryColor.copy(alpha = 0.40f),
+                            Color.Transparent
+                        ),
+                        center = center,
+                        radius = (currentRadius * 0.55f).coerceAtLeast(10f)
+                    ),
+                    radius = (currentRadius * 0.55f).coerceAtLeast(10f),
+                    center = center
+                )
+
+                // 5. Perimeter Sweeping Progress Arc for Current Phase
+                val totalPhaseSec = getPhaseDuration(currentPhase, selectedPattern)
+                val progressFraction = if (totalPhaseSec > 0) {
+                    (totalPhaseSec - phaseSecondsRemaining).toFloat() / totalPhaseSec.toFloat()
+                } else 1.0f
+
+                drawArc(
+                    color = primaryColor,
+                    startAngle = -90f,
+                    sweepAngle = 360f * progressFraction,
+                    useCenter = false,
+                    topLeft = Offset(center.x - baseRadius, center.y - baseRadius),
+                    size = Size(baseRadius * 2, baseRadius * 2),
+                    style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
                 )
             }
         }
 
-        // Phase Status & Countdown Panel (Positioned cleanly below the sphere, no text on sphere!)
+        // Clean Phase Panel (Spacious, non-overlapping typography)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp)
+                .padding(vertical = 6.dp)
         ) {
-            // Phase Badge
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
@@ -378,19 +391,17 @@ fun BreathingScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Big Clear Countdown Digits
             Text(
                 text = "$phaseSecondsRemaining",
-                fontSize = 50.sp,
+                fontSize = 52.sp,
                 fontWeight = FontWeight.Light,
                 color = ZenTextPrimary
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Descriptive Instruction Text
             Text(
                 text = currentPhase.instruction,
                 fontSize = 13.sp,
