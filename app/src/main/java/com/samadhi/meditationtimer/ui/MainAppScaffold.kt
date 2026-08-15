@@ -34,6 +34,7 @@ import com.samadhi.meditationtimer.ui.screens.settings.SettingsViewModel
 import com.samadhi.meditationtimer.ui.screens.summary.SessionSummaryScreen
 import com.samadhi.meditationtimer.ui.screens.timer.TimerScreen
 import com.samadhi.meditationtimer.ui.screens.timer.TimerViewModel
+import com.samadhi.meditationtimer.ui.screens.wisdom.WisdomScreen
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
@@ -176,6 +177,10 @@ fun MainAppScaffold() {
                         }
                     }
                 )
+            }
+
+            composable(Screen.Wisdom.route) {
+                WisdomScreen()
             }
 
             composable(Screen.History.route) {

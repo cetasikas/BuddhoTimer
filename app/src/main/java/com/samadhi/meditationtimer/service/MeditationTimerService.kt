@@ -42,6 +42,8 @@ class MeditationTimerService : Service() {
     private var isDndEnabledForSession: Boolean = false
     private var hasChimedForOverrun: Boolean = false
 
+    private var soundBellResName: String = SoundHelper.SOUND_TIBETAN_BOWL
+
     inner class LocalBinder : Binder() {
         fun getService(): MeditationTimerService = this@MeditationTimerService
     }
@@ -64,7 +66,8 @@ class MeditationTimerService : Service() {
                 val prepSec = intent.getIntExtra(EXTRA_PREP_SEC, 5)
                 val autoDnd = intent.getBooleanExtra(EXTRA_AUTO_DND, true)
                 val openEnded = intent.getBooleanExtra(EXTRA_OPEN_ENDED, false)
-                startTimer(targetSec, prepSec, autoDnd, openEnded)
+                val soundBell = intent.getStringExtra(EXTRA_SOUND_BELL) ?: SoundHelper.SOUND_TIBETAN_BOWL
+                startTimer(targetSec, prepSec, autoDnd, openEnded, soundBell)
             }
             ACTION_PAUSE -> pauseTimer()
             ACTION_RESUME -> resumeTimer()
@@ -78,12 +81,14 @@ class MeditationTimerService : Service() {
         targetSec: Int,
         prepSec: Int,
         autoDnd: Boolean,
-        openEnded: Boolean
+        openEnded: Boolean,
+        soundBell: String
     ) {
         targetDurationSec = targetSec
         prepTimeSec = prepSec
         isDndEnabledForSession = autoDnd
         isOpenEnded = openEnded
+        soundBellResName = soundBell
         elapsedSeconds = 0
         overrunSeconds = 0
         hasChimedForOverrun = false
@@ -121,7 +126,7 @@ class MeditationTimerService : Service() {
             }
 
             // Beginning chime
-            soundHelper.playChime(serviceScope)
+            soundHelper.playChime(soundBellResName, serviceScope)
 
             // 2. Active Session Loop
             while (isActive) {
@@ -161,7 +166,7 @@ class MeditationTimerService : Service() {
                         
                         if (!hasChimedForOverrun) {
                             hasChimedForOverrun = true
-                            soundHelper.playChime(serviceScope)
+                            soundHelper.playChime(soundBellResName, serviceScope)
                         }
 
                         _timerStatus.value = TimerStatus.Running(
@@ -240,7 +245,7 @@ class MeditationTimerService : Service() {
                             overrunSeconds = elapsedSeconds - targetDurationSec
                             if (!hasChimedForOverrun) {
                                 hasChimedForOverrun = true
-                                soundHelper.playChime(serviceScope)
+                                soundHelper.playChime(soundBellResName, serviceScope)
                             }
                             _timerStatus.value = TimerStatus.Running(
                                 remainingSeconds = 0,
@@ -352,6 +357,7 @@ class MeditationTimerService : Service() {
         const val EXTRA_PREP_SEC = "extra_prep_sec"
         const val EXTRA_AUTO_DND = "extra_auto_dnd"
         const val EXTRA_OPEN_ENDED = "extra_open_ended"
+        const val EXTRA_SOUND_BELL = "extra_sound_bell"
 
         private val _timerStatus = MutableStateFlow<TimerStatus>(TimerStatus.Idle)
         val timerStatus: StateFlow<TimerStatus> = _timerStatus.asStateFlow()

@@ -284,44 +284,49 @@ fun SettingsScreen(
             border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MusicNote,
-                        contentDescription = null,
-                        tint = ZenAmber,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Tibetan Singing Bowl",
-                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                            color = ZenTextPrimary
-                        )
-                        Text(
-                            text = "Harmonic chime with subtle haptics",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                            color = ZenTextSecondary
-                        )
+            Column(modifier = Modifier.padding(16.dp)) {
+                SoundHelper.soundOptions.forEachIndexed { index, soundOption ->
+                    if (index > 0) {
+                        Spacer(modifier = Modifier.height(14.dp))
                     }
-                }
-                OutlinedButton(
-                    onClick = { soundHelper.playChime() },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenAmber),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(ZenAmber))
-                ) {
-                    Text("Preview", fontSize = 12.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MusicNote,
+                                contentDescription = null,
+                                tint = ZenAmber,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = soundOption.title,
+                                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
+                                    color = ZenTextPrimary
+                                )
+                                Text(
+                                    text = soundOption.description,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                                    color = ZenTextSecondary
+                                )
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = { soundHelper.playChime(soundOption.id) },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenAmber),
+                            border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(ZenAmber))
+                        ) {
+                            Text("Preview", fontSize = 11.sp)
+                        }
+                    }
                 }
             }
         }

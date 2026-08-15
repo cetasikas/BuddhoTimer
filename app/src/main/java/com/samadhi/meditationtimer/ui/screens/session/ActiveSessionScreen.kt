@@ -1,9 +1,17 @@
 package com.samadhi.meditationtimer.ui.screens.session
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +27,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
@@ -33,8 +43,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +78,7 @@ fun ActiveSessionScreen(
 ) {
     val timerStatus by viewModel.timerStatus.collectAsState()
     val config by viewModel.config.collectAsState()
+    var isOledZenMode by remember { mutableStateOf(false) }
 
     LaunchedEffect(timerStatus) {
         if (timerStatus is TimerStatus.Completed) {
@@ -73,31 +88,65 @@ fun ActiveSessionScreen(
         }
     }
 
+    val backgroundColor = if (isOledZenMode) Color(0xFF000000) else ZenObsidian
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(ZenObsidian)
+            .background(backgroundColor)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                if (isOledZenMode) {
+                    isOledZenMode = false
+                }
+            }
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Cancel Action (Top End)
-        IconButton(
-            onClick = {
-                viewModel.cancelSession()
-                onSessionCancelled()
-            },
+        // Top Navigation Controls (Cancel & OLED Dim Mode)
+        Row(
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(ZenSurface)
+                .align(Alignment.TopCenter)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Cancel Practice",
-                tint = ZenTextSecondary,
-                modifier = Modifier.size(20.dp)
-            )
+            // OLED Mode Toggle
+            IconButton(
+                onClick = { isOledZenMode = !isOledZenMode },
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(if (isOledZenMode) Color(0xFF111111) else ZenSurface)
+            ) {
+                Icon(
+                    imageVector = if (isOledZenMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                    contentDescription = if (isOledZenMode) "Exit OLED Mode" else "OLED Deep Black Mode",
+                    tint = if (isOledZenMode) ZenAmber else ZenTextSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // Cancel Action
+            IconButton(
+                onClick = {
+                    viewModel.cancelSession()
+                    onSessionCancelled()
+                },
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(if (isOledZenMode) Color(0xFF111111) else ZenSurface)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Cancel Practice",
+                    tint = ZenTextSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
 
         when (val status = timerStatus) {
@@ -122,7 +171,7 @@ fun ActiveSessionScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Close your eyes & find stillness",
+                        text = "Close your eyes & settle in",
                         style = MaterialTheme.typography.bodyMedium,
                         color = ZenTextSecondary
                     )
@@ -140,136 +189,175 @@ fun ActiveSessionScreen(
                     (totalTarget - remainingSec).toFloat() / totalTarget.toFloat()
                 } else 1.0f
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    // Header Badge
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isOverrun) ZenOverrunBlue.copy(alpha = 0.15f)
-                                else ZenAmber.copy(alpha = 0.15f)
-                            )
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                if (isOledZenMode) {
+                    // Minimalist OLED Deep Black Ambient Clock
+                    val pulseTransition = rememberInfiniteTransition(label = "oled_pulse")
+                    val pulseAlpha by pulseTransition.animateFloat(
+                        initialValue = 0.6f,
+                        targetValue = 1.0f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(4000, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "pulseAlpha"
+                    )
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.alpha(if (isPaused) 0.5f else pulseAlpha)
                     ) {
                         Text(
                             text = when {
                                 isPaused -> "PAUSED"
-                                isOverrun -> "SAMADHI OVERRUN"
-                                config.isOpenEnded -> "OPEN PRACTICE"
-                                else -> "MEDITATING"
+                                isOverrun -> "+${NotificationHelper.formatSeconds(elapsedSec - totalTarget)}"
+                                config.isOpenEnded -> NotificationHelper.formatSeconds(elapsedSec)
+                                else -> NotificationHelper.formatSeconds(remainingSec)
                             },
+                            fontSize = 72.sp,
+                            fontWeight = FontWeight.ExtraLight,
+                            color = if (isOverrun) ZenOverrunBlue.copy(alpha = 0.8f) else ZenAmber.copy(alpha = 0.85f)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = if (isOverrun) "Samadhi Overrun • Tap anywhere to view" else "Tap anywhere to wake controls",
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp,
-                            color = if (isOverrun) ZenOverrunBlue else ZenAmber
+                            color = Color(0xFF555555)
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(36.dp))
-
-                    // Circular Progress Display
-                    CircularTimerProgress(
-                        progress = progress,
-                        isOverrun = isOverrun,
-                        isPaused = isPaused,
-                        size = 300.dp,
-                        strokeWidth = 10.dp
+                } else {
+                    // Standard Rich Interactive Session View
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            if (isOverrun) {
-                                val overrunTime = elapsedSec - totalTarget
-                                Text(
-                                    text = "+${NotificationHelper.formatSeconds(overrunTime)}",
-                                    fontSize = 44.sp,
-                                    fontWeight = FontWeight.Light,
-                                    color = ZenOverrunBlue
+                        // Header Badge
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    if (isOverrun) ZenOverrunBlue.copy(alpha = 0.15f)
+                                    else ZenAmber.copy(alpha = 0.15f)
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Total: ${NotificationHelper.formatSeconds(elapsedSec)}",
-                                    fontSize = 14.sp,
-                                    color = ZenTextSecondary
-                                )
-                            } else if (config.isOpenEnded) {
-                                Text(
-                                    text = NotificationHelper.formatSeconds(elapsedSec),
-                                    fontSize = 50.sp,
-                                    fontWeight = FontWeight.Light,
-                                    color = ZenTextPrimary
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Elapsed Time",
-                                    fontSize = 13.sp,
-                                    color = ZenTextSecondary
-                                )
-                            } else {
-                                Text(
-                                    text = NotificationHelper.formatSeconds(remainingSec),
-                                    fontSize = 52.sp,
-                                    fontWeight = FontWeight.Light,
-                                    color = ZenTextPrimary
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSec)}",
-                                    fontSize = 13.sp,
-                                    color = ZenTextSecondary
-                                )
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = when {
+                                    isPaused -> "PAUSED"
+                                    isOverrun -> "SAMADHI OVERRUN"
+                                    config.isOpenEnded -> "OPEN PRACTICE"
+                                    else -> "MEDITATING"
+                                },
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 2.sp,
+                                color = if (isOverrun) ZenOverrunBlue else ZenAmber
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(36.dp))
+
+                        // Circular Progress Display
+                        CircularTimerProgress(
+                            progress = progress,
+                            isOverrun = isOverrun,
+                            isPaused = isPaused,
+                            size = 300.dp,
+                            strokeWidth = 10.dp
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                if (isOverrun) {
+                                    val overrunTime = elapsedSec - totalTarget
+                                    Text(
+                                        text = "+${NotificationHelper.formatSeconds(overrunTime)}",
+                                        fontSize = 44.sp,
+                                        fontWeight = FontWeight.Light,
+                                        color = ZenOverrunBlue
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Total: ${NotificationHelper.formatSeconds(elapsedSec)}",
+                                        fontSize = 14.sp,
+                                        color = ZenTextSecondary
+                                    )
+                                } else if (config.isOpenEnded) {
+                                    Text(
+                                        text = NotificationHelper.formatSeconds(elapsedSec),
+                                        fontSize = 50.sp,
+                                        fontWeight = FontWeight.Light,
+                                        color = ZenTextPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Elapsed Time",
+                                        fontSize = 13.sp,
+                                        color = ZenTextSecondary
+                                    )
+                                } else {
+                                    Text(
+                                        text = NotificationHelper.formatSeconds(remainingSec),
+                                        fontSize = 52.sp,
+                                        fontWeight = FontWeight.Light,
+                                        color = ZenTextPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSec)}",
+                                        fontSize = 13.sp,
+                                        color = ZenTextSecondary
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(48.dp))
+                        Spacer(modifier = Modifier.height(48.dp))
 
-                    // Action Controls
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Pause / Resume Button
-                        IconButton(
-                            onClick = {
-                                if (isPaused) viewModel.resumeSession() else viewModel.pauseSession()
-                            },
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(CircleShape)
-                                .background(ZenSurface)
+                        // Action Controls
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(20.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                                contentDescription = if (isPaused) "Resume" else "Pause",
-                                tint = ZenAmber,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
+                            // Pause / Resume Button
+                            IconButton(
+                                onClick = {
+                                    if (isPaused) viewModel.resumeSession() else viewModel.pauseSession()
+                                },
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .background(ZenSurface)
+                            ) {
+                                Icon(
+                                    imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                                    contentDescription = if (isPaused) "Resume" else "Pause",
+                                    tint = ZenAmber,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
 
-                        // Complete / Finish Button
-                        Button(
-                            onClick = { viewModel.finishSession() },
-                            modifier = Modifier
-                                .height(56.dp)
-                                .clip(RoundedCornerShape(28.dp)),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isOverrun) ZenOverrunBlue else ZenAmber,
-                                contentColor = ZenObsidian
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Done,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Finish Session",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
-                            )
+                            // Complete / Finish Button
+                            Button(
+                                onClick = { viewModel.finishSession() },
+                                modifier = Modifier
+                                    .height(56.dp)
+                                    .clip(RoundedCornerShape(28.dp)),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isOverrun) ZenOverrunBlue else ZenAmber,
+                                    contentColor = ZenObsidian
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Done,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Finish Session",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
+                            }
                         }
                     }
                 }

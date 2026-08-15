@@ -24,11 +24,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.DoNotDisturbOn
+import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -37,7 +42,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -51,19 +58,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.samadhi.meditationtimer.service.SoundHelper
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenAmberDark
 import com.samadhi.meditationtimer.ui.theme.ZenAmberGlow
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenDarkBackground
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
+import com.samadhi.meditationtimer.ui.theme.ZenOverrunBlue
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
 import com.samadhi.meditationtimer.ui.theme.ZenTeal
@@ -81,6 +92,8 @@ fun TimerScreen(
     val config by viewModel.config.collectAsState()
     val isDndGranted by viewModel.isDndGranted.collectAsState()
     val isBatteryOptIgnored by viewModel.isBatteryOptIgnored.collectAsState()
+    val currentQuote by viewModel.currentQuote.collectAsState()
+
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -107,7 +120,7 @@ fun TimerScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // App Brand Header
         Row(
@@ -118,7 +131,7 @@ fun TimerScreen(
                 imageVector = Icons.Default.SelfImprovement,
                 contentDescription = null,
                 tint = ZenAmber,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(30.dp)
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
@@ -131,7 +144,79 @@ fun TimerScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Pre-Session Daily Wisdom Reflection Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .clickable { viewModel.cycleNextQuote() },
+            colors = CardDefaults.cardColors(containerColor = ZenSurface),
+            border = CardDefaults.outlinedCardBorder().copy(
+                brush = Brush.horizontalGradient(
+                    listOf(ZenAmber.copy(alpha = 0.35f), ZenBorder)
+                )
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = ZenAmber,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "CONTEMPLATION",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp,
+                            color = ZenAmber
+                        )
+                    }
+                    IconButton(
+                        onClick = { viewModel.cycleNextQuote() },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Next Reflection",
+                            tint = ZenTextSecondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "\"${currentQuote.quote}\"",
+                    fontSize = 13.sp,
+                    fontStyle = FontStyle.Italic,
+                    lineHeight = 19.sp,
+                    color = ZenTextPrimary
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "— ${currentQuote.author} (${currentQuote.sourceOrTradition})",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ZenAmber
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Target Duration Display Card
         Box(
@@ -144,52 +229,57 @@ fun TimerScreen(
                     )
                 )
                 .border(1.dp, ZenBorder, RoundedCornerShape(24.dp))
-                .padding(vertical = 32.dp, horizontal = 24.dp),
+                .padding(vertical = 28.dp, horizontal = 20.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = if (config.isOpenEnded) "OPEN PRACTICE" else "TARGET DURATION",
+                    text = if (config.isOpenEnded) "OPEN PRACTICE (COUNT UP)" else "TARGET DURATION",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 2.sp,
                     color = ZenTextSecondary
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 if (config.isOpenEnded) {
                     Text(
                         text = "∞",
-                        fontSize = 72.sp,
+                        fontSize = 68.sp,
                         fontWeight = FontWeight.Light,
                         color = ZenTeal
                     )
                     Text(
-                        text = "Stopwatch mode with overrun logging",
-                        fontSize = 13.sp,
+                        text = "Open stopwatch • Count up freely",
+                        fontSize = 12.sp,
                         color = ZenTextMuted
                     )
                 } else {
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             text = "${config.targetDurationMinutes}",
-                            fontSize = 68.sp,
+                            fontSize = 64.sp,
                             fontWeight = FontWeight.Light,
                             color = ZenAmber
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "min",
-                            fontSize = 20.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Normal,
                             color = ZenTextSecondary,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
                     }
+                    Text(
+                        text = "Auto-continues into Samadhi Overrun when time ends",
+                        fontSize = 11.sp,
+                        color = ZenOverrunBlue
+                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Quick Preset Chips
         if (!config.isOpenEnded) {
@@ -227,7 +317,7 @@ fun TimerScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Duration Slider
             Slider(
@@ -241,6 +331,79 @@ fun TimerScreen(
                     inactiveTrackColor = ZenSurfaceVariant
                 )
             )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Sound & Bell Selector Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = ZenSurface),
+            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.MusicNote,
+                            contentDescription = null,
+                            tint = ZenAmber,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Meditation Chime",
+                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                            color = ZenTextPrimary
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { viewModel.soundHelper.playChime(config.soundBellResName) },
+                        modifier = Modifier.height(32.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenAmber),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(ZenAmber))
+                    ) {
+                        Text("Preview", fontSize = 11.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SoundHelper.soundOptions.forEach { soundOption ->
+                        val isSelected = config.soundBellResName == soundOption.id
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                viewModel.updateSoundBell(soundOption.id)
+                                viewModel.soundHelper.playChime(soundOption.id)
+                            },
+                            label = { Text(soundOption.title, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = ZenSurfaceVariant,
+                                labelColor = ZenTextSecondary,
+                                selectedContainerColor = ZenAmber,
+                                selectedLabelColor = ZenObsidian
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                borderColor = if (isSelected) ZenAmber else ZenBorder,
+                                enabled = true,
+                                selected = isSelected
+                            )
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -261,13 +424,13 @@ fun TimerScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Open-Ended Session",
-                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 15.sp),
+                            text = "Open-Ended Practice",
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
                             color = ZenTextPrimary
                         )
                         Text(
-                            text = "Count up without a fixed ending time",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                            text = "Count up as a stopwatch without a fixed end-time",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp),
                             color = ZenTextSecondary
                         )
                     }
@@ -294,12 +457,12 @@ fun TimerScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Warm-up Countdown",
-                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 15.sp),
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
                             color = ZenTextPrimary
                         )
                         Text(
-                            text = "Gentle preparation time to settle in",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                            text = "Settling time before session begins",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp),
                             color = ZenTextSecondary
                         )
                     }
@@ -335,12 +498,12 @@ fun TimerScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Auto Do Not Disturb",
-                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 15.sp),
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
                             color = ZenTextPrimary
                         )
                         Text(
-                            text = "Silence notifications during meditation",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                            text = "Silence phone notifications during meditation",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp),
                             color = ZenTextSecondary
                         )
                     }
@@ -402,7 +565,7 @@ fun TimerScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Start Practice Big Button
         Button(

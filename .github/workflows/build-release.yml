@@ -49,18 +49,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.0
-          name: "Buddho Timer v1.0.0"
+          tag_name: v1.1.0
+          name: "Buddho Timer v1.1.0"
           body: |
-            ## ?? Buddho Meditation Timer v1.0.0
+            ## 🪷 Buddho Meditation Timer v1.1.0
             
-            Standalone Mindfulness & Meditation Timer for Android with:
-            - Ongoing Foreground Notification & Live Activity controls
-            - Samadhi Overrun continuous timing
-            - Room Database & Markdown Reflection Notes
-            - Do Not Disturb (DND) auto-silence integration
-            - Partial WakeLock background persistence
-            - JSON / CSV Storage Access Framework Backup & Restore
+            Major feature update with offline wisdom guides, sound engine overhaul, and Zen OLED mode:
+            - **Teachings & Mantras Module**: 100% offline guidance from Ajahn Chah, Ajahn Lee, Ajahn Brahm, Thich Nhat Hanh, Mingyur Rinpoche, Bhante Gunaratana, and the Buddho Mantra.
+            - **Pre-Session Wisdom Card**: Daily rotatable contemplation reflections on the Timer screen.
+            - **HD Sound Synthesizer Engine**: Multi-harmonic Tibetan Singing Bowl, Zen Bronze Bell, Ting-Sha Cymbals, Woodblock Moktak, and Silent Retreat (Haptic Only) mode.
+            - **Zen OLED Deep Black Ambient Mode**: Pitch-black distraction-free clock display for night sits.
+            - **Samadhi Overrun & Open-Ended Timer Refinements**.
+            - **Zero Internet Permissions**: 100% offline and privacy-first.
           draft: false
           prerelease: false
           files: |
