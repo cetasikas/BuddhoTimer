@@ -24,8 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
+import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 
 @Composable
 fun MarkdownToolbar(
@@ -50,7 +50,7 @@ fun MarkdownToolbar(
             Icon(
                 imageVector = Icons.Default.Title,
                 contentDescription = "Heading",
-                tint = ZenAmber,
+                tint = ZenTealLight,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -64,7 +64,7 @@ fun MarkdownToolbar(
             Icon(
                 imageVector = Icons.Default.FormatBold,
                 contentDescription = "Bold",
-                tint = ZenAmber,
+                tint = ZenTealLight,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -78,7 +78,7 @@ fun MarkdownToolbar(
             Icon(
                 imageVector = Icons.Default.FormatItalic,
                 contentDescription = "Italic",
-                tint = ZenAmber,
+                tint = ZenTealLight,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -92,7 +92,7 @@ fun MarkdownToolbar(
             Icon(
                 imageVector = Icons.Default.FormatQuote,
                 contentDescription = "Quote",
-                tint = ZenAmber,
+                tint = ZenTealLight,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -106,7 +106,7 @@ fun MarkdownToolbar(
             Icon(
                 imageVector = Icons.Default.FormatListBulleted,
                 contentDescription = "List",
-                tint = ZenAmber,
+                tint = ZenTealLight,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -120,7 +120,7 @@ fun MarkdownToolbar(
             Icon(
                 imageVector = Icons.Default.Code,
                 contentDescription = "Code",
-                tint = ZenAmber,
+                tint = ZenTealLight,
                 modifier = Modifier.size(18.dp)
             )
         }

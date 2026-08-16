@@ -29,10 +29,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
+import com.samadhi.meditationtimer.ui.theme.ZenTeal
+import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 
@@ -62,9 +63,9 @@ fun MoodSelector(
     ) {
         moodOptions.forEach { mood ->
             val isSelected = mood.level == selectedMood
-            val bg = if (isSelected) ZenAmber.copy(alpha = 0.15f) else ZenSurface
-            val border = if (isSelected) ZenAmber else ZenBorder
-            val tint = if (isSelected) ZenAmber else ZenTextMuted
+            val bg = if (isSelected) ZenTeal.copy(alpha = 0.22f) else ZenSurface
+            val border = if (isSelected) ZenTealLight else ZenBorder
+            val tint = if (isSelected) ZenTealLight else ZenTextMuted
 
             Column(
                 modifier = Modifier
@@ -87,7 +88,7 @@ fun MoodSelector(
                 Text(
                     text = mood.title,
                     fontSize = 10.sp,
-                    color = if (isSelected) ZenAmber else ZenTextMuted
+                    color = if (isSelected) ZenTealLight else ZenTextMuted
                 )
             }
         }

@@ -42,7 +42,8 @@ private data class SettledLeaf(
     val rotation: Float,
     val sizePx: Float,
     val alpha: Float,
-    val color: Color
+    val color: Color,
+    val orderIndex: Int
 )
 
 @Composable
@@ -52,7 +53,8 @@ fun FallingLeavesEffect(
     triggerBurst: Int = 0,
     ambientAlpha: Float = 0.32f,
     isGlowing: Boolean = false,
-    pileUpAtBottom: Boolean = false
+    pileUpAtBottom: Boolean = false,
+    sessionProgressRatio: Float = 0.0f
 ) {
     val leaves = remember {
         mutableStateListOf<LeafParticle>().apply {
@@ -60,13 +62,9 @@ fun FallingLeavesEffect(
         }
     }
 
-    val settledLeaves = remember { mutableStateListOf<SettledLeaf>() }
-
-    // Clear settled leaves when meditation is not active
-    LaunchedEffect(pileUpAtBottom) {
-        if (!pileUpAtBottom) {
-            settledLeaves.clear()
-        }
+    // Pre-generated calm resting positions along the bottom
+    val settledBed = remember {
+        generateSettledBed(42)
     }
 
     // Trigger burst leaves on action
@@ -97,20 +95,7 @@ fun FallingLeavesEffect(
                                 continue
                             }
                         } else {
-                            if (leaf.yRatio >= 0.94f) {
-                                if (pileUpAtBottom && settledLeaves.size < 36 && Random.nextFloat() < 0.65f) {
-                                    settledLeaves.add(
-                                        SettledLeaf(
-                                            xRatio = (leaf.xRatio + (Random.nextFloat() - 0.5f) * 0.05f).coerceIn(0.03f, 0.97f),
-                                            yRatio = Random.nextFloat() * 0.06f + 0.92f,
-                                            rotation = leaf.rotation + (Random.nextFloat() - 0.5f) * 30f,
-                                            sizePx = leaf.sizePx * 0.95f,
-                                            alpha = (leaf.alpha * 0.75f).coerceIn(0.2f, 0.65f),
-                                            color = leaf.color
-                                        )
-                                    )
-                                }
-                                // Reset to top
+                            if (leaf.yRatio >= 1.05f) {
                                 leaf.yRatio = -0.08f
                                 leaf.xRatio = Random.nextFloat()
                             }
@@ -131,16 +116,18 @@ fun FallingLeavesEffect(
         if (width <= 0f || height <= 0f) return@Canvas
 
         val currentTimeSec = (lastFrameTimeNanos / 1_000_000_000f)
-        // Gentle, soothing 5-second breathing glow oscillation
-        val breathingCycle = (sin(currentTimeSec * 1.25f) * 0.5f + 0.5f)
+        // Gentle, soothing 4.5-second breathing glow oscillation
+        val breathingCycle = (sin(currentTimeSec * 1.4f) * 0.5f + 0.5f)
 
-        // Draw settled leaves resting at the bottom
-        settledLeaves.forEach { settled ->
-            val posX = settled.xRatio * width
-            val posY = settled.yRatio * height
-            val currentAlpha = (settled.alpha * ambientAlpha).coerceIn(0f, 1f)
+        // 1. Draw settled leaves coinciding with session elapsed progress
+        if (pileUpAtBottom && sessionProgressRatio > 0.005f) {
+            val maxVisibleSettled = (sessionProgressRatio.coerceIn(0f, 1.25f) * settledBed.size).toInt().coerceAtMost(settledBed.size)
+            for (i in 0 until maxVisibleSettled) {
+                val settled = settledBed[i]
+                val posX = settled.xRatio * width
+                val posY = settled.yRatio * height
+                val currentAlpha = (settled.alpha * ambientAlpha * 1.4f).coerceIn(0.15f, 0.85f)
 
-            if (currentAlpha > 0.01f) {
                 drawRealisticLeaf(
                     path = leafPath,
                     veinPath = veinPath,
@@ -149,12 +136,13 @@ fun FallingLeavesEffect(
                     rotation = settled.rotation,
                     color = settled.color.copy(alpha = currentAlpha),
                     isGlowing = isGlowing,
-                    breathingGlowFactor = breathingCycle
+                    breathingGlowFactor = breathingCycle,
+                    isResting = true
                 )
             }
         }
 
-        // Draw active falling leaves
+        // 2. Draw active falling leaves
         leaves.forEach { leaf ->
             val sway = sin(currentTimeSec * leaf.swayFreq + leaf.swayPhase) * (leaf.swayAmpRatio * width)
             val posX = (leaf.xRatio * width + sway).coerceIn(-50f, width + 50f)
@@ -170,7 +158,8 @@ fun FallingLeavesEffect(
                     rotation = leaf.rotation,
                     color = leaf.color.copy(alpha = currentAlpha),
                     isGlowing = isGlowing,
-                    breathingGlowFactor = breathingCycle
+                    breathingGlowFactor = breathingCycle,
+                    isResting = false
                 )
             }
         }
@@ -185,7 +174,8 @@ private fun DrawScope.drawRealisticLeaf(
     rotation: Float,
     color: Color,
     isGlowing: Boolean,
-    breathingGlowFactor: Float
+    breathingGlowFactor: Float,
+    isResting: Boolean = false
 ) {
     rotate(degrees = rotation, pivot = center) {
         path.reset()
@@ -206,29 +196,35 @@ private fun DrawScope.drawRealisticLeaf(
         )
         path.close()
 
-        // Luminous breathing glow effect when meditation is active
+        // Noticeable, serene luminous breathing glow effect during meditation
         if (isGlowing) {
-            val outerGlowAlpha = (0.20f + 0.32f * breathingGlowFactor).coerceIn(0.1f, 0.6f)
-            val innerGlowAlpha = (0.35f + 0.35f * breathingGlowFactor).coerceIn(0.2f, 0.8f)
+            val outerAlpha = (0.35f + 0.45f * breathingGlowFactor).coerceIn(0.2f, 0.85f)
+            val innerAlpha = (0.50f + 0.45f * breathingGlowFactor).coerceIn(0.35f, 0.95f)
 
-            // Outer Soft Halo
+            // Outer Soft Halo Aura
             drawPath(
                 path = path,
-                color = Color(0xFF5EEAD4).copy(alpha = outerGlowAlpha * color.alpha),
-                style = Stroke(width = 5.0f)
+                color = Color(0xFF5EEAD4).copy(alpha = outerAlpha),
+                style = Stroke(width = if (isResting) 6.0f else 8.5f)
             )
-            // Inner Luminous Rim
+            // Middle Bright Teal Luminous Ring
             drawPath(
                 path = path,
-                color = Color(0xFFE6FFFA).copy(alpha = innerGlowAlpha * color.alpha),
-                style = Stroke(width = 2.0f)
+                color = Color(0xFF99F6E4).copy(alpha = innerAlpha),
+                style = Stroke(width = if (isResting) 3.0f else 4.0f)
+            )
+            // Inner Core Luminous Stroke
+            drawPath(
+                path = path,
+                color = Color(0xFFF0FDFA).copy(alpha = 0.75f),
+                style = Stroke(width = 1.5f)
             )
         }
 
         // Fill leaf body
         drawPath(path = path, color = color)
 
-        // Delicate Leaf Texture: Central Rib & Side Veins
+        // Delicate Leaf Texture: Central Spine & Side Ribs
         veinPath.reset()
         // Central vein
         veinPath.moveTo(center.x, center.y - halfH * 0.85f)
@@ -248,12 +244,12 @@ private fun DrawScope.drawRealisticLeaf(
         veinPath.moveTo(center.x, center.y + stepY * 0.1f)
         veinPath.quadraticTo(center.x - halfW * 0.55f, center.y - stepY * 0.15f, center.x - halfW * 0.7f, center.y)
 
-        // Draw leaf veins with soft translucent stroke
-        val veinColor = Color(0xFF041014).copy(alpha = (0.28f * color.alpha).coerceIn(0.08f, 0.4f))
+        // Draw leaf veins with crisp translucent stroke
+        val veinColor = Color(0xFF041014).copy(alpha = (0.35f * color.alpha).coerceIn(0.12f, 0.55f))
         drawPath(
             path = veinPath,
             color = veinColor,
-            style = Stroke(width = 1.0f)
+            style = Stroke(width = 1.2f)
         )
     }
 }
@@ -266,6 +262,21 @@ private val leafPalette = listOf(
     Color(0xFF94A3B8), // Soft Moonlit Slate
     Color(0xFFD4AF37)  // Antique Gold Accent
 )
+
+private fun generateSettledBed(count: Int): List<SettledLeaf> {
+    val random = Random(42) // Consistent harmonious seed for floor bed layout
+    return List(count) { i ->
+        SettledLeaf(
+            xRatio = ((i.toFloat() / count.toFloat()) + (random.nextFloat() - 0.5f) * 0.12f).coerceIn(0.04f, 0.96f),
+            yRatio = 0.92f + (random.nextFloat() * 0.06f),
+            rotation = (random.nextFloat() - 0.5f) * 60f + if (i % 2 == 0) 15f else -15f,
+            sizePx = random.nextFloat() * 8f + 16f,
+            alpha = random.nextFloat() * 0.35f + 0.45f,
+            color = leafPalette[i % leafPalette.size],
+            orderIndex = i
+        )
+    }.shuffled(Random(108))
+}
 
 private fun generateAmbientLeaves(count: Int): List<LeafParticle> {
     return List(count) {

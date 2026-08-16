@@ -33,11 +33,10 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import com.samadhi.meditationtimer.ui.components.ZenBranchSlider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -278,28 +277,18 @@ fun TimerScreen(
                     .padding(horizontal = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Sleek light-grey minimal slider
-                Slider(
+                // Minimal Organic Zen Branch Slider
+                ZenBranchSlider(
                     value = config.targetDurationMinutes.toFloat(),
                     onValueChange = {
-                        isSliding = true
                         viewModel.updateDurationMinutes(it.toInt())
                         leafBurstTrigger++
                     },
-                    onValueChangeFinished = {
-                        isSliding = false
-                    },
                     valueRange = 1f..120f,
-                    steps = 118,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFFCBD5E1),
-                        activeTrackColor = Color(0xFF94A3B8),
-                        inactiveTrackColor = Color(0xFF1E293B)
-                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // --- CLEAN GLOWING PRESET PILL BUTTONS ---
                 FlowRow(

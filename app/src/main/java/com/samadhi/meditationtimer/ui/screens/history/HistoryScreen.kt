@@ -54,6 +54,7 @@ import com.samadhi.meditationtimer.ui.theme.ZenOverrunBlue
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
 import com.samadhi.meditationtimer.ui.theme.ZenTeal
+import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
@@ -143,7 +144,7 @@ fun HistoryScreen(
                             title = "Sessions",
                             value = "${stats.totalSessionsCount}",
                             icon = Icons.Default.SelfImprovement,
-                            tint = ZenAmber
+                            tint = ZenTealLight
                         )
                         // Total Practice Time
                         StatItem(
@@ -157,7 +158,7 @@ fun HistoryScreen(
                             title = "Streak",
                             value = "${stats.currentStreakDays}d",
                             icon = Icons.Default.LocalFireDepartment,
-                            tint = ZenAmber
+                            tint = ZenTealLight
                         )
                         // Longest Streak
                         StatItem(
@@ -305,7 +306,7 @@ private fun SessionCard(
                             text = NotificationHelper.formatSeconds(session.actualDurationSec),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = ZenAmber
+                            color = ZenTealLight
                         )
                         if (session.overrunSec > 0) {
                             Spacer(modifier = Modifier.width(8.dp))

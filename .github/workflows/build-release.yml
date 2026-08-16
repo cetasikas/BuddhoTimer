@@ -49,19 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.9.0
-          name: "Buddho Timer v1.9.0"
+          tag_name: v2.0.0
+          name: "Buddho Timer v2.0.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v1.9.0
+            ## 🪷 Buddho Meditation Timer v2.0.0
             
-            - **🍃 Pure Minimalist Timer Layout**: Removed header clutter for maximum serenity and calm.
-            - **⚪ Minimal Slate/Grey Slider**: Redesigned sleek slider in neutral moonlit slate tones with organic circular thumb and leaf flutter feedback.
-            - **🍂 Realistic Leaf Textures & Breathing Glow Aura**: Detailed primary and secondary leaf veins, smooth 5-second breathing halo oscillation during meditation, and calming leaf accumulation along the floor of the screen.
-            - **🌊 Serene Blue/Teal Theme & Enlarged Digits**: Cohesive moonlit teal aesthetic across Active Session, circular progress arc, and Settings, with larger high-contrast timer numbers.
-            - **📖 Ajahn Brahm's 4-Stage Meditation Guide**: Updated "Start Here" topic card to feature the foundational stages of letting go, silent awareness, and joyful stillness.
-            - **⚙️ Redesigned Settings & Seamless Back Navigation**: Unified teal theme, dedicated Back buttons on Settings and Wisdom, and removed redundant Box Breathing card from settings.
-            - **✨ First-Launch & On-Demand Tutorial Walkthrough**: Interactive 4-step quick guide introducing core features and offering one-tap DND / Battery permission setup, also accessible from Settings.
-            - **Zero Internet Permissions**: 100% offline, privacy-first meditation companion.
+            - **🪵 Minimal Organic Zen Branch Slider**: Custom minimalist slider styled as a living bamboo/tree branch with organic nodes, living teal active gradient, dormant moonlit slate stem, and a delicate sprouting leaf bead thumb with zero yellow.
+            - **✨ Noticeable Breathing Glow Halo**: Luminous triple-layer cyan-teal breathing halo aura oscillating gently around leaves during meditation sits.
+            - **🍃 Progress-Coinciding Leaf Accumulation**: Falling leaves settle naturally into a serene, growing bed along the floor of the screen that dynamically reflects elapsed practice progress.
+            - **🌊 Universal Serene Teal Theme**: Cohesive moonlit teal aesthetic completely unified across Practice Complete (Session Summary), Mood Selector, Markdown Toolbar, and History records.
+            - **100% Offline & Private**: Zero internet permissions, no tracking, built for deep peace and stillness.
           draft: false
           prerelease: false
           files: |

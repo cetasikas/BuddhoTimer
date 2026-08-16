@@ -67,6 +67,9 @@ import androidx.compose.ui.graphics.Color
 import com.samadhi.meditationtimer.R
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 
+import com.samadhi.meditationtimer.ui.theme.ZenTeal
+import com.samadhi.meditationtimer.ui.theme.ZenTealLight
+
 @Composable
 fun SessionSummaryScreen(
     completedStatus: TimerStatus.Completed?,
@@ -108,7 +111,10 @@ fun SessionSummaryScreen(
 
         FallingLeavesEffect(
             leafCount = 14,
-            ambientAlpha = 0.26f
+            ambientAlpha = 0.42f,
+            isGlowing = true,
+            pileUpAtBottom = true,
+            sessionProgressRatio = 1.0f
         )
 
         Column(
@@ -124,8 +130,8 @@ fun SessionSummaryScreen(
         Icon(
             imageVector = Icons.Default.SelfImprovement,
             contentDescription = null,
-            tint = ZenAmber,
-            modifier = Modifier.size(40.dp)
+            tint = ZenTealLight,
+            modifier = Modifier.size(42.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -144,7 +150,7 @@ fun SessionSummaryScreen(
         // Stats Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ZenSurface),
+            colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.80f)),
             border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -161,7 +167,7 @@ fun SessionSummaryScreen(
                         text = NotificationHelper.formatSeconds(completedStatus.actualDurationSec),
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
-                        color = ZenAmber
+                        color = ZenTealLight
                     )
                     Text(
                         text = "Total Practice",
@@ -184,12 +190,12 @@ fun SessionSummaryScreen(
                             text = "+${NotificationHelper.formatSeconds(completedStatus.overrunSec)}",
                             fontSize = 26.sp,
                             fontWeight = FontWeight.Bold,
-                            color = ZenOverrunBlue
+                            color = ZenTealLight
                         )
                         Text(
                             text = "Samadhi Overrun",
                             fontSize = 12.sp,
-                            color = ZenOverrunBlue
+                            color = ZenTeal
                         )
                     } else {
                         Text(
@@ -246,7 +252,7 @@ fun SessionSummaryScreen(
                 .fillMaxWidth()
                 .height(140.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(ZenSurface)
+                .background(ZenSurface.copy(alpha = 0.80f))
                 .border(1.dp, ZenBorder, RoundedCornerShape(12.dp))
                 .padding(12.dp)
         ) {
@@ -264,7 +270,7 @@ fun SessionSummaryScreen(
                     fontSize = 14.sp,
                     lineHeight = 20.sp
                 ),
-                cursorBrush = SolidColor(ZenAmber),
+                cursorBrush = SolidColor(ZenTealLight),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -291,8 +297,8 @@ fun SessionSummaryScreen(
                 .height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = ZenAmber,
-                contentColor = ZenObsidian
+                containerColor = ZenTeal,
+                contentColor = Color(0xFF041014)
             )
         ) {
             Icon(

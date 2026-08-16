@@ -138,14 +138,29 @@ fun ActiveSessionScreen(
                     )
             )
 
-            FallingLeavesEffect(
-                leafCount = 14,
-                triggerBurst = leavesBurstTrigger,
-                ambientAlpha = 0.38f,
-                isGlowing = true,
-                pileUpAtBottom = true
-            )
+        val currentProgress = when (val status = timerStatus) {
+            is TimerStatus.Running -> {
+                if (status.isOverrun) 1.0f
+                else if (config.targetDurationSeconds > 0) (status.elapsedSeconds.toFloat() / config.targetDurationSeconds.toFloat()).coerceIn(0f, 1f)
+                else 0.5f
+            }
+            is TimerStatus.Paused -> {
+                if (status.isOverrun) 1.0f
+                else if (config.targetDurationSeconds > 0) (status.elapsedSeconds.toFloat() / config.targetDurationSeconds.toFloat()).coerceIn(0f, 1f)
+                else 0.5f
+            }
+            else -> 0f
         }
+
+        FallingLeavesEffect(
+            leafCount = 14,
+            triggerBurst = leavesBurstTrigger,
+            ambientAlpha = 0.55f,
+            isGlowing = true,
+            pileUpAtBottom = true,
+            sessionProgressRatio = currentProgress
+        )
+    }
 
         Box(
             modifier = Modifier
