@@ -12,7 +12,7 @@ enum class ParticleType {
 
 enum class ZenThemeId(val id: String, val title: String, val subtitle: String) {
     BAMBOO_TEAL("bamboo_teal", "Moonlit Bamboo", "Original serene teal & bamboo leaves"),
-    SACRED_LOTUS("sacred_lotus", "Sacred Lotus", "Tranquil water lily & floating lotus petals"),
+    SACRED_LOTUS("sacred_lotus", "Golden Lotus", "Warm temple gold & floating amber petals"),
     SAKURA_TWILIGHT("sakura_twilight", "Sakura Twilight", "Midnight cherry blossom & drifting petals")
 }
 
@@ -51,21 +51,21 @@ val BambooTealTheme = ZenTheme(
 
 val SacredLotusTheme = ZenTheme(
     id = ZenThemeId.SACRED_LOTUS,
-    title = "Sacred Lotus",
+    title = "Golden Lotus",
     backgroundDrawableRes = R.drawable.bg_zen_lotus,
-    primary = Color(0xFFD977A6),
-    primaryLight = Color(0xFFF4A8C4),
-    primaryDark = Color(0xFF831843),
-    primaryGlow = Color(0x35D977A6),
-    overrunColor = Color(0xFFF59E0B),
+    primary = Color(0xFFD4AF37),
+    primaryLight = Color(0xFFFFE082),
+    primaryDark = Color(0xFF8D6E1C),
+    primaryGlow = Color(0x35D4AF37),
+    overrunColor = Color(0xFF60A5FA),
     particleType = ParticleType.LOTUS_PETAL,
     particlePalette = listOf(
-        Color(0xFFF4A8C4),
-        Color(0xFFE879A8),
-        Color(0xFFD977A6),
-        Color(0xFFFDE8E8),
-        Color(0xFFFBCFE8),
-        Color(0xFFFBBF24)
+        Color(0xFFFFE082),
+        Color(0xFFFFD54F),
+        Color(0xFFD4AF37),
+        Color(0xFFFFF8E1),
+        Color(0xFFFFECB3),
+        Color(0xFFC8A261)
     )
 )
 

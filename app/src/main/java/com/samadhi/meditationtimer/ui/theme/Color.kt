@@ -16,11 +16,11 @@ val ZenTealLight = Color(0xFF5EEAD4)
 val ZenTealDark = Color(0xFF164E4D)
 val ZenTealGlow = Color(0x352EA8A4)
 
-// 2. Sacred Lotus Palette
-val ZenLotus = Color(0xFFD977A6)
-val ZenLotusLight = Color(0xFFF4A8C4)
-val ZenLotusDark = Color(0xFF831843)
-val ZenLotusGlow = Color(0x35D977A6)
+// 2. Golden Lotus / Sandalwood Amber Palette
+val ZenLotus = Color(0xFFD4AF37)
+val ZenLotusLight = Color(0xFFFFE082)
+val ZenLotusDark = Color(0xFF8D6E1C)
+val ZenLotusGlow = Color(0x35D4AF37)
 
 // 3. Sakura Twilight Palette
 val ZenSakura = Color(0xFFE0829D)

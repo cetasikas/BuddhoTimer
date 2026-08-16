@@ -278,11 +278,11 @@ fun BreathingScreen(
                         colors = FilterChipDefaults.filterChipColors(
                             containerColor = ZenSurface.copy(alpha = 0.7f),
                             labelColor = ZenTextSecondary,
-                            selectedContainerColor = ZenTeal,
+                            selectedContainerColor = currentTheme.primary,
                             selectedLabelColor = ZenObsidian
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            borderColor = if (isSelected) ZenTeal else ZenBorder,
+                            borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
                             enabled = true,
                             selected = isSelected
                         ),
@@ -371,14 +371,14 @@ fun BreathingScreen(
                         )
                         Text(
                             text = "$completedCycles",
-                            fontSize = 18.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = ZenTeal
+                            color = currentTheme.primaryLight
                         )
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "TOTAL CALM TIME",
+                            text = "CALM TIME",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.2.sp,
@@ -386,20 +386,20 @@ fun BreathingScreen(
                         )
                         Text(
                             text = NotificationHelper.formatSeconds(totalElapsedSec),
-                            fontSize = 18.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = ZenAmber
+                            color = currentTheme.primaryLight
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             // Action Controls
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
@@ -435,7 +435,7 @@ fun BreathingScreen(
                         .height(54.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isRunning) ZenSurfaceVariant else ZenTeal,
+                        containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
                         contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
                     )
                 ) {

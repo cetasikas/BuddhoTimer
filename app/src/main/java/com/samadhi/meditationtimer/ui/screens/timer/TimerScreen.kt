@@ -47,6 +47,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
@@ -188,37 +190,58 @@ fun TimerScreen(
                         }
                     }
 
-                    // Action Icons: [?] and [⚙]
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        IconButton(
-                            onClick = onOpenWisdom,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(ZenSurface.copy(alpha = 0.65f))
-                                .border(1.dp, ZenBorder, CircleShape)
+                    // Support / Buy Me a Coffee Button
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(ZenSurface.copy(alpha = 0.65f))
+                            .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                            .clickable {
+                                val intent = android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse("https://ko-fi.com/hackysackapp")
+                                ).apply {
+                                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                context.startActivity(intent)
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                                contentDescription = "Meditation Instructions",
-                                tint = ZenTextSecondary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-
-                        IconButton(
-                            onClick = onOpenSettings,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(ZenSurface.copy(alpha = 0.65f))
-                                .border(1.dp, ZenBorder, CircleShape)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Settings,
-                                contentDescription = "Meditation Settings",
-                                tint = ZenTextSecondary,
-                                modifier = Modifier.size(18.dp)
+                            androidx.compose.foundation.Canvas(modifier = Modifier.size(14.dp)) {
+                                val strokeColor = currentTheme.primaryLight
+                                val strokeW = 1.4f
+                                // Cup body
+                                val cup = Path().apply {
+                                    moveTo(size.width * 0.18f, size.height * 0.34f)
+                                    lineTo(size.width * 0.76f, size.height * 0.34f)
+                                    lineTo(size.width * 0.70f, size.height * 0.82f)
+                                    quadraticTo(size.width * 0.47f, size.height * 0.90f, size.width * 0.24f, size.height * 0.82f)
+                                    close()
+                                }
+                                drawPath(cup, strokeColor, style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeW))
+                                // Handle
+                                val handle = Path().apply {
+                                    moveTo(size.width * 0.74f, size.height * 0.42f)
+                                    quadraticTo(size.width * 0.98f, size.height * 0.54f, size.width * 0.70f, size.height * 0.68f)
+                                }
+                                drawPath(handle, strokeColor, style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeW))
+                                // Rising aroma steam
+                                drawLine(strokeColor, Offset(size.width * 0.36f, size.height * 0.24f), Offset(size.width * 0.36f, size.height * 0.12f), strokeWidth = strokeW)
+                                drawLine(strokeColor, Offset(size.width * 0.56f, size.height * 0.24f), Offset(size.width * 0.56f, size.height * 0.12f), strokeWidth = strokeW)
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Support",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                letterSpacing = 0.5.sp,
+                                color = currentTheme.primaryLight
                             )
                         }
                     }

@@ -49,18 +49,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.2.1
-          name: "Buddho Timer v2.2.1"
+          tag_name: v2.3.0
+          name: "Buddho Timer v2.3.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.2.1
+            ## 🪷 Buddho Meditation Timer v2.3.0
             
-            - **🍃 Blank Start & Even Golden-Ratio Leaf Accumulation**: Meditation screen starts with a clean, unaccumulated floor that slowly and evenly fills across the full width of the screen using low-discrepancy dispersion, eliminating right-side clustering.
-            - **✨ Crisp Natural Meditation Leaf Aesthetics**: Aligned leaf rendering during meditation with the exact crisp, organic styling from the main timer screen with a soft, peaceful breathing aura.
-            - **🌸 Theme-Specific Falling Particles & Blossoms**:
-              - *Moonlit Bamboo*: Slender bamboo & Bodhi leaves with visible stem and natural side veins.
-              - *Sacred Lotus*: Wide curved lotus petals plus occasional 8-petal floating lotus blossoms with golden stamen cores.
-              - *Sakura Twilight*: Iconic cleft-notched cherry blossom petals plus occasional drifting 5-petal sakura flowers.
-            - **100% Offline & Private**: Zero tracking, zero internet permissions, built for deep peace and stillness.
+            - **🪷 Warm Golden Lotus & Sandalwood Amber Theme**: Transformed the Lotus atmosphere into an authentic, serene warm temple gold and sandalwood amber aesthetic with floating golden water lily petals.
+            - **☕ Ko-fi Donation & Support Integration**: Replaced top cut-off icons with a sleek "Support / Buy Me a Coffee" button linking directly to [ko-fi.com/hackysackapp](https://ko-fi.com/hackysackapp).
+            - **🧭 100% Reliable Bottom Navigation**: Instant, seamless 1-tap switching between all 4 tabs (Timer, Wisdom, History, Settings).
+            - **⏳ Themed Warm-up Preparation & Zen Box Breathing**: Full atmosphere theming across the preparation countdown ring and box breathing visualizer.
+            - **🍂 Deep 5-Tier Progressive Stacking & Graceful Overflow**: Leaves/petals now build up deeply towards the timer during longer sits and gracefully recycle for extended meditation.
+            - **100% Offline & Private**: Zero tracking, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
           files: |

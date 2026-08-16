@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -218,23 +219,43 @@ fun ActiveSessionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(currentTheme.primary.copy(alpha = 0.18f))
+                            .padding(horizontal = 18.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "PREPARATION",
+                            fontSize = 12.sp,
+                            letterSpacing = 3.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = currentTheme.primaryLight
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .size(160.dp)
+                            .clip(CircleShape)
+                            .background(ZenSurface.copy(alpha = 0.65f))
+                            .border(2.dp, currentTheme.primaryLight.copy(alpha = 0.6f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${status.remainingSeconds}",
+                            fontSize = 72.sp,
+                            fontWeight = FontWeight.ExtraLight,
+                            color = currentTheme.primaryLight
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
                     Text(
-                        text = "PREPARATION",
-                        fontSize = 14.sp,
-                        letterSpacing = 4.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ZenTealLight
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "${status.remainingSeconds}",
-                        fontSize = 88.sp,
-                        fontWeight = FontWeight.Light,
-                        color = ZenTealLight
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Close your eyes & settle in",
+                        text = "Settle into your posture & breathe gently",
                         style = MaterialTheme.typography.bodyMedium,
                         color = ZenTextSecondary
                     )

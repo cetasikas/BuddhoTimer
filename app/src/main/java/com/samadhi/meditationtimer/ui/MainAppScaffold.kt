@@ -135,11 +135,10 @@ fun MainAppScaffold() {
                                     onClick = {
                                         if (currentRoute != screen.route) {
                                             navController.navigate(screen.route) {
-                                                popUpTo(navController.graph.findStartDestination().id) {
-                                                    saveState = true
+                                                popUpTo(Screen.Timer.route) {
+                                                    saveState = false
                                                 }
                                                 launchSingleTop = true
-                                                restoreState = true
                                             }
                                         }
                                     },

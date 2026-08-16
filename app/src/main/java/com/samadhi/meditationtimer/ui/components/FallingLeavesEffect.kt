@@ -69,9 +69,9 @@ fun FallingLeavesEffect(
         }
     }
 
-    // Evenly distributed 3-tier settled bed across the screen width (90 particles)
+    // 5-tiered deep progressive stacked bed (up to 120 particles)
     val settledBed = remember(currentTheme.id) {
-        generateEvenlyDistributedBed(90, currentTheme.particleType, currentTheme.particlePalette)
+        generateEvenlyDistributedBed(120, currentTheme.particleType, currentTheme.particlePalette)
     }
 
     // Trigger burst particles on action
@@ -126,9 +126,11 @@ fun FallingLeavesEffect(
         // Gentle 4.8s breathing wave
         val breathingCycle = (sin(currentTimeSec * 1.3f) * 0.5f + 0.5f)
 
-        // 1. Draw settled stacked particles (Starts completely blank at 0% progress and slowly fills evenly)
+        // 1. Draw settled stacked particles (Starts blank, builds up towards timer, and gracefully resets if filled)
         if (pileUpAtBottom && sessionProgressRatio > 0.005f) {
-            val totalVisible = (sessionProgressRatio.coerceIn(0f, 1.0f) * settledBed.size).toInt().coerceIn(0, settledBed.size)
+            // Cycle progress so long sits build up and gracefully start fresh
+            val cycleProgress = (sessionProgressRatio % 1.0f).let { if (it == 0f && sessionProgressRatio > 0f) 1.0f else it }
+            val totalVisible = (cycleProgress * settledBed.size).toInt().coerceIn(0, settledBed.size)
 
             for (i in 0 until totalVisible) {
                 val settled = settledBed[i]
@@ -340,21 +342,25 @@ private fun DrawScope.drawThemeParticle(
     }
 }
 
-// Low-discrepancy sequence generation to guarantee even screen width dispersion from leaf 1 to 90
+// Low-discrepancy golden-ratio sequence generation for multi-tier deep progressive accumulation (120 particles)
 private fun generateEvenlyDistributedBed(count: Int, particleType: ParticleType, palette: List<Color>): List<SettledParticle> {
     val random = Random(777)
     return List(count) { i ->
-        // 3-tiered accumulation: Layer 0 (Floor base), Layer 1 (Mid mound), Layer 2 (Upper stack)
+        // 5-tiered accumulation: Layer 0 (Floor base), Layer 1 (Low mound), Layer 2 (Mid stack), Layer 3 (Upper stack), Layer 4 (Peak drifts)
         val layer = when {
-            i < count * 0.45f -> 0
-            i < count * 0.80f -> 1
-            else -> 2
+            i < count * 0.25f -> 0
+            i < count * 0.50f -> 1
+            i < count * 0.70f -> 2
+            i < count * 0.88f -> 3
+            else -> 4
         }
 
         val baseY = when (layer) {
             0 -> 0.955f + random.nextFloat() * 0.030f
-            1 -> 0.915f + random.nextFloat() * 0.035f
-            else -> 0.870f + random.nextFloat() * 0.040f
+            1 -> 0.905f + random.nextFloat() * 0.035f
+            2 -> 0.840f + random.nextFloat() * 0.040f
+            3 -> 0.760f + random.nextFloat() * 0.045f
+            else -> 0.670f + random.nextFloat() * 0.050f
         }
 
         // Golden Ratio dispersion for perfectly uniform width distribution without clumping on either side
