@@ -49,16 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.3.0
-          name: "Buddho Timer v2.3.0"
+          tag_name: v2.3.1
+          name: "Buddho Timer v2.3.1"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.3.0
+            ## 🪷 Buddho Meditation Timer v2.3.1
             
-            - **🪷 Warm Golden Lotus & Sandalwood Amber Theme**: Transformed the Lotus atmosphere into an authentic, serene warm temple gold and sandalwood amber aesthetic with floating golden water lily petals.
-            - **☕ Ko-fi Donation & Support Integration**: Replaced top cut-off icons with a sleek "Support / Buy Me a Coffee" button linking directly to [ko-fi.com/hackysackapp](https://ko-fi.com/hackysackapp).
-            - **🧭 100% Reliable Bottom Navigation**: Instant, seamless 1-tap switching between all 4 tabs (Timer, Wisdom, History, Settings).
-            - **⏳ Themed Warm-up Preparation & Zen Box Breathing**: Full atmosphere theming across the preparation countdown ring and box breathing visualizer.
-            - **🍂 Deep 5-Tier Progressive Stacking & Graceful Overflow**: Leaves/petals now build up deeply towards the timer during longer sits and gracefully recycle for extended meditation.
+            - **🍃 Fluid Initial Animation & Pure Leaf Particles**: Fixed initial frame rendering for smooth falling leaves upon app launch, and removed all circle glow balls so only authentic theme leaves/petals fall.
+            - **🌬️ Zen Miniature Leaf Breathing Visualizer**: Replaced circular breath dots with miniature theme-adaptive leaves & petals that expand, shimmer, and contract with breath cycles.
+            - **▶️ Box Breathing Start Button & High-Contrast Readability**: Added dedicated "Begin Breathing Practice" starter button, fixed top close button title overlap, themed the breathing icon, and enhanced legibility for INHALE / HOLD / EXHALE phases.
+            - **🪵 Larger Tactile Slider Handle**: Expanded thumb pebble and sprout touch targets for smooth, effortless duration dragging.
+            - **☕ Donate Button**: Updated Ko-fi support header label to "Donate" next to the coffee cup icon.
             - **100% Offline & Private**: Zero tracking, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

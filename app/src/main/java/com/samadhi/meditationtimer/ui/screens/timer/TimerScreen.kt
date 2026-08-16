@@ -237,7 +237,7 @@ fun TimerScreen(
                             }
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Support",
+                                text = "Donate",
                                 fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Medium,
                                 letterSpacing = 0.5.sp,

@@ -16,7 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import com.samadhi.meditationtimer.domain.model.BreathPhase
+import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
+import com.samadhi.meditationtimer.ui.theme.ParticleType
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -24,23 +30,21 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
- * Data structure representing an individual glowing particle in the breath field.
+ * Individual miniature leaf/petal particle in the breathing canvas.
  */
-private data class BreathDot(
+private data class LeafBreathDot(
     val index: Int,
     val angle: Float,
-    val normalizedRadius: Float, // 0.0 (center) to 1.0 (outer boundary)
+    val normalizedRadius: Float,
     val baseRadiusScale: Float,
-    val dotSize: Float,
+    val leafSize: Float,
+    val leafRotation: Float,
     val baseAlpha: Float,
     val color: Color,
     val jitterSpeed: Float,
     val jitterPhase: Float
 )
 
-/**
- * Organic easeInOutCubic easing function.
- */
 private fun easeInOutCubic(x: Float): Float {
     val t = x.coerceIn(0f, 1f)
     return if (t < 0.5f) {
@@ -53,39 +57,36 @@ private fun easeInOutCubic(x: Float): Float {
 @Composable
 fun ZenParticleBreathingCanvas(
     currentPhase: BreathPhase,
-    phaseProgress: Float, // 0.0f (start of phase) to 1.0f (end of phase)
+    phaseProgress: Float,
     modifier: Modifier = Modifier,
-    particleCount: Int = 450
+    particleCount: Int = 220
 ) {
-    // Generate particle field with golden ratio spiral (phyllotaxis) for organic natural balance
-    val particles = remember(particleCount) {
-        val goldenAngle = (PI * (3.0 - sqrt(5.0))).toFloat() // ~2.39996 rad (~137.5 deg)
-        val palette = listOf(
-            Color(0xFFFFF7DB), // Pure Warm Luminous Light
-            Color(0xFFFFE082), // Glowing Soft Gold
-            Color(0xFFF5BA42), // Zen Amber Gold
-            Color(0xFFE5A93B), // Plum Village Warm Amber
-            Color(0xFF64FFDA)  // Serene Celestial Jade Sparkle
-        )
+    val currentTheme = LocalZenTheme.current
+
+    // Generate leaf particle field with phyllotaxis spiral distribution
+    val particles = remember(particleCount, currentTheme.id) {
+        val goldenAngle = (PI * (3.0 - sqrt(5.0))).toFloat() // ~137.5 deg
+        val palette = currentTheme.particlePalette
 
         List(particleCount) { i ->
             val angle = i.toFloat() * goldenAngle
-            // Non-linear distribution for dense center with gentle atmospheric fade to edges
             val r = sqrt(i.toFloat() / particleCount.toFloat())
             val size = when {
-                i % 25 == 0 -> Random.nextFloat() * 2.2f + 3.0f // Accent star dots
-                i % 7 == 0 -> Random.nextFloat() * 1.5f + 2.2f
-                else -> Random.nextFloat() * 1.0f + 1.2f
+                i % 18 == 0 -> Random.nextFloat() * 4.0f + 12.0f // Hero accent leaves
+                i % 5 == 0 -> Random.nextFloat() * 3.0f + 9.0f
+                else -> Random.nextFloat() * 2.5f + 6.5f
             }
-            val alpha = (0.35f + 0.65f * (1.0f - r * 0.35f)).coerceIn(0.2f, 1.0f)
-            val color = if (i % 30 == 0) palette[4] else palette[i % 4]
+            val alpha = (0.45f + 0.55f * (1.0f - r * 0.30f)).coerceIn(0.25f, 0.95f)
+            val color = palette[i % palette.size]
+            val rot = Math.toDegrees(angle.toDouble()).toFloat() + (Random.nextFloat() - 0.5f) * 40f
 
-            BreathDot(
+            LeafBreathDot(
                 index = i,
                 angle = angle,
                 normalizedRadius = r,
                 baseRadiusScale = Random.nextFloat() * 0.15f + 0.92f,
-                dotSize = size,
+                leafSize = size,
+                leafRotation = rot,
                 baseAlpha = alpha,
                 color = color,
                 jitterSpeed = Random.nextFloat() * 1.5f + 1.0f,
@@ -94,8 +95,7 @@ fun ZenParticleBreathingCanvas(
         }
     }
 
-    // Organic shimmering transition
-    val infiniteTransition = rememberInfiniteTransition(label = "particleShimmer")
+    val infiniteTransition = rememberInfiniteTransition(label = "leafShimmer")
     val shimmerTime by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 6.28f,
@@ -116,44 +116,41 @@ fun ZenParticleBreathingCanvas(
         label = "corePulse"
     )
 
-    // Calculate breath expansion factor based on phase and easeInOutCubic
     val easedProgress = easeInOutCubic(phaseProgress)
     val (expansionFactor, phaseGlowColor) = when (currentPhase) {
         BreathPhase.INHALE -> {
-            // Expand from core (0.28) to full bloom (1.0)
             val expansion = 0.28f + (0.72f * easedProgress)
-            Pair(expansion, Color(0xFFFFD580))
+            Pair(expansion, currentTheme.primaryLight)
         }
         BreathPhase.HOLD_FULL -> {
-            // Suspended at full bloom with gentle organic harmonic breathing pulse
             val suspensionPulse = (sin((shimmerTime * 2f).toDouble()) * 0.025).toFloat()
-            Pair(1.0f + suspensionPulse, Color(0xFFFFF0B3))
+            Pair(1.0f + suspensionPulse, currentTheme.primaryLight)
         }
         BreathPhase.EXHALE -> {
-            // Gently converge from full bloom (1.0) back to core (0.28)
             val contraction = 1.0f - (0.72f * easedProgress)
-            Pair(contraction, Color(0xFF81D4FA))
+            Pair(contraction, currentTheme.overrunColor)
         }
         BreathPhase.HOLD_EMPTY -> {
-            // Quiet resting center
             val restingPulse = (sin((shimmerTime * 1.5f).toDouble()) * 0.015).toFloat()
-            Pair(0.28f + restingPulse, Color(0xFFFFCC80))
+            Pair(0.28f + restingPulse, currentTheme.primaryDark)
         }
     }
+
+    val leafPath = remember { Path() }
+    val detailPath = remember { Path() }
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val center = Offset(size.width / 2f, size.height / 2f)
         val maxRadius = (size.minDimension / 2f) * 0.88f
         if (maxRadius <= 0f) return@Canvas
 
-        // 1. Serene Moonlit Atmospheric Background Radial Aura
+        // 1. Serene Radial Atmosphere Aura
         val currentAtmosphereRadius = (maxRadius * expansionFactor * 1.15f).coerceAtLeast(30f)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    phaseGlowColor.copy(alpha = (0.22f * expansionFactor).coerceIn(0f, 1f)),
-                    Color(0xFFE5A93B).copy(alpha = (0.08f * expansionFactor).coerceIn(0f, 1f)),
-                    Color(0xFF0E172A).copy(alpha = 0.02f),
+                    phaseGlowColor.copy(alpha = (0.20f * expansionFactor).coerceIn(0f, 1f)),
+                    currentTheme.primaryDark.copy(alpha = (0.08f * expansionFactor).coerceIn(0f, 1f)),
                     Color.Transparent
                 ),
                 center = center,
@@ -164,12 +161,12 @@ fun ZenParticleBreathingCanvas(
         )
 
         // 2. Luminous Central Sanctuary Core
-        val coreRadius = (maxRadius * 0.22f * corePulse).coerceAtLeast(15f)
+        val coreRadius = (maxRadius * 0.20f * corePulse).coerceAtLeast(15f)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    Color(0xFFFFF9E6).copy(alpha = 0.50f),
-                    Color(0xFFFFD580).copy(alpha = 0.25f),
+                    currentTheme.primaryLight.copy(alpha = 0.35f),
+                    currentTheme.primary.copy(alpha = 0.15f),
                     Color.Transparent
                 ),
                 center = center,
@@ -179,36 +176,120 @@ fun ZenParticleBreathingCanvas(
             center = center
         )
 
-        // 3. Render Field of Glowing Warm Gold Particles
+        // 3. Render Field of Miniature Breathing Leaves/Petals
         particles.forEach { dot ->
             val jitter = (sin((shimmerTime * dot.jitterSpeed + dot.jitterPhase).toDouble()) * 2.5).toFloat()
-            // Expansion physics
             val dynamicR = maxRadius * dot.normalizedRadius * dot.baseRadiusScale * expansionFactor + jitter
             val currentAngle = (dot.angle.toDouble() + (shimmerTime.toDouble() * 0.04 * (1.0 - dot.normalizedRadius.toDouble()))).toFloat()
 
-            val dotX = (center.x.toDouble() + cos(currentAngle.toDouble()) * dynamicR.toDouble()).toFloat()
-            val dotY = (center.y.toDouble() + sin(currentAngle.toDouble()) * dynamicR.toDouble()).toFloat()
+            val leafX = (center.x.toDouble() + cos(currentAngle.toDouble()) * dynamicR.toDouble()).toFloat()
+            val leafY = (center.y.toDouble() + sin(currentAngle.toDouble()) * dynamicR.toDouble()).toFloat()
 
-            // Subtle depth luminescence
             val shimmerAlpha = (sin((shimmerTime * dot.jitterSpeed * 1.5f + dot.jitterPhase).toDouble()) * 0.15).toFloat()
-            val dotAlpha = (dot.baseAlpha + shimmerAlpha).coerceIn(0.15f, 1.0f)
-            val effectiveColor = dot.color.copy(alpha = dotAlpha)
+            val leafAlpha = (dot.baseAlpha + shimmerAlpha).coerceIn(0.18f, 1.0f)
+            val effectiveColor = dot.color.copy(alpha = leafAlpha)
 
-            // Render soft glow halo for larger accent particles
-            if (dot.dotSize > 2.0f) {
-                drawCircle(
-                    color = effectiveColor.copy(alpha = dotAlpha * 0.35f),
-                    radius = dot.dotSize * 2.2f,
-                    center = Offset(dotX, dotY)
-                )
-            }
+            val leafCenter = Offset(leafX, leafY)
+            val rotationDeg = dot.leafRotation + (shimmerTime * 5f)
 
-            // Render sharp luminous particle core
-            drawCircle(
+            drawMiniatureLeaf(
+                particleType = currentTheme.particleType,
+                shapePath = leafPath,
+                detailPath = detailPath,
+                center = leafCenter,
+                size = dot.leafSize,
+                rotation = rotationDeg,
                 color = effectiveColor,
-                radius = dot.dotSize,
-                center = Offset(dotX, dotY)
+                glowColor = phaseGlowColor
             )
         }
+    }
+}
+
+private fun DrawScope.drawMiniatureLeaf(
+    particleType: ParticleType,
+    shapePath: Path,
+    detailPath: Path,
+    center: Offset,
+    size: Float,
+    rotation: Float,
+    color: Color,
+    glowColor: Color
+) {
+    rotate(degrees = rotation, pivot = center) {
+        shapePath.reset()
+        detailPath.reset()
+
+        val halfW = size * 0.40f
+        val halfH = size * 0.85f
+
+        when (particleType) {
+            ParticleType.BAMBOO_LEAF -> {
+                // Miniature Bodhi / Bamboo Leaf
+                shapePath.moveTo(center.x, center.y - halfH)
+                shapePath.cubicTo(
+                    center.x + halfW * 1.1f, center.y - halfH * 0.3f,
+                    center.x + halfW * 0.8f, center.y + halfH * 0.4f,
+                    center.x, center.y + halfH
+                )
+                shapePath.cubicTo(
+                    center.x - halfW * 0.8f, center.y + halfH * 0.4f,
+                    center.x - halfW * 1.1f, center.y - halfH * 0.3f,
+                    center.x, center.y - halfH
+                )
+                shapePath.close()
+
+                detailPath.moveTo(center.x, center.y - halfH * 0.8f)
+                detailPath.lineTo(center.x, center.y + halfH * 0.8f)
+            }
+            ParticleType.LOTUS_PETAL -> {
+                // Miniature Lotus Petal
+                shapePath.moveTo(center.x, center.y - halfH * 0.9f)
+                shapePath.cubicTo(
+                    center.x + halfW * 1.3f, center.y - halfH * 0.35f,
+                    center.x + halfW * 1.1f, center.y + halfH * 0.45f,
+                    center.x, center.y + halfH
+                )
+                shapePath.cubicTo(
+                    center.x - halfW * 1.1f, center.y + halfH * 0.45f,
+                    center.x - halfW * 1.3f, center.y - halfH * 0.35f,
+                    center.x, center.y - halfH * 0.9f
+                )
+                shapePath.close()
+
+                detailPath.moveTo(center.x, center.y - halfH * 0.75f)
+                detailPath.lineTo(center.x, center.y + halfH * 0.75f)
+            }
+            ParticleType.SAKURA_PETAL -> {
+                // Miniature Sakura Petal
+                val topY = center.y - halfH * 0.9f
+                shapePath.moveTo(center.x, center.y + halfH)
+                shapePath.cubicTo(
+                    center.x - halfW * 1.2f, center.y + halfH * 0.35f,
+                    center.x - halfW * 1.1f, center.y - halfH * 0.45f,
+                    center.x - halfW * 0.55f, topY
+                )
+                shapePath.quadraticTo(
+                    center.x, topY + halfH * 0.22f,
+                    center.x + halfW * 0.55f, topY
+                )
+                shapePath.cubicTo(
+                    center.x + halfW * 1.1f, center.y - halfH * 0.45f,
+                    center.x + halfW * 1.2f, center.y + halfH * 0.35f,
+                    center.x, center.y + halfH
+                )
+                shapePath.close()
+            }
+        }
+
+        // Fill miniature leaf body
+        drawPath(path = shapePath, color = color)
+
+        // Vein / Crease
+        drawPath(
+            path = detailPath,
+            color = Color(0xFF041014).copy(alpha = (0.28f * color.alpha).coerceIn(0.10f, 0.40f)),
+            style = Stroke(width = 0.8f)
+        )
     }
 }

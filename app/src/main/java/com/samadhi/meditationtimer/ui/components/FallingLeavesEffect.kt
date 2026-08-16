@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ParticleType
-import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -35,7 +34,6 @@ private data class ParticleState(
     val sizePx: Float,
     val alpha: Float,
     val color: Color,
-    val isBlossomFlower: Boolean = false,
     val isBurst: Boolean = false,
     var lifeRatio: Float = 1.0f
 )
@@ -47,7 +45,6 @@ private data class SettledParticle(
     val sizePx: Float,
     val alpha: Float,
     val color: Color,
-    val isBlossomFlower: Boolean = false,
     val layer: Int
 )
 
@@ -65,30 +62,31 @@ fun FallingLeavesEffect(
 
     val particles = remember(currentTheme.id) {
         mutableStateListOf<ParticleState>().apply {
-            addAll(generateAmbientParticles(leafCount, currentTheme.particleType, currentTheme.particlePalette))
+            addAll(generateAmbientParticles(leafCount, currentTheme.particlePalette))
         }
     }
 
     // 5-tiered deep progressive stacked bed (up to 120 particles)
     val settledBed = remember(currentTheme.id) {
-        generateEvenlyDistributedBed(120, currentTheme.particleType, currentTheme.particlePalette)
+        generateEvenlyDistributedBed(120, currentTheme.particlePalette)
     }
 
     // Trigger burst particles on action
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {
-            val burstParticles = generateBurstParticles(14, currentTheme.particleType, currentTheme.particlePalette)
+            val burstParticles = generateBurstParticles(14, currentTheme.particlePalette)
             particles.addAll(burstParticles)
         }
     }
 
-    var lastFrameTimeNanos by remember { mutableLongStateOf(0L) }
+    var frameTick by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(Unit) {
+        var lastTime = 0L
         while (true) {
             withFrameNanos { frameTimeNanos ->
-                if (lastFrameTimeNanos != 0L) {
-                    val dt = ((frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000f).coerceIn(0.001f, 0.05f)
+                if (lastTime != 0L) {
+                    val dt = ((frameTimeNanos - lastTime) / 1_000_000_000f).coerceIn(0.001f, 0.05f)
                     val iterator = particles.listIterator()
                     while (iterator.hasNext()) {
                         val p = iterator.next()
@@ -109,7 +107,8 @@ fun FallingLeavesEffect(
                         }
                     }
                 }
-                lastFrameTimeNanos = frameTimeNanos
+                lastTime = frameTimeNanos
+                frameTick = frameTimeNanos
             }
         }
     }
@@ -118,11 +117,13 @@ fun FallingLeavesEffect(
     val detailPath = remember { Path() }
 
     Canvas(modifier = modifier.fillMaxSize()) {
+        // Read frameTick to trigger redraw on every vsync frame seamlessly from start
+        val tick = frameTick
         val width = size.width
         val height = size.height
         if (width <= 0f || height <= 0f) return@Canvas
 
-        val currentTimeSec = (lastFrameTimeNanos / 1_000_000_000f)
+        val currentTimeSec = (tick / 1_000_000_000f)
         // Gentle 4.8s breathing wave
         val breathingCycle = (sin(currentTimeSec * 1.3f) * 0.5f + 0.5f)
 
@@ -147,7 +148,6 @@ fun FallingLeavesEffect(
                     rotation = settled.rotation,
                     color = settled.color.copy(alpha = currentAlpha),
                     glowColor = currentTheme.primaryLight,
-                    isBlossomFlower = settled.isBlossomFlower,
                     isGlowing = isGlowing,
                     breathingGlowFactor = breathingCycle,
                     isResting = true
@@ -172,7 +172,6 @@ fun FallingLeavesEffect(
                     rotation = p.rotation,
                     color = p.color.copy(alpha = currentAlpha),
                     glowColor = currentTheme.primaryLight,
-                    isBlossomFlower = p.isBlossomFlower,
                     isGlowing = isGlowing,
                     breathingGlowFactor = breathingCycle,
                     isResting = false
@@ -191,7 +190,6 @@ private fun DrawScope.drawThemeParticle(
     rotation: Float,
     color: Color,
     glowColor: Color,
-    isBlossomFlower: Boolean,
     isGlowing: Boolean,
     breathingGlowFactor: Float,
     isResting: Boolean
@@ -202,45 +200,6 @@ private fun DrawScope.drawThemeParticle(
 
         val halfW = size * 0.40f
         val halfH = size * 0.88f
-
-        if (isBlossomFlower) {
-            // Full Blossom Flower (Sakura 5-petal blossom or Sacred Lotus blossom)
-            val petalCount = if (particleType == ParticleType.LOTUS_PETAL) 8 else 5
-            val petalRadius = size * 0.42f
-            val angleStep = 360f / petalCount
-
-            // Outer subtle breathing aura
-            if (isGlowing) {
-                val haloAlpha = (0.14f + 0.16f * breathingGlowFactor).coerceIn(0.08f, 0.35f)
-                drawCircle(
-                    color = glowColor.copy(alpha = haloAlpha),
-                    radius = size * 0.58f,
-                    center = center
-                )
-            }
-
-            // Draw Flower Petals
-            for (p in 0 until petalCount) {
-                val angleRad = Math.toRadians((p * angleStep).toDouble())
-                val px = center.x + (cos(angleRad) * petalRadius * 0.55f).toFloat()
-                val py = center.y + (sin(angleRad) * petalRadius * 0.55f).toFloat()
-
-                drawCircle(
-                    color = color,
-                    radius = petalRadius * 0.48f,
-                    center = Offset(px, py)
-                )
-            }
-
-            // Flower Center / Pistil
-            val coreColor = if (particleType == ParticleType.LOTUS_PETAL) Color(0xFFFBBF24) else Color(0xFFFFF1F2)
-            drawCircle(
-                color = coreColor.copy(alpha = color.alpha),
-                radius = petalRadius * 0.28f,
-                center = center
-            )
-            return@rotate
-        }
 
         when (particleType) {
             ParticleType.BAMBOO_LEAF -> {
@@ -343,7 +302,7 @@ private fun DrawScope.drawThemeParticle(
 }
 
 // Low-discrepancy golden-ratio sequence generation for multi-tier deep progressive accumulation (120 particles)
-private fun generateEvenlyDistributedBed(count: Int, particleType: ParticleType, palette: List<Color>): List<SettledParticle> {
+private fun generateEvenlyDistributedBed(count: Int, palette: List<Color>): List<SettledParticle> {
     val random = Random(777)
     return List(count) { i ->
         // 5-tiered accumulation: Layer 0 (Floor base), Layer 1 (Low mound), Layer 2 (Mid stack), Layer 3 (Upper stack), Layer 4 (Peak drifts)
@@ -368,8 +327,6 @@ private fun generateEvenlyDistributedBed(count: Int, particleType: ParticleType,
         val xJitter = (random.nextFloat() - 0.5f) * 0.035f
         val xRatio = (goldX + xJitter).coerceIn(0.04f, 0.96f)
 
-        val isBlossom = (particleType != ParticleType.BAMBOO_LEAF) && (i % 7 == 0)
-
         SettledParticle(
             xRatio = xRatio,
             yRatio = baseY,
@@ -377,35 +334,31 @@ private fun generateEvenlyDistributedBed(count: Int, particleType: ParticleType,
             sizePx = random.nextFloat() * 8f + 18f,
             alpha = random.nextFloat() * 0.25f + 0.55f,
             color = palette[i % palette.size],
-            isBlossomFlower = isBlossom,
             layer = layer
         )
     }
 }
 
-private fun generateAmbientParticles(count: Int, particleType: ParticleType, palette: List<Color>): List<ParticleState> {
-    return List(count) { i ->
-        val isBlossom = (particleType != ParticleType.BAMBOO_LEAF) && (i % 5 == 0)
+private fun generateAmbientParticles(count: Int, palette: List<Color>): List<ParticleState> {
+    return List(count) {
         ParticleState(
             xRatio = Random.nextFloat(),
             yRatio = Random.nextFloat(),
-            speedY = Random.nextFloat() * 0.040f + 0.020f,
+            speedY = Random.nextFloat() * 0.045f + 0.025f,
             swayFreq = Random.nextFloat() * 1.4f + 1.1f,
             swayAmpRatio = Random.nextFloat() * 0.030f + 0.015f,
             swayPhase = Random.nextFloat() * 6.28f,
             rotation = Random.nextFloat() * 360f,
             rotationSpeed = (Random.nextFloat() - 0.5f) * 40f,
-            sizePx = if (isBlossom) Random.nextFloat() * 8f + 20f else Random.nextFloat() * 10f + 16f,
+            sizePx = Random.nextFloat() * 10f + 16f,
             alpha = Random.nextFloat() * 0.30f + 0.45f,
-            color = palette.random(),
-            isBlossomFlower = isBlossom
+            color = palette.random()
         )
     }
 }
 
-private fun generateBurstParticles(count: Int, particleType: ParticleType, palette: List<Color>): List<ParticleState> {
-    return List(count) { i ->
-        val isBlossom = (particleType != ParticleType.BAMBOO_LEAF) && (i % 4 == 0)
+private fun generateBurstParticles(count: Int, palette: List<Color>): List<ParticleState> {
+    return List(count) {
         ParticleState(
             xRatio = Random.nextFloat() * 0.8f + 0.1f,
             yRatio = Random.nextFloat() * 0.35f,
@@ -415,10 +368,9 @@ private fun generateBurstParticles(count: Int, particleType: ParticleType, palet
             swayPhase = Random.nextFloat() * 6.28f,
             rotation = Random.nextFloat() * 360f,
             rotationSpeed = (Random.nextFloat() - 0.5f) * 80f,
-            sizePx = if (isBlossom) Random.nextFloat() * 10f + 20f else Random.nextFloat() * 12f + 16f,
+            sizePx = Random.nextFloat() * 12f + 16f,
             alpha = Random.nextFloat() * 0.35f + 0.55f,
             color = palette.random(),
-            isBlossomFlower = isBlossom,
             isBurst = true
         )
     }

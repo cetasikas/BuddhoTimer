@@ -143,75 +143,75 @@ fun ZenBranchSlider(
                 }
             }
 
-            // 3. THUMB: Theme-adaptive Zen Sprout Pebble
+            // 3. THUMB: Theme-adaptive Zen Sprout Pebble (Enlarged & Highly Tactile)
             // Glowing Halo
             drawCircle(
-                color = currentTheme.primary.copy(alpha = 0.30f),
-                radius = 20.0f,
+                color = currentTheme.primary.copy(alpha = 0.35f),
+                radius = 26.0f,
                 center = Offset(thumbX, centerY)
             )
 
             // Pebble Core
             drawCircle(
                 color = Color(0xFF0C1322),
-                radius = 12.0f,
+                radius = 16.0f,
                 center = Offset(thumbX, centerY)
             )
             // Pebble Outer Theme Ring
             drawCircle(
                 color = currentTheme.primaryLight,
-                radius = 12.0f,
+                radius = 16.0f,
                 center = Offset(thumbX, centerY),
-                style = Stroke(width = 2.8f)
+                style = Stroke(width = 3.2f)
             )
 
-            // Sprout silhouette matching theme
+            // Sprout silhouette matching theme (Enlarged)
             thumbPath.reset()
             when (currentTheme.particleType) {
                 ParticleType.BAMBOO_LEAF -> {
                     // Sprouted Bodhi Leaf
-                    thumbPath.moveTo(thumbX, centerY - 5f)
+                    thumbPath.moveTo(thumbX, centerY - 6f)
                     thumbPath.cubicTo(
-                        thumbX + 7f, centerY - 14f,
-                        thumbX + 11f, centerY - 17f,
-                        thumbX + 13f, centerY - 23f
+                        thumbX + 9f, centerY - 16f,
+                        thumbX + 14f, centerY - 21f,
+                        thumbX + 16f, centerY - 28f
                     )
                     thumbPath.cubicTo(
-                        thumbX + 4f, centerY - 20f,
-                        thumbX + 1f, centerY - 13f,
-                        thumbX, centerY - 5f
+                        thumbX + 5f, centerY - 24f,
+                        thumbX + 1f, centerY - 15f,
+                        thumbX, centerY - 6f
                     )
                 }
                 ParticleType.LOTUS_PETAL -> {
                     // Lotus Bud
-                    thumbPath.moveTo(thumbX, centerY - 5f)
+                    thumbPath.moveTo(thumbX, centerY - 6f)
                     thumbPath.cubicTo(
-                        thumbX + 8f, centerY - 13f,
-                        thumbX + 7f, centerY - 20f,
-                        thumbX, centerY - 24f
+                        thumbX + 10f, centerY - 16f,
+                        thumbX + 9f, centerY - 24f,
+                        thumbX, centerY - 29f
                     )
                     thumbPath.cubicTo(
-                        thumbX - 7f, centerY - 20f,
-                        thumbX - 8f, centerY - 13f,
-                        thumbX, centerY - 5f
+                        thumbX - 9f, centerY - 24f,
+                        thumbX - 10f, centerY - 16f,
+                        thumbX, centerY - 6f
                     )
                 }
                 ParticleType.SAKURA_PETAL -> {
                     // Sakura Blossom Bud
-                    thumbPath.moveTo(thumbX, centerY - 5f)
+                    thumbPath.moveTo(thumbX, centerY - 6f)
                     thumbPath.cubicTo(
-                        thumbX + 8f, centerY - 14f,
-                        thumbX + 6f, centerY - 22f,
-                        thumbX + 2f, centerY - 24f
+                        thumbX + 10f, centerY - 16f,
+                        thumbX + 8f, centerY - 26f,
+                        thumbX + 3f, centerY - 29f
                     )
                     thumbPath.quadraticTo(
-                        thumbX, centerY - 20f,
-                        thumbX - 2f, centerY - 24f
+                        thumbX, centerY - 24f,
+                        thumbX - 3f, centerY - 29f
                     )
                     thumbPath.cubicTo(
-                        thumbX - 6f, centerY - 22f,
-                        thumbX - 8f, centerY - 14f,
-                        thumbX, centerY - 5f
+                        thumbX - 8f, centerY - 26f,
+                        thumbX - 10f, centerY - 16f,
+                        thumbX, centerY - 6f
                     )
                 }
             }

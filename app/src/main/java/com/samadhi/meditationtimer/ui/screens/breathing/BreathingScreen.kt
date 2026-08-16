@@ -86,7 +86,7 @@ fun BreathingScreen(
     val soundHelper = remember { SoundHelper(context) }
 
     var selectedPattern by remember { mutableStateOf(BreathingPattern.BOX_BREATHING) }
-    var isRunning by remember { mutableStateOf(true) }
+    var isRunning by remember { mutableStateOf(false) }
     var currentPhase by remember { mutableStateOf(BreathPhase.INHALE) }
     var phaseSecondsRemaining by remember { mutableIntStateOf(selectedPattern.inhaleSec) }
     var totalElapsedSec by remember { mutableIntStateOf(0) }
@@ -192,32 +192,35 @@ fun BreathingScreen(
                 .padding(horizontal = 20.dp, vertical = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Header Row
+            // Top Header Row (With proper spacing so Close button never overlaps title)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(ZenTeal.copy(alpha = 0.18f))
-                            .border(1.dp, ZenTeal.copy(alpha = 0.4f), CircleShape),
+                            .background(currentTheme.primary.copy(alpha = 0.18f))
+                            .border(1.dp, currentTheme.primary.copy(alpha = 0.4f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Air,
                             contentDescription = null,
-                            tint = ZenTeal,
+                            tint = currentTheme.primaryLight,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "ZEN PARTICLE BREATHING",
+                            text = "ZEN BREATHING",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.5.sp
@@ -291,7 +294,7 @@ fun BreathingScreen(
                 }
             }
 
-            // Central Zen Particle Breath Visualizer ("A Thousand Dots, Breathing" Aesthetic)
+            // Central Zen Particle Breath Visualizer (Miniature Leaves / Petals Breathing Field)
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -302,48 +305,56 @@ fun BreathingScreen(
                     currentPhase = currentPhase,
                     phaseProgress = phaseProgress,
                     modifier = Modifier.fillMaxSize(),
-                    particleCount = 420
+                    particleCount = 220
                 )
 
-                // Ethereal Center Breath Phase Typography Floating inside the Particle Field
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                // High-Contrast Sanctuary Breath Phase Typography Floating in Particle Field
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(ZenObsidian.copy(alpha = 0.85f))
+                        .border(1.5.dp, phaseColor.copy(alpha = 0.70f), RoundedCornerShape(24.dp))
+                        .padding(horizontal = 28.dp, vertical = 16.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Floating Badge
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(phaseColor.copy(alpha = 0.18f))
-                            .border(1.dp, phaseColor.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
-                            .padding(horizontal = 16.dp, vertical = 5.dp)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
+                        // High-Contrast Floating Badge
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(phaseColor.copy(alpha = 0.22f))
+                                .border(1.dp, phaseColor.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                                .padding(horizontal = 16.dp, vertical = 5.dp)
+                        ) {
+                            Text(
+                                text = currentPhase.displayName.uppercase(),
+                                fontSize = 13.sp,
+                                letterSpacing = 3.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = phaseColor
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
                         Text(
-                            text = currentPhase.displayName.uppercase(),
-                            fontSize = 12.sp,
-                            letterSpacing = 3.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = phaseColor
+                            text = "$phaseSecondsRemaining",
+                            fontSize = 62.sp,
+                            fontWeight = FontWeight.ExtraLight,
+                            color = ZenTextPrimary
+                        )
+
+                        Text(
+                            text = currentPhase.instruction,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = ZenTextSecondary,
+                            textAlign = TextAlign.Center
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "$phaseSecondsRemaining",
-                        fontSize = 58.sp,
-                        fontWeight = FontWeight.ExtraLight,
-                        color = ZenTextPrimary
-                    )
-
-                    Text(
-                        text = currentPhase.instruction,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = ZenTextSecondary,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp)
-                    )
                 }
             }
 
@@ -376,6 +387,7 @@ fun BreathingScreen(
                             color = currentTheme.primaryLight
                         )
                     }
+
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = "CALM TIME",
@@ -441,12 +453,16 @@ fun BreathingScreen(
                 ) {
                     Icon(
                         imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isRunning) "Pause" else "Resume",
+                        contentDescription = if (isRunning) "Pause" else "Start",
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (isRunning) "Pause Practice" else "Resume Breathing",
+                        text = when {
+                            isRunning -> "Pause Practice"
+                            totalElapsedSec == 0 -> "Begin Breathing Practice"
+                            else -> "Resume Breathing"
+                        },
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
