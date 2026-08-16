@@ -155,7 +155,7 @@ fun ActiveSessionScreen(
         FallingLeavesEffect(
             leafCount = 14,
             triggerBurst = leavesBurstTrigger,
-            ambientAlpha = 0.55f,
+            ambientAlpha = 0.32f,
             isGlowing = true,
             pileUpAtBottom = true,
             sessionProgressRatio = currentProgress

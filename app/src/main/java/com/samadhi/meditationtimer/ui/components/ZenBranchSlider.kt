@@ -8,24 +8,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import com.samadhi.meditationtimer.ui.theme.ZenBorder
-import com.samadhi.meditationtimer.ui.theme.ZenTeal
-import com.samadhi.meditationtimer.ui.theme.ZenTealLight
+import com.samadhi.meditationtimer.ui.theme.ZenSage
+import com.samadhi.meditationtimer.ui.theme.ZenSageDark
+import com.samadhi.meditationtimer.ui.theme.ZenSageLight
 
 @Composable
 fun ZenBranchSlider(
@@ -39,8 +34,8 @@ fun ZenBranchSlider(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(36.dp)
-            .padding(horizontal = 6.dp)
+            .height(54.dp)
+            .padding(horizontal = 4.dp)
             .pointerInput(valueRange) {
                 detectTapGestures { offset ->
                     val width = size.width.toFloat()
@@ -63,29 +58,28 @@ fun ZenBranchSlider(
                 }
             }
     ) {
-        Canvas(modifier = Modifier.fillMaxWidth().height(36.dp)) {
+        Canvas(modifier = Modifier.fillMaxWidth().height(54.dp)) {
             val width = size.width
             val height = size.height
             val centerY = height / 2f
 
             val fraction = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(0f, 1f)
-            val thumbX = fraction * width
+            val thumbX = (fraction * width).coerceIn(12f, width - 12f)
 
-            // 1. INACTIVE BRANCH (Ahead of thumb): Organic Dormant Slate Branch
-            // Base inactive stem
+            // 1. INACTIVE BRANCH (Ahead of thumb): Organic Dormant Slate/Wood Branch
             drawLine(
                 color = Color(0xFF1E293B),
                 start = Offset(thumbX, centerY),
                 end = Offset(width, centerY),
-                strokeWidth = 6.0f,
+                strokeWidth = 8.0f,
                 cap = StrokeCap.Round
             )
-            // Subtle branch grain line
+            // Subtle branch grain
             drawLine(
                 color = Color(0xFF334155),
-                start = Offset(thumbX + 4f, centerY - 1f),
-                end = Offset(width - 2f, centerY - 1f),
-                strokeWidth = 2.0f,
+                start = Offset(thumbX + 4f, centerY - 1.5f),
+                end = Offset(width - 2f, centerY - 1.5f),
+                strokeWidth = 2.5f,
                 cap = StrokeCap.Round
             )
 
@@ -93,25 +87,24 @@ fun ZenBranchSlider(
             val nodeSpacing = width / 6f
             for (i in 1..5) {
                 val nodeX = i * nodeSpacing
-                if (nodeX > thumbX + 8f) {
-                    // Bamboo node ring
+                if (nodeX > thumbX + 10f) {
                     drawLine(
                         color = Color(0xFF475569),
-                        start = Offset(nodeX, centerY - 5f),
-                        end = Offset(nodeX, centerY + 5f),
-                        strokeWidth = 2.5f,
+                        start = Offset(nodeX, centerY - 6.5f),
+                        end = Offset(nodeX, centerY + 6.5f),
+                        strokeWidth = 3.0f,
                         cap = StrokeCap.Round
                     )
                 }
             }
 
-            // 2. ACTIVE BRANCH (Behind thumb): Living Bamboo/Branch with Teal Gradient
-            if (thumbX > 2f) {
+            // 2. ACTIVE BRANCH (Behind thumb): Living Bamboo/Branch with Calming Sage Gradient
+            if (thumbX > 4f) {
                 val activeBrush = Brush.horizontalGradient(
                     colors = listOf(
-                        Color(0xFF164E4D),
-                        Color(0xFF2EA8A4),
-                        Color(0xFF5EEAD4)
+                        ZenSageDark,
+                        ZenSage,
+                        ZenSageLight
                     ),
                     startX = 0f,
                     endX = thumbX
@@ -122,73 +115,74 @@ fun ZenBranchSlider(
                     brush = activeBrush,
                     start = Offset(0f, centerY),
                     end = Offset(thumbX, centerY),
-                    strokeWidth = 7.0f,
+                    strokeWidth = 9.5f,
                     cap = StrokeCap.Round
                 )
 
                 // Luminous top highlight
                 drawLine(
-                    color = Color(0xFF99F6E4).copy(alpha = 0.5f),
-                    start = Offset(4f, centerY - 1.5f),
-                    end = Offset(thumbX - 2f, centerY - 1.5f),
-                    strokeWidth = 2.0f,
+                    color = ZenSageLight.copy(alpha = 0.55f),
+                    start = Offset(4f, centerY - 2f),
+                    end = Offset(thumbX - 2f, centerY - 2f),
+                    strokeWidth = 2.5f,
                     cap = StrokeCap.Round
                 )
 
                 // Living Branch Nodes
                 for (i in 1..5) {
                     val nodeX = i * nodeSpacing
-                    if (nodeX < thumbX - 8f) {
+                    if (nodeX < thumbX - 10f) {
                         drawLine(
-                            color = Color(0xFF5EEAD4),
-                            start = Offset(nodeX, centerY - 5.5f),
-                            end = Offset(nodeX, centerY + 5.5f),
-                            strokeWidth = 2.5f,
+                            color = ZenSageLight,
+                            start = Offset(nodeX, centerY - 7f),
+                            end = Offset(nodeX, centerY + 7f),
+                            strokeWidth = 3.0f,
                             cap = StrokeCap.Round
                         )
                     }
                 }
             }
 
-            // 3. THUMB: Minimal Zen Leaf Sprout Bead
+            // 3. THUMB: Large Comfortable Zen Leaf Sprout Bead
             // Glowing Halo
             drawCircle(
-                color = Color(0xFF5EEAD4).copy(alpha = 0.35f),
-                radius = 16.0f,
+                color = ZenSage.copy(alpha = 0.28f),
+                radius = 20.0f,
                 center = Offset(thumbX, centerY)
             )
 
-            // Bead Body
+            // Pebble Core
             drawCircle(
-                color = Color(0xFF0F172A),
-                radius = 9.0f,
+                color = Color(0xFF0C1322),
+                radius = 12.0f,
                 center = Offset(thumbX, centerY)
             )
+            // Pebble Sage Ring
             drawCircle(
-                color = Color(0xFF5EEAD4),
-                radius = 9.0f,
+                color = ZenSageLight,
+                radius = 12.0f,
                 center = Offset(thumbX, centerY),
-                style = Stroke(width = 2.2f)
+                style = Stroke(width = 2.8f)
             )
 
-            // Delicate sprouting leaf at thumb
+            // Delicate sprouted Bodhi leaf atop thumb
             leafPath.reset()
-            leafPath.moveTo(thumbX, centerY - 4f)
+            leafPath.moveTo(thumbX, centerY - 5f)
             leafPath.cubicTo(
-                thumbX + 6f, centerY - 12f,
-                thumbX + 9f, centerY - 14f,
-                thumbX + 11f, centerY - 18f
+                thumbX + 7f, centerY - 14f,
+                thumbX + 11f, centerY - 17f,
+                thumbX + 13f, centerY - 23f
             )
             leafPath.cubicTo(
-                thumbX + 3f, centerY - 16f,
-                thumbX + 1f, centerY - 11f,
-                thumbX, centerY - 4f
+                thumbX + 4f, centerY - 20f,
+                thumbX + 1f, centerY - 13f,
+                thumbX, centerY - 5f
             )
             leafPath.close()
 
             drawPath(
                 path = leafPath,
-                color = Color(0xFF5EEAD4)
+                color = ZenSageLight
             )
         }
     }

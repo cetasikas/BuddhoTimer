@@ -111,7 +111,7 @@ fun SessionSummaryScreen(
 
         FallingLeavesEffect(
             leafCount = 14,
-            ambientAlpha = 0.42f,
+            ambientAlpha = 0.32f,
             isGlowing = true,
             pileUpAtBottom = true,
             sessionProgressRatio = 1.0f

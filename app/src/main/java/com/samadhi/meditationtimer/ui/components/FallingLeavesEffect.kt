@@ -43,15 +43,15 @@ private data class SettledLeaf(
     val sizePx: Float,
     val alpha: Float,
     val color: Color,
-    val orderIndex: Int
+    val layer: Int
 )
 
 @Composable
 fun FallingLeavesEffect(
     modifier: Modifier = Modifier,
-    leafCount: Int = 16,
+    leafCount: Int = 14,
     triggerBurst: Int = 0,
-    ambientAlpha: Float = 0.32f,
+    ambientAlpha: Float = 0.28f,
     isGlowing: Boolean = false,
     pileUpAtBottom: Boolean = false,
     sessionProgressRatio: Float = 0.0f
@@ -62,9 +62,9 @@ fun FallingLeavesEffect(
         }
     }
 
-    // Pre-generated calm resting positions along the bottom
+    // Rich multi-tiered stacked bed of leaves along the bottom
     val settledBed = remember {
-        generateSettledBed(42)
+        generateStackedBed(65)
     }
 
     // Trigger burst leaves on action
@@ -116,17 +116,17 @@ fun FallingLeavesEffect(
         if (width <= 0f || height <= 0f) return@Canvas
 
         val currentTimeSec = (lastFrameTimeNanos / 1_000_000_000f)
-        // Gentle, soothing 4.5-second breathing glow oscillation
-        val breathingCycle = (sin(currentTimeSec * 1.4f) * 0.5f + 0.5f)
+        // Gentle, soothing 5.0-second breathing sine oscillation
+        val breathingCycle = (sin(currentTimeSec * 1.25f) * 0.5f + 0.5f)
 
-        // 1. Draw settled leaves coinciding with session elapsed progress
-        if (pileUpAtBottom && sessionProgressRatio > 0.005f) {
+        // 1. Draw settled stacked leaves coinciding with session elapsed progress
+        if (pileUpAtBottom && sessionProgressRatio > 0.01f) {
             val maxVisibleSettled = (sessionProgressRatio.coerceIn(0f, 1.25f) * settledBed.size).toInt().coerceAtMost(settledBed.size)
             for (i in 0 until maxVisibleSettled) {
                 val settled = settledBed[i]
                 val posX = settled.xRatio * width
                 val posY = settled.yRatio * height
-                val currentAlpha = (settled.alpha * ambientAlpha * 1.4f).coerceIn(0.15f, 0.85f)
+                val currentAlpha = (settled.alpha * ambientAlpha * 1.5f).coerceIn(0.12f, 0.75f)
 
                 drawRealisticLeaf(
                     path = leafPath,
@@ -142,7 +142,7 @@ fun FallingLeavesEffect(
             }
         }
 
-        // 2. Draw active falling leaves
+        // 2. Draw active floating leaves
         leaves.forEach { leaf ->
             val sway = sin(currentTimeSec * leaf.swayFreq + leaf.swayPhase) * (leaf.swayAmpRatio * width)
             val posX = (leaf.xRatio * width + sway).coerceIn(-50f, width + 50f)
@@ -196,28 +196,22 @@ private fun DrawScope.drawRealisticLeaf(
         )
         path.close()
 
-        // Noticeable, serene luminous breathing glow effect during meditation
+        // Subtle, calming breathing glow aura during active meditation
         if (isGlowing) {
-            val outerAlpha = (0.35f + 0.45f * breathingGlowFactor).coerceIn(0.2f, 0.85f)
-            val innerAlpha = (0.50f + 0.45f * breathingGlowFactor).coerceIn(0.35f, 0.95f)
+            val haloAlpha = (0.18f + 0.22f * breathingGlowFactor).coerceIn(0.12f, 0.45f)
+            val rimAlpha = (0.28f + 0.25f * breathingGlowFactor).coerceIn(0.20f, 0.58f)
 
-            // Outer Soft Halo Aura
+            // Soft Translucent Sage Outer Halo
             drawPath(
                 path = path,
-                color = Color(0xFF5EEAD4).copy(alpha = outerAlpha),
-                style = Stroke(width = if (isResting) 6.0f else 8.5f)
+                color = Color(0xFFAECBB0).copy(alpha = haloAlpha),
+                style = Stroke(width = if (isResting) 3.5f else 4.5f)
             )
-            // Middle Bright Teal Luminous Ring
+            // Delicate Inner Sage Rim
             drawPath(
                 path = path,
-                color = Color(0xFF99F6E4).copy(alpha = innerAlpha),
-                style = Stroke(width = if (isResting) 3.0f else 4.0f)
-            )
-            // Inner Core Luminous Stroke
-            drawPath(
-                path = path,
-                color = Color(0xFFF0FDFA).copy(alpha = 0.75f),
-                style = Stroke(width = 1.5f)
+                color = Color(0xFF8BA888).copy(alpha = rimAlpha),
+                style = Stroke(width = if (isResting) 1.5f else 2.0f)
             )
         }
 
@@ -226,11 +220,11 @@ private fun DrawScope.drawRealisticLeaf(
 
         // Delicate Leaf Texture: Central Spine & Side Ribs
         veinPath.reset()
-        // Central vein
+        // Central spine
         veinPath.moveTo(center.x, center.y - halfH * 0.85f)
         veinPath.lineTo(center.x, center.y + halfH * 0.88f)
 
-        // Subtle side veins
+        // Subtle side ribs
         val stepY = halfH * 0.38f
         // Top veins
         veinPath.moveTo(center.x, center.y - stepY * 0.6f)
@@ -244,38 +238,52 @@ private fun DrawScope.drawRealisticLeaf(
         veinPath.moveTo(center.x, center.y + stepY * 0.1f)
         veinPath.quadraticTo(center.x - halfW * 0.55f, center.y - stepY * 0.15f, center.x - halfW * 0.7f, center.y)
 
-        // Draw leaf veins with crisp translucent stroke
-        val veinColor = Color(0xFF041014).copy(alpha = (0.35f * color.alpha).coerceIn(0.12f, 0.55f))
+        // Draw leaf veins with gentle translucent stroke
+        val veinColor = Color(0xFF041014).copy(alpha = (0.28f * color.alpha).coerceIn(0.10f, 0.40f))
         drawPath(
             path = veinPath,
             color = veinColor,
-            style = Stroke(width = 1.2f)
+            style = Stroke(width = 1.0f)
         )
     }
 }
 
+// Harmonious Calming Sage & Earthy Moss Palette
 private val leafPalette = listOf(
-    Color(0xFF2EA8A4), // Teal Glaze
-    Color(0xFF38C7C2), // Luminous Teal
-    Color(0xFF5EEAD4), // Bright Zen Teal
-    Color(0xFF8BA870), // Zen Moss Green
-    Color(0xFF94A3B8), // Soft Moonlit Slate
-    Color(0xFFD4AF37)  // Antique Gold Accent
+    Color(0xFF8BA888), // Calming Sage Green
+    Color(0xFFAECBB0), // Light Sage Highlight
+    Color(0xFF759772), // Forest Moss Green
+    Color(0xFF9AA67A), // Warm Olive Sage
+    Color(0xFF8E9FA5), // Moonlit Slate Blue
+    Color(0xFFC8AD7F)  // Warm Sand / Antique Bamboo
 )
 
-private fun generateSettledBed(count: Int): List<SettledLeaf> {
-    val random = Random(42) // Consistent harmonious seed for floor bed layout
+private fun generateStackedBed(count: Int): List<SettledLeaf> {
+    val random = Random(108)
     return List(count) { i ->
+        // 3-tiered accumulation: Layer 0 (Floor base), Layer 1 (Middle mound), Layer 2 (Upper stack)
+        val layer = when {
+            i < count * 0.45f -> 0
+            i < count * 0.80f -> 1
+            else -> 2
+        }
+
+        val baseY = when (layer) {
+            0 -> 0.95f + random.nextFloat() * 0.035f
+            1 -> 0.91f + random.nextFloat() * 0.040f
+            else -> 0.87f + random.nextFloat() * 0.045f
+        }
+
         SettledLeaf(
-            xRatio = ((i.toFloat() / count.toFloat()) + (random.nextFloat() - 0.5f) * 0.12f).coerceIn(0.04f, 0.96f),
-            yRatio = 0.92f + (random.nextFloat() * 0.06f),
-            rotation = (random.nextFloat() - 0.5f) * 60f + if (i % 2 == 0) 15f else -15f,
-            sizePx = random.nextFloat() * 8f + 16f,
-            alpha = random.nextFloat() * 0.35f + 0.45f,
+            xRatio = ((i.toFloat() / count.toFloat()) + (random.nextFloat() - 0.5f) * 0.16f).coerceIn(0.02f, 0.98f),
+            yRatio = baseY,
+            rotation = (random.nextFloat() - 0.5f) * 75f + if (i % 2 == 0) 20f else -20f,
+            sizePx = random.nextFloat() * 7f + 16f,
+            alpha = random.nextFloat() * 0.30f + 0.45f,
             color = leafPalette[i % leafPalette.size],
-            orderIndex = i
+            layer = layer
         )
-    }.shuffled(Random(108))
+    }.shuffled(Random(42))
 }
 
 private fun generateAmbientLeaves(count: Int): List<LeafParticle> {
@@ -283,14 +291,14 @@ private fun generateAmbientLeaves(count: Int): List<LeafParticle> {
         LeafParticle(
             xRatio = Random.nextFloat(),
             yRatio = Random.nextFloat(),
-            speedY = Random.nextFloat() * 0.045f + 0.022f,
-            swayFreq = Random.nextFloat() * 1.5f + 1.2f,
-            swayAmpRatio = Random.nextFloat() * 0.035f + 0.015f,
+            speedY = Random.nextFloat() * 0.040f + 0.020f,
+            swayFreq = Random.nextFloat() * 1.4f + 1.1f,
+            swayAmpRatio = Random.nextFloat() * 0.030f + 0.015f,
             swayPhase = Random.nextFloat() * 6.28f,
             rotation = Random.nextFloat() * 360f,
-            rotationSpeed = (Random.nextFloat() - 0.5f) * 45f,
-            sizePx = Random.nextFloat() * 14f + 15f,
-            alpha = Random.nextFloat() * 0.4f + 0.35f,
+            rotationSpeed = (Random.nextFloat() - 0.5f) * 40f,
+            sizePx = Random.nextFloat() * 12f + 15f,
+            alpha = Random.nextFloat() * 0.35f + 0.35f,
             color = leafPalette.random()
         )
     }
@@ -301,14 +309,14 @@ private fun generateBurstLeaves(count: Int): List<LeafParticle> {
         LeafParticle(
             xRatio = Random.nextFloat() * 0.8f + 0.1f,
             yRatio = Random.nextFloat() * 0.35f,
-            speedY = Random.nextFloat() * 0.10f + 0.06f,
-            swayFreq = Random.nextFloat() * 2.5f + 1.8f,
-            swayAmpRatio = Random.nextFloat() * 0.06f + 0.03f,
+            speedY = Random.nextFloat() * 0.09f + 0.05f,
+            swayFreq = Random.nextFloat() * 2.2f + 1.6f,
+            swayAmpRatio = Random.nextFloat() * 0.05f + 0.025f,
             swayPhase = Random.nextFloat() * 6.28f,
             rotation = Random.nextFloat() * 360f,
-            rotationSpeed = (Random.nextFloat() - 0.5f) * 90f,
-            sizePx = Random.nextFloat() * 16f + 14f,
-            alpha = Random.nextFloat() * 0.5f + 0.5f,
+            rotationSpeed = (Random.nextFloat() - 0.5f) * 80f,
+            sizePx = Random.nextFloat() * 14f + 14f,
+            alpha = Random.nextFloat() * 0.4f + 0.45f,
             color = leafPalette.random(),
             isBurst = true
         )
