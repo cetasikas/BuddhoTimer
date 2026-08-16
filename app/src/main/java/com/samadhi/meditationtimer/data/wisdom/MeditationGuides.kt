@@ -17,14 +17,14 @@ object MeditationGuides {
             id = "start_here",
             topicNumber = 1,
             iconName = "start",
-            title = "Start Here: The Basics of Meditation",
-            subtitle = "Laying the foundation before watching the breath",
-            quote = "“Put down the heavy backpack of the past; don't pick up the burden of the future.” — Ajahn Brahm",
+            title = "Start Here: Ajahn Brahm's Method",
+            subtitle = "The 4 foundational stages from letting go of the world to joyful stillness",
+            quote = "“Meditation is the way of letting go. In meditation you let go of the complex world outside in order to reach the powerful peace within.” — Ajahn Brahm",
             practicalSteps = listOf(
-                "Find a comfortable, upright posture. Relax your shoulders, soften your face, and let the jaw unclamp.",
-                "Give yourself permission to be completely useless for this time—no problems to solve, nowhere to be.",
-                "Let go of the 'director' in your head. Stop judging whether your meditation is 'good' or 'bad.'",
-                "Rest content in the simple reality of being alive in this exact moment."
+                "Stage 1: Present Moment Awareness — Put down the heavy luggage of past and future. Give yourself permission to be completely useless for this hour—nowhere to go, no problems to solve.",
+                "Stage 2: Silent Present Moment Awareness — Turn down the inner narrator. Stop commentary and opinions. Experience the vivid beauty of the 'here and now' in total silence.",
+                "Stage 3: Silent Present Moment Awareness of the Breath — Gently invite the breath into silent awareness. Do not control or force the breath; allow the body to breathe itself as you enjoy its natural rhythm.",
+                "Stage 4: Full Sustained Attention on the Breath — Delight in following the whole breath from beginning, to middle, to the quiet turning point at the end, resting in deep stillness."
             )
         ),
         TopicCardData(

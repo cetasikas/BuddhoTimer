@@ -23,8 +23,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.samadhi.meditationtimer.ui.theme.ZenAmber
-import com.samadhi.meditationtimer.ui.theme.ZenAmberGlow
+import com.samadhi.meditationtimer.ui.theme.ZenTeal
+import com.samadhi.meditationtimer.ui.theme.ZenTealGlow
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenOverrunBlue
 import com.samadhi.meditationtimer.ui.theme.ZenOverrunGlow
@@ -51,8 +51,8 @@ fun CircularTimerProgress(
         label = "pulseScale"
     )
 
-    val activeColor = if (isOverrun) ZenOverrunBlue else ZenAmber
-    val glowColor = if (isOverrun) ZenOverrunGlow else ZenAmberGlow
+    val activeColor = if (isOverrun) ZenOverrunBlue else ZenTeal
+    val glowColor = if (isOverrun) ZenOverrunGlow else ZenTealGlow
 
     Box(
         modifier = modifier.size(size),

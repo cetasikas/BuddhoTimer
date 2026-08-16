@@ -65,6 +65,8 @@ import com.samadhi.meditationtimer.ui.theme.ZenDanger
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenOverrunBlue
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
+import com.samadhi.meditationtimer.ui.theme.ZenTeal
+import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
@@ -140,7 +142,8 @@ fun ActiveSessionScreen(
                 leafCount = 14,
                 triggerBurst = leavesBurstTrigger,
                 ambientAlpha = 0.38f,
-                isGlowing = true
+                isGlowing = true,
+                pileUpAtBottom = true
             )
         }
 
@@ -169,7 +172,7 @@ fun ActiveSessionScreen(
                 Icon(
                     imageVector = if (isOledZenMode) Icons.Default.LightMode else Icons.Default.DarkMode,
                     contentDescription = if (isOledZenMode) "Exit OLED Mode" else "OLED Deep Black Mode",
-                    tint = if (isOledZenMode) ZenAmber else ZenTextSecondary,
+                    tint = if (isOledZenMode) ZenTealLight else ZenTextSecondary,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -205,14 +208,14 @@ fun ActiveSessionScreen(
                         fontSize = 14.sp,
                         letterSpacing = 4.sp,
                         fontWeight = FontWeight.Bold,
-                        color = ZenAmber
+                        color = ZenTealLight
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "${status.remainingSeconds}",
-                        fontSize = 80.sp,
+                        fontSize = 88.sp,
                         fontWeight = FontWeight.Light,
-                        color = ZenAmber
+                        color = ZenTealLight
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -259,9 +262,9 @@ fun ActiveSessionScreen(
                                 config.isOpenEnded -> NotificationHelper.formatSeconds(elapsedSec)
                                 else -> NotificationHelper.formatSeconds(remainingSec)
                             },
-                            fontSize = 72.sp,
+                            fontSize = 84.sp,
                             fontWeight = FontWeight.ExtraLight,
-                            color = if (isOverrun) ZenOverrunBlue.copy(alpha = 0.8f) else ZenAmber.copy(alpha = 0.85f)
+                            color = if (isOverrun) ZenOverrunBlue.copy(alpha = 0.9f) else ZenTealLight.copy(alpha = 0.9f)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
@@ -282,7 +285,7 @@ fun ActiveSessionScreen(
                                 .clip(RoundedCornerShape(20.dp))
                                 .background(
                                     if (isOverrun) ZenOverrunBlue.copy(alpha = 0.15f)
-                                    else ZenAmber.copy(alpha = 0.15f)
+                                    else ZenTeal.copy(alpha = 0.18f)
                                 )
                                 .padding(horizontal = 16.dp, vertical = 6.dp)
                         ) {
@@ -296,7 +299,7 @@ fun ActiveSessionScreen(
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 2.sp,
-                                color = if (isOverrun) ZenOverrunBlue else ZenAmber
+                                color = if (isOverrun) ZenOverrunBlue else ZenTealLight
                             )
                         }
 
@@ -315,7 +318,7 @@ fun ActiveSessionScreen(
                                     val overrunTime = elapsedSec - totalTarget
                                     Text(
                                         text = "+${NotificationHelper.formatSeconds(overrunTime)}",
-                                        fontSize = 44.sp,
+                                        fontSize = 52.sp,
                                         fontWeight = FontWeight.Light,
                                         color = ZenOverrunBlue
                                     )
@@ -328,7 +331,7 @@ fun ActiveSessionScreen(
                                 } else if (config.isOpenEnded) {
                                     Text(
                                         text = NotificationHelper.formatSeconds(elapsedSec),
-                                        fontSize = 50.sp,
+                                        fontSize = 62.sp,
                                         fontWeight = FontWeight.Light,
                                         color = ZenTextPrimary
                                     )
@@ -341,8 +344,9 @@ fun ActiveSessionScreen(
                                 } else {
                                     Text(
                                         text = NotificationHelper.formatSeconds(remainingSec),
-                                        fontSize = 52.sp,
+                                        fontSize = 64.sp,
                                         fontWeight = FontWeight.Light,
+                                        letterSpacing = (-1).sp,
                                         color = ZenTextPrimary
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
@@ -376,7 +380,7 @@ fun ActiveSessionScreen(
                                 Icon(
                                     imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
                                     contentDescription = if (isPaused) "Resume" else "Pause",
-                                    tint = ZenAmber,
+                                    tint = ZenTealLight,
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
@@ -388,8 +392,8 @@ fun ActiveSessionScreen(
                                     .height(56.dp)
                                     .clip(RoundedCornerShape(28.dp)),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isOverrun) ZenOverrunBlue else ZenAmber,
-                                    contentColor = ZenObsidian
+                                    containerColor = if (isOverrun) ZenOverrunBlue else ZenTeal,
+                                    contentColor = Color(0xFF041014)
                                 )
                             ) {
                                 Icon(

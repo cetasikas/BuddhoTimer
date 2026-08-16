@@ -157,17 +157,36 @@ fun TimerScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Plum Village Calligraphy Title
-                    Text(
-                        text = "Buddho Timer",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontFamily = FontFamily.Serif,
-                            fontStyle = FontStyle.Italic,
-                            letterSpacing = 2.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ZenTextPrimary
-                        )
-                    )
+                    // Out-of-the-way Minimal Box Breathing Pill Button
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(ZenTeal.copy(alpha = 0.14f))
+                            .border(1.dp, ZenTeal.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                            .clickable { onOpenBreathing() }
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Air,
+                                contentDescription = null,
+                                tint = ZenTealLight,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Zen Box Breathing",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                letterSpacing = 0.5.sp,
+                                color = ZenTealLight
+                            )
+                        }
+                    }
 
                     // Action Icons: [?] and [⚙]
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -204,39 +223,6 @@ fun TimerScreen(
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Out-of-the-way Minimal Box Breathing Pill Button
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(ZenTeal.copy(alpha = 0.14f))
-                        .border(1.dp, ZenTeal.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
-                        .clickable { onOpenBreathing() }
-                        .padding(horizontal = 14.dp, vertical = 5.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Air,
-                            contentDescription = null,
-                            tint = ZenTealLight,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Zen Box Breathing",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            letterSpacing = 0.5.sp,
-                            color = ZenTealLight
-                        )
-                    }
-                }
             }
 
             // --- FLOATING TARGET DURATION DISPLAY ---
@@ -260,7 +246,7 @@ fun TimerScreen(
                 ) {
                     Text(
                         text = "${config.targetDurationMinutes}",
-                        fontSize = 72.sp,
+                        fontSize = 76.sp,
                         fontWeight = FontWeight.ExtraLight,
                         letterSpacing = (-2).sp,
                         color = ZenTextPrimary
@@ -271,7 +257,7 @@ fun TimerScreen(
                         fontSize = 20.sp,
                         fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Light,
-                        color = ZenGoldGlow,
+                        color = ZenTealLight,
                         modifier = Modifier.padding(bottom = 14.dp)
                     )
                 }
@@ -292,7 +278,7 @@ fun TimerScreen(
                     .padding(horizontal = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Slider with leaf animation trigger
+                // Sleek light-grey minimal slider
                 Slider(
                     value = config.targetDurationMinutes.toFloat(),
                     onValueChange = {
@@ -306,9 +292,9 @@ fun TimerScreen(
                     valueRange = 1f..120f,
                     steps = 118,
                     colors = SliderDefaults.colors(
-                        thumbColor = ZenTealLight,
-                        activeTrackColor = ZenTeal,
-                        inactiveTrackColor = ZenBorder.copy(alpha = 0.55f)
+                        thumbColor = Color(0xFFCBD5E1),
+                        activeTrackColor = Color(0xFF94A3B8),
+                        inactiveTrackColor = Color(0xFF1E293B)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )

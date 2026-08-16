@@ -49,19 +49,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.8.0
-          name: "Buddho Timer v1.8.0"
+          tag_name: v1.9.0
+          name: "Buddho Timer v1.9.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v1.8.0
+            ## 🪷 Buddho Meditation Timer v1.9.0
             
-            - **✨ Single-Page Compact Timer Layout**: Optimized vertical layout so all controls, duration display, and the "Begin Practice" button fit comfortably within a single view.
-            - **🍃 Plum Village "Buddho Timer" Typography**: Elegant calligraphy serif title styling.
-            - **🧘 Quick Box Breathing Access**: Dedicated minimal quick-launch pill on the main timer screen.
-            - **🍂 Animated Slider & Glowing Leaves Aura**: Smooth leaf flutter animations on duration adjustment, and luminous edge glow halo around falling leaves during active meditation.
-            - **📖 Simplified & Expandable Wisdom Guides**: Clean, approachable topic cards covering the basics of meditation, breath awareness, Buddho mantra, walking meditation, overcoming restlessness/sleepiness, and loving-kindness.
-            - **🔔 Soothing Additive Audio Synthesis**: Mellow Tibetan Singing Bowl, temple bell, ting-sha, and woodblock with gentle attack envelopes for zero harsh clicks or startling sounds.
-            - **⚙️ Refined Settings Layout**: Fixed sound preview button and horizontal permission action pills.
-            - **🌌 Universal Plum Village Moonlit Atmosphere**: Serene dark bamboo backdrop with subtle falling leaves across all screens.
+            - **🍃 Pure Minimalist Timer Layout**: Removed header clutter for maximum serenity and calm.
+            - **⚪ Minimal Slate/Grey Slider**: Redesigned sleek slider in neutral moonlit slate tones with organic circular thumb and leaf flutter feedback.
+            - **🍂 Realistic Leaf Textures & Breathing Glow Aura**: Detailed primary and secondary leaf veins, smooth 5-second breathing halo oscillation during meditation, and calming leaf accumulation along the floor of the screen.
+            - **🌊 Serene Blue/Teal Theme & Enlarged Digits**: Cohesive moonlit teal aesthetic across Active Session, circular progress arc, and Settings, with larger high-contrast timer numbers.
+            - **📖 Ajahn Brahm's 4-Stage Meditation Guide**: Updated "Start Here" topic card to feature the foundational stages of letting go, silent awareness, and joyful stillness.
+            - **⚙️ Redesigned Settings & Seamless Back Navigation**: Unified teal theme, dedicated Back buttons on Settings and Wisdom, and removed redundant Box Breathing card from settings.
+            - **✨ First-Launch & On-Demand Tutorial Walkthrough**: Interactive 4-step quick guide introducing core features and offering one-tap DND / Battery permission setup, also accessible from Settings.
             - **Zero Internet Permissions**: 100% offline, privacy-first meditation companion.
           draft: false
           prerelease: false

@@ -72,8 +72,12 @@ import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.IconButton
+
 @Composable
 fun WisdomScreen(
+    onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val topics = remember { MeditationGuides.topicCards }
@@ -117,26 +121,27 @@ fun WisdomScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Header Row
+            // Header Row with Back Button
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Box(
+                IconButton(
+                    onClick = onNavigateBack,
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
-                        .background(ZenTeal.copy(alpha = 0.18f))
-                        .border(1.dp, ZenTeal.copy(alpha = 0.4f), CircleShape),
-                    contentAlignment = Alignment.Center
+                        .background(ZenSurface.copy(alpha = 0.75f))
+                        .border(1.dp, ZenBorder, CircleShape)
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                        contentDescription = null,
-                        tint = ZenTeal,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = ZenTealLight,
                         modifier = Modifier.size(20.dp)
                     )
                 }
+
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
