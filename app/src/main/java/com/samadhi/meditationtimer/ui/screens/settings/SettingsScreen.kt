@@ -385,12 +385,12 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Box Breathing (Panic & Stress Reset)",
-                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
+                                text = "Zen Particle Box Breathing",
+                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
                                 color = ZenTextPrimary
                             )
                             Text(
-                                text = "4-4-4-4 guided breathwork for acute calm",
+                                text = "4-4-4-4 guided Plum Village particle breathwork",
                                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
                                 color = ZenTextSecondary
                             )

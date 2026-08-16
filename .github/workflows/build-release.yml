@@ -49,17 +49,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.6.0
-          name: "Buddho Timer v1.6.0"
+          tag_name: v1.7.0
+          name: "Buddho Timer v1.7.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v1.6.0
+            ## 🪷 Buddho Meditation Timer v1.7.0
             
-            - **📜 Hanji & Sumi-e Zen Aesthetic**: Handcrafted Mulberry Washi paper deckled timer card, Japanese ink wash bamboo artwork background, and carved teal wooden button.
-            - **🎨 Organic Watercolor Preset Chips & Enso Track**: Sandstone, clay terracotta, and teal glaze presets with Enso circle step markers.
-            - **🔄 Keep It Going Mode**: Explicit toggle for Samadhi Overrun continuous timing past target duration.
-            - **🧘 Simple Groundwork-First Instructions**: Lineage-free, step-by-step guidance emphasizing laying the groundwork first (dropping past & future, letting go of the doer) before watching the breath.
-            - **⚙️ Clean Navigation & Settings**: Discrete `?` and `⚙️` header access with chimes, auto-DND, and Box Breathing in preferences.
-            - **Zero Internet Permissions**: 100% offline, privacy-first meditation tool.
+            - **🍃 Plum Village Zen Aesthetic & Moonlit Atmosphere**: Darkened, serene moonlit Sumi-e bamboo atmosphere with high-contrast, luminous typography.
+            - **🍂 Interactive Falling Leaves Animation**: Gentle bodhi/bamboo leaves drifting smoothly and fluttering on key actions (starting timer, pausing/resuming, preset selection).
+            - **✨ Floating Target Duration**: Large, prominent floating duration display directly on the serene background without heavy cards or washi-paper borders.
+            - **💫 Minimalist Slider & Glowing Preset Pills**: Clean horizontal duration slider paired with soft glowing pill-shaped preset buttons (`5m` to `60m`).
+            - **🌌 Zen Particle Box Breathing Mode**: Custom particle canvas animation inspired by *"A Thousand Dots, Breathing"* with 400+ glowing warm gold particles expanding, suspending, converging, and resting with organic `easeInOutCubic` easing.
+            - **🔲 Minimalist Outline Navigation**: Clean, discrete outline navigation icons across the bottom bar.
+            - **Zero Internet Permissions**: 100% offline, privacy-first meditation companion.
           draft: false
           prerelease: false
           files: |

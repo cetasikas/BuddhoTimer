@@ -1,14 +1,6 @@
 package com.samadhi.meditationtimer.ui.screens.breathing
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -45,32 +37,34 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.samadhi.meditationtimer.R
 import com.samadhi.meditationtimer.domain.model.BreathPhase
 import com.samadhi.meditationtimer.domain.model.BreathingPattern
 import com.samadhi.meditationtimer.service.NotificationHelper
 import com.samadhi.meditationtimer.service.SoundHelper
+import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
+import com.samadhi.meditationtimer.ui.components.ZenParticleBreathingCanvas
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
-import com.samadhi.meditationtimer.ui.theme.ZenAmberDark
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
+import com.samadhi.meditationtimer.ui.theme.ZenGoldGlow
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenOverrunBlue
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
@@ -81,9 +75,6 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -100,420 +91,369 @@ fun BreathingScreen(
     var phaseSecondsRemaining by remember { mutableIntStateOf(selectedPattern.inhaleSec) }
     var totalElapsedSec by remember { mutableIntStateOf(0) }
     var completedCycles by remember { mutableIntStateOf(0) }
+    var leafBurstTrigger by remember { mutableIntStateOf(0) }
 
-    // Breathing timer ticker loop
+    // Smooth sub-second progress for fluid particle transition
+    var phaseProgress by remember { mutableFloatStateOf(0.0f) }
+
+    // High precision breath cycle ticker
     LaunchedEffect(isRunning, selectedPattern) {
         if (!isRunning) return@LaunchedEffect
 
         currentPhase = BreathPhase.INHALE
         phaseSecondsRemaining = selectedPattern.inhaleSec
+        phaseProgress = 0.0f
         soundHelper.triggerGentleVibration()
 
-        while (isActive && isRunning) {
-            delay(1000L)
-            totalElapsedSec++
-            phaseSecondsRemaining--
+        var phaseStartTimeMs = System.currentTimeMillis()
 
-            if (phaseSecondsRemaining <= 0) {
+        while (isActive && isRunning) {
+            val totalPhaseSec = getPhaseDuration(currentPhase, selectedPattern).coerceAtLeast(1)
+            val totalPhaseMs = totalPhaseSec * 1000L
+            val elapsedInPhaseMs = System.currentTimeMillis() - phaseStartTimeMs
+
+            phaseProgress = (elapsedInPhaseMs.toFloat() / totalPhaseMs.toFloat()).coerceIn(0.0f, 1.0f)
+            val secRemaining = (totalPhaseSec - (elapsedInPhaseMs / 1000L).toInt()).coerceAtLeast(1)
+            phaseSecondsRemaining = secRemaining
+
+            if (elapsedInPhaseMs >= totalPhaseMs) {
                 val nextPhase = getNextPhase(currentPhase, selectedPattern)
                 if (nextPhase == BreathPhase.INHALE) {
                     completedCycles++
                 }
                 currentPhase = nextPhase
+                phaseStartTimeMs = System.currentTimeMillis()
                 phaseSecondsRemaining = getPhaseDuration(nextPhase, selectedPattern)
+                phaseProgress = 0.0f
                 soundHelper.triggerGentleVibration()
             }
+
+            delay(16L) // ~60 FPS smooth interpolation
         }
     }
 
-    // Dynamic scale expansion targets
-    val targetScale = when (currentPhase) {
-        BreathPhase.INHALE -> 1.0f
-        BreathPhase.HOLD_FULL -> 1.0f
-        BreathPhase.EXHALE -> 0.32f
-        BreathPhase.HOLD_EMPTY -> 0.32f
+    // Elapsed total time ticker
+    LaunchedEffect(isRunning) {
+        if (!isRunning) return@LaunchedEffect
+        while (isActive && isRunning) {
+            delay(1000L)
+            totalElapsedSec++
+        }
     }
 
-    val currentPhaseDurationMs = (getPhaseDuration(currentPhase, selectedPattern) * 1000).coerceAtLeast(1000)
-    val animatedScale by animateFloatAsState(
-        targetValue = targetScale,
-        animationSpec = tween(
-            durationMillis = if (currentPhase == BreathPhase.HOLD_FULL || currentPhase == BreathPhase.HOLD_EMPTY) 400 else currentPhaseDurationMs,
-            easing = FastOutSlowInEasing
-        ),
-        label = "organicBloomScale"
-    )
-
-    // Gentle slow rotation for organic floating sensation
-    val infiniteTransition = rememberInfiniteTransition(label = "mandalaRotation")
-    val slowRotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 24000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotationAngle"
-    )
-
-    val primaryColor = when (currentPhase) {
+    val phaseColor = when (currentPhase) {
         BreathPhase.INHALE -> ZenTeal
-        BreathPhase.HOLD_FULL -> ZenAmber
+        BreathPhase.HOLD_FULL -> ZenGoldGlow
         BreathPhase.EXHALE -> ZenOverrunBlue
-        BreathPhase.HOLD_EMPTY -> ZenAmberDark
+        BreathPhase.HOLD_EMPTY -> ZenAmber
     }
 
-    val bloomSecondaryColor = when (currentPhase) {
-        BreathPhase.INHALE -> Color(0xFF64FFDA)
-        BreathPhase.HOLD_FULL -> Color(0xFFFFD54F)
-        BreathPhase.EXHALE -> Color(0xFF81D4FA)
-        BreathPhase.HOLD_EMPTY -> Color(0xFFFFB74D)
-    }
-
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(ZenObsidian)
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Top Header Row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(ZenTeal.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Air,
-                        contentDescription = null,
-                        tint = ZenTeal,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
-                    Text(
-                        text = "Box Breathing & Relief",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = ZenTextPrimary
-                    )
-                    Text(
-                        text = selectedPattern.subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = ZenTextSecondary
-                    )
-                }
-            }
+        // 1. Dark Moonlit Plum Village Backdrop
+        Image(
+            painter = painterResource(id = R.drawable.bg_zen_bamboo),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            alpha = 0.18f
+        )
 
-            IconButton(
-                onClick = onClose,
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(ZenSurface)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Close Breathing",
-                    tint = ZenTextSecondary,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Pattern Selection Chips
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            BreathingPattern.allPatterns.forEach { pattern ->
-                val isSelected = selectedPattern.id == pattern.id
-                FilterChip(
-                    selected = isSelected,
-                    onClick = {
-                        selectedPattern = pattern
-                        currentPhase = BreathPhase.INHALE
-                        phaseSecondsRemaining = pattern.inhaleSec
-                    },
-                    label = { Text(pattern.name, fontSize = 11.sp) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = ZenSurface,
-                        labelColor = ZenTextSecondary,
-                        selectedContainerColor = ZenTeal,
-                        selectedLabelColor = ZenObsidian
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        borderColor = if (isSelected) ZenTeal else ZenBorder,
-                        enabled = true,
-                        selected = isSelected
-                    )
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Hypnotic Organic Breathing Flower / Mandala Visualizer (breathworktimer.net inspired)
+        // Moonlit Gradient Scrim
         Box(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Canvas(modifier = Modifier.size(270.dp)) {
-                val center = Offset(size.width / 2f, size.height / 2f)
-                val baseRadius = size.minDimension / 2f - 24.dp.toPx()
-                val currentRadius = baseRadius * animatedScale
-
-                // 1. Soft Outer Atmospheric Expansion Glow
-                drawCircle(
-                    brush = Brush.radialGradient(
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
                         colors = listOf(
-                            primaryColor.copy(alpha = 0.35f),
-                            primaryColor.copy(alpha = 0.08f),
-                            Color.Transparent
-                        ),
-                        center = center,
-                        radius = (currentRadius * 1.45f).coerceAtLeast(10f)
-                    ),
-                    radius = currentRadius * 1.45f,
-                    center = center
-                )
-
-                // 2. Base Guide Ring (Outer Calm Boundary)
-                drawCircle(
-                    color = ZenBorder.copy(alpha = 0.30f),
-                    radius = baseRadius,
-                    center = center,
-                    style = Stroke(width = 1.5.dp.toPx())
-                )
-
-                // 3. Multi-Petal Organic Liquid Flower Blooming
-                val numPetals = 6
-                val petalOffsetDist = currentRadius * 0.42f
-                val petalRadius = currentRadius * 0.58f
-
-                for (i in 0 until numPetals) {
-                    val angleRad = Math.toRadians((i * (360.0 / numPetals) + slowRotation)).toFloat()
-                    val petalCenter = Offset(
-                        center.x + cos(angleRad) * petalOffsetDist,
-                        center.y + sin(angleRad) * petalOffsetDist
+                            Color(0xFF060911).copy(alpha = 0.85f),
+                            Color(0xFF0A101D).copy(alpha = 0.70f),
+                            Color(0xFF060911).copy(alpha = 0.95f)
+                        )
                     )
+                )
+        )
 
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                bloomSecondaryColor.copy(alpha = 0.55f),
-                                primaryColor.copy(alpha = 0.30f),
-                                primaryColor.copy(alpha = 0.05f)
+        // 2. Subtle Falling Leaves Effect
+        FallingLeavesEffect(
+            leafCount = 14,
+            triggerBurst = leafBurstTrigger,
+            ambientAlpha = 0.25f
+        )
+
+        // 3. Main Screen Flow
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Top Header Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(ZenTeal.copy(alpha = 0.18f))
+                            .border(1.dp, ZenTeal.copy(alpha = 0.4f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Air,
+                            contentDescription = null,
+                            tint = ZenTeal,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "ZEN PARTICLE BREATHING",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.5.sp
                             ),
-                            center = petalCenter,
-                            radius = petalRadius.coerceAtLeast(8f)
-                        ),
-                        radius = petalRadius.coerceAtLeast(8f),
-                        center = petalCenter
-                    )
-
-                    // Delicate petal stroke
-                    drawCircle(
-                        color = bloomSecondaryColor.copy(alpha = 0.35f),
-                        radius = petalRadius.coerceAtLeast(8f),
-                        center = petalCenter,
-                        style = Stroke(width = 1.5.dp.toPx())
-                    )
+                            color = ZenTextPrimary
+                        )
+                        Text(
+                            text = selectedPattern.subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = ZenTextSecondary
+                        )
+                    }
                 }
 
-                // 4. Luminous Center Core
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.90f),
-                            bloomSecondaryColor.copy(alpha = 0.80f),
-                            primaryColor.copy(alpha = 0.40f),
-                            Color.Transparent
-                        ),
-                        center = center,
-                        radius = (currentRadius * 0.55f).coerceAtLeast(10f)
-                    ),
-                    radius = (currentRadius * 0.55f).coerceAtLeast(10f),
-                    center = center
-                )
-
-                // 5. Perimeter Sweeping Progress Arc for Current Phase
-                val totalPhaseSec = getPhaseDuration(currentPhase, selectedPattern)
-                val progressFraction = if (totalPhaseSec > 0) {
-                    (totalPhaseSec - phaseSecondsRemaining).toFloat() / totalPhaseSec.toFloat()
-                } else 1.0f
-
-                drawArc(
-                    color = primaryColor,
-                    startAngle = -90f,
-                    sweepAngle = 360f * progressFraction,
-                    useCenter = false,
-                    topLeft = Offset(center.x - baseRadius, center.y - baseRadius),
-                    size = Size(baseRadius * 2, baseRadius * 2),
-                    style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
-                )
+                IconButton(
+                    onClick = onClose,
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(ZenSurface)
+                        .border(1.dp, ZenBorder, CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close Breathing",
+                        tint = ZenTextSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
-        }
 
-        // Clean Phase Panel (Spacious, non-overlapping typography)
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 6.dp)
-        ) {
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Pattern Selection Chips
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                BreathingPattern.allPatterns.forEach { pattern ->
+                    val isSelected = selectedPattern.id == pattern.id
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = {
+                            selectedPattern = pattern
+                            currentPhase = BreathPhase.INHALE
+                            phaseSecondsRemaining = pattern.inhaleSec
+                            phaseProgress = 0f
+                            leafBurstTrigger++
+                        },
+                        label = {
+                            Text(
+                                text = pattern.name,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = ZenSurface.copy(alpha = 0.7f),
+                            labelColor = ZenTextSecondary,
+                            selectedContainerColor = ZenTeal,
+                            selectedLabelColor = ZenObsidian
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (isSelected) ZenTeal else ZenBorder,
+                            enabled = true,
+                            selected = isSelected
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+            }
+
+            // Central Zen Particle Breath Visualizer ("A Thousand Dots, Breathing" Aesthetic)
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(primaryColor.copy(alpha = 0.18f))
-                    .border(1.dp, primaryColor.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-                    .padding(horizontal = 18.dp, vertical = 6.dp)
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = currentPhase.displayName.uppercase(),
-                    fontSize = 13.sp,
-                    letterSpacing = 3.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = primaryColor
+                ZenParticleBreathingCanvas(
+                    currentPhase = currentPhase,
+                    phaseProgress = phaseProgress,
+                    modifier = Modifier.fillMaxSize(),
+                    particleCount = 420
                 )
+
+                // Ethereal Center Breath Phase Typography Floating inside the Particle Field
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // Floating Badge
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(phaseColor.copy(alpha = 0.18f))
+                            .border(1.dp, phaseColor.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 16.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = currentPhase.displayName.uppercase(),
+                            fontSize = 12.sp,
+                            letterSpacing = 3.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = phaseColor
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "$phaseSecondsRemaining",
+                        fontSize = 58.sp,
+                        fontWeight = FontWeight.ExtraLight,
+                        color = ZenTextPrimary
+                    )
+
+                    Text(
+                        text = currentPhase.instruction,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = ZenTextSecondary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            // Stats Card (Cycles & Calm Time)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.85f)),
+                border = CardDefaults.outlinedCardBorder().copy(brush = Brush.horizontalGradient(listOf(ZenBorder, ZenBorder))),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "COMPLETED CYCLES",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp,
+                            color = ZenTextSecondary
+                        )
+                        Text(
+                            text = "$completedCycles",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ZenTeal
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "TOTAL CALM TIME",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp,
+                            color = ZenTextSecondary
+                        )
+                        Text(
+                            text = NotificationHelper.formatSeconds(totalElapsedSec),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ZenAmber
+                        )
+                    }
+                }
+            }
 
-            Text(
-                text = "$phaseSecondsRemaining",
-                fontSize = 52.sp,
-                fontWeight = FontWeight.Light,
-                color = ZenTextPrimary
-            )
+            Spacer(modifier = Modifier.height(14.dp))
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = currentPhase.instruction,
-                fontSize = 13.sp,
-                color = ZenTextSecondary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 24.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Stats Card (Cycles & Total Time)
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ZenSurface),
-            border = CardDefaults.outlinedCardBorder().copy(brush = Brush.horizontalGradient(listOf(ZenBorder, ZenBorder))),
-            shape = RoundedCornerShape(14.dp)
-        ) {
+            // Action Controls
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "COMPLETED CYCLES",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp,
-                        color = ZenTextSecondary
-                    )
-                    Text(
-                        text = "$completedCycles",
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ZenTeal
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "TOTAL CALM TIME",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp,
-                        color = ZenTextSecondary
-                    )
-                    Text(
-                        text = NotificationHelper.formatSeconds(totalElapsedSec),
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ZenAmber
+                IconButton(
+                    onClick = {
+                        totalElapsedSec = 0
+                        completedCycles = 0
+                        currentPhase = BreathPhase.INHALE
+                        phaseSecondsRemaining = selectedPattern.inhaleSec
+                        phaseProgress = 0f
+                        leafBurstTrigger++
+                    },
+                    modifier = Modifier
+                        .size(54.dp)
+                        .clip(CircleShape)
+                        .background(ZenSurface)
+                        .border(1.dp, ZenBorder, CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Reset Session",
+                        tint = ZenTextSecondary,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
+
+                Button(
+                    onClick = {
+                        isRunning = !isRunning
+                        leafBurstTrigger++
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(54.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isRunning) ZenSurfaceVariant else ZenTeal,
+                        contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = if (isRunning) "Pause" else "Resume",
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isRunning) "Pause Practice" else "Resume Breathing",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(4.dp))
         }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Play / Pause & Reset Action Row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = {
-                    totalElapsedSec = 0
-                    completedCycles = 0
-                    currentPhase = BreathPhase.INHALE
-                    phaseSecondsRemaining = selectedPattern.inhaleSec
-                },
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(CircleShape)
-                    .background(ZenSurface)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Reset Session",
-                    tint = ZenTextSecondary,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-
-            Button(
-                onClick = { isRunning = !isRunning },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(54.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isRunning) ZenSurfaceVariant else ZenTeal,
-                    contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
-                )
-            ) {
-                Icon(
-                    imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isRunning) "Pause" else "Resume",
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (isRunning) "Pause Exercise" else "Resume Breathing",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
     }
 }
 

@@ -69,6 +69,13 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Brush
+import com.samadhi.meditationtimer.R
+import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
+
 @Composable
 fun ActiveSessionScreen(
     viewModel: TimerViewModel,
@@ -79,6 +86,7 @@ fun ActiveSessionScreen(
     val timerStatus by viewModel.timerStatus.collectAsState()
     val config by viewModel.config.collectAsState()
     var isOledZenMode by remember { mutableStateOf(false) }
+    var leavesBurstTrigger by remember { mutableStateOf(0) }
 
     LaunchedEffect(timerStatus) {
         if (timerStatus is TimerStatus.Completed) {
@@ -101,10 +109,46 @@ fun ActiveSessionScreen(
                 if (isOledZenMode) {
                     isOledZenMode = false
                 }
-            }
-            .padding(24.dp),
+            },
         contentAlignment = Alignment.Center
     ) {
+        // Subtle background art when not in OLED mode
+        if (!isOledZenMode) {
+            Image(
+                painter = painterResource(id = R.drawable.bg_zen_bamboo),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+                alpha = 0.16f
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF060911).copy(alpha = 0.85f),
+                                Color(0xFF0A101D).copy(alpha = 0.70f),
+                                Color(0xFF060911).copy(alpha = 0.92f)
+                            )
+                        )
+                    )
+            )
+
+            FallingLeavesEffect(
+                leafCount = 12,
+                triggerBurst = leavesBurstTrigger,
+                ambientAlpha = 0.25f
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
         // Top Navigation Controls (Cancel & OLED Dim Mode)
         Row(
             modifier = Modifier
@@ -320,6 +364,7 @@ fun ActiveSessionScreen(
                             // Pause / Resume Button
                             IconButton(
                                 onClick = {
+                                    leavesBurstTrigger++
                                     if (isPaused) viewModel.resumeSession() else viewModel.pauseSession()
                                 },
                                 modifier = Modifier
@@ -368,5 +413,7 @@ fun ActiveSessionScreen(
                 Text(text = "Initializing…", color = ZenTextMuted)
             }
         }
+        }
     }
 }
+

@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -40,6 +41,7 @@ import com.samadhi.meditationtimer.ui.screens.wisdom.WisdomScreen
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
+import com.samadhi.meditationtimer.ui.theme.ZenTeal
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 
@@ -89,8 +91,9 @@ fun MainAppScaffold() {
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(
-                    containerColor = androidx.compose.ui.graphics.Color(0xFF0C1322),
-                    contentColor = androidx.compose.ui.graphics.Color(0xFFE8EEF5)
+                    containerColor = ZenObsidian,
+                    contentColor = ZenTextPrimary,
+                    tonalElevation = 0.dp
                 ) {
                     Screen.bottomNavItems.forEach { screen ->
                         val selected = currentRoute == screen.route
@@ -103,7 +106,13 @@ fun MainAppScaffold() {
                                     )
                                 }
                             },
-                            label = { Text(screen.title, fontSize = 11.sp, fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal) },
+                            label = {
+                                Text(
+                                    text = screen.title,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal
+                                )
+                            },
                             selected = selected,
                             onClick = {
                                 if (currentRoute != screen.route) {
@@ -117,11 +126,11 @@ fun MainAppScaffold() {
                                 }
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = androidx.compose.ui.graphics.Color.White,
-                                selectedTextColor = androidx.compose.ui.graphics.Color.White,
-                                unselectedIconColor = androidx.compose.ui.graphics.Color(0xFF7E93AE),
-                                unselectedTextColor = androidx.compose.ui.graphics.Color(0xFF7E93AE),
-                                indicatorColor = androidx.compose.ui.graphics.Color(0xFF2A7A78)
+                                selectedIconColor = ZenTextPrimary,
+                                selectedTextColor = ZenTextPrimary,
+                                unselectedIconColor = ZenTextMuted,
+                                unselectedTextColor = ZenTextMuted,
+                                indicatorColor = ZenTeal.copy(alpha = 0.28f)
                             )
                         )
                     }

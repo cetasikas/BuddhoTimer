@@ -1,5 +1,8 @@
 package com.samadhi.meditationtimer.ui.screens.timer
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,11 +25,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,13 +41,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
@@ -56,13 +60,18 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.samadhi.meditationtimer.R
+import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
-import com.samadhi.meditationtimer.ui.theme.ZenAmberDark
+import com.samadhi.meditationtimer.ui.theme.ZenAmberGlow
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
+import com.samadhi.meditationtimer.ui.theme.ZenGoldDust
+import com.samadhi.meditationtimer.ui.theme.ZenGoldGlow
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
 import com.samadhi.meditationtimer.ui.theme.ZenTeal
+import com.samadhi.meditationtimer.ui.theme.ZenTealGlow
+import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
@@ -78,6 +87,7 @@ fun TimerScreen(
 ) {
     val config by viewModel.config.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
+    var leafBurstTrigger by remember { mutableIntStateOf(0) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -91,33 +101,45 @@ fun TimerScreen(
         }
     }
 
-    val presetDurations = listOf(
-        Pair(5, Color(0xFFD8BA84)),   // Warm Sandstone
-        Pair(10, Color(0xFFB8734C)),  // Terracotta Clay
-        Pair(15, Color(0xFF2A7A78)),  // Selected Teal Glaze
-        Pair(20, Color(0xFFD8BA84)),  // Sandstone
-        Pair(30, Color(0xFFD8BA84)),  // Sandstone
-        Pair(45, Color(0xFFB8734C)),  // Terracotta
-        Pair(60, Color(0xFF6D804B))   // Matcha Olive
-    )
-
-    val ensoPoints = listOf(5, 10, 15, 20, 30, 45, 60, 90, 120)
+    val presetDurations = listOf(5, 10, 15, 20, 30, 45, 60)
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        // 1. Subtle Japanese Bamboo Sumi-e Artwork Background
+        // 1. Dark Moonlit Plum Village Bamboo Background
         Image(
             painter = painterResource(id = R.drawable.bg_zen_bamboo),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
-            alpha = 0.45f
+            alpha = 0.22f
         )
 
-        // 2. Main Content Scrollable Flow
+        // Moonlit Gradient Overlay for deep serenity
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF060911).copy(alpha = 0.82f),
+                            Color(0xFF0A1120).copy(alpha = 0.65f),
+                            Color(0xFF060911).copy(alpha = 0.92f)
+                        )
+                    )
+                )
+        )
+
+        // 2. Interactive Falling Leaves Ambient Animation
+        FallingLeavesEffect(
+            leafCount = 16,
+            triggerBurst = leafBurstTrigger,
+            ambientAlpha = 0.32f
+        )
+
+        // 3. Scrollable Main Content Flow
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -131,250 +153,207 @@ fun TimerScreen(
             ) {
                 Text(
                     text = "BUDDHO",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        letterSpacing = 4.sp,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        letterSpacing = 5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFE8EEF5)
+                        color = ZenTextPrimary
                     )
                 )
 
-                // Top Right Action Buttons: [?] and [Settings]
+                // Top Right Minimal Outline Action Buttons: [?] and [Settings]
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     IconButton(
                         onClick = onOpenWisdom,
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF142036).copy(alpha = 0.8f))
-                            .border(1.dp, Color(0xFF334B73), CircleShape)
+                            .background(ZenSurface.copy(alpha = 0.6f))
+                            .border(1.dp, ZenBorder, CircleShape)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                            imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
                             contentDescription = "Meditation Instructions",
-                            tint = Color(0xFFC0D5EE),
-                            modifier = Modifier.size(20.dp)
+                            tint = ZenTextSecondary,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
 
                     IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF142036).copy(alpha = 0.8f))
-                            .border(1.dp, Color(0xFF334B73), CircleShape)
+                            .background(ZenSurface.copy(alpha = 0.6f))
+                            .border(1.dp, ZenBorder, CircleShape)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Settings,
+                            imageVector = Icons.Outlined.Settings,
                             contentDescription = "Meditation Settings",
-                            tint = Color(0xFFC0D5EE),
-                            modifier = Modifier.size(20.dp)
+                            tint = ZenTextSecondary,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(38.dp))
 
-            // 3. Handcrafted Hanji Washi Paper Deckled Card
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp)
-                    .shadow(12.dp, RoundedCornerShape(16.dp))
-                    .clip(RoundedCornerShape(16.dp)),
-                contentAlignment = Alignment.Center
+            // 4. Floating Target Duration Display (No cards or borders behind the text)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                // Washi Paper Texture Background
-                Image(
-                    painter = painterResource(id = R.drawable.bg_washi_paper),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                Text(
+                    text = "TARGET DURATION",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 3.sp,
+                    color = ZenTeal
                 )
 
-                // Sumi-e Ink Typography on Paper
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp)
-                ) {
-                    Text(
-                        text = "TARGET DURATION",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.5.sp,
-                        color = Color(0xFF1C2C27)
-                    )
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "${config.targetDurationMinutes}",
-                            fontSize = 76.sp,
-                            fontWeight = FontWeight.Light,
-                            color = Color(0xFF152623)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "min",
-                            fontSize = 24.sp,
-                            fontStyle = FontStyle.Italic,
-                            color = Color(0xFF1C2C27),
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = if (config.isOverrunEnabled) "Continues into Samadhi Overrun when time ends" else "Chime sounds and finishes at target time",
-                        fontSize = 13.sp,
-                        fontStyle = FontStyle.Italic,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF2C423C)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 4. Quick Presets Header
-            Text(
-                text = "Quick Presets",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFFE8EEF5),
-                modifier = Modifier.align(Alignment.Start)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Watercolor Paint Stroke Preset Chips
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                presetDurations.forEach { (duration, chipColor) ->
-                    val isSelected = config.targetDurationMinutes == duration
-                    val effectiveColor = if (isSelected) Color(0xFF2A7A78) else chipColor
-
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(effectiveColor)
-                            .border(
-                                width = if (isSelected) 2.dp else 0.dp,
-                                color = if (isSelected) Color.White.copy(alpha = 0.8f) else Color.Transparent,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .clickable { viewModel.updateDurationMinutes(duration) }
-                            .padding(horizontal = 18.dp, vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "${duration}m",
-                            fontSize = 15.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) Color.White else Color(0xFF1F1E1B)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 5. Zen Enso Track & Fine-tuning Slider
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                // Enso Rings on Track
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    ensoPoints.forEach { point ->
-                        val isCurrentOrPassed = config.targetDurationMinutes >= point
-                        val isExact = config.targetDurationMinutes == point
-
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (isExact) Color(0xFF2A7A78).copy(alpha = 0.3f) else Color.Transparent
-                                )
-                                .border(
-                                    width = if (isExact) 3.dp else 1.5.dp,
-                                    color = when {
-                                        isExact -> Color(0xFF2A7A78)
-                                        isCurrentOrPassed -> Color(0xFF3B5680)
-                                        else -> Color(0xFF22334D)
-                                    },
-                                    shape = CircleShape
-                                )
-                        )
-                    }
+                    Text(
+                        text = "${config.targetDurationMinutes}",
+                        fontSize = 84.sp,
+                        fontWeight = FontWeight.ExtraLight,
+                        letterSpacing = (-2).sp,
+                        color = ZenTextPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "min",
+                        fontSize = 24.sp,
+                        fontStyle = FontStyle.Italic,
+                        fontWeight = FontWeight.Light,
+                        color = ZenGoldGlow,
+                        modifier = Modifier.padding(bottom = 18.dp)
+                    )
                 }
 
-                // Slider overlay for smooth dragging
+                Text(
+                    text = if (config.isOverrunEnabled) "Practice continues seamlessly into Samadhi Overrun" else "Mindful chime sounds at target completion",
+                    fontSize = 13.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = ZenTextSecondary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(42.dp))
+
+            // 5. Minimalist Horizontal Slider
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Slider(
                     value = config.targetDurationMinutes.toFloat(),
-                    onValueChange = { viewModel.updateDurationMinutes(it.toInt()) },
+                    onValueChange = {
+                        viewModel.updateDurationMinutes(it.toInt())
+                    },
                     valueRange = 1f..120f,
                     steps = 118,
                     colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFF2A7A78),
-                        activeTrackColor = Color.Transparent,
-                        inactiveTrackColor = Color.Transparent
+                        thumbColor = ZenTeal,
+                        activeTrackColor = ZenTeal,
+                        inactiveTrackColor = ZenBorder.copy(alpha = 0.5f)
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp)
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 6. "Keep It Going" Mode Toggle (Samadhi Overrun Option)
-            Card(
+            // 6. Clean Row of Minimal Pill-shaped Preset Buttons with Soft Glowing Active States
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF142036).copy(alpha = 0.85f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(Color(0xFF2E4366))),
-                shape = RoundedCornerShape(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                presetDurations.forEach { duration ->
+                    val isSelected = config.targetDurationMinutes == duration
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                if (isSelected) ZenTeal.copy(alpha = 0.22f)
+                                else ZenSurface.copy(alpha = 0.6f)
+                            )
+                            .border(
+                                width = if (isSelected) 1.5.dp else 1.dp,
+                                color = if (isSelected) ZenTeal else ZenBorder,
+                                shape = RoundedCornerShape(20.dp)
+                            )
+                            .clickable {
+                                viewModel.updateDurationMinutes(duration)
+                                leafBurstTrigger++
+                            }
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${duration}m",
+                            fontSize = 14.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) ZenTealLight else ZenTextSecondary
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // 7. Minimalist "Keep It Going" Mode Toggle (Samadhi Overrun Option)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(ZenSurface.copy(alpha = 0.65f))
+                    .border(1.dp, ZenBorder, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 18.dp, vertical = 12.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Keep It Going (Samadhi Overrun)",
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                            color = Color(0xFFE8EEF5)
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = ZenTextPrimary
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Timer runs past 00:00 without stopping so practice isn't cut short",
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                            color = Color(0xFF9FB6D4)
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                            color = ZenTextSecondary
                         )
                     }
 
+                    Spacer(modifier = Modifier.width(12.dp))
+
                     Switch(
                         checked = config.isOverrunEnabled,
-                        onCheckedChange = { viewModel.toggleOverrun(it) },
+                        onCheckedChange = {
+                            viewModel.toggleOverrun(it)
+                            leafBurstTrigger++
+                        },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color(0xFF2A7A78),
-                            checkedTrackColor = Color(0xFF1C4543),
+                            checkedThumbColor = ZenTeal,
+                            checkedTrackColor = ZenTeal.copy(alpha = 0.35f),
                             uncheckedThumbColor = ZenTextMuted,
                             uncheckedTrackColor = ZenSurfaceVariant
                         )
@@ -382,46 +361,32 @@ fun TimerScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(36.dp))
 
-            // 7. Carved Teal Woodblock "▶ Begin Practice" Button
+            // 8. Serene Floating "▶ Begin Practice" Button with Soft Ambient Glow
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(62.dp)
-                    .shadow(10.dp, RoundedCornerShape(18.dp))
-                    .clip(RoundedCornerShape(18.dp))
+                    .height(58.dp)
+                    .shadow(12.dp, RoundedCornerShape(20.dp), spotColor = ZenTeal)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFF227876),
+                                Color(0xFF2EA8A4),
+                                Color(0xFF38C7C2)
+                            )
+                        )
+                    )
+                    .border(1.dp, Color(0xFF5EEAD4).copy(alpha = 0.5f), RoundedCornerShape(20.dp))
                     .clickable {
+                        leafBurstTrigger++
                         viewModel.startSession()
                         onStartSession()
                     },
                 contentAlignment = Alignment.Center
             ) {
-                // Teal Painted Wooden Texture Background
-                Image(
-                    painter = painterResource(id = R.drawable.bg_teal_wood),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                // Dark bevel overlay for tactile depth
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.15f),
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.35f)
-                                )
-                            )
-                        )
-                        .border(1.5.dp, Color(0xFF5BA7A5).copy(alpha = 0.6f), RoundedCornerShape(18.dp))
-                )
-
-                // Button Text
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
@@ -429,16 +394,16 @@ fun TimerScreen(
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = null,
-                        tint = Color(0xFFF3EED9),
+                        tint = Color(0xFF041014),
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Begin Practice",
-                        fontSize = 19.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
-                        color = Color(0xFFF3EED9)
+                        letterSpacing = 1.sp,
+                        color = Color(0xFF041014)
                     )
                 }
             }
