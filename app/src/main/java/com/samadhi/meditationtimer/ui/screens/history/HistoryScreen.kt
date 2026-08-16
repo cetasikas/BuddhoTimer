@@ -74,14 +74,15 @@ fun HistoryScreen(
     viewModel: HistoryViewModel,
     modifier: Modifier = Modifier
 ) {
+    val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
     val sessions by viewModel.sessions.collectAsState()
     val stats by viewModel.stats.collectAsState()
     var sessionToDelete by remember { mutableStateOf<MeditationSession?>(null) }
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        // Moonlit Backdrop
+        // Dynamic Moonlit Backdrop
         Image(
-            painter = painterResource(id = R.drawable.bg_zen_bamboo),
+            painter = painterResource(id = currentTheme.backgroundDrawableRes),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
@@ -144,21 +145,21 @@ fun HistoryScreen(
                             title = "Sessions",
                             value = "${stats.totalSessionsCount}",
                             icon = Icons.Default.SelfImprovement,
-                            tint = ZenTealLight
+                            tint = currentTheme.primaryLight
                         )
                         // Total Practice Time
                         StatItem(
                             title = "Total Time",
                             value = formatHoursMinutes(stats.totalPracticeMinutes),
                             icon = Icons.Default.Timelapse,
-                            tint = ZenTeal
+                            tint = currentTheme.primary
                         )
                         // Current Streak
                         StatItem(
                             title = "Streak",
                             value = "${stats.currentStreakDays}d",
                             icon = Icons.Default.LocalFireDepartment,
-                            tint = ZenTealLight
+                            tint = currentTheme.primaryLight
                         )
                         // Longest Streak
                         StatItem(

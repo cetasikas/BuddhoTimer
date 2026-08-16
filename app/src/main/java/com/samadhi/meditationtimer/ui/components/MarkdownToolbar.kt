@@ -18,21 +18,22 @@ import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
-import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 
 @Composable
 fun MarkdownToolbar(
-    textValue: TextFieldValue,
+    textFieldValue: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val currentTheme = LocalZenTheme.current
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -43,84 +44,84 @@ fun MarkdownToolbar(
     ) {
         IconButton(
             onClick = {
-                onValueChange(wrapOrInsert(textValue, "## ", ""))
+                onValueChange(wrapOrInsert(textFieldValue, "## ", ""))
             },
             modifier = Modifier.size(36.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Title,
                 contentDescription = "Heading",
-                tint = ZenTealLight,
+                tint = currentTheme.primaryLight,
                 modifier = Modifier.size(18.dp)
             )
         }
 
         IconButton(
             onClick = {
-                onValueChange(wrapOrInsert(textValue, "**", "**"))
+                onValueChange(wrapOrInsert(textFieldValue, "**", "**"))
             },
             modifier = Modifier.size(36.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.FormatBold,
                 contentDescription = "Bold",
-                tint = ZenTealLight,
+                tint = currentTheme.primaryLight,
                 modifier = Modifier.size(18.dp)
             )
         }
 
         IconButton(
             onClick = {
-                onValueChange(wrapOrInsert(textValue, "*", "*"))
+                onValueChange(wrapOrInsert(textFieldValue, "*", "*"))
             },
             modifier = Modifier.size(36.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.FormatItalic,
                 contentDescription = "Italic",
-                tint = ZenTealLight,
+                tint = currentTheme.primaryLight,
                 modifier = Modifier.size(18.dp)
             )
         }
 
         IconButton(
             onClick = {
-                onValueChange(wrapOrInsert(textValue, "> ", ""))
+                onValueChange(wrapOrInsert(textFieldValue, "> ", ""))
             },
             modifier = Modifier.size(36.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.FormatQuote,
                 contentDescription = "Quote",
-                tint = ZenTealLight,
+                tint = currentTheme.primaryLight,
                 modifier = Modifier.size(18.dp)
             )
         }
 
         IconButton(
             onClick = {
-                onValueChange(wrapOrInsert(textValue, "- ", ""))
+                onValueChange(wrapOrInsert(textFieldValue, "- ", ""))
             },
             modifier = Modifier.size(36.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.FormatListBulleted,
                 contentDescription = "List",
-                tint = ZenTealLight,
+                tint = currentTheme.primaryLight,
                 modifier = Modifier.size(18.dp)
             )
         }
 
         IconButton(
             onClick = {
-                onValueChange(wrapOrInsert(textValue, "`", "`"))
+                onValueChange(wrapOrInsert(textFieldValue, "`", "`"))
             },
             modifier = Modifier.size(36.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Code,
                 contentDescription = "Code",
-                tint = ZenTealLight,
+                tint = currentTheme.primaryLight,
                 modifier = Modifier.size(18.dp)
             )
         }

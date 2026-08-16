@@ -3,11 +3,6 @@ package com.samadhi.meditationtimer.ui.components
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,14 +22,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Air
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.HourglassBottom
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SelfImprovement
+import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -53,55 +47,60 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.samadhi.meditationtimer.ui.theme.BambooTealTheme
+import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
+import com.samadhi.meditationtimer.ui.theme.SacredLotusTheme
+import com.samadhi.meditationtimer.ui.theme.SakuraTwilightTheme
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
-import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
-import com.samadhi.meditationtimer.ui.theme.ZenTeal
-import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
+import com.samadhi.meditationtimer.ui.theme.ZenTheme
+import com.samadhi.meditationtimer.ui.theme.ZenThemeId
 
 private data class TutorialStep(
     val title: String,
     val subtitle: String,
     val description: String,
     val icon: ImageVector,
+    val isThemeStep: Boolean = false,
     val isPermissionStep: Boolean = false
 )
 
 private val tutorialSteps = listOf(
     TutorialStep(
-        title = "Welcome to Buddho Timer",
-        subtitle = "A serene, 100% offline forest meditation companion",
-        description = "Designed for quiet stillness and peace. Set your target practice duration easily with the minimal slider or one-tap glowing preset buttons.",
+        title = "Choose Your Zen Atmosphere",
+        subtitle = "Select your starting aesthetic (changeable anytime in Settings)",
+        description = "Each atmosphere features its own custom moonlit backdrop, animated falling particles, and harmonious color theme.",
+        icon = Icons.Default.Palette,
+        isThemeStep = true
+    ),
+    TutorialStep(
+        title = "Minimal Meditation Timer",
+        subtitle = "A serene, 100% offline companion for quiet stillness",
+        description = "Set your practice duration easily using the organic branch slider or one-tap glowing preset buttons. Practice with zero distractions.",
         icon = Icons.Default.SelfImprovement
     ),
     TutorialStep(
-        title = "Keep It Going (Samadhi Overrun)",
-        subtitle = "Never be interrupted during deep peace",
-        description = "Enable Samadhi Overrun to let your meditation continue uninterrupted past target time without startling bells. The timer counts up gently until you finish.",
+        title = "Samadhi Overrun & Box Breathing",
+        subtitle = "Deepen peace and anchor the breath",
+        description = "Enable Samadhi Overrun to let deep meditation continue uninterrupted past target time, or tap 'Zen Box Breathing' for 4-4-4-4 particle breathwork.",
         icon = Icons.Default.HourglassBottom
-    ),
-    TutorialStep(
-        title = "Box Breathing & Wisdom Guides",
-        subtitle = "Mindfulness anchors at your fingertips",
-        description = "Tap the 'Zen Box Breathing' pill on the main screen for 4-4-4-4 particle breathwork, or open the Wisdom tab for Ajahn Brahm's step-by-step guides.",
-        icon = Icons.Default.Air
     ),
     TutorialStep(
         title = "Recommended Permissions",
         subtitle = "Ensure uninterrupted sits & background stability",
-        description = "Grant Do Not Disturb access to auto-silence incoming notifications, and exempt background battery optimization so Android never terminates long sits.",
+        description = "Grant Do Not Disturb access to auto-silence incoming notifications, and exempt background battery optimization so Android never stops long sits.",
         icon = Icons.Default.DoNotDisturb,
         isPermissionStep = true
     )
@@ -111,10 +110,12 @@ private val tutorialSteps = listOf(
 fun TutorialOverlay(
     isVisible: Boolean,
     onDismiss: () -> Unit,
+    onSelectTheme: (ZenThemeId) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (!isVisible) return
 
+    val currentTheme = LocalZenTheme.current
     val context = LocalContext.current
     var currentStepIndex by remember { mutableIntStateOf(0) }
     val step = tutorialSteps[currentStepIndex]
@@ -132,8 +133,8 @@ fun TutorialOverlay(
                 .fillMaxWidth(0.92f)
                 .clip(RoundedCornerShape(24.dp))
                 .background(ZenSurface.copy(alpha = 0.95f))
-                .border(1.dp, ZenTeal.copy(alpha = 0.4f), RoundedCornerShape(24.dp))
-                .padding(24.dp),
+                .border(1.dp, currentTheme.primary.copy(alpha = 0.4f), RoundedCornerShape(24.dp))
+                .padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Header Row: Progress & Close
@@ -151,7 +152,7 @@ fun TutorialOverlay(
                                 .width(if (idx == currentStepIndex) 24.dp else 10.dp)
                                 .clip(RoundedCornerShape(3.dp))
                                 .background(
-                                    if (idx == currentStepIndex) ZenTealLight
+                                    if (idx == currentStepIndex) currentTheme.primaryLight
                                     else ZenBorder.copy(alpha = 0.7f)
                                 )
                         )
@@ -171,71 +172,139 @@ fun TutorialOverlay(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Glowing Icon Header
             Box(
                 modifier = Modifier
-                    .size(68.dp)
+                    .size(62.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.radialGradient(
                             colors = listOf(
-                                ZenTeal.copy(alpha = 0.35f),
+                                currentTheme.primary.copy(alpha = 0.35f),
                                 ZenSurfaceVariant
                             )
                         )
                     )
-                    .border(1.dp, ZenTealLight.copy(alpha = 0.5f), CircleShape),
+                    .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.5f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = step.icon,
                     contentDescription = null,
-                    tint = ZenTealLight,
-                    modifier = Modifier.size(34.dp)
+                    tint = currentTheme.primaryLight,
+                    modifier = Modifier.size(30.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Text(
                 text = step.title,
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 19.sp
+                    fontSize = 18.sp
                 ),
                 color = ZenTextPrimary,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
                 text = step.subtitle,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontStyle = FontStyle.Italic,
-                    fontSize = 13.sp
+                    fontSize = 12.5.sp
                 ),
-                color = ZenTealLight,
+                color = currentTheme.primaryLight,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = step.description,
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 13.5.sp,
-                    lineHeight = 20.sp
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp
                 ),
                 color = ZenTextSecondary,
                 textAlign = TextAlign.Center
             )
 
+            // Step 1: Interactive Theme Picker
+            if (step.isThemeStep) {
+                Spacer(modifier = Modifier.height(14.dp))
+                val themes = listOf(BambooTealTheme, SacredLotusTheme, SakuraTwilightTheme)
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    themes.forEach { theme ->
+                        val isSelected = currentTheme.id == theme.id
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    if (isSelected) theme.primary.copy(alpha = 0.20f)
+                                    else ZenSurfaceVariant.copy(alpha = 0.6f)
+                                )
+                                .border(
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) theme.primaryLight else ZenBorder,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable { onSelectTheme(theme.id) }
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(theme.primaryLight)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = theme.title,
+                                            fontSize = 13.5.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) theme.primaryLight else ZenTextPrimary
+                                        )
+                                        Text(
+                                            text = theme.id.subtitle,
+                                            fontSize = 11.sp,
+                                            color = ZenTextSecondary
+                                        )
+                                    }
+                                }
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = theme.primaryLight,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Permissions Quick Access (Only on Step 4)
             if (step.isPermissionStep) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -250,8 +319,8 @@ fun TutorialOverlay(
                         },
                         modifier = Modifier.weight(1f).height(38.dp),
                         shape = RoundedCornerShape(19.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTealLight),
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = androidx.compose.ui.graphics.SolidColor(ZenTeal))
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
                     ) {
                         Text("Grant DND", fontSize = 11.5.sp, fontWeight = FontWeight.Medium)
                     }
@@ -266,15 +335,15 @@ fun TutorialOverlay(
                         },
                         modifier = Modifier.weight(1f).height(38.dp),
                         shape = RoundedCornerShape(19.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTealLight),
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = androidx.compose.ui.graphics.SolidColor(ZenTeal))
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
                     ) {
                         Text("Disable Battery Opt", fontSize = 11.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Action Buttons
             Row(
@@ -294,10 +363,10 @@ fun TutorialOverlay(
                             currentStepIndex++
                         }
                     },
-                    modifier = Modifier.height(44.dp),
-                    shape = RoundedCornerShape(22.dp),
+                    modifier = Modifier.height(42.dp),
+                    shape = RoundedCornerShape(21.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ZenTeal,
+                        containerColor = currentTheme.primary,
                         contentColor = Color(0xFF041014)
                     )
                 ) {

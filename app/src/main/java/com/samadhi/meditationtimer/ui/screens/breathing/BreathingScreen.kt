@@ -141,10 +141,11 @@ fun BreathingScreen(
         }
     }
 
+    val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
     val phaseColor = when (currentPhase) {
-        BreathPhase.INHALE -> ZenTeal
-        BreathPhase.HOLD_FULL -> ZenGoldGlow
-        BreathPhase.EXHALE -> ZenOverrunBlue
+        BreathPhase.INHALE -> currentTheme.primary
+        BreathPhase.HOLD_FULL -> currentTheme.primaryLight
+        BreathPhase.EXHALE -> currentTheme.overrunColor
         BreathPhase.HOLD_EMPTY -> ZenAmber
     }
 
@@ -153,9 +154,9 @@ fun BreathingScreen(
             .fillMaxSize()
             .background(ZenObsidian)
     ) {
-        // 1. Dark Moonlit Plum Village Backdrop
+        // 1. Dynamic Moonlit Backdrop
         Image(
-            painter = painterResource(id = R.drawable.bg_zen_bamboo),
+            painter = painterResource(id = currentTheme.backgroundDrawableRes),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),

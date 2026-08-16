@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,7 +19,6 @@ import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,13 +27,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
-import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
-import com.samadhi.meditationtimer.ui.theme.ZenTeal
-import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
-import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 
 data class MoodOption(
     val level: Int,
@@ -57,15 +52,17 @@ fun MoodSelector(
     onMoodSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val currentTheme = LocalZenTheme.current
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         moodOptions.forEach { mood ->
             val isSelected = mood.level == selectedMood
-            val bg = if (isSelected) ZenTeal.copy(alpha = 0.22f) else ZenSurface
-            val border = if (isSelected) ZenTealLight else ZenBorder
-            val tint = if (isSelected) ZenTealLight else ZenTextMuted
+            val bg = if (isSelected) currentTheme.primary.copy(alpha = 0.22f) else ZenSurface
+            val border = if (isSelected) currentTheme.primaryLight else ZenBorder
+            val tint = if (isSelected) currentTheme.primaryLight else ZenTextMuted
 
             Column(
                 modifier = Modifier
@@ -88,7 +85,7 @@ fun MoodSelector(
                 Text(
                     text = mood.title,
                     fontSize = 10.sp,
-                    color = if (isSelected) ZenTealLight else ZenTextMuted
+                    color = if (isSelected) currentTheme.primaryLight else ZenTextMuted
                 )
             }
         }

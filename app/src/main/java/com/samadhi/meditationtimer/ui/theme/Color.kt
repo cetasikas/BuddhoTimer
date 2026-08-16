@@ -10,16 +10,28 @@ val ZenSurface = Color(0xFF131F33)
 val ZenSurfaceVariant = Color(0xFF1C2B44)
 val ZenBorder = Color(0xFF263959)
 
-// Serene Calming Sage Green Palette (Plum Village Zen Aesthetic)
-val ZenSage = Color(0xFF8BA888)        // Soft muted calming sage green
-val ZenSageLight = Color(0xFFAECBB0)   // Gentle airy sage green highlight
-val ZenSageDark = Color(0xFF4D6B51)    // Deep tranquil forest moss
-val ZenSageGlow = Color(0x358BA888)    // Subtle ambient breathing aura
+// 1. Moonlit Bamboo / Zen Teal Palette (Default)
+val ZenTeal = Color(0xFF2EA8A4)
+val ZenTealLight = Color(0xFF5EEAD4)
+val ZenTealDark = Color(0xFF164E4D)
+val ZenTealGlow = Color(0x352EA8A4)
 
-// Theme aliases mapped to Sage Green for consistent calming aesthetic
-val ZenTeal = ZenSage
-val ZenTealLight = ZenSageLight
-val ZenTealGlow = ZenSageGlow
+// 2. Sacred Lotus Palette
+val ZenLotus = Color(0xFFD977A6)
+val ZenLotusLight = Color(0xFFF4A8C4)
+val ZenLotusDark = Color(0xFF831843)
+val ZenLotusGlow = Color(0x35D977A6)
+
+// 3. Sakura Twilight Palette
+val ZenSakura = Color(0xFFE0829D)
+val ZenSakuraLight = Color(0xFFFBCFE8)
+val ZenSakuraDark = Color(0xFF881337)
+val ZenSakuraGlow = Color(0x35E0829D)
+
+// Calming Sage Palette
+val ZenSage = Color(0xFF8BA888)
+val ZenSageLight = Color(0xFFAECBB0)
+val ZenSageDark = Color(0xFF4D6B51)
 
 val ZenAmber = Color(0xFFE5A93B)
 val ZenAmberLight = Color(0xFFFFCC66)
@@ -30,13 +42,13 @@ val ZenGoldGlow = Color(0xFFFFD580)
 val ZenGoldCore = Color(0xFFFFF6D6)
 val ZenGoldDust = Color(0xFFF0B849)
 
-val ZenOverrunBlue = Color(0xFF7EADC7)  // Soft misty slate-blue
-val ZenOverrunGlow = Color(0x357EADC7)
+val ZenOverrunBlue = Color(0xFF60A5FA)
+val ZenOverrunGlow = Color(0x3560A5FA)
 
 // High-contrast legible text
 val ZenTextPrimary = Color(0xFFF8FAFC)
 val ZenTextSecondary = Color(0xFFCBD5E1)
 val ZenTextMuted = Color(0xFF8396B0)
 
-val ZenSuccess = Color(0xFF8BA888)
+val ZenSuccess = Color(0xFF34D399)
 val ZenDanger = Color(0xFFF87171)

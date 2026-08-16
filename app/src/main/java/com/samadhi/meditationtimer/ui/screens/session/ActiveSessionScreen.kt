@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Done
@@ -43,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -70,13 +72,13 @@ import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
-
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Brush
 import com.samadhi.meditationtimer.R
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
+import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 
 @Composable
 fun ActiveSessionScreen(
@@ -87,8 +89,9 @@ fun ActiveSessionScreen(
 ) {
     val timerStatus by viewModel.timerStatus.collectAsState()
     val config by viewModel.config.collectAsState()
+    val currentTheme = LocalZenTheme.current
     var isOledZenMode by remember { mutableStateOf(false) }
-    var leavesBurstTrigger by remember { mutableStateOf(0) }
+    var leavesBurstTrigger by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(timerStatus) {
         if (timerStatus is TimerStatus.Completed) {
@@ -98,12 +101,10 @@ fun ActiveSessionScreen(
         }
     }
 
-    val backgroundColor = if (isOledZenMode) Color(0xFF000000) else ZenObsidian
-
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(if (isOledZenMode) Color.Black else ZenObsidian)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -111,13 +112,12 @@ fun ActiveSessionScreen(
                 if (isOledZenMode) {
                     isOledZenMode = false
                 }
-            },
-        contentAlignment = Alignment.Center
+            }
     ) {
-        // Subtle background art when not in OLED mode
         if (!isOledZenMode) {
+            // Dynamic Moonlit Backdrop
             Image(
-                painter = painterResource(id = R.drawable.bg_zen_bamboo),
+                painter = painterResource(id = currentTheme.backgroundDrawableRes),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -279,7 +279,7 @@ fun ActiveSessionScreen(
                             },
                             fontSize = 84.sp,
                             fontWeight = FontWeight.ExtraLight,
-                            color = if (isOverrun) ZenOverrunBlue.copy(alpha = 0.9f) else ZenTealLight.copy(alpha = 0.9f)
+                            color = if (isOverrun) currentTheme.overrunColor.copy(alpha = 0.9f) else currentTheme.primaryLight.copy(alpha = 0.9f)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
@@ -299,8 +299,8 @@ fun ActiveSessionScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
                                 .background(
-                                    if (isOverrun) ZenOverrunBlue.copy(alpha = 0.15f)
-                                    else ZenTeal.copy(alpha = 0.18f)
+                                    if (isOverrun) currentTheme.overrunColor.copy(alpha = 0.15f)
+                                    else currentTheme.primary.copy(alpha = 0.18f)
                                 )
                                 .padding(horizontal = 16.dp, vertical = 6.dp)
                         ) {
@@ -314,7 +314,7 @@ fun ActiveSessionScreen(
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 2.sp,
-                                color = if (isOverrun) ZenOverrunBlue else ZenTealLight
+                                color = if (isOverrun) currentTheme.overrunColor else currentTheme.primaryLight
                             )
                         }
 
@@ -335,7 +335,7 @@ fun ActiveSessionScreen(
                                         text = "+${NotificationHelper.formatSeconds(overrunTime)}",
                                         fontSize = 52.sp,
                                         fontWeight = FontWeight.Light,
-                                        color = ZenOverrunBlue
+                                        color = currentTheme.overrunColor
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
@@ -395,7 +395,7 @@ fun ActiveSessionScreen(
                                 Icon(
                                     imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
                                     contentDescription = if (isPaused) "Resume" else "Pause",
-                                    tint = ZenTealLight,
+                                    tint = currentTheme.primaryLight,
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
@@ -407,21 +407,26 @@ fun ActiveSessionScreen(
                                     .height(56.dp)
                                     .clip(RoundedCornerShape(28.dp)),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isOverrun) ZenOverrunBlue else ZenTeal,
-                                    contentColor = Color(0xFF041014)
+                                    containerColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary,
+                                    contentColor = ZenObsidian
                                 )
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Done,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Finish Session",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Complete",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                }
                             }
                         }
                     }

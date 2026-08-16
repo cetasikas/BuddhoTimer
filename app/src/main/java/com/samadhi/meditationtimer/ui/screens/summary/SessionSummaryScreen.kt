@@ -82,13 +82,14 @@ fun SessionSummaryScreen(
         return
     }
 
+    val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
     var selectedMood by remember { mutableIntStateOf(3) }
     var notesValue by remember { mutableStateOf(TextFieldValue("")) }
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        // Moonlit Backdrop
+        // Dynamic Moonlit Backdrop
         Image(
-            painter = painterResource(id = R.drawable.bg_zen_bamboo),
+            painter = painterResource(id = currentTheme.backgroundDrawableRes),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
@@ -130,7 +131,7 @@ fun SessionSummaryScreen(
         Icon(
             imageVector = Icons.Default.SelfImprovement,
             contentDescription = null,
-            tint = ZenTealLight,
+            tint = currentTheme.primaryLight,
             modifier = Modifier.size(42.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -167,7 +168,7 @@ fun SessionSummaryScreen(
                         text = NotificationHelper.formatSeconds(completedStatus.actualDurationSec),
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
-                        color = ZenTealLight
+                        color = currentTheme.primaryLight
                     )
                     Text(
                         text = "Total Practice",
@@ -190,12 +191,12 @@ fun SessionSummaryScreen(
                             text = "+${NotificationHelper.formatSeconds(completedStatus.overrunSec)}",
                             fontSize = 26.sp,
                             fontWeight = FontWeight.Bold,
-                            color = ZenTealLight
+                            color = currentTheme.primaryLight
                         )
                         Text(
                             text = "Samadhi Overrun",
                             fontSize = 12.sp,
-                            color = ZenTeal
+                            color = currentTheme.primary
                         )
                     } else {
                         Text(
@@ -218,66 +219,79 @@ fun SessionSummaryScreen(
 
         // Mood / Depth Rating Selector
         Text(
-            text = "Quality of Focus & Stillness",
-            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-            color = ZenTextPrimary,
-            modifier = Modifier.align(Alignment.Start)
+            text = "STATE OF MIND & CLARITY",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp,
+            color = currentTheme.primaryLight,
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
         MoodSelector(
             selectedMood = selectedMood,
-            onMoodSelected = { selectedMood = it }
+            onMoodSelected = { selectedMood = it },
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Markdown Reflection Journal
+        // Journal & Meditation Reflection Notes
         Text(
-            text = "Practice Reflections (Markdown)",
-            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-            color = ZenTextPrimary,
-            modifier = Modifier.align(Alignment.Start)
+            text = "MEDITATION REFLECTION",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp,
+            color = currentTheme.primaryLight,
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        MarkdownToolbar(
-            textValue = notesValue,
-            onValueChange = { notesValue = it }
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(ZenSurface.copy(alpha = 0.80f))
-                .border(1.dp, ZenBorder, RoundedCornerShape(12.dp))
-                .padding(12.dp)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.80f)),
+            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            if (notesValue.text.isEmpty()) {
-                Text(
-                    text = "Write reflections, insights, or sensations (Markdown supported)…",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = ZenTextMuted)
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Markdown formatting toolbar
+                MarkdownToolbar(
+                    textFieldValue = notesValue,
+                    onValueChange = { notesValue = it }
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                BasicTextField(
+                    value = notesValue,
+                    onValueChange = { notesValue = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(110.dp),
+                    textStyle = TextStyle(
+                        color = ZenTextPrimary,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp
+                    ),
+                    cursorBrush = SolidColor(currentTheme.primaryLight),
+                    decorationBox = { innerTextField ->
+                        Box {
+                            if (notesValue.text.isEmpty()) {
+                                Text(
+                                    text = "Record insights, stillness, challenges, or mental state...",
+                                    color = ZenTextMuted,
+                                    fontSize = 14.sp
+                                )
+                            }
+                            innerTextField()
+                        }
+                    }
                 )
             }
-            BasicTextField(
-                value = notesValue,
-                onValueChange = { notesValue = it },
-                textStyle = TextStyle(
-                    color = ZenTextPrimary,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp
-                ),
-                cursorBrush = SolidColor(ZenTealLight),
-                modifier = Modifier.fillMaxSize()
-            )
         }
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        // Action Buttons
+        // Actions: Save Reflection & Discard
         Button(
             onClick = {
                 val session = MeditationSession(
@@ -297,7 +311,7 @@ fun SessionSummaryScreen(
                 .height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = ZenTeal,
+                containerColor = currentTheme.primary,
                 contentColor = Color(0xFF041014)
             )
         ) {

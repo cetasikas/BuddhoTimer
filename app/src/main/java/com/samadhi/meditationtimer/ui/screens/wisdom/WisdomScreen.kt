@@ -80,13 +80,14 @@ fun WisdomScreen(
     onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
     val topics = remember { MeditationGuides.topicCards }
     var expandedTopicId by remember { mutableStateOf<String?>("start_here") }
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        // 1. Dark Moonlit Bamboo Backdrop
+        // 1. Dynamic Moonlit Backdrop
         Image(
-            painter = painterResource(id = R.drawable.bg_zen_bamboo),
+            painter = painterResource(id = currentTheme.backgroundDrawableRes),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
@@ -108,7 +109,7 @@ fun WisdomScreen(
                 )
         )
 
-        // 2. Subtle Falling Leaves
+        // 2. Subtle Falling Particles
         FallingLeavesEffect(
             leafCount = 14,
             ambientAlpha = 0.26f
@@ -137,7 +138,7 @@ fun WisdomScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = ZenTealLight,
+                        tint = currentTheme.primaryLight,
                         modifier = Modifier.size(20.dp)
                     )
                 }

@@ -23,10 +23,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.samadhi.meditationtimer.ui.theme.ZenTeal
-import com.samadhi.meditationtimer.ui.theme.ZenTealGlow
+import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
-import com.samadhi.meditationtimer.ui.theme.ZenOverrunBlue
 import com.samadhi.meditationtimer.ui.theme.ZenOverrunGlow
 
 @Composable
@@ -39,6 +37,8 @@ fun CircularTimerProgress(
     strokeWidth: Dp = 8.dp,
     content: @Composable () -> Unit
 ) {
+    val currentTheme = LocalZenTheme.current
+
     // Breathing pulse animation for meditative state
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseScale by infiniteTransition.animateFloat(
@@ -51,8 +51,8 @@ fun CircularTimerProgress(
         label = "pulseScale"
     )
 
-    val activeColor = if (isOverrun) ZenOverrunBlue else ZenTeal
-    val glowColor = if (isOverrun) ZenOverrunGlow else ZenTealGlow
+    val activeColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary
+    val glowColor = if (isOverrun) ZenOverrunGlow else currentTheme.primaryGlow
 
     Box(
         modifier = modifier.size(size),

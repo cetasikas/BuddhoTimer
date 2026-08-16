@@ -17,10 +17,12 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
+import com.samadhi.meditationtimer.ui.theme.ParticleType
 import kotlin.math.sin
 import kotlin.random.Random
 
-private data class LeafParticle(
+private data class ParticleState(
     var xRatio: Float,
     var yRatio: Float,
     val speedY: Float,
@@ -36,7 +38,7 @@ private data class LeafParticle(
     var lifeRatio: Float = 1.0f
 )
 
-private data class SettledLeaf(
+private data class SettledParticle(
     val xRatio: Float,
     val yRatio: Float,
     val rotation: Float,
@@ -49,29 +51,31 @@ private data class SettledLeaf(
 @Composable
 fun FallingLeavesEffect(
     modifier: Modifier = Modifier,
-    leafCount: Int = 14,
+    leafCount: Int = 16,
     triggerBurst: Int = 0,
-    ambientAlpha: Float = 0.28f,
+    ambientAlpha: Float = 0.32f,
     isGlowing: Boolean = false,
     pileUpAtBottom: Boolean = false,
     sessionProgressRatio: Float = 0.0f
 ) {
-    val leaves = remember {
-        mutableStateListOf<LeafParticle>().apply {
-            addAll(generateAmbientLeaves(leafCount))
+    val currentTheme = LocalZenTheme.current
+
+    val particles = remember(currentTheme.id) {
+        mutableStateListOf<ParticleState>().apply {
+            addAll(generateAmbientParticles(leafCount, currentTheme.particlePalette))
         }
     }
 
-    // Rich multi-tiered stacked bed of leaves along the bottom
-    val settledBed = remember {
-        generateStackedBed(65)
+    // Rich 4-tiered dense stacked bed (up to 100 particles)
+    val settledBed = remember(currentTheme.id) {
+        generateDenseStackedBed(100, currentTheme.particlePalette)
     }
 
-    // Trigger burst leaves on action
+    // Trigger burst particles on action
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {
-            val burstLeaves = generateBurstLeaves(12)
-            leaves.addAll(burstLeaves)
+            val burstParticles = generateBurstParticles(14, currentTheme.particlePalette)
+            particles.addAll(burstParticles)
         }
     }
 
@@ -82,22 +86,22 @@ fun FallingLeavesEffect(
             withFrameNanos { frameTimeNanos ->
                 if (lastFrameTimeNanos != 0L) {
                     val dt = ((frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000f).coerceIn(0.001f, 0.05f)
-                    val iterator = leaves.listIterator()
+                    val iterator = particles.listIterator()
                     while (iterator.hasNext()) {
-                        val leaf = iterator.next()
-                        leaf.yRatio += leaf.speedY * dt
-                        leaf.rotation += leaf.rotationSpeed * dt
+                        val p = iterator.next()
+                        p.yRatio += p.speedY * dt
+                        p.rotation += p.rotationSpeed * dt
 
-                        if (leaf.isBurst) {
-                            leaf.lifeRatio -= dt * 0.28f
-                            if (leaf.lifeRatio <= 0f || leaf.yRatio > 1.15f) {
+                        if (p.isBurst) {
+                            p.lifeRatio -= dt * 0.28f
+                            if (p.lifeRatio <= 0f || p.yRatio > 1.15f) {
                                 iterator.remove()
                                 continue
                             }
                         } else {
-                            if (leaf.yRatio >= 1.05f) {
-                                leaf.yRatio = -0.08f
-                                leaf.xRatio = Random.nextFloat()
+                            if (p.yRatio >= 1.05f) {
+                                p.yRatio = -0.08f
+                                p.xRatio = Random.nextFloat()
                             }
                         }
                     }
@@ -107,8 +111,8 @@ fun FallingLeavesEffect(
         }
     }
 
-    val leafPath = remember { Path() }
-    val veinPath = remember { Path() }
+    val shapePath = remember { Path() }
+    val detailPath = remember { Path() }
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
@@ -116,25 +120,30 @@ fun FallingLeavesEffect(
         if (width <= 0f || height <= 0f) return@Canvas
 
         val currentTimeSec = (lastFrameTimeNanos / 1_000_000_000f)
-        // Gentle, soothing 5.0-second breathing sine oscillation
-        val breathingCycle = (sin(currentTimeSec * 1.25f) * 0.5f + 0.5f)
+        // Calming 4.8s breathing sine wave
+        val breathingCycle = (sin(currentTimeSec * 1.3f) * 0.5f + 0.5f)
 
-        // 1. Draw settled stacked leaves coinciding with session elapsed progress
-        if (pileUpAtBottom && sessionProgressRatio > 0.01f) {
-            val maxVisibleSettled = (sessionProgressRatio.coerceIn(0f, 1.25f) * settledBed.size).toInt().coerceAtMost(settledBed.size)
-            for (i in 0 until maxVisibleSettled) {
+        // 1. Draw settled stacked particles (Starts with an immediate base bed and builds up richly)
+        if (pileUpAtBottom) {
+            val baseCount = 18 // Base resting bed from the start
+            val progressiveCount = (sessionProgressRatio.coerceIn(0f, 1.25f) * (settledBed.size - baseCount)).toInt()
+            val totalVisible = (baseCount + progressiveCount).coerceIn(baseCount, settledBed.size)
+
+            for (i in 0 until totalVisible) {
                 val settled = settledBed[i]
                 val posX = settled.xRatio * width
                 val posY = settled.yRatio * height
-                val currentAlpha = (settled.alpha * ambientAlpha * 1.5f).coerceIn(0.12f, 0.75f)
+                val currentAlpha = (settled.alpha * ambientAlpha * 1.5f).coerceIn(0.15f, 0.85f)
 
-                drawRealisticLeaf(
-                    path = leafPath,
-                    veinPath = veinPath,
+                drawThemeParticle(
+                    particleType = currentTheme.particleType,
+                    shapePath = shapePath,
+                    detailPath = detailPath,
                     center = Offset(posX, posY),
                     size = settled.sizePx,
                     rotation = settled.rotation,
                     color = settled.color.copy(alpha = currentAlpha),
+                    glowColor = currentTheme.primaryLight,
                     isGlowing = isGlowing,
                     breathingGlowFactor = breathingCycle,
                     isResting = true
@@ -142,21 +151,23 @@ fun FallingLeavesEffect(
             }
         }
 
-        // 2. Draw active floating leaves
-        leaves.forEach { leaf ->
-            val sway = sin(currentTimeSec * leaf.swayFreq + leaf.swayPhase) * (leaf.swayAmpRatio * width)
-            val posX = (leaf.xRatio * width + sway).coerceIn(-50f, width + 50f)
-            val posY = leaf.yRatio * height
-            val currentAlpha = (leaf.alpha * leaf.lifeRatio * ambientAlpha).coerceIn(0f, 1f)
+        // 2. Draw active floating particles
+        particles.forEach { p ->
+            val sway = sin(currentTimeSec * p.swayFreq + p.swayPhase) * (p.swayAmpRatio * width)
+            val posX = (p.xRatio * width + sway).coerceIn(-50f, width + 50f)
+            val posY = p.yRatio * height
+            val currentAlpha = (p.alpha * p.lifeRatio * ambientAlpha).coerceIn(0f, 1f)
 
             if (currentAlpha > 0.01f) {
-                drawRealisticLeaf(
-                    path = leafPath,
-                    veinPath = veinPath,
+                drawThemeParticle(
+                    particleType = currentTheme.particleType,
+                    shapePath = shapePath,
+                    detailPath = detailPath,
                     center = Offset(posX, posY),
-                    size = leaf.sizePx,
-                    rotation = leaf.rotation,
-                    color = leaf.color.copy(alpha = currentAlpha),
+                    size = p.sizePx,
+                    rotation = p.rotation,
+                    color = p.color.copy(alpha = currentAlpha),
+                    glowColor = currentTheme.primaryLight,
                     isGlowing = isGlowing,
                     breathingGlowFactor = breathingCycle,
                     isResting = false
@@ -166,129 +177,168 @@ fun FallingLeavesEffect(
     }
 }
 
-private fun DrawScope.drawRealisticLeaf(
-    path: Path,
-    veinPath: Path,
+private fun DrawScope.drawThemeParticle(
+    particleType: ParticleType,
+    shapePath: Path,
+    detailPath: Path,
     center: Offset,
     size: Float,
     rotation: Float,
     color: Color,
+    glowColor: Color,
     isGlowing: Boolean,
     breathingGlowFactor: Float,
-    isResting: Boolean = false
+    isResting: Boolean
 ) {
     rotate(degrees = rotation, pivot = center) {
-        path.reset()
-        val halfW = size * 0.38f
+        shapePath.reset()
+        detailPath.reset()
+
+        val halfW = size * 0.40f
         val halfH = size * 0.88f
 
-        // Natural Bodhi / Bamboo organic contour
-        path.moveTo(center.x, center.y - halfH)
-        path.cubicTo(
-            center.x + halfW * 1.05f, center.y - halfH * 0.32f,
-            center.x + halfW * 0.85f, center.y + halfH * 0.38f,
-            center.x, center.y + halfH
-        )
-        path.cubicTo(
-            center.x - halfW * 0.85f, center.y + halfH * 0.38f,
-            center.x - halfW * 1.05f, center.y - halfH * 0.32f,
-            center.x, center.y - halfH
-        )
-        path.close()
+        when (particleType) {
+            ParticleType.BAMBOO_LEAF -> {
+                // Natural Bodhi / Bamboo Leaf Shape
+                shapePath.moveTo(center.x, center.y - halfH)
+                shapePath.cubicTo(
+                    center.x + halfW * 1.05f, center.y - halfH * 0.32f,
+                    center.x + halfW * 0.85f, center.y + halfH * 0.38f,
+                    center.x, center.y + halfH
+                )
+                shapePath.cubicTo(
+                    center.x - halfW * 0.85f, center.y + halfH * 0.38f,
+                    center.x - halfW * 1.05f, center.y - halfH * 0.32f,
+                    center.x, center.y - halfH
+                )
+                shapePath.close()
+
+                // Veins
+                detailPath.moveTo(center.x, center.y - halfH * 0.85f)
+                detailPath.lineTo(center.x, center.y + halfH * 0.88f)
+                val stepY = halfH * 0.38f
+                detailPath.moveTo(center.x, center.y - stepY * 0.6f)
+                detailPath.quadraticTo(center.x + halfW * 0.5f, center.y - stepY * 0.85f, center.x + halfW * 0.65f, center.y - stepY * 0.7f)
+                detailPath.moveTo(center.x, center.y - stepY * 0.6f)
+                detailPath.quadraticTo(center.x - halfW * 0.5f, center.y - stepY * 0.85f, center.x - halfW * 0.65f, center.y - stepY * 0.7f)
+                detailPath.moveTo(center.x, center.y + stepY * 0.1f)
+                detailPath.quadraticTo(center.x + halfW * 0.55f, center.y - stepY * 0.15f, center.x + halfW * 0.7f, center.y)
+                detailPath.moveTo(center.x, center.y + stepY * 0.1f)
+                detailPath.quadraticTo(center.x - halfW * 0.55f, center.y - stepY * 0.15f, center.x - halfW * 0.7f, center.y)
+            }
+
+            ParticleType.LOTUS_PETAL -> {
+                // Graceful Cupped Sacred Lotus Petal
+                shapePath.moveTo(center.x, center.y - halfH * 0.95f)
+                shapePath.cubicTo(
+                    center.x + halfW * 1.25f, center.y - halfH * 0.40f,
+                    center.x + halfW * 1.15f, center.y + halfH * 0.45f,
+                    center.x, center.y + halfH
+                )
+                shapePath.cubicTo(
+                    center.x - halfW * 1.15f, center.y + halfH * 0.45f,
+                    center.x - halfW * 1.25f, center.y - halfH * 0.40f,
+                    center.x, center.y - halfH * 0.95f
+                )
+                shapePath.close()
+
+                // Delicate central petal spine & soft shading
+                detailPath.moveTo(center.x, center.y - halfH * 0.85f)
+                detailPath.quadraticTo(center.x + halfW * 0.15f, center.y, center.x, center.y + halfH * 0.85f)
+            }
+
+            ParticleType.SAKURA_PETAL -> {
+                // Notched Cherry Blossom Petal
+                val topY = center.y - halfH * 0.95f
+                shapePath.moveTo(center.x, center.y + halfH)
+                shapePath.cubicTo(
+                    center.x - halfW * 1.2f, center.y + halfH * 0.35f,
+                    center.x - halfW * 1.1f, center.y - halfH * 0.45f,
+                    center.x - halfW * 0.55f, topY
+                )
+                // Distinctive sakura petal center notch
+                shapePath.quadraticTo(
+                    center.x, topY + halfH * 0.22f,
+                    center.x + halfW * 0.55f, topY
+                )
+                shapePath.cubicTo(
+                    center.x + halfW * 1.1f, center.y - halfH * 0.45f,
+                    center.x + halfW * 1.2f, center.y + halfH * 0.35f,
+                    center.x, center.y + halfH
+                )
+                shapePath.close()
+
+                // Soft central crease
+                detailPath.moveTo(center.x, topY + halfH * 0.3f)
+                detailPath.lineTo(center.x, center.y + halfH * 0.8f)
+            }
+        }
 
         // Subtle, calming breathing glow aura during active meditation
         if (isGlowing) {
             val haloAlpha = (0.18f + 0.22f * breathingGlowFactor).coerceIn(0.12f, 0.45f)
             val rimAlpha = (0.28f + 0.25f * breathingGlowFactor).coerceIn(0.20f, 0.58f)
 
-            // Soft Translucent Sage Outer Halo
+            // Outer Breathing Halo
             drawPath(
-                path = path,
-                color = Color(0xFFAECBB0).copy(alpha = haloAlpha),
+                path = shapePath,
+                color = glowColor.copy(alpha = haloAlpha),
                 style = Stroke(width = if (isResting) 3.5f else 4.5f)
             )
-            // Delicate Inner Sage Rim
+            // Delicate Inner Rim
             drawPath(
-                path = path,
-                color = Color(0xFF8BA888).copy(alpha = rimAlpha),
+                path = shapePath,
+                color = color.copy(alpha = rimAlpha),
                 style = Stroke(width = if (isResting) 1.5f else 2.0f)
             )
         }
 
-        // Fill leaf body
-        drawPath(path = path, color = color)
+        // Fill Particle Body
+        drawPath(path = shapePath, color = color)
 
-        // Delicate Leaf Texture: Central Spine & Side Ribs
-        veinPath.reset()
-        // Central spine
-        veinPath.moveTo(center.x, center.y - halfH * 0.85f)
-        veinPath.lineTo(center.x, center.y + halfH * 0.88f)
-
-        // Subtle side ribs
-        val stepY = halfH * 0.38f
-        // Top veins
-        veinPath.moveTo(center.x, center.y - stepY * 0.6f)
-        veinPath.quadraticTo(center.x + halfW * 0.45f, center.y - stepY * 0.85f, center.x + halfW * 0.65f, center.y - stepY * 0.7f)
-        veinPath.moveTo(center.x, center.y - stepY * 0.6f)
-        veinPath.quadraticTo(center.x - halfW * 0.45f, center.y - stepY * 0.85f, center.x - halfW * 0.65f, center.y - stepY * 0.7f)
-
-        // Middle veins
-        veinPath.moveTo(center.x, center.y + stepY * 0.1f)
-        veinPath.quadraticTo(center.x + halfW * 0.55f, center.y - stepY * 0.15f, center.x + halfW * 0.7f, center.y)
-        veinPath.moveTo(center.x, center.y + stepY * 0.1f)
-        veinPath.quadraticTo(center.x - halfW * 0.55f, center.y - stepY * 0.15f, center.x - halfW * 0.7f, center.y)
-
-        // Draw leaf veins with gentle translucent stroke
-        val veinColor = Color(0xFF041014).copy(alpha = (0.28f * color.alpha).coerceIn(0.10f, 0.40f))
+        // Draw Petal / Leaf Details
+        val detailColor = Color(0xFF041014).copy(alpha = (0.26f * color.alpha).coerceIn(0.08f, 0.38f))
         drawPath(
-            path = veinPath,
-            color = veinColor,
+            path = detailPath,
+            color = detailColor,
             style = Stroke(width = 1.0f)
         )
     }
 }
 
-// Harmonious Calming Sage & Earthy Moss Palette
-private val leafPalette = listOf(
-    Color(0xFF8BA888), // Calming Sage Green
-    Color(0xFFAECBB0), // Light Sage Highlight
-    Color(0xFF759772), // Forest Moss Green
-    Color(0xFF9AA67A), // Warm Olive Sage
-    Color(0xFF8E9FA5), // Moonlit Slate Blue
-    Color(0xFFC8AD7F)  // Warm Sand / Antique Bamboo
-)
-
-private fun generateStackedBed(count: Int): List<SettledLeaf> {
+private fun generateDenseStackedBed(count: Int, palette: List<Color>): List<SettledParticle> {
     val random = Random(108)
     return List(count) { i ->
-        // 3-tiered accumulation: Layer 0 (Floor base), Layer 1 (Middle mound), Layer 2 (Upper stack)
+        // 4-tiered accumulation: Layer 0 (Floor base), Layer 1 (Mid mound), Layer 2 (Upper stack), Layer 3 (High drifts)
         val layer = when {
-            i < count * 0.45f -> 0
-            i < count * 0.80f -> 1
-            else -> 2
+            i < count * 0.40f -> 0
+            i < count * 0.70f -> 1
+            i < count * 0.90f -> 2
+            else -> 3
         }
 
         val baseY = when (layer) {
             0 -> 0.95f + random.nextFloat() * 0.035f
-            1 -> 0.91f + random.nextFloat() * 0.040f
-            else -> 0.87f + random.nextFloat() * 0.045f
+            1 -> 0.90f + random.nextFloat() * 0.045f
+            2 -> 0.85f + random.nextFloat() * 0.050f
+            else -> 0.79f + random.nextFloat() * 0.055f
         }
 
-        SettledLeaf(
-            xRatio = ((i.toFloat() / count.toFloat()) + (random.nextFloat() - 0.5f) * 0.16f).coerceIn(0.02f, 0.98f),
+        SettledParticle(
+            xRatio = ((i.toFloat() / count.toFloat()) + (random.nextFloat() - 0.5f) * 0.18f).coerceIn(0.02f, 0.98f),
             yRatio = baseY,
-            rotation = (random.nextFloat() - 0.5f) * 75f + if (i % 2 == 0) 20f else -20f,
-            sizePx = random.nextFloat() * 7f + 16f,
-            alpha = random.nextFloat() * 0.30f + 0.45f,
-            color = leafPalette[i % leafPalette.size],
+            rotation = (random.nextFloat() - 0.5f) * 90f + if (i % 2 == 0) 25f else -25f,
+            sizePx = random.nextFloat() * 10f + 18f,
+            alpha = random.nextFloat() * 0.30f + 0.50f,
+            color = palette[i % palette.size],
             layer = layer
         )
     }.shuffled(Random(42))
 }
 
-private fun generateAmbientLeaves(count: Int): List<LeafParticle> {
+private fun generateAmbientParticles(count: Int, palette: List<Color>): List<ParticleState> {
     return List(count) {
-        LeafParticle(
+        ParticleState(
             xRatio = Random.nextFloat(),
             yRatio = Random.nextFloat(),
             speedY = Random.nextFloat() * 0.040f + 0.020f,
@@ -297,16 +347,16 @@ private fun generateAmbientLeaves(count: Int): List<LeafParticle> {
             swayPhase = Random.nextFloat() * 6.28f,
             rotation = Random.nextFloat() * 360f,
             rotationSpeed = (Random.nextFloat() - 0.5f) * 40f,
-            sizePx = Random.nextFloat() * 12f + 15f,
-            alpha = Random.nextFloat() * 0.35f + 0.35f,
-            color = leafPalette.random()
+            sizePx = Random.nextFloat() * 12f + 16f,
+            alpha = Random.nextFloat() * 0.35f + 0.40f,
+            color = palette.random()
         )
     }
 }
 
-private fun generateBurstLeaves(count: Int): List<LeafParticle> {
+private fun generateBurstParticles(count: Int, palette: List<Color>): List<ParticleState> {
     return List(count) {
-        LeafParticle(
+        ParticleState(
             xRatio = Random.nextFloat() * 0.8f + 0.1f,
             yRatio = Random.nextFloat() * 0.35f,
             speedY = Random.nextFloat() * 0.09f + 0.05f,
@@ -315,9 +365,9 @@ private fun generateBurstLeaves(count: Int): List<LeafParticle> {
             swayPhase = Random.nextFloat() * 6.28f,
             rotation = Random.nextFloat() * 360f,
             rotationSpeed = (Random.nextFloat() - 0.5f) * 80f,
-            sizePx = Random.nextFloat() * 14f + 14f,
-            alpha = Random.nextFloat() * 0.4f + 0.45f,
-            color = leafPalette.random(),
+            sizePx = Random.nextFloat() * 14f + 16f,
+            alpha = Random.nextFloat() * 0.4f + 0.50f,
+            color = palette.random(),
             isBurst = true
         )
     }

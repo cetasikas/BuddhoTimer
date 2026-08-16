@@ -87,6 +87,7 @@ fun TimerScreen(
     modifier: Modifier = Modifier
 ) {
     val config by viewModel.config.collectAsState()
+    val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var leafBurstTrigger by remember { mutableIntStateOf(0) }
     var isSliding by remember { mutableStateOf(false) }
@@ -106,9 +107,9 @@ fun TimerScreen(
     val presetDurations = listOf(5, 10, 15, 20, 30, 45, 60)
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        // 1. Dark Moonlit Plum Village Bamboo Background
+        // 1. Dynamic Moonlit Plum Village Background
         Image(
-            painter = painterResource(id = R.drawable.bg_zen_bamboo),
+            painter = painterResource(id = currentTheme.backgroundDrawableRes),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
@@ -130,7 +131,7 @@ fun TimerScreen(
                 )
         )
 
-        // 2. Interactive Falling Leaves Ambient Animation
+        // 2. Interactive Falling Particles Ambient Animation
         FallingLeavesEffect(
             leafCount = 16,
             triggerBurst = leafBurstTrigger,
@@ -160,8 +161,8 @@ fun TimerScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
-                            .background(ZenTeal.copy(alpha = 0.14f))
-                            .border(1.dp, ZenTeal.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                            .background(currentTheme.primary.copy(alpha = 0.14f))
+                            .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
                             .clickable { onOpenBreathing() }
                             .padding(horizontal = 14.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
@@ -173,7 +174,7 @@ fun TimerScreen(
                             Icon(
                                 imageVector = Icons.Outlined.Air,
                                 contentDescription = null,
-                                tint = ZenTealLight,
+                                tint = currentTheme.primaryLight,
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
@@ -182,7 +183,7 @@ fun TimerScreen(
                                 fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Medium,
                                 letterSpacing = 0.5.sp,
-                                color = ZenTealLight
+                                color = currentTheme.primaryLight
                             )
                         }
                     }
@@ -224,48 +225,27 @@ fun TimerScreen(
                 }
             }
 
-            // --- FLOATING TARGET DURATION DISPLAY ---
+            // --- LARGE MINIMAL TARGET DURATION DISPLAY ---
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+                    .padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "TARGET DURATION",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.5.sp,
-                    color = ZenTeal
+                    text = "${config.targetDurationMinutes}",
+                    fontSize = 72.sp,
+                    fontWeight = FontWeight.ExtraLight,
+                    letterSpacing = (-2).sp,
+                    color = ZenTextPrimary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
-
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "${config.targetDurationMinutes}",
-                        fontSize = 76.sp,
-                        fontWeight = FontWeight.ExtraLight,
-                        letterSpacing = (-2).sp,
-                        color = ZenTextPrimary
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "min",
-                        fontSize = 20.sp,
-                        fontStyle = FontStyle.Italic,
-                        fontWeight = FontWeight.Light,
-                        color = ZenTealLight,
-                        modifier = Modifier.padding(bottom = 14.dp)
-                    )
-                }
-
                 Text(
-                    text = if (config.isOverrunEnabled) "Continuous Samadhi Overrun enabled" else "Chime rings at target duration",
-                    fontSize = 12.sp,
-                    fontStyle = FontStyle.Italic,
-                    color = ZenTextSecondary,
+                    text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 4.sp,
+                    color = currentTheme.primaryLight,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
@@ -303,12 +283,12 @@ fun TimerScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(
-                                    if (isSelected) ZenTeal.copy(alpha = 0.22f)
+                                    if (isSelected) currentTheme.primary.copy(alpha = 0.22f)
                                     else ZenSurface.copy(alpha = 0.55f)
                                 )
                                 .border(
                                     width = if (isSelected) 1.5.dp else 1.dp,
-                                    color = if (isSelected) ZenTealLight else ZenBorder,
+                                    color = if (isSelected) currentTheme.primaryLight else ZenBorder,
                                     shape = RoundedCornerShape(16.dp)
                                 )
                                 .clickable {
@@ -322,7 +302,7 @@ fun TimerScreen(
                                 text = "${duration}m",
                                 fontSize = 13.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) ZenTealLight else ZenTextSecondary
+                                color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
                             )
                         }
                     }
@@ -368,8 +348,8 @@ fun TimerScreen(
                             leafBurstTrigger++
                         },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = ZenTeal,
-                            checkedTrackColor = ZenTeal.copy(alpha = 0.35f),
+                            checkedThumbColor = currentTheme.primary,
+                            checkedTrackColor = currentTheme.primary.copy(alpha = 0.35f),
                             uncheckedThumbColor = ZenTextMuted,
                             uncheckedTrackColor = ZenSurfaceVariant
                         )
@@ -382,18 +362,18 @@ fun TimerScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
-                    .shadow(10.dp, RoundedCornerShape(18.dp), spotColor = ZenTeal)
+                    .shadow(10.dp, RoundedCornerShape(18.dp), spotColor = currentTheme.primary)
                     .clip(RoundedCornerShape(18.dp))
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                Color(0xFF1E6E6C),
-                                Color(0xFF2EA8A4),
-                                Color(0xFF38C7C2)
+                                currentTheme.primaryDark,
+                                currentTheme.primary,
+                                currentTheme.primaryLight
                             )
                         )
                     )
-                    .border(1.dp, Color(0xFF5EEAD4).copy(alpha = 0.5f), RoundedCornerShape(18.dp))
+                    .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
                     .clickable {
                         leafBurstTrigger++
                         viewModel.startSession()
