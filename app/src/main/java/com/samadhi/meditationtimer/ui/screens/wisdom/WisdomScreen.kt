@@ -322,27 +322,31 @@ private fun SimpleTopicCard(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .padding(top = 2.dp)
-                                    .size(18.dp)
+                                    .padding(top = 1.dp)
+                                    .size(24.dp)
                                     .clip(CircleShape)
-                                    .background(topicColor.copy(alpha = 0.15f)),
+                                    .background(topicColor.copy(alpha = 0.18f))
+                                    .border(1.dp, topicColor.copy(alpha = 0.40f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = "${index + 1}",
-                                    fontSize = 10.sp,
+                                    fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = topicColor
+                                    color = topicColor,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    lineHeight = 12.sp
                                 )
                             }
 
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
 
                             Text(
                                 text = step,
                                 fontSize = 13.sp,
-                                lineHeight = 18.sp,
-                                color = ZenTextSecondary
+                                lineHeight = 19.sp,
+                                color = ZenTextSecondary,
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
