@@ -8,9 +8,13 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,12 +24,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.CheckCircle
@@ -40,11 +43,15 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -52,9 +59,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -64,11 +72,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.samadhi.meditationtimer.service.SoundHelper
+import com.samadhi.meditationtimer.ui.screens.timer.TimerViewModel
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
+import com.samadhi.meditationtimer.ui.theme.ZenAmberDark
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
-import com.samadhi.meditationtimer.ui.theme.ZenDanger
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
-import com.samadhi.meditationtimer.ui.theme.ZenSuccess
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
 import com.samadhi.meditationtimer.ui.theme.ZenTeal
@@ -76,21 +84,26 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 
+@OptIn(ExperimentalLayoutApi::class)
 @SuppressLint("BatteryLife")
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
+    timerViewModel: TimerViewModel,
     onOpenBreathing: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isDndGranted by viewModel.isDndGranted.collectAsState()
     val isBatteryOptIgnored by viewModel.isBatteryOptIgnored.collectAsState()
     val statusMessage by viewModel.statusMessage.collectAsState()
+    val config by timerViewModel.config.collectAsState()
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val soundHelper = remember { SoundHelper(context) }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val prepOptions = listOf(0, 5, 10, 15)
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -130,449 +143,480 @@ fun SettingsScreen(
         uri?.let { viewModel.importJsonBackup(it) }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(ZenObsidian)
-            .padding(horizontal = 20.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Settings & Preferences",
-            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
-            color = ZenTextPrimary
-        )
-        Text(
-            text = "Meditation chimes, permissions, and data backup",
-            style = MaterialTheme.typography.bodyMedium,
-            color = ZenTextSecondary
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Mindfulness Exercises Section
-        Text(
-            text = "BREATHWORK & RELIEF",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
-            color = ZenTeal
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Card(
+    Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .clickable { onOpenBreathing() },
-            colors = CardDefaults.cardColors(containerColor = ZenSurface),
-            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenTeal.copy(alpha = 0.35f))),
-            shape = RoundedCornerShape(16.dp)
+                .fillMaxSize()
+                .padding(horizontal = 20.dp)
+                .verticalScroll(rememberScrollState())
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Meditation Settings",
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                color = ZenTextPrimary
+            )
+            Text(
+                text = "Chimes, warm-up, breathwork, and backups",
+                style = MaterialTheme.typography.bodyMedium,
+                color = ZenTextSecondary
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 1. MEDITATION SOUNDS & BELLS
+            Text(
+                text = "MEDITATION CHIMES",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                color = ZenAmber
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(ZenTeal.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Air,
-                            contentDescription = null,
-                            tint = ZenTeal,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Box Breathing (Panic & Stress Reset)",
-                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                            color = ZenTextPrimary
-                        )
-                        Text(
-                            text = "4-4-4-4 visual guide for acute calm",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                            color = ZenTextSecondary
-                        )
-                    }
-                }
-                FilledTonalButton(
-                    onClick = onOpenBreathing,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = ZenTeal,
-                        contentColor = ZenObsidian
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text("Start", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // System Permissions Section
-        Text(
-            text = "SYSTEM PERMISSIONS",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
-            color = ZenAmber
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ZenSurface),
-            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                // DND Access
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DoNotDisturb,
-                            contentDescription = null,
-                            tint = if (isDndGranted) ZenSuccess else ZenDanger,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Do Not Disturb Access",
-                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                                color = ZenTextPrimary
-                            )
-                            Text(
-                                text = if (isDndGranted) "Access granted" else "Required for auto silence",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                                color = if (isDndGranted) ZenSuccess else ZenTextMuted
-                            )
-                        }
-                    }
-                    if (!isDndGranted) {
-                        FilledTonalButton(
-                            onClick = {
-                                context.startActivity(
-                                    Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
-                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                    }
-                                )
-                            },
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = ZenAmber,
-                                contentColor = ZenObsidian
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Grant", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Battery Optimization
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.BatteryChargingFull,
-                            contentDescription = null,
-                            tint = if (isBatteryOptIgnored) ZenSuccess else ZenAmber,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Unrestricted Battery",
-                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                                color = ZenTextPrimary
-                            )
-                            Text(
-                                text = if (isBatteryOptIgnored) "Unrestricted background" else "Recommended for long sessions",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                                color = if (isBatteryOptIgnored) ZenSuccess else ZenTextMuted
-                            )
-                        }
-                    }
-                    if (!isBatteryOptIgnored) {
-                        FilledTonalButton(
-                            onClick = {
-                                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                    data = Uri.parse("package:${context.packageName}")
-                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                }
-                                context.startActivity(intent)
-                            },
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = ZenAmber,
-                                contentColor = ZenObsidian
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Allow", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Sound & Haptics Section
-        Text(
-            text = "SOUND & HAPTICS",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
-            color = ZenAmber
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ZenSurface),
-            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                SoundHelper.soundOptions.forEachIndexed { index, soundOption ->
-                    if (index > 0) {
-                        Spacer(modifier = Modifier.height(14.dp))
-                    }
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.MusicNote,
                                 contentDescription = null,
                                 tint = ZenAmber,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Start & End Chime",
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                                color = ZenTextPrimary
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = { soundHelper.playChime(config.soundBellResName) },
+                            modifier = Modifier.height(32.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenAmber),
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenAmber))
+                        ) {
+                            Text("Preview", fontSize = 11.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SoundHelper.soundOptions.forEach { soundOption ->
+                            val isSelected = config.soundBellResName == soundOption.id
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    timerViewModel.updateSoundBell(soundOption.id)
+                                    soundHelper.playChime(soundOption.id)
+                                },
+                                label = { Text(soundOption.title, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = ZenSurfaceVariant,
+                                    labelColor = ZenTextSecondary,
+                                    selectedContainerColor = ZenAmber,
+                                    selectedLabelColor = ZenObsidian
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    borderColor = if (isSelected) ZenAmber else ZenBorder,
+                                    enabled = true,
+                                    selected = isSelected
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 2. SESSION TIMING & DND
+            Text(
+                text = "SESSION PREFERENCES",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                color = ZenAmber
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Warm-up Countdown
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Warm-up Countdown",
+                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
+                                color = ZenTextPrimary
+                            )
+                            Text(
+                                text = "Gentle settling time before session begins",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp),
+                                color = ZenTextSecondary
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            prepOptions.forEach { prep ->
+                                val isSelected = config.prepTimeSeconds == prep
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isSelected) ZenAmber else ZenSurfaceVariant)
+                                        .clickable { timerViewModel.updatePrepTimeSeconds(prep) }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = if (prep == 0) "Off" else "${prep}s",
+                                        fontSize = 12.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) ZenObsidian else ZenTextPrimary
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Auto DND Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Auto Do Not Disturb",
+                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
+                                color = ZenTextPrimary
+                            )
+                            Text(
+                                text = "Silence phone notifications during meditation",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp),
+                                color = ZenTextSecondary
+                            )
+                        }
+                        Switch(
+                            checked = config.isAutoDndEnabled,
+                            onCheckedChange = { timerViewModel.toggleAutoDnd(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = ZenAmber,
+                                checkedTrackColor = ZenAmberDark,
+                                uncheckedThumbColor = ZenTextMuted,
+                                uncheckedTrackColor = ZenSurfaceVariant
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 3. BOX BREATHING / PANIC RELIEF
+            Text(
+                text = "BREATHWORK & RELIEF",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                color = ZenTeal
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onOpenBreathing() },
+                colors = CardDefaults.cardColors(containerColor = ZenSurface),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenTeal.copy(alpha = 0.35f))),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(ZenTeal.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Air,
+                                contentDescription = null,
+                                tint = ZenTeal,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Box Breathing (Panic & Stress Reset)",
+                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
+                                color = ZenTextPrimary
+                            )
+                            Text(
+                                text = "4-4-4-4 guided breathwork for acute calm",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                                color = ZenTextSecondary
+                            )
+                        }
+                    }
+                    FilledTonalButton(
+                        onClick = onOpenBreathing,
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = ZenTeal,
+                            contentColor = ZenObsidian
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Start", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 4. SYSTEM PERMISSIONS
+            Text(
+                text = "SYSTEM PERMISSIONS",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                color = ZenTextSecondary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Do Not Disturb Permission
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.DoNotDisturb,
+                                contentDescription = null,
+                                tint = if (isDndGranted) ZenAmber else ZenTextMuted,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = soundOption.title,
+                                    text = "Do Not Disturb Access",
                                     style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
                                     color = ZenTextPrimary
                                 )
                                 Text(
-                                    text = soundOption.description,
+                                    text = if (isDndGranted) "Granted (Auto-silence enabled)" else "Permission required for auto-DND",
                                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                                    color = ZenTextSecondary
+                                    color = if (isDndGranted) ZenAmber else ZenTextSecondary
                                 )
                             }
                         }
+                        if (isDndGranted) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Granted",
+                                tint = ZenAmber,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    context.startActivity(
+                                        Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
+                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        }
+                                    )
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenAmber))
+                            ) {
+                                Text("Grant", fontSize = 12.sp, color = ZenAmber)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Battery Optimization
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.BatteryChargingFull,
+                                contentDescription = null,
+                                tint = if (isBatteryOptIgnored) ZenAmber else ZenTextMuted,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Background Execution",
+                                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
+                                    color = ZenTextPrimary
+                                )
+                                Text(
+                                    text = if (isBatteryOptIgnored) "Unrestricted (Safe from OS kill)" else "Recommended for long sessions",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                                    color = if (isBatteryOptIgnored) ZenAmber else ZenTextSecondary
+                                )
+                            }
+                        }
+                        if (isBatteryOptIgnored) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Ignored",
+                                tint = ZenAmber,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    context.startActivity(
+                                        Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        }
+                                    )
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenAmber))
+                            ) {
+                                Text("Disable", fontSize = 12.sp, color = ZenAmber)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 5. DATA BACKUP & EXPORT
+            Text(
+                text = "DATA BACKUP & PORTABILITY",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                color = ZenTextSecondary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "100% Offline & Private",
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
+                        color = ZenTextPrimary
+                    )
+                    Text(
+                        text = "Export your meditation logs and markdown reflections locally or restore from backup files.",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                        color = ZenTextSecondary
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         OutlinedButton(
-                            onClick = { soundHelper.playChime(soundOption.id) },
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenAmber),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(ZenAmber))
+                            onClick = { exportJsonLauncher.launch("buddho_backup_${System.currentTimeMillis()}.json") },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenAmber))
                         ) {
-                            Text("Preview", fontSize = 11.sp)
+                            Icon(Icons.Default.CloudUpload, contentDescription = null, tint = ZenAmber, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Export JSON", fontSize = 11.sp, color = ZenAmber)
                         }
+
+                        OutlinedButton(
+                            onClick = { exportCsvLauncher.launch("buddho_sessions_${System.currentTimeMillis()}.csv") },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenAmber))
+                        ) {
+                            Icon(Icons.Default.TableChart, contentDescription = null, tint = ZenAmber, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Export CSV", fontSize = 11.sp, color = ZenAmber)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    FilledTonalButton(
+                        onClick = { importJsonLauncher.launch(arrayOf("application/json", "*/*")) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = ZenSurfaceVariant,
+                            contentColor = ZenTextPrimary
+                        )
+                    ) {
+                        Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Restore from JSON Backup", fontSize = 12.sp)
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(36.dp))
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Backup, Export & Import Section
-        Text(
-            text = "STORAGE & BACKUP (SAF)",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
-            color = ZenAmber
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ZenSurface),
-            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Export JSON
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CloudUpload,
-                            contentDescription = null,
-                            tint = ZenAmber,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Export JSON Backup",
-                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                                color = ZenTextPrimary
-                            )
-                            Text(
-                                text = "Save to device or Google Drive",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                                color = ZenTextSecondary
-                            )
-                        }
-                    }
-                    FilledTonalButton(
-                        onClick = {
-                            val filename = "samadhi_backup_${System.currentTimeMillis()}.json"
-                            exportJsonLauncher.launch(filename)
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = ZenSurfaceVariant,
-                            contentColor = ZenTextPrimary
-                        )
-                    ) {
-                        Text("Export", fontSize = 12.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Export CSV
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.TableChart,
-                            contentDescription = null,
-                            tint = ZenTeal,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Export CSV Spreadsheet",
-                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                                color = ZenTextPrimary
-                            )
-                            Text(
-                                text = "For spreadsheet analytics",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                                color = ZenTextSecondary
-                            )
-                        }
-                    }
-                    FilledTonalButton(
-                        onClick = {
-                            val filename = "samadhi_records_${System.currentTimeMillis()}.csv"
-                            exportCsvLauncher.launch(filename)
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = ZenSurfaceVariant,
-                            contentColor = ZenTextPrimary
-                        )
-                    ) {
-                        Text("Export", fontSize = 12.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Import JSON
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CloudDownload,
-                            contentDescription = null,
-                            tint = ZenAmber,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Import & Restore Backup",
-                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                                color = ZenTextPrimary
-                            )
-                            Text(
-                                text = "Merge records from JSON file",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                                color = ZenTextSecondary
-                            )
-                        }
-                    }
-                    FilledTonalButton(
-                        onClick = {
-                            importJsonLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = ZenSurfaceVariant,
-                            contentColor = ZenTextPrimary
-                        )
-                    ) {
-                        Text("Import", fontSize = 12.sp)
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        SnackbarHost(hostState = snackbarHostState)
     }
 }

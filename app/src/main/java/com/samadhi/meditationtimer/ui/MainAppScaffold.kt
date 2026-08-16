@@ -142,8 +142,11 @@ fun MainAppScaffold() {
                     onStartSession = {
                         navController.navigate(Screen.ActiveSession.route)
                     },
-                    onOpenBreathing = {
-                        navController.navigate(Screen.Breathing.route)
+                    onOpenWisdom = {
+                        navController.navigate(Screen.Wisdom.route)
+                    },
+                    onOpenSettings = {
+                        navController.navigate(Screen.Settings.route)
                     }
                 )
             }
@@ -202,6 +205,7 @@ fun MainAppScaffold() {
             composable(Screen.Settings.route) {
                 SettingsScreen(
                     viewModel = settingsViewModel,
+                    timerViewModel = timerViewModel,
                     onOpenBreathing = {
                         navController.navigate(Screen.Breathing.route)
                     }

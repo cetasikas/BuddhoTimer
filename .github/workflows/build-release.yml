@@ -49,17 +49,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.4.0
-          name: "Buddho Timer v1.4.0"
+          tag_name: v1.5.0
+          name: "Buddho Timer v1.5.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v1.4.0
+            ## 🪷 Buddho Meditation Timer v1.5.0
             
-            - **🧘 Pristine Minimalist Timer Screen**: Pure focus on the target duration timer with Samadhi Overrun continuous timing.
-            - **🌸 Organic Hypnotic Breathing Flower**: Realistic expanding/contracting blooming mandala visualizer with sweeping progress arc and spacious non-overlapping typography.
-            - **📚 Structured Wisdom Guidance**: Level tabs for Beginner, Intermediate, and Advanced practice steps.
-            - **⚙️ Centralized Settings**: Meditation chime selectors and Box Breathing relief tools moved into preferences.
-            - **🔔 HD Sound Synthesizer Engine**: Multi-harmonic Tibetan Singing Bowl, Zen Bronze Bell, Ting-Sha Cymbals, Woodblock Moktak, and Silent Retreat mode.
-            - **🌑 Zen OLED Deep Black Ambient Mode**: Pitch-black distraction-free clock display for night sits.
+            - **🧘 Pure Minimalist Main Timer**: Ultra-clean interface with target duration, quick presets, slider, and direct start.
+            - **❓ Quick Instructions Access**: Dedicated `?` header button to open Master Teachings & Instructions (Beginner, Intermediate, Advanced).
+            - **⚙️ Complete Meditation Settings**: Dedicated `⚙️` header button for chime sounds, warm-up prep time, auto-DND, and backups.
+            - **🫁 Box Breathing in Settings**: Dedicated guided breathwork launcher with realistic blooming flower animation.
+            - **🔔 HD Sound Synthesizer**: Tibetan Singing Bowl, Zen Bell, Ting-Sha, Moktak, and Silent Haptic mode.
+            - **🌑 Zen OLED Deep Black Mode**: Screen-dimming pitch black mode for evening practice.
+            - **Zero Internet Permissions**: 100% offline, battery-efficient, and privacy-first.
           draft: false
           prerelease: false
           files: |
