@@ -49,18 +49,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.2.0
-          name: "Buddho Timer v2.2.0"
+          tag_name: v2.2.1
+          name: "Buddho Timer v2.2.1"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.2.0
+            ## 🪷 Buddho Meditation Timer v2.2.1
             
-            - **🎨 Multi-Atmosphere Theme Engine**: Switch between 3 curated Plum Village aesthetics:
-              - **🎋 Moonlit Bamboo (Zen Teal)**: Reverted to the beloved original moonlit bamboo atmosphere with serene teal/cyan breathing glow and bamboo leaves.
-              - **🪷 Sacred Lotus**: Misty night lotus pond with floating petals, rose-gold breathing glow, and radiant lotus accents.
-              - **🌸 Sakura Twilight**: Starry cherry blossom canopy with drifting notched sakura petals and ethereal pink-pearl glow.
-            - **✨ Initial Startup Theme Selection**: Choose your starting atmosphere directly upon first launch during onboarding, or customize anytime in Settings.
-            - **🍂 Rich Progressive Leaf & Petal Accumulation**: Dense 4-tiered floor accumulation (100+ particles) that starts with an immediate resting bed and progressively builds up into a lush mound of leaves/petals as your practice deepens.
-            - **🪵 Theme-Adaptive Zen Branch Slider**: Living stem gradients and thumb sprouts adapt seamlessly to your active atmosphere.
+            - **🍃 Blank Start & Even Golden-Ratio Leaf Accumulation**: Meditation screen starts with a clean, unaccumulated floor that slowly and evenly fills across the full width of the screen using low-discrepancy dispersion, eliminating right-side clustering.
+            - **✨ Crisp Natural Meditation Leaf Aesthetics**: Aligned leaf rendering during meditation with the exact crisp, organic styling from the main timer screen with a soft, peaceful breathing aura.
+            - **🌸 Theme-Specific Falling Particles & Blossoms**:
+              - *Moonlit Bamboo*: Slender bamboo & Bodhi leaves with visible stem and natural side veins.
+              - *Sacred Lotus*: Wide curved lotus petals plus occasional 8-petal floating lotus blossoms with golden stamen cores.
+              - *Sakura Twilight*: Iconic cleft-notched cherry blossom petals plus occasional drifting 5-petal sakura flowers.
             - **100% Offline & Private**: Zero tracking, zero internet permissions, built for deep peace and stillness.
           draft: false
           prerelease: false
