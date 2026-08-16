@@ -55,6 +55,10 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         _config.value = _config.value.copy(isOpenEnded = isOpenEnded)
     }
 
+    fun toggleOverrun(isOverrunEnabled: Boolean) {
+        _config.value = _config.value.copy(isOverrunEnabled = isOverrunEnabled)
+    }
+
     fun toggleAutoDnd(enabled: Boolean) {
         _config.value = _config.value.copy(isAutoDndEnabled = enabled)
     }

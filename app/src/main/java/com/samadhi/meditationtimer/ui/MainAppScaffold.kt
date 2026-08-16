@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -88,8 +89,8 @@ fun MainAppScaffold() {
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(
-                    containerColor = ZenSurface,
-                    contentColor = ZenTextPrimary
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF0C1322),
+                    contentColor = androidx.compose.ui.graphics.Color(0xFFE8EEF5)
                 ) {
                     Screen.bottomNavItems.forEach { screen ->
                         val selected = currentRoute == screen.route
@@ -102,7 +103,7 @@ fun MainAppScaffold() {
                                     )
                                 }
                             },
-                            label = { Text(screen.title) },
+                            label = { Text(screen.title, fontSize = 11.sp, fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal) },
                             selected = selected,
                             onClick = {
                                 if (currentRoute != screen.route) {
@@ -116,11 +117,11 @@ fun MainAppScaffold() {
                                 }
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = ZenAmber,
-                                selectedTextColor = ZenAmber,
-                                unselectedIconColor = ZenTextMuted,
-                                unselectedTextColor = ZenTextMuted,
-                                indicatorColor = ZenAmber.copy(alpha = 0.15f)
+                                selectedIconColor = androidx.compose.ui.graphics.Color.White,
+                                selectedTextColor = androidx.compose.ui.graphics.Color.White,
+                                unselectedIconColor = androidx.compose.ui.graphics.Color(0xFF7E93AE),
+                                unselectedTextColor = androidx.compose.ui.graphics.Color(0xFF7E93AE),
+                                indicatorColor = androidx.compose.ui.graphics.Color(0xFF2A7A78)
                             )
                         )
                     }

@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,11 +27,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -48,20 +49,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.samadhi.meditationtimer.R
 import com.samadhi.meditationtimer.data.wisdom.MeditationGuides
-import com.samadhi.meditationtimer.data.wisdom.TeacherGuide
+import com.samadhi.meditationtimer.data.wisdom.MeditationTip
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
-import com.samadhi.meditationtimer.ui.theme.ZenAmberDark
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
 import com.samadhi.meditationtimer.ui.theme.ZenTeal
-import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 
@@ -70,114 +71,130 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 fun WisdomScreen(
     modifier: Modifier = Modifier
 ) {
-    val teachers = remember { MeditationGuides.teachers }
-    val levelOptions = listOf("All Levels", "Beginner", "Intermediate", "Advanced")
-    var selectedLevel by remember { mutableStateOf("All Levels") }
-    var expandedTeacherId by remember { mutableStateOf<String?>("buddho") }
+    val allTips = remember { MeditationGuides.meditationTips }
+    val phases = remember { MeditationGuides.meditationPhases }
+    var selectedPhase by remember { mutableStateOf("All Steps") }
+    var expandedTipId by remember { mutableStateOf<String?>("drop_past") }
 
-    val filteredTeachers = remember(selectedLevel) {
-        if (selectedLevel == "All Levels") {
-            teachers
+    val filteredTips = remember(selectedPhase) {
+        if (selectedPhase == "All Steps") {
+            allTips
         } else {
-            teachers.filter { it.level.equals(selectedLevel, ignoreCase = true) }
+            allTips.filter { it.phase == selectedPhase }
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(ZenObsidian)
-            .padding(horizontal = 20.dp)
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Title Header
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                contentDescription = null,
-                tint = ZenAmber,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Column {
-                Text(
-                    text = "Meditation Instructions",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                    color = ZenTextPrimary
-                )
-                Text(
-                    text = "Distilled practice steps by experience level",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = ZenTextSecondary
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Level Filter Chips (Beginner, Intermediate, Advanced)
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            levelOptions.forEach { level ->
-                val isSelected = selectedLevel == level
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { selectedLevel = level },
-                    label = { Text(level, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = ZenSurface,
-                        labelColor = ZenTextSecondary,
-                        selectedContainerColor = ZenAmber,
-                        selectedLabelColor = ZenObsidian
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        borderColor = if (isSelected) ZenAmber else ZenBorder,
-                        enabled = true,
-                        selected = isSelected
-                    )
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Guides List
-        LazyColumn(
+    Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
+        // Subtle Zen Bamboo Sumi-e Background
+        Image(
+            painter = painterResource(id = R.drawable.bg_zen_bamboo),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            alpha = 0.35f
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp)
         ) {
-            items(filteredTeachers, key = { it.id }) { teacher ->
-                val isExpanded = expandedTeacherId == teacher.id
-                TeacherCard(
-                    teacher = teacher,
-                    isExpanded = isExpanded,
-                    onToggleExpand = {
-                        expandedTeacherId = if (isExpanded) null else teacher.id
-                    }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Title Header
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                    contentDescription = null,
+                    tint = ZenAmber,
+                    modifier = Modifier.size(28.dp)
                 )
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "Meditation Instructions",
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                        color = ZenTextPrimary
+                    )
+                    Text(
+                        text = "Simple, practical steps for silent awareness",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = ZenTextSecondary
+                    )
+                }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Phase Filter Tabs
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                phases.forEach { phaseName ->
+                    val isSelected = selectedPhase == phaseName
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { selectedPhase = phaseName },
+                        label = {
+                            Text(
+                                text = phaseName,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = ZenSurface.copy(alpha = 0.85f),
+                            labelColor = ZenTextSecondary,
+                            selectedContainerColor = ZenAmber,
+                            selectedLabelColor = ZenObsidian
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (isSelected) ZenAmber else ZenBorder,
+                            enabled = true,
+                            selected = isSelected
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Instructions Step List
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(filteredTips, key = { it.id }) { tip ->
+                    val isExpanded = expandedTipId == tip.id
+                    TipCard(
+                        tip = tip,
+                        isExpanded = isExpanded,
+                        onToggleExpand = {
+                            expandedTipId = if (isExpanded) null else tip.id
+                        }
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
             }
         }
     }
 }
 
 @Composable
-fun TeacherCard(
-    teacher: TeacherGuide,
+fun TipCard(
+    tip: MeditationTip,
     isExpanded: Boolean,
     onToggleExpand: () -> Unit
 ) {
-    val levelColor = when (teacher.level) {
-        "Beginner" -> ZenTeal
-        "Intermediate" -> ZenAmber
-        "Advanced" -> Color(0xFFB388FF)
+    val phaseColor = when (tip.phaseNumber) {
+        1 -> Color(0xFFD8BA84) // Warm Sandstone for Groundwork
+        2 -> ZenTeal          // Calm Teal for Breath
+        3 -> Color(0xFF90CAF9) // Celestial Blue for Stillness
         else -> ZenAmber
     }
 
@@ -186,46 +203,43 @@ fun TeacherCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable { onToggleExpand() },
-        colors = CardDefaults.cardColors(containerColor = ZenSurface),
+        colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.88f)),
         border = CardDefaults.outlinedCardBorder().copy(
-            brush = SolidColor(if (isExpanded) levelColor.copy(alpha = 0.5f) else ZenBorder)
+            brush = SolidColor(if (isExpanded) phaseColor.copy(alpha = 0.6f) else ZenBorder)
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header: Level & Tradition Badges + Expand Arrow
+            // Step Number & Phase Badge + Expand Icon
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(levelColor.copy(alpha = 0.15f))
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .background(phaseColor.copy(alpha = 0.2f))
+                            .border(1.dp, phaseColor, CircleShape),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = teacher.level.uppercase(),
-                            fontSize = 10.sp,
+                            text = "${tip.stepNumber}",
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp,
-                            color = levelColor
+                            color = phaseColor
                         )
                     }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(ZenSurfaceVariant)
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            text = teacher.tradition.split("(").first().trim(),
-                            fontSize = 10.sp,
-                            color = ZenTextSecondary
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = tip.phase.uppercase(),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        color = phaseColor
+                    )
                 }
 
                 Icon(
@@ -236,153 +250,78 @@ fun TeacherCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Title & Master Name
+            // Step Title
             Text(
-                text = teacher.title,
-                fontSize = 17.sp,
+                text = tip.title,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = ZenTextPrimary
             )
+
+            // Subtitle
             Text(
-                text = "Guidance from ${teacher.teacherName}",
+                text = tip.subtitle,
                 fontSize = 12.sp,
                 color = ZenTextSecondary
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Summary
-            Text(
-                text = teacher.summary,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                color = ZenTextSecondary
-            )
+            // Core Wisdom Quote Box
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(ZenSurfaceVariant.copy(alpha = 0.6f))
+                    .padding(10.dp)
+            ) {
+                Text(
+                    text = tip.coreWisdom,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    color = ZenTextPrimary
+                )
+            }
 
-            // Expanded Step Details
+            // Expanded Practical Points
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                Column(modifier = Modifier.padding(top = 14.dp)) {
-                    // Core Key Concept Box
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(ZenSurfaceVariant)
-                            .border(1.dp, levelColor.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
-                            .padding(12.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.Top) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = levelColor,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .padding(top = 2.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = "CORE ESSENCE",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp,
-                                    color = levelColor
-                                )
-                                Spacer(modifier = Modifier.height(3.dp))
-                                Text(
-                                    text = teacher.keyConcept,
-                                    fontSize = 12.sp,
-                                    lineHeight = 17.sp,
-                                    color = ZenTextPrimary
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Step List
+                Column(modifier = Modifier.padding(top = 12.dp)) {
                     Text(
-                        text = "STEP-BY-STEP PRACTICE",
+                        text = "HOW TO PRACTICE:",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
-                        color = ZenTextSecondary
+                        letterSpacing = 1.sp,
+                        color = phaseColor
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
-                    teacher.steps.forEach { step ->
+                    tip.detailedGuidance.forEach { point ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 5.dp),
+                                .padding(vertical = 4.dp),
                             verticalAlignment = Alignment.Top
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(22.dp)
-                                    .clip(CircleShape)
-                                    .background(levelColor.copy(alpha = 0.2f))
-                                    .border(1.dp, levelColor, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "${step.stepNumber}",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = levelColor
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = step.title,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = ZenTextPrimary
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = step.instruction,
-                                    fontSize = 12.sp,
-                                    lineHeight = 17.sp,
-                                    color = ZenTextSecondary
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Core Quote Footer
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(ZenSurfaceVariant.copy(alpha = 0.5f))
-                            .padding(10.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.Top) {
                             Icon(
-                                imageVector = Icons.Default.FormatQuote,
+                                imageVector = Icons.Default.Check,
                                 contentDescription = null,
-                                tint = ZenTeal,
-                                modifier = Modifier.size(18.dp)
+                                tint = phaseColor,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .padding(top = 2.dp)
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "\"${teacher.coreQuote}\"",
+                                text = point,
                                 fontSize = 12.sp,
-                                fontStyle = FontStyle.Italic,
-                                lineHeight = 16.sp,
-                                color = ZenTeal
+                                lineHeight = 17.sp,
+                                color = ZenTextSecondary
                             )
                         }
                     }
