@@ -57,6 +57,13 @@ import com.samadhi.meditationtimer.ui.theme.ZenTeal
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import com.samadhi.meditationtimer.R
+import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -70,13 +77,41 @@ fun HistoryScreen(
     val stats by viewModel.stats.collectAsState()
     var sessionToDelete by remember { mutableStateOf<MeditationSession?>(null) }
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(ZenObsidian)
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
+        // Moonlit Backdrop
+        Image(
+            painter = painterResource(id = R.drawable.bg_zen_bamboo),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            alpha = 0.20f
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF060911).copy(alpha = 0.85f),
+                            Color(0xFF0A101D).copy(alpha = 0.70f),
+                            Color(0xFF060911).copy(alpha = 0.92f)
+                        )
+                    )
+                )
+        )
+
+        FallingLeavesEffect(
+            leafCount = 14,
+            ambientAlpha = 0.26f
+        )
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         item {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -174,32 +209,33 @@ fun HistoryScreen(
         item {
             Spacer(modifier = Modifier.height(24.dp))
         }
-    }
+        }
 
-    // Delete Confirmation Dialog
-    sessionToDelete?.let { session ->
-        AlertDialog(
-            onDismissRequest = { sessionToDelete = null },
-            title = { Text(text = "Delete Practice Record", color = ZenTextPrimary) },
-            text = { Text(text = "Are you sure you want to permanently delete this meditation entry and notes?", color = ZenTextSecondary) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteSession(session)
-                        sessionToDelete = null
+        // Delete Confirmation Dialog
+        sessionToDelete?.let { session ->
+            AlertDialog(
+                onDismissRequest = { sessionToDelete = null },
+                title = { Text(text = "Delete Practice Record", color = ZenTextPrimary) },
+                text = { Text(text = "Are you sure you want to permanently delete this meditation entry and notes?", color = ZenTextSecondary) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteSession(session)
+                            sessionToDelete = null
+                        }
+                    ) {
+                        Text(text = "Delete", color = ZenDanger, fontWeight = FontWeight.Bold)
                     }
-                ) {
-                    Text(text = "Delete", color = ZenDanger, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { sessionToDelete = null }) {
-                    Text(text = "Cancel", color = ZenTextSecondary)
-                }
-            },
-            containerColor = ZenSurface,
-            shape = RoundedCornerShape(16.dp)
-        )
+                },
+                dismissButton = {
+                    TextButton(onClick = { sessionToDelete = null }) {
+                        Text(text = "Cancel", color = ZenTextSecondary)
+                    }
+                },
+                containerColor = ZenSurface,
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
     }
 }
 

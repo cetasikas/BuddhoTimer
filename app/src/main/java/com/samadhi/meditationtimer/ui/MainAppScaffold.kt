@@ -157,6 +157,9 @@ fun MainAppScaffold() {
                     },
                     onOpenSettings = {
                         navController.navigate(Screen.Settings.route)
+                    },
+                    onOpenBreathing = {
+                        navController.navigate(Screen.Breathing.route)
                     }
                 )
             }

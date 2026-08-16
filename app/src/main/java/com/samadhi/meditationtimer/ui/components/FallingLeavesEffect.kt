@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import kotlin.math.sin
 import kotlin.random.Random
@@ -38,9 +39,10 @@ private data class LeafParticle(
 @Composable
 fun FallingLeavesEffect(
     modifier: Modifier = Modifier,
-    leafCount: Int = 18,
+    leafCount: Int = 16,
     triggerBurst: Int = 0,
-    ambientAlpha: Float = 0.35f
+    ambientAlpha: Float = 0.32f,
+    isGlowing: Boolean = false
 ) {
     val leaves = remember {
         mutableStateListOf<LeafParticle>().apply {
@@ -70,7 +72,7 @@ fun FallingLeavesEffect(
                         leaf.rotation += leaf.rotationSpeed * dt
 
                         if (leaf.isBurst) {
-                            leaf.lifeRatio -= dt * 0.25f
+                            leaf.lifeRatio -= dt * 0.28f
                             if (leaf.lifeRatio <= 0f || leaf.yRatio > 1.15f) {
                                 iterator.remove()
                                 continue
@@ -109,7 +111,8 @@ fun FallingLeavesEffect(
                     center = Offset(posX, posY),
                     size = leaf.sizePx,
                     rotation = leaf.rotation,
-                    color = leaf.color.copy(alpha = currentAlpha)
+                    color = leaf.color.copy(alpha = currentAlpha),
+                    isGlowing = isGlowing
                 )
             }
         }
@@ -121,12 +124,13 @@ private fun DrawScope.drawLeaf(
     center: Offset,
     size: Float,
     rotation: Float,
-    color: Color
+    color: Color,
+    isGlowing: Boolean
 ) {
     rotate(degrees = rotation, pivot = center) {
         path.reset()
-        val halfW = size * 0.35f
-        val halfH = size * 0.85f
+        val halfW = size * 0.36f
+        val halfH = size * 0.88f
 
         // Graceful Plum Village Bodhi / Bamboo Leaf Curve
         path.moveTo(center.x, center.y - halfH)
@@ -141,6 +145,20 @@ private fun DrawScope.drawLeaf(
             center.x, center.y - halfH
         )
         path.close()
+
+        // Luminous glowing rim when active
+        if (isGlowing) {
+            drawPath(
+                path = path,
+                color = Color(0xFFFFE082).copy(alpha = 0.45f),
+                style = Stroke(width = 2.5f)
+            )
+            drawPath(
+                path = path,
+                color = Color(0xFFFFF9E6).copy(alpha = 0.30f),
+                style = Stroke(width = 4.5f)
+            )
+        }
 
         drawPath(path = path, color = color)
     }
@@ -159,7 +177,7 @@ private fun generateAmbientLeaves(count: Int): List<LeafParticle> {
         LeafParticle(
             xRatio = Random.nextFloat(),
             yRatio = Random.nextFloat(),
-            speedY = Random.nextFloat() * 0.045f + 0.025f,
+            speedY = Random.nextFloat() * 0.045f + 0.022f,
             swayFreq = Random.nextFloat() * 1.5f + 1.2f,
             swayAmpRatio = Random.nextFloat() * 0.035f + 0.015f,
             swayPhase = Random.nextFloat() * 6.28f,

@@ -59,6 +59,14 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import com.samadhi.meditationtimer.R
+import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
+
 @Composable
 fun SessionSummaryScreen(
     completedStatus: TimerStatus.Completed?,
@@ -74,14 +82,42 @@ fun SessionSummaryScreen(
     var selectedMood by remember { mutableIntStateOf(3) }
     var notesValue by remember { mutableStateOf(TextFieldValue("")) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(ZenObsidian)
-            .padding(horizontal = 20.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
+        // Moonlit Backdrop
+        Image(
+            painter = painterResource(id = R.drawable.bg_zen_bamboo),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            alpha = 0.20f
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF060911).copy(alpha = 0.85f),
+                            Color(0xFF0A101D).copy(alpha = 0.70f),
+                            Color(0xFF060911).copy(alpha = 0.92f)
+                        )
+                    )
+                )
+        )
+
+        FallingLeavesEffect(
+            leafCount = 14,
+            ambientAlpha = 0.26f
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Icon & Header
@@ -283,11 +319,12 @@ fun SessionSummaryScreen(
                 .height(50.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
-            border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(ZenBorder))
+            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenBorder))
         ) {
             Text(text = "Discard", fontSize = 14.sp)
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+        }
     }
 }

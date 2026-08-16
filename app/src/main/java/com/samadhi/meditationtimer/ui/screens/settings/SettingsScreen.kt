@@ -83,6 +83,13 @@ import com.samadhi.meditationtimer.ui.theme.ZenTeal
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.samadhi.meditationtimer.R
+import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 
 @OptIn(ExperimentalLayoutApi::class)
 @SuppressLint("BatteryLife")
@@ -99,8 +106,8 @@ fun SettingsScreen(
     val config by timerViewModel.config.collectAsState()
 
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     val soundHelper = remember { SoundHelper(context) }
+    val lifecycleOwner = LocalLifecycleOwner.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     val prepOptions = listOf(0, 5, 10, 15)
@@ -144,6 +151,34 @@ fun SettingsScreen(
     }
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
+        // Moonlit Backdrop
+        Image(
+            painter = painterResource(id = R.drawable.bg_zen_bamboo),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            alpha = 0.20f
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF060911).copy(alpha = 0.85f),
+                            Color(0xFF0A101D).copy(alpha = 0.70f),
+                            Color(0xFF060911).copy(alpha = 0.92f)
+                        )
+                    )
+                )
+        )
+
+        FallingLeavesEffect(
+            leafCount = 14,
+            ambientAlpha = 0.26f
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -164,9 +199,9 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 1. MEDITATION SOUNDS & BELLS
+            // 1. BELL SOUNDS
             Text(
-                text = "MEDITATION CHIMES",
+                text = "BELL SOUND & CHIMES",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.5.sp,
@@ -176,7 +211,7 @@ fun SettingsScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
                 border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -186,7 +221,10 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.MusicNote,
                                 contentDescription = null,
@@ -200,14 +238,16 @@ fun SettingsScreen(
                                 color = ZenTextPrimary
                             )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                         OutlinedButton(
                             onClick = { soundHelper.playChime(config.soundBellResName) },
-                            modifier = Modifier.height(32.dp),
-                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.height(34.dp),
+                            shape = RoundedCornerShape(17.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenAmber),
                             border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenAmber))
                         ) {
-                            Text("Preview", fontSize = 11.sp)
+                            Text("Preview", fontSize = 12.sp, fontWeight = FontWeight.Medium)
                         }
                     }
 
@@ -424,7 +464,7 @@ fun SettingsScreen(
             // Do Not Disturb Permission
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
                 border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -434,7 +474,10 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.DoNotDisturb,
                                 contentDescription = null,
@@ -455,12 +498,13 @@ fun SettingsScreen(
                                 )
                             }
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                         if (isDndGranted) {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Granted",
                                 tint = ZenAmber,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         } else {
                             OutlinedButton(
@@ -471,10 +515,12 @@ fun SettingsScreen(
                                         }
                                     )
                                 },
-                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.height(34.dp),
+                                shape = RoundedCornerShape(17.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                                 border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenAmber))
                             ) {
-                                Text("Grant", fontSize = 12.sp, color = ZenAmber)
+                                Text("Grant", fontSize = 12.sp, color = ZenAmber, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
@@ -487,7 +533,10 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.BatteryChargingFull,
                                 contentDescription = null,
@@ -508,12 +557,13 @@ fun SettingsScreen(
                                 )
                             }
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                         if (isBatteryOptIgnored) {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Ignored",
                                 tint = ZenAmber,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         } else {
                             OutlinedButton(
@@ -524,10 +574,12 @@ fun SettingsScreen(
                                         }
                                     )
                                 },
-                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.height(34.dp),
+                                shape = RoundedCornerShape(17.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                                 border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenAmber))
                             ) {
-                                Text("Disable", fontSize = 12.sp, color = ZenAmber)
+                                Text("Disable", fontSize = 12.sp, color = ZenAmber, fontWeight = FontWeight.Medium)
                             }
                         }
                     }

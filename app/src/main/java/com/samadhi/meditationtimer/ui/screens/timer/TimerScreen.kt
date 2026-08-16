@@ -1,12 +1,13 @@
 package com.samadhi.meditationtimer.ui.screens.timer
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +28,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Air
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,16 +43,19 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -62,15 +66,12 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.samadhi.meditationtimer.R
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
-import com.samadhi.meditationtimer.ui.theme.ZenAmberGlow
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
-import com.samadhi.meditationtimer.ui.theme.ZenGoldDust
 import com.samadhi.meditationtimer.ui.theme.ZenGoldGlow
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
 import com.samadhi.meditationtimer.ui.theme.ZenTeal
-import com.samadhi.meditationtimer.ui.theme.ZenTealGlow
 import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
@@ -83,11 +84,13 @@ fun TimerScreen(
     onStartSession: () -> Unit,
     onOpenWisdom: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenBreathing: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val config by viewModel.config.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     var leafBurstTrigger by remember { mutableIntStateOf(0) }
+    var isSliding by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -110,18 +113,18 @@ fun TimerScreen(
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
-            alpha = 0.22f
+            alpha = 0.20f
         )
 
-        // Moonlit Gradient Overlay for deep serenity
+        // Moonlit Gradient Overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF060911).copy(alpha = 0.82f),
-                            Color(0xFF0A1120).copy(alpha = 0.65f),
+                            Color(0xFF060911).copy(alpha = 0.85f),
+                            Color(0xFF0A1120).copy(alpha = 0.68f),
                             Color(0xFF060911).copy(alpha = 0.92f)
                         )
                     )
@@ -135,83 +138,121 @@ fun TimerScreen(
             ambientAlpha = 0.32f
         )
 
-        // 3. Scrollable Main Content Flow
+        // 3. Compact Main Content (Fits on a single screen without scrolling overflow)
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 22.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Top Minimalist Header
-            Row(
+            // --- TOP HEADER ---
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "BUDDHO",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        letterSpacing = 5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ZenTextPrimary
-                    )
-                )
-
-                // Top Right Minimal Outline Action Buttons: [?] and [Settings]
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    IconButton(
-                        onClick = onOpenWisdom,
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(ZenSurface.copy(alpha = 0.6f))
-                            .border(1.dp, ZenBorder, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                            contentDescription = "Meditation Instructions",
-                            tint = ZenTextSecondary,
-                            modifier = Modifier.size(18.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Plum Village Calligraphy Title
+                    Text(
+                        text = "Buddho Timer",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontStyle = FontStyle.Italic,
+                            letterSpacing = 2.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ZenTextPrimary
                         )
-                    }
+                    )
 
-                    IconButton(
-                        onClick = onOpenSettings,
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(ZenSurface.copy(alpha = 0.6f))
-                            .border(1.dp, ZenBorder, CircleShape)
+                    // Action Icons: [?] and [⚙]
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        IconButton(
+                            onClick = onOpenWisdom,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(ZenSurface.copy(alpha = 0.65f))
+                                .border(1.dp, ZenBorder, CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
+                                contentDescription = "Meditation Instructions",
+                                tint = ZenTextSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onOpenSettings,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(ZenSurface.copy(alpha = 0.65f))
+                                .border(1.dp, ZenBorder, CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Settings,
+                                contentDescription = "Meditation Settings",
+                                tint = ZenTextSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Out-of-the-way Minimal Box Breathing Pill Button
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(ZenTeal.copy(alpha = 0.14f))
+                        .border(1.dp, ZenTeal.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                        .clickable { onOpenBreathing() }
+                        .padding(horizontal = 14.dp, vertical = 5.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Settings,
-                            contentDescription = "Meditation Settings",
-                            tint = ZenTextSecondary,
-                            modifier = Modifier.size(18.dp)
+                            imageVector = Icons.Outlined.Air,
+                            contentDescription = null,
+                            tint = ZenTealLight,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Zen Box Breathing",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 0.5.sp,
+                            color = ZenTealLight
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(38.dp))
-
-            // 4. Floating Target Duration Display (No cards or borders behind the text)
+            // --- FLOATING TARGET DURATION DISPLAY ---
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
             ) {
                 Text(
                     text = "TARGET DURATION",
-                    fontSize = 13.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 3.sp,
+                    letterSpacing = 2.5.sp,
                     color = ZenTeal
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     verticalAlignment = Alignment.Bottom,
@@ -219,107 +260,108 @@ fun TimerScreen(
                 ) {
                     Text(
                         text = "${config.targetDurationMinutes}",
-                        fontSize = 84.sp,
+                        fontSize = 72.sp,
                         fontWeight = FontWeight.ExtraLight,
                         letterSpacing = (-2).sp,
                         color = ZenTextPrimary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "min",
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Light,
                         color = ZenGoldGlow,
-                        modifier = Modifier.padding(bottom = 18.dp)
+                        modifier = Modifier.padding(bottom = 14.dp)
                     )
                 }
 
                 Text(
-                    text = if (config.isOverrunEnabled) "Practice continues seamlessly into Samadhi Overrun" else "Mindful chime sounds at target completion",
-                    fontSize = 13.sp,
+                    text = if (config.isOverrunEnabled) "Continuous Samadhi Overrun enabled" else "Chime rings at target duration",
+                    fontSize = 12.sp,
                     fontStyle = FontStyle.Italic,
                     color = ZenTextSecondary,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
 
-            Spacer(modifier = Modifier.height(42.dp))
-
-            // 5. Minimalist Horizontal Slider
+            // --- MINIMAL SLIDER WITH LEAF INTERACTION ANIMATION ---
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Slider with leaf animation trigger
                 Slider(
                     value = config.targetDurationMinutes.toFloat(),
                     onValueChange = {
+                        isSliding = true
                         viewModel.updateDurationMinutes(it.toInt())
+                        leafBurstTrigger++
+                    },
+                    onValueChangeFinished = {
+                        isSliding = false
                     },
                     valueRange = 1f..120f,
                     steps = 118,
                     colors = SliderDefaults.colors(
-                        thumbColor = ZenTeal,
+                        thumbColor = ZenTealLight,
                         activeTrackColor = ZenTeal,
-                        inactiveTrackColor = ZenBorder.copy(alpha = 0.5f)
+                        inactiveTrackColor = ZenBorder.copy(alpha = 0.55f)
                     ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp)
+                    modifier = Modifier.fillMaxWidth()
                 )
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-            // 6. Clean Row of Minimal Pill-shaped Preset Buttons with Soft Glowing Active States
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                presetDurations.forEach { duration ->
-                    val isSelected = config.targetDurationMinutes == duration
+                // --- CLEAN GLOWING PRESET PILL BUTTONS ---
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    presetDurations.forEach { duration ->
+                        val isSelected = config.targetDurationMinutes == duration
 
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isSelected) ZenTeal.copy(alpha = 0.22f)
-                                else ZenSurface.copy(alpha = 0.6f)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    if (isSelected) ZenTeal.copy(alpha = 0.22f)
+                                    else ZenSurface.copy(alpha = 0.55f)
+                                )
+                                .border(
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) ZenTealLight else ZenBorder,
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .clickable {
+                                    viewModel.updateDurationMinutes(duration)
+                                    leafBurstTrigger++
+                                }
+                                .padding(horizontal = 13.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${duration}m",
+                                fontSize = 13.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) ZenTealLight else ZenTextSecondary
                             )
-                            .border(
-                                width = if (isSelected) 1.5.dp else 1.dp,
-                                color = if (isSelected) ZenTeal else ZenBorder,
-                                shape = RoundedCornerShape(20.dp)
-                            )
-                            .clickable {
-                                viewModel.updateDurationMinutes(duration)
-                                leafBurstTrigger++
-                            }
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "${duration}m",
-                            fontSize = 14.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) ZenTealLight else ZenTextSecondary
-                        )
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // 7. Minimalist "Keep It Going" Mode Toggle (Samadhi Overrun Option)
+            // --- COMPACT KEEP IT GOING MODE TOGGLE ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(ZenSurface.copy(alpha = 0.65f))
-                    .border(1.dp, ZenBorder, RoundedCornerShape(16.dp))
-                    .padding(horizontal = 18.dp, vertical = 12.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(ZenSurface.copy(alpha = 0.60f))
+                    .border(1.dp, ZenBorder.copy(alpha = 0.8f), RoundedCornerShape(14.dp))
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -330,20 +372,19 @@ fun TimerScreen(
                         Text(
                             text = "Keep It Going (Samadhi Overrun)",
                             style = MaterialTheme.typography.titleMedium.copy(
-                                fontSize = 14.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold
                             ),
                             color = ZenTextPrimary
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Timer runs past 00:00 without stopping so practice isn't cut short",
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                            text = "Timer continues past 00:00 without interruption",
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                             color = ZenTextSecondary
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     Switch(
                         checked = config.isOverrunEnabled,
@@ -361,25 +402,23 @@ fun TimerScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
-
-            // 8. Serene Floating "▶ Begin Practice" Button with Soft Ambient Glow
+            // --- COMPACT FLOATING "BEGIN PRACTICE" ACTION BUTTON ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(58.dp)
-                    .shadow(12.dp, RoundedCornerShape(20.dp), spotColor = ZenTeal)
-                    .clip(RoundedCornerShape(20.dp))
+                    .height(52.dp)
+                    .shadow(10.dp, RoundedCornerShape(18.dp), spotColor = ZenTeal)
+                    .clip(RoundedCornerShape(18.dp))
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                Color(0xFF227876),
+                                Color(0xFF1E6E6C),
                                 Color(0xFF2EA8A4),
                                 Color(0xFF38C7C2)
                             )
                         )
                     )
-                    .border(1.dp, Color(0xFF5EEAD4).copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                    .border(1.dp, Color(0xFF5EEAD4).copy(alpha = 0.5f), RoundedCornerShape(18.dp))
                     .clickable {
                         leafBurstTrigger++
                         viewModel.startSession()
@@ -395,20 +434,18 @@ fun TimerScreen(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = null,
                         tint = Color(0xFF041014),
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Begin Practice",
-                        fontSize = 17.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
                         color = Color(0xFF041014)
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(36.dp))
         }
     }
 }

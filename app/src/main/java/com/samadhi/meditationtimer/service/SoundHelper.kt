@@ -59,138 +59,139 @@ class SoundHelper(private val context: Context) {
     }
 
     /**
-     * Deep Tibetan Singing Bowl: Warm sub-harmonics, gentle pulsing beat, soothing resonant decay
+     * Deep Tibetan Singing Bowl: Warm, mellow bronze resonance with soft 50ms attack & soothing 1.8Hz binaural pulse
      */
     private fun synthesizeSingingBowlSound() {
-        val sampleRate = 44100
-        val durationSeconds = 4.5
-        val numSamples = (durationSeconds * sampleRate).toInt()
-        val buffer = ShortArray(numSamples)
-
-        // Fundamental frequencies for warm Tibetan bronze bowl (F3 fundamental ~174Hz, soothing harmonics)
-        val f1 = 174.61 // Deep fundamental
-        val f2 = 432.00 // Resonant 2nd harmonic
-        val f3 = 528.00 // Solfeggio overtone
-        val f4 = 864.00 // Shimmer
-
-        for (i in 0 until numSamples) {
-            val t = i.toDouble() / sampleRate
-
-            // Smooth 20ms attack to eliminate clicks + exponential decay
-            val attack = if (t < 0.02) (t / 0.02) else 1.0
-            val decay = exp(-0.85 * t)
-            val envelope = attack * decay
-
-            // Gentle 2.5 Hz binaural amplitude modulation (singing bowl rim pulse)
-            val beat = 1.0 + 0.12 * sin(2.0 * PI * 2.5 * t)
-
-            val s1 = sin(2.0 * PI * f1 * t) * 0.58
-            val s2 = sin(2.0 * PI * f2 * t) * 0.25 * exp(-1.2 * t)
-            val s3 = sin(2.0 * PI * f3 * t) * 0.12 * exp(-1.8 * t)
-            val s4 = sin(2.0 * PI * f4 * t) * 0.05 * exp(-2.5 * t)
-
-            val sample = (s1 + s2 + s3 + s4) * beat * envelope
-            val clamped = sample.coerceIn(-0.95, 0.95)
-            buffer[i] = (clamped * Short.MAX_VALUE).toInt().toShort()
-        }
-
-        playPcmBuffer(buffer, sampleRate)
-    }
-
-    /**
-     * Zen Bronze Temple Bell (Keisu): Rich bronze strike with clear harmonic ring and pure sustained overtone
-     */
-    private fun synthesizeZenTempleBell() {
         val sampleRate = 44100
         val durationSeconds = 5.0
         val numSamples = (durationSeconds * sampleRate).toInt()
         val buffer = ShortArray(numSamples)
 
-        val f1 = 261.63 // C4 Temple fundamental
-        val f2 = 523.25 // C5 Octave
-        val f3 = 784.00 // G5 Harmonic fifth
-        val f4 = 1174.66 // D6 Bronze shimmer
+        // Warm, grounding frequencies (F3 fundamental ~174.6Hz with pure harmonics)
+        val f1 = 174.61 // Deep fundamental
+        val f2 = 349.23 // Octave F4
+        val f3 = 523.25 // Fifth C5
+        val f4 = 784.00 // G5 Soft overtone
 
         for (i in 0 until numSamples) {
             val t = i.toDouble() / sampleRate
 
-            val attack = if (t < 0.008) (t / 0.008) else 1.0
-            val decay = exp(-0.75 * t)
+            // Smooth 60ms non-linear attack to ensure zero jarring click
+            val attack = if (t < 0.06) (sin(PI * t / (2.0 * 0.06))) else 1.0
+            val decay = exp(-0.65 * t)
             val envelope = attack * decay
 
-            // Bronze strike transient
-            val strike = if (t < 0.05) sin(2.0 * PI * 800.0 * t) * exp(-40.0 * t) * 0.15 else 0.0
+            // Gentle 1.8 Hz binaural pulsation (singing bowl rim resonance)
+            val beat = 1.0 + 0.08 * sin(2.0 * PI * 1.8 * t)
 
-            val s1 = sin(2.0 * PI * f1 * t) * 0.60
-            val s2 = sin(2.0 * PI * f2 * t) * 0.22 * exp(-1.0 * t)
-            val s3 = sin(2.0 * PI * f3 * t) * 0.12 * exp(-1.5 * t)
-            val s4 = sin(2.0 * PI * f4 * t) * 0.06 * exp(-3.0 * t)
+            val s1 = sin(2.0 * PI * f1 * t) * 0.65
+            val s2 = sin(2.0 * PI * f2 * t) * 0.20 * exp(-0.9 * t)
+            val s3 = sin(2.0 * PI * f3 * t) * 0.10 * exp(-1.4 * t)
+            val s4 = sin(2.0 * PI * f4 * t) * 0.04 * exp(-2.0 * t)
 
-            val sample = (s1 + s2 + s3 + s4 + strike) * envelope
-            val clamped = sample.coerceIn(-0.95, 0.95)
-            buffer[i] = (clamped * Short.MAX_VALUE).toInt().toShort()
+            val sample = (s1 + s2 + s3 + s4) * beat * envelope
+            val clamped = sample.coerceIn(-0.90, 0.90)
+            buffer[i] = (clamped * Short.MAX_VALUE * 0.85).toInt().toShort()
         }
 
         playPcmBuffer(buffer, sampleRate)
     }
 
     /**
-     * Ting-Sha Chimes: High, crystal-clear Tibetan cymbal chime with pure lingering resonance
+     * Zen Bronze Temple Bell (Keisu): Rich bronze warmth with gentle mallet strike and pure sustained ring
+     */
+    private fun synthesizeZenTempleBell() {
+        val sampleRate = 44100
+        val durationSeconds = 5.5
+        val numSamples = (durationSeconds * sampleRate).toInt()
+        val buffer = ShortArray(numSamples)
+
+        val f1 = 220.00 // A3 Warm temple body
+        val f2 = 440.00 // A4 Octave
+        val f3 = 659.25 // E5 Harmonious fifth
+        val f4 = 880.00 // A5 Shimmer
+
+        for (i in 0 until numSamples) {
+            val t = i.toDouble() / sampleRate
+
+            // Smooth 40ms attack (soft padded wooden mallet)
+            val attack = if (t < 0.04) (sin(PI * t / (2.0 * 0.04))) else 1.0
+            val decay = exp(-0.55 * t)
+            val envelope = attack * decay
+
+            // Low frequency mallet thump (subtle 80Hz cushion)
+            val mallet = if (t < 0.08) sin(2.0 * PI * 80.0 * t) * exp(-25.0 * t) * 0.12 else 0.0
+
+            val s1 = sin(2.0 * PI * f1 * t) * 0.62
+            val s2 = sin(2.0 * PI * f2 * t) * 0.22 * exp(-0.8 * t)
+            val s3 = sin(2.0 * PI * f3 * t) * 0.10 * exp(-1.2 * t)
+            val s4 = sin(2.0 * PI * f4 * t) * 0.04 * exp(-2.0 * t)
+
+            val sample = (s1 + s2 + s3 + s4 + mallet) * envelope
+            val clamped = sample.coerceIn(-0.90, 0.90)
+            buffer[i] = (clamped * Short.MAX_VALUE * 0.85).toInt().toShort()
+        }
+
+        playPcmBuffer(buffer, sampleRate)
+    }
+
+    /**
+     * Ting-Sha Chimes: Crystal-clear, soft celestial chime with pure lingering resonance
      */
     private fun synthesizeTingshaChime() {
         val sampleRate = 44100
-        val durationSeconds = 4.0
+        val durationSeconds = 4.5
         val numSamples = (durationSeconds * sampleRate).toInt()
         val buffer = ShortArray(numSamples)
 
-        val f1 = 2093.00 // C7 Bright celestial fundamental
-        val f2 = 2101.00 // Slight detuning for authentic Ting-Sha shimmer
-        val f3 = 4186.00 // High sparkle
+        val f1 = 1760.00 // A6 Silky celestial fundamental
+        val f2 = 1766.00 // Gentle natural shimmer beating (6Hz)
+        val f3 = 3520.00 // A7 Soft sparkle
 
         for (i in 0 until numSamples) {
             val t = i.toDouble() / sampleRate
 
-            val attack = if (t < 0.005) (t / 0.005) else 1.0
-            val decay = exp(-0.95 * t)
+            val attack = if (t < 0.03) (sin(PI * t / (2.0 * 0.03))) else 1.0
+            val decay = exp(-0.70 * t)
             val envelope = attack * decay
 
-            val s1 = sin(2.0 * PI * f1 * t) * 0.50
-            val s2 = sin(2.0 * PI * f2 * t) * 0.40
-            val s3 = sin(2.0 * PI * f3 * t) * 0.10 * exp(-2.0 * t)
+            val s1 = sin(2.0 * PI * f1 * t) * 0.55
+            val s2 = sin(2.0 * PI * f2 * t) * 0.38
+            val s3 = sin(2.0 * PI * f3 * t) * 0.06 * exp(-1.5 * t)
 
             val sample = (s1 + s2 + s3) * envelope
-            val clamped = sample.coerceIn(-0.95, 0.95)
-            buffer[i] = (clamped * Short.MAX_VALUE).toInt().toShort()
+            val clamped = sample.coerceIn(-0.85, 0.85)
+            buffer[i] = (clamped * Short.MAX_VALUE * 0.75).toInt().toShort()
         }
 
         playPcmBuffer(buffer, sampleRate)
     }
 
     /**
-     * Moktak / Temple Woodblock: Organic mellow wooden strike
+     * Moktak / Temple Woodblock: Organic warm resonant wooden knock
      */
     private fun synthesizeMoktak() {
         val sampleRate = 44100
-        val durationSeconds = 1.2
+        val durationSeconds = 1.4
         val numSamples = (durationSeconds * sampleRate).toInt()
         val buffer = ShortArray(numSamples)
 
-        val f1 = 587.33 // D5 Wooden body
-        val f2 = 880.00 // A5 Wood overtone
+        val f1 = 440.00 // A4 Warm wood cavity
+        val f2 = 660.00 // E5 Wood body
 
         for (i in 0 until numSamples) {
             val t = i.toDouble() / sampleRate
 
-            val attack = if (t < 0.003) (t / 0.003) else 1.0
-            val decay = exp(-7.0 * t)
+            val attack = if (t < 0.015) (sin(PI * t / (2.0 * 0.015))) else 1.0
+            val decay = exp(-5.5 * t)
             val envelope = attack * decay
 
-            val s1 = sin(2.0 * PI * f1 * t) * 0.70
-            val s2 = sin(2.0 * PI * f2 * t) * 0.30
+            val s1 = sin(2.0 * PI * f1 * t) * 0.75
+            val s2 = sin(2.0 * PI * f2 * t) * 0.25 * exp(-8.0 * t)
 
             val sample = (s1 + s2) * envelope
-            val clamped = sample.coerceIn(-0.95, 0.95)
-            buffer[i] = (clamped * Short.MAX_VALUE).toInt().toShort()
+            val clamped = sample.coerceIn(-0.90, 0.90)
+            buffer[i] = (clamped * Short.MAX_VALUE * 0.80).toInt().toShort()
         }
 
         playPcmBuffer(buffer, sampleRate)
@@ -200,7 +201,7 @@ class SoundHelper(private val context: Context) {
         val audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
             )
@@ -234,7 +235,7 @@ class SoundHelper(private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 // Triple gentle meditative wave: wait 0ms, vibrate 120ms, wait 180ms, vibrate 160ms, wait 180ms, vibrate 220ms
                 val timings = longArrayOf(0, 120, 180, 160, 180, 220)
-                val amplitudes = intArrayOf(0, 70, 0, 90, 0, 120)
+                val amplitudes = intArrayOf(0, 60, 0, 80, 0, 100)
                 val effect = VibrationEffect.createWaveform(timings, amplitudes, -1)
                 vibrator?.vibrate(effect)
             } else {
