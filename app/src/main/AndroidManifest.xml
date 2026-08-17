@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".MeditationApp"
@@ -44,6 +45,20 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Meditation timer countdown with precise background progression, audio chime triggers, and overrun tracking." />
         </service>
+
+        <!-- Reminder Broadcast Receivers -->
+        <receiver
+            android:name=".service.reminder.MeditationReminderReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".service.reminder.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

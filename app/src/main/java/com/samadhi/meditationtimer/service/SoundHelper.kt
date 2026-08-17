@@ -235,7 +235,7 @@ class SoundHelper(private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 // Triple gentle meditative wave: wait 0ms, vibrate 120ms, wait 180ms, vibrate 160ms, wait 180ms, vibrate 220ms
                 val timings = longArrayOf(0, 120, 180, 160, 180, 220)
-                val amplitudes = intArrayOf(0, 60, 0, 80, 0, 100)
+                val amplitudes = intArrayOf(0, 50, 0, 75, 0, 95)
                 val effect = VibrationEffect.createWaveform(timings, amplitudes, -1)
                 vibrator?.vibrate(effect)
             } else {
@@ -244,6 +244,53 @@ class SoundHelper(private val context: Context) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error triggering vibration", e)
+        }
+    }
+
+    fun triggerHarmonicIntervalHaptic() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Gentle dual-pulse interval ripple
+                val timings = longArrayOf(0, 90, 140, 140)
+                val amplitudes = intArrayOf(0, 45, 0, 70)
+                val effect = VibrationEffect.createWaveform(timings, amplitudes, -1)
+                vibrator?.vibrate(effect)
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(longArrayOf(0, 90, 140, 140), -1)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error triggering interval haptic", e)
+        }
+    }
+
+    fun triggerHarmonicCompletionHaptic() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Deep resonant 4-stage completion cascade
+                val timings = longArrayOf(0, 150, 120, 200, 120, 260, 150, 320)
+                val amplitudes = intArrayOf(0, 40, 0, 65, 0, 90, 0, 120)
+                val effect = VibrationEffect.createWaveform(timings, amplitudes, -1)
+                vibrator?.vibrate(effect)
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(longArrayOf(0, 150, 120, 200, 120, 260, 150, 320), -1)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error triggering completion haptic", e)
+        }
+    }
+
+    fun triggerSoftTouchHaptic() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(30L)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error triggering touch haptic", e)
         }
     }
 

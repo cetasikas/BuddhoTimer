@@ -60,7 +60,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -527,6 +530,258 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 5. MEDITATION REMINDERS (OUTSIDE APP)
+            Text(
+                text = "MEDITATION REMINDERS",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                color = currentTheme.primaryLight
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val reminderPrefs = remember { context.getSharedPreferences("timer_prefs", android.content.Context.MODE_PRIVATE) }
+            var reminderEnabled by remember { mutableStateOf(reminderPrefs.getBoolean("daily_reminder_enabled", false)) }
+            var reminderMode by remember { mutableStateOf(reminderPrefs.getString("reminder_mode", "daily") ?: "daily") }
+            var reminderHour by remember { mutableIntStateOf(reminderPrefs.getInt("reminder_hour", 8)) }
+            var reminderIntervalHours by remember { mutableIntStateOf(reminderPrefs.getInt("reminder_interval_hours", 4)) }
+
+            val postNotificationLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission(),
+                onResult = { isGranted ->
+                    if (isGranted) {
+                        reminderEnabled = true
+                        reminderPrefs.edit().putBoolean("daily_reminder_enabled", true).apply()
+                        if (reminderMode == "interval") {
+                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
+                        } else {
+                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
+                        }
+                    }
+                }
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Remind Me to Meditate",
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                                color = ZenTextPrimary
+                            )
+                            Text(
+                                text = "Send gentle mindfulness notifications outside the app",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
+                                color = ZenTextSecondary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Switch(
+                            checked = reminderEnabled,
+                            onCheckedChange = { isChecked ->
+                                if (isChecked && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                    val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                                        context,
+                                        android.Manifest.permission.POST_NOTIFICATIONS
+                                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+                                    if (!hasPermission) {
+                                        postNotificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                        return@Switch
+                                    }
+                                }
+
+                                reminderEnabled = isChecked
+                                reminderPrefs.edit().putBoolean("daily_reminder_enabled", isChecked).apply()
+
+                                if (isChecked) {
+                                    if (reminderMode == "interval") {
+                                        com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
+                                    } else {
+                                        com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
+                                    }
+                                } else {
+                                    com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.cancelReminder(context)
+                                }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = ZenObsidian,
+                                checkedTrackColor = currentTheme.primary,
+                                uncheckedThumbColor = ZenTextMuted,
+                                uncheckedTrackColor = ZenSurfaceVariant
+                            )
+                        )
+                    }
+
+                    if (reminderEnabled) {
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Reminder Frequency Mode (Daily vs Interval)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FilterChip(
+                                selected = reminderMode == "daily",
+                                onClick = {
+                                    reminderMode = "daily"
+                                    reminderPrefs.edit().putString("reminder_mode", "daily").apply()
+                                    com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
+                                },
+                                label = { Text("Daily Schedule", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = ZenSurfaceVariant,
+                                    labelColor = ZenTextSecondary,
+                                    selectedContainerColor = currentTheme.primary,
+                                    selectedLabelColor = ZenObsidian
+                                )
+                            )
+
+                            FilterChip(
+                                selected = reminderMode == "interval",
+                                onClick = {
+                                    reminderMode = "interval"
+                                    reminderPrefs.edit().putString("reminder_mode", "interval").apply()
+                                    com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
+                                },
+                                label = { Text("Periodic Interval", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = ZenSurfaceVariant,
+                                    labelColor = ZenTextSecondary,
+                                    selectedContainerColor = currentTheme.primary,
+                                    selectedLabelColor = ZenObsidian
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        if (reminderMode == "daily") {
+                            Text(
+                                text = "Reminder Time",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ZenTextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            val hourPresets = listOf(6, 7, 8, 9, 12, 18, 20, 21, 22)
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                hourPresets.forEach { h ->
+                                    val isSelected = reminderHour == h
+                                    val timeLabel = when {
+                                        h == 0 -> "12 AM"
+                                        h < 12 -> "$h AM"
+                                        h == 12 -> "12 PM"
+                                        else -> "${h - 12} PM"
+                                    }
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = {
+                                            reminderHour = h
+                                            reminderPrefs.edit().putInt("reminder_hour", h).apply()
+                                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, h, 0)
+                                        },
+                                        label = { Text(timeLabel, fontSize = 11.5.sp) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            containerColor = ZenSurfaceVariant,
+                                            labelColor = ZenTextSecondary,
+                                            selectedContainerColor = currentTheme.primary,
+                                            selectedLabelColor = ZenObsidian
+                                        ),
+                                        border = FilterChipDefaults.filterChipBorder(
+                                            borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
+                                            enabled = true,
+                                            selected = isSelected
+                                        )
+                                    )
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "Interval Cadence",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ZenTextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            val intervalOptions = listOf(2, 3, 4, 6, 8, 12)
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                intervalOptions.forEach { hrs ->
+                                    val isSelected = reminderIntervalHours == hrs
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = {
+                                            reminderIntervalHours = hrs
+                                            reminderPrefs.edit().putInt("reminder_interval_hours", hrs).apply()
+                                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, hrs)
+                                        },
+                                        label = { Text("Every ${hrs}h", fontSize = 11.5.sp) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            containerColor = ZenSurfaceVariant,
+                                            labelColor = ZenTextSecondary,
+                                            selectedContainerColor = currentTheme.primary,
+                                            selectedLabelColor = ZenObsidian
+                                        ),
+                                        border = FilterChipDefaults.filterChipBorder(
+                                            borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
+                                            enabled = true,
+                                            selected = isSelected
+                                        )
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Test Notification Button
+                        OutlinedButton(
+                            onClick = {
+                                val quote = com.samadhi.meditationtimer.data.wisdom.MeditationGuides.wisdomQuotes.random()
+                                val helper = com.samadhi.meditationtimer.service.NotificationHelper(context)
+                                helper.showReminderNotification(
+                                    "Time for Stillness 🪷",
+                                    "“${quote.quote}” — ${quote.author}"
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenBorder))
+                        ) {
+                            Text("Send Test Reminder Notification", fontSize = 12.sp, color = currentTheme.primaryLight)
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 6. PREPARATION (WARM UP)
             Text(
                 text = "PREPARATION (WARM UP)",
                 fontSize = 12.sp,

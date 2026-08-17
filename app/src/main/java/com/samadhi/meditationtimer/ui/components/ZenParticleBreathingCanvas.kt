@@ -195,18 +195,18 @@ fun ZenParticleBreathingCanvas(
             val expandR = leaf.expandRadiusRatio * maxRadius
             val r = homeR + (expandR - homeR) * expansionFactor
 
-            // Multi-frequency harmonic organic wobble
-            val wx = sin(animClockSec * leaf.speed * 2.2f + leaf.phase) * leaf.wobble * (1.4f + 2.2f * expansionFactor)
-            val wy = cos(animClockSec * leaf.speed * 1.8f + leaf.phase * 1.3f) * leaf.wobble * (1.4f + 2.2f * expansionFactor)
+            // Multi-frequency harmonic organic wobble (calm, slow drift)
+            val wx = sin(animClockSec * leaf.speed * 0.9f + leaf.phase) * leaf.wobble * (1.1f + 1.4f * expansionFactor)
+            val wy = cos(animClockSec * leaf.speed * 0.7f + leaf.phase * 1.3f) * leaf.wobble * (1.1f + 1.4f * expansionFactor)
 
-            // Dynamic breathing spiral orbit (rotates and expands gracefully with the breath)
-            val breathSpiralAngle = leaf.angle + (expansionFactor * 0.45f) + (animClockSec * leaf.speed * 2.0f)
+            // Dynamic breathing spiral orbit (Much slower, tranquil meditative drift)
+            val breathSpiralAngle = leaf.angle + (expansionFactor * 0.16f) + (animClockSec * leaf.speed * 0.45f)
             val pX = center.x + cos(breathSpiralAngle) * r + wx
             val pY = center.y + sin(breathSpiralAngle) * r + wy
 
-            val dynamicAlpha = leaf.opacity * (0.60f + expansionFactor * 0.40f)
-            val flutter = sin(animClockSec * leaf.flutterSpeed + leaf.phase) * (14f + 16f * expansionFactor)
-            val rot = Math.toDegrees(breathSpiralAngle.toDouble()).toFloat() + 90f + flutter + (expansionFactor * 22f * (if (leaf.index % 2 == 0) 1f else -1f))
+            val dynamicAlpha = leaf.opacity * (0.65f + expansionFactor * 0.35f)
+            val flutter = sin(animClockSec * leaf.flutterSpeed * 0.4f + leaf.phase) * (5f + 6f * expansionFactor)
+            val rot = Math.toDegrees(breathSpiralAngle.toDouble()).toFloat() + 90f + flutter + (expansionFactor * 9f * (if (leaf.index % 2 == 0) 1f else -1f))
 
             val currentLeafSize = leaf.size * (0.85f + 0.30f * expansionFactor)
 
@@ -217,7 +217,7 @@ fun ZenParticleBreathingCanvas(
                 center = Offset(pX, pY),
                 size = currentLeafSize,
                 rotation = rot,
-                color = leaf.color.copy(alpha = dynamicAlpha.coerceIn(0.50f, 1.0f)),
+                color = leaf.color.copy(alpha = dynamicAlpha.coerceIn(0.55f, 1.0f)),
                 highlightColor = currentTheme.primaryLight,
                 glowIntensity = glowPulseIntensity,
                 expansionFactor = expansionFactor,
@@ -309,39 +309,39 @@ private fun DrawScope.drawGlowingLeaf(
             }
         }
 
-        // Pass 1: Wide Pulsating Glow Halo (Swells generously with breathing)
-        val outerGlowAlpha = (0.38f * glowIntensity * dynamicAlpha).coerceIn(0f, 0.60f)
-        val outerGlowStroke = 11.0f * (0.75f + 0.45f * glowIntensity * expansionFactor)
+        // Pass 1: Wide Luminous White Ambient Aura Glow (Pulsating softly with the breath)
+        val whiteOuterGlowAlpha = (0.42f * glowIntensity * dynamicAlpha).coerceIn(0f, 0.65f)
+        val whiteOuterGlowStroke = 12.0f * (0.75f + 0.50f * glowIntensity * expansionFactor)
         drawPath(
             path = path,
-            color = highlightColor.copy(alpha = outerGlowAlpha),
-            style = Stroke(width = outerGlowStroke, cap = StrokeCap.Round)
+            color = Color.White.copy(alpha = whiteOuterGlowAlpha),
+            style = Stroke(width = whiteOuterGlowStroke, cap = StrokeCap.Round)
         )
 
-        // Pass 2: Inner Radiant Bloom
-        val innerGlowAlpha = (0.60f * glowIntensity * dynamicAlpha).coerceIn(0.15f, 0.85f)
-        val innerGlowStroke = 4.5f * (0.8f + 0.35f * glowIntensity)
+        // Pass 2: Inner Brilliant White-Pearl Radiant Bloom
+        val whiteInnerGlowAlpha = (0.68f * glowIntensity * dynamicAlpha).coerceIn(0.20f, 0.90f)
+        val whiteInnerGlowStroke = 4.5f * (0.8f + 0.35f * glowIntensity)
         drawPath(
             path = path,
-            color = highlightColor.copy(alpha = innerGlowAlpha),
-            style = Stroke(width = innerGlowStroke, cap = StrokeCap.Round)
+            color = Color(0xFFFFFFF2).copy(alpha = whiteInnerGlowAlpha),
+            style = Stroke(width = whiteInnerGlowStroke, cap = StrokeCap.Round)
         )
 
         // Pass 3: Solid Leaf Body Fill
         drawPath(path = path, color = color)
 
-        // Pass 4: Crisp Outer Rim Outline
-        val rimAlpha = (0.90f * dynamicAlpha).coerceIn(0.4f, 1.0f)
+        // Pass 4: Crisp Luminous White Outer Rim Outline
+        val rimAlpha = (0.92f * dynamicAlpha).coerceIn(0.5f, 1.0f)
         drawPath(
             path = path,
-            color = highlightColor.copy(alpha = rimAlpha),
+            color = Color.White.copy(alpha = rimAlpha),
             style = Stroke(width = 1.3f)
         )
 
-        // Pass 5: Center Spine Vein Detail
+        // Pass 5: Luminous White Center Spine Vein
         drawPath(
             path = spinePath,
-            color = highlightColor.copy(alpha = (rimAlpha * 0.65f)),
+            color = Color.White.copy(alpha = (rimAlpha * 0.80f)),
             style = Stroke(width = 1.1f, cap = StrokeCap.Round)
         )
     }

@@ -23,7 +23,7 @@ class NotificationHelper(private val context: Context) {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
+            val timerChannel = NotificationChannel(
                 CHANNEL_ID,
                 context.getString(R.string.notification_channel_timer_name),
                 NotificationManager.IMPORTANCE_LOW
@@ -33,8 +33,47 @@ class NotificationHelper(private val context: Context) {
                 setSound(null, null)
                 enableVibration(false)
             }
-            notificationManager.createNotificationChannel(channel)
+            notificationManager.createNotificationChannel(timerChannel)
+
+            val reminderChannel = NotificationChannel(
+                CHANNEL_REMINDERS_ID,
+                "Meditation Reminders",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Daily and periodic gentle reminders to pause and meditate"
+                setShowBadge(true)
+            }
+            notificationManager.createNotificationChannel(reminderChannel)
         }
+    }
+
+    fun buildReminderNotification(title: String, message: String): Notification {
+        val openAppIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val openAppPendingIntent = PendingIntent.getActivity(
+            context,
+            1002,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(context, CHANNEL_REMINDERS_ID)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentIntent(openAppPendingIntent)
+            .setAutoCancel(true)
+            .setColor(0xFF26A69A.toInt())
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
+    }
+
+    fun showReminderNotification(title: String, message: String) {
+        val notification = buildReminderNotification(title, message)
+        notificationManager.notify(NOTIFICATION_REMINDER_ID, notification)
     }
 
     fun buildTimerNotification(
@@ -105,7 +144,9 @@ class NotificationHelper(private val context: Context) {
 
     companion object {
         const val CHANNEL_ID = "meditation_timer_channel"
+        const val CHANNEL_REMINDERS_ID = "meditation_reminders_channel"
         const val NOTIFICATION_ID = 1001
+        const val NOTIFICATION_REMINDER_ID = 1002
 
         fun formatSeconds(totalSeconds: Int): String {
             val mins = totalSeconds / 60

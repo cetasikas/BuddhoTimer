@@ -267,13 +267,15 @@ fun ActiveSessionScreen(
 
                             Spacer(modifier = Modifier.height(36.dp))
 
-                        // Circular Progress Display
+                        // Circular Progress Display with Breath Pacing Aura & Interval Notches
                         CircularTimerProgress(
                             progress = progress,
                             isOverrun = isOverrun,
                             isPaused = isPaused,
                             size = 300.dp,
-                            strokeWidth = 10.dp
+                            strokeWidth = 10.dp,
+                            intervalMinutes = config.mindfulnessIntervalMinutes,
+                            totalDurationMinutes = config.targetDurationMinutes
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 if (isOverrun) {

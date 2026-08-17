@@ -139,6 +139,7 @@ class MeditationTimerService : Service() {
                 if (intervalSec > 0 && elapsedSeconds > 0 && elapsedSeconds % intervalSec == 0) {
                     // Only chime if not right at the end of a timed session (which plays the completion chime)
                     if (isOpenEnded || elapsedSeconds != targetDurationSec) {
+                        soundHelper.triggerHarmonicIntervalHaptic()
                         soundHelper.playChime(soundBellResName, serviceScope)
                     }
                 }
@@ -177,6 +178,7 @@ class MeditationTimerService : Service() {
                         
                         if (!hasChimedForOverrun) {
                             hasChimedForOverrun = true
+                            soundHelper.triggerHarmonicCompletionHaptic()
                             soundHelper.playChime(soundBellResName, serviceScope)
                         }
 

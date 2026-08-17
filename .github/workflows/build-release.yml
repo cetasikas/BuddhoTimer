@@ -49,17 +49,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.4.2
-          name: "Buddho Timer v2.4.2"
+          tag_name: v2.5.0
+          name: "Buddho Timer v2.5.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.4.2
+            ## 🪷 Buddho Meditation Timer v2.5.0
             
-            - **🍃 Dynamic Spiral Orbit & Expanded Glow Halos**: Leaves in Box Breathing now organically swirl and expand along living logarithmic spiral orbits in synchrony with your breath ($0.22 \leftrightarrow 1.0$), with expansive pulsating glowing borders.
-            - **🌌 Soft Atmospheric Central Nebula**: Replaced the center core with an ultra-soft, diffused multi-stop ambient nebula with zero harsh solid dots.
-            - **🌑 Tap to Blackout Screen (Stealth Mode)**: Removed the old LED mode in favor of seamless full-screen AMOLED pure black stealth mode—simply tap anywhere during meditation to turn the screen completely dark, and tap again to wake.
-            - **🔔 Mindfulness Interval Bell Setting**: Added customizable periodic interval chimes (Off, 1m, 2m, 3m, 5m, 10m, 15m, 20m, 30m) to gently anchor your awareness back to the present moment.
-            - **📱 Keep Screen Awake Toggle**: Configurable setting to keep the screen active during meditation and box breathing practice without sleeping.
-            - **⚙️ Complete Settings Persistence**: All preferences, intervals, toggles, and leaf configurations persist reliably across app launches.
+            - **🔔 Meditation Reminders Outside App**: Added customizable daily (specific hour) and periodic interval reminders with tranquil mindfulness quotes from Buddhist masters to gently invite you into daily stillness.
+            - **🪷 Buddhist Wisdom Reflection Card**: 30+ authentic quotes strictly from revered masters (*Ajahn Chah, Thich Nhat Hanh, Ajahn Brahm, Sayadaw U Tejaniya, Shunryu Suzuki, Dalai Lama, Bhante Gunaratana, Eihei Dogen, Luang Pu Mun*) presented on a post-meditation reflection card with tap-to-shuffle.
+            - **🌬️ Subtle Breath Pacing Aura**: A gentle, whisper-thin pulsating halo around the circular timer ring oscillating in a soothing 4s in / 4s out cadence to anchor visual awareness.
+            - **📍 Milestone Interval Notches**: Luminous milestone notch beads along the circular timer track indicating upcoming periodic mindfulness chimes.
+            - **✨ Calmer Leaf Orbit & Luminous White Aura**: Significantly slowed down leaf rotation in Box Breathing for deep serenity and introduced a brilliant, pearlescent white glowing aura with crisp high-contrast veins.
+            - **📳 Harmonic Haptic Resonance**: Tiered, subtle tactile vibration profiles for interval bells, session completion, and touch feedback.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

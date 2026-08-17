@@ -2,6 +2,7 @@ package com.samadhi.meditationtimer.ui.screens.summary
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -85,6 +86,9 @@ fun SessionSummaryScreen(
     val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
     var selectedMood by remember { mutableIntStateOf(3) }
     var notesValue by remember { mutableStateOf(TextFieldValue("")) }
+    var currentWisdomQuote by remember {
+        mutableStateOf(com.samadhi.meditationtimer.data.wisdom.MeditationGuides.wisdomQuotes.random())
+    }
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
         var isBlowingAway by remember { mutableStateOf(false) }
@@ -197,7 +201,78 @@ fun SessionSummaryScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Buddhist Wisdom Reflection Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .clickable {
+                    val quotes = com.samadhi.meditationtimer.data.wisdom.MeditationGuides.wisdomQuotes
+                    currentWisdomQuote = quotes.random()
+                },
+            colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.65f)),
+            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.35f))),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "🪷",
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "WORDS OF WISDOM",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp,
+                            color = currentTheme.primaryLight
+                        )
+                    }
+
+                    Text(
+                        text = "Tap to shuffle",
+                        fontSize = 11.sp,
+                        color = ZenTextMuted
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "“${currentWisdomQuote.quote}”",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 13.5.sp,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                        lineHeight = 20.sp
+                    ),
+                    color = ZenTextPrimary
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(
+                        text = "— ${currentWisdomQuote.author} (${currentWisdomQuote.sourceOrTradition})",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = currentTheme.primaryLight.copy(alpha = 0.9f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Mood / Depth Rating Selector
         Text(

@@ -35,20 +35,32 @@ fun CircularTimerProgress(
     modifier: Modifier = Modifier,
     size: Dp = 280.dp,
     strokeWidth: Dp = 8.dp,
+    intervalMinutes: Int = 0,
+    totalDurationMinutes: Int = 0,
     content: @Composable () -> Unit
 ) {
     val currentTheme = LocalZenTheme.current
 
-    // Breathing pulse animation for meditative state
+    // Subtle breathing pulse & pacing aura animation (4s in, 4s out meditative wave)
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseScale by infiniteTransition.animateFloat(
-        initialValue = if (isPaused) 1.0f else 0.97f,
-        targetValue = if (isPaused) 1.0f else 1.03f,
+        initialValue = if (isPaused) 1.0f else 0.95f,
+        targetValue = if (isPaused) 1.0f else 1.05f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 4000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulseScale"
+    )
+
+    val breathAuraAlpha by infiniteTransition.animateFloat(
+        initialValue = if (isPaused) 0.15f else 0.18f,
+        targetValue = if (isPaused) 0.15f else 0.45f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "breathAuraAlpha"
     )
 
     val activeColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary
@@ -63,18 +75,22 @@ fun CircularTimerProgress(
             val center = Offset(canvasSize.width / 2f, canvasSize.height / 2f)
             val radius = (canvasSize.minDimension - strokeWidth.toPx()) / 2f
 
-            // 1. Ambient Glow Ring
+            // 1. Subtle Breath Pacing Aura (Gentle expanding & contracting luminous halo)
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(glowColor, Color.Transparent),
+                    colors = listOf(
+                        glowColor.copy(alpha = breathAuraAlpha),
+                        currentTheme.primaryLight.copy(alpha = breathAuraAlpha * 0.4f),
+                        Color.Transparent
+                    ),
                     center = center,
-                    radius = radius * 1.25f * (if (isPaused) 1.0f else pulseScale)
+                    radius = radius * 1.32f * pulseScale
                 ),
-                radius = radius * 1.2f,
+                radius = radius * 1.30f * pulseScale,
                 center = center
             )
 
-            // 2. Track Background
+            // 2. Track Background Ring
             drawCircle(
                 color = ZenBorder,
                 radius = radius,
@@ -84,7 +100,6 @@ fun CircularTimerProgress(
 
             // 3. Active Progress Arc
             val sweepAngle = if (isOverrun) {
-                // In Overrun mode, show a continuous glowing circle
                 360f
             } else {
                 (progress.coerceIn(0f, 1f)) * 360f
@@ -102,6 +117,34 @@ fun CircularTimerProgress(
                     cap = StrokeCap.Round
                 )
             )
+
+            // 4. Interval Milestone Notches (if interval bell is active)
+            if (intervalMinutes > 0 && totalDurationMinutes > intervalMinutes) {
+                val totalSteps = totalDurationMinutes / intervalMinutes
+                val stepAngle = (intervalMinutes.toFloat() / totalDurationMinutes.toFloat()) * 360f
+
+                for (step in 1 until totalSteps) {
+                    val angleDeg = -90f + (step * stepAngle)
+                    val angleRad = Math.toRadians(angleDeg.toDouble())
+                    val notchX = center.x + (radius * kotlin.math.cos(angleRad)).toFloat()
+                    val notchY = center.y + (radius * kotlin.math.sin(angleRad)).toFloat()
+
+                    val isPassed = (step * stepAngle) <= sweepAngle
+
+                    // Outer glowing milestone dot
+                    drawCircle(
+                        color = if (isPassed) currentTheme.primaryLight else Color.White.copy(alpha = 0.5f),
+                        radius = 4.5f,
+                        center = Offset(notchX, notchY)
+                    )
+                    // Inner bright core
+                    drawCircle(
+                        color = if (isPassed) Color.White else ZenBorder,
+                        radius = 2.2f,
+                        center = Offset(notchX, notchY)
+                    )
+                }
+            }
         }
 
         content()
