@@ -110,12 +110,22 @@ fun SessionSummaryScreen(
                 )
         )
 
+        val sessionDurationSec = completedStatus?.actualDurationSec ?: 0
+        val sessionLeavesCount = if (sessionDurationSec <= 0) 24 else ((sessionDurationSec / 7).coerceIn(12, 110))
+
+        var isBlowingAway by remember { mutableStateOf(false) }
+        var pendingExitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
         FallingLeavesEffect(
             leafCount = 14,
             ambientAlpha = 0.32f,
             isGlowing = true,
             pileUpAtBottom = true,
-            sessionProgressRatio = 1.0f
+            initialSettledLeavesCount = sessionLeavesCount,
+            isBlowingAway = isBlowingAway,
+            onBlowAwayComplete = {
+                pendingExitAction?.invoke()
+            }
         )
 
         Column(
@@ -294,18 +304,22 @@ fun SessionSummaryScreen(
         // Actions: Save Reflection & Discard
         Button(
             onClick = {
-                val session = MeditationSession(
-                    startTimeEpochMs = completedStatus.startTimeEpochMs,
-                    completedTimeEpochMs = completedStatus.completedTimeEpochMs,
-                    targetDurationSec = completedStatus.targetDurationSec,
-                    actualDurationSec = completedStatus.actualDurationSec,
-                    overrunSec = completedStatus.overrunSec,
-                    rating = selectedMood,
-                    notesMarkdown = notesValue.text,
-                    completedSuccessfully = true
-                )
-                onSaveSession(session)
+                if (!isBlowingAway) {
+                    val session = MeditationSession(
+                        startTimeEpochMs = completedStatus.startTimeEpochMs,
+                        completedTimeEpochMs = completedStatus.completedTimeEpochMs,
+                        targetDurationSec = completedStatus.targetDurationSec,
+                        actualDurationSec = completedStatus.actualDurationSec,
+                        overrunSec = completedStatus.overrunSec,
+                        rating = selectedMood,
+                        notesMarkdown = notesValue.text,
+                        completedSuccessfully = true
+                    )
+                    pendingExitAction = { onSaveSession(session) }
+                    isBlowingAway = true
+                }
             },
+            enabled = !isBlowingAway,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -333,7 +347,13 @@ fun SessionSummaryScreen(
         Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedButton(
-            onClick = onDiscard,
+            onClick = {
+                if (!isBlowingAway) {
+                    pendingExitAction = { onDiscard() }
+                    isBlowingAway = true
+                }
+            },
+            enabled = !isBlowingAway,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),

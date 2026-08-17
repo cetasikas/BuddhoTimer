@@ -20,7 +20,9 @@ data class TimerConfiguration(
     val soundBellResName: String = "tibetan_singing_bowl",
     val isAutoDndEnabled: Boolean = true,
     val isOpenEnded: Boolean = false,
-    val isOverrunEnabled: Boolean = true
+    val isOverrunEnabled: Boolean = true,
+    val showLeavesDuringMeditation: Boolean = true,
+    val meditationLeafCount: Int = 16
 ) {
     val targetDurationSeconds: Int
         get() = if (isOpenEnded) 0 else targetDurationMinutes * 60

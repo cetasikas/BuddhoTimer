@@ -153,14 +153,16 @@ fun ActiveSessionScreen(
             else -> 0f
         }
 
-        FallingLeavesEffect(
-            leafCount = 14,
-            triggerBurst = leavesBurstTrigger,
-            ambientAlpha = 0.32f,
-            isGlowing = true,
-            pileUpAtBottom = true,
-            sessionProgressRatio = currentProgress
-        )
+        if (config.showLeavesDuringMeditation) {
+            FallingLeavesEffect(
+                leafCount = config.meditationLeafCount,
+                triggerBurst = leavesBurstTrigger,
+                ambientAlpha = 0.32f,
+                isGlowing = true,
+                pileUpAtBottom = true,
+                sessionProgressRatio = currentProgress
+            )
+        }
     }
 
         Box(

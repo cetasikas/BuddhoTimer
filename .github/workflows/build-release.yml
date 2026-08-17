@@ -49,16 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.3.4
-          name: "Buddho Timer v2.3.4"
+          tag_name: v2.3.5
+          name: "Buddho Timer v2.3.5"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.3.4
+            ## 🪷 Buddho Meditation Timer v2.3.5
             
-            - **🍃 Calmer, Serene Falling Speed**: Greatly softened the descent speed and rocking motion of falling leaves for a peaceful, tranquil drift during meditation.
-            - **🍂 Zero Landing Jerk & Unified Frame Physics**: Directly synchronized horizontal position and drift to eliminate all coordinate jumping/snapping on touchdown.
-            - **🪶 Guaranteed Flat Horizontal Resting**: Fixed resting orientation geometry to 90°/270° with natural mound slope alignment so leaves always rest flat on the ground and atop other leaves instead of landing vertically.
-            - **🌬️ Silky Smooth Box Breathing Visualizer**: Discontinuity-free continuous phase transitions with living lung physics.
-            - **✨ Minimal Unboxed Breathing Typography**: Serene floating typography with clean animated crossfades.
+            - **🍃 Multi-Tier Leaf Pile Stacking**: Leaves now realistically accumulate and stack upward in multiple organic tiers (`Base`, `Mid`, `Upper Mound`, `Top Peak`) with rich layered depth shading.
+            - **⚙️ Settings Option for Practice Leaves**: Added a toggle switch in Settings to enable/disable falling leaves during active meditation.
+            - **🍂 Configurable Leaf Density**: Added interactive selectors to choose particle count during practice: Light (8), Gentle (16), Lush (28), Breeze (42).
+            - **🪶 Session Duration Synchronization**: Summary screen renders the exact leaf mound accumulated during the meditation practice.
+            - **🌬️ Autumn Wind Blow-Away Animation**: Saving or discarding a session sweeps resting leaves into a gentle swirling autumn breeze that dissolves into the sky before returning to the main menu.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

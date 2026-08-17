@@ -63,6 +63,14 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         _config.value = _config.value.copy(isAutoDndEnabled = enabled)
     }
 
+    fun toggleShowLeavesDuringMeditation(enabled: Boolean) {
+        _config.value = _config.value.copy(showLeavesDuringMeditation = enabled)
+    }
+
+    fun updateMeditationLeafCount(count: Int) {
+        _config.value = _config.value.copy(meditationLeafCount = count)
+    }
+
     fun updateSoundBell(soundResName: String) {
         _config.value = _config.value.copy(soundBellResName = soundResName)
     }
