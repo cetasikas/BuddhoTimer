@@ -28,6 +28,7 @@ import kotlin.random.Random
 
 private data class ActiveLeaf(
     var xBase: Float,
+    var currentX: Float,
     var y: Float,
     val speedY: Float,
     val swayFreq: Float,
@@ -43,7 +44,7 @@ private data class ActiveLeaf(
     // Landing / Settling transition state
     var isSettling: Boolean = false,
     var settleProgress: Float = 0.0f,
-    var settleDuration: Float = 0.42f,
+    var settleDuration: Float = 0.55f,
     var settleStartX: Float = 0f,
     var settleStartY: Float = 0f,
     var settleStartRot: Float = 0f,
@@ -116,26 +117,29 @@ fun FallingLeavesEffect(
         label = "animClockVal"
     )
 
-    // Physics update step with frame-rate independence and smooth settling cushioning
+    // Physics update step with frame-rate independence and ultra-smooth landing cushioning
     LaunchedEffect(currentTheme.id, pileUpAtBottom) {
         var lastTimeNanos = 0L
+        var totalElapsedSec = 0f
+
         while (true) {
             withFrameNanos { nowNanos ->
                 if (lastTimeNanos != 0L) {
                     val dt = ((nowNanos - lastTimeNanos) / 1_000_000_000f).coerceIn(0.001f, 0.05f)
-                    val timeSec = nowNanos / 1_000_000_000f
+                    totalElapsedSec += dt
                     val iterator = activeLeaves.listIterator()
 
                     while (iterator.hasNext()) {
                         val leaf = iterator.next()
 
                         if (leaf.isSettling) {
-                            // 🍂 Smooth Landing & Settling Phase (Decelerate, align to slope, cushion onto pile)
+                            // 🍂 Smooth Landing & Settling Phase (Decelerate, rotate to horizontal, cushion onto pile)
                             leaf.settleProgress += dt / leaf.settleDuration
                             val t = leaf.settleProgress.coerceIn(0f, 1f)
-                            // Ease-out cubic for soft, organic touchdown
+                            // Smooth ease-out cubic for soft, organic touchdown
                             val ease = 1f - (1f - t) * (1f - t) * (1f - t)
 
+                            leaf.currentX = leaf.settleStartX + (leaf.settleTargetX - leaf.settleStartX) * ease
                             leaf.y = leaf.settleStartY + (leaf.settleTargetY - leaf.settleStartY) * ease
                             leaf.rotation = leaf.settleStartRot + (leaf.settleTargetRot - leaf.settleStartRot) * ease
 
@@ -156,7 +160,7 @@ fun FallingLeavesEffect(
                                     )
 
                                     // Organic Gaussian elevation rise so mounds build up smoothly
-                                    val depositAmount = 0.010f
+                                    val depositAmount = 0.009f
                                     groundProfile[bin] = (groundProfile[bin] - depositAmount).coerceAtLeast(0.65f)
                                     if (bin > 0) groundProfile[bin - 1] = (groundProfile[bin - 1] - depositAmount * 0.65f).coerceAtLeast(0.65f)
                                     if (bin < 31) groundProfile[bin + 1] = (groundProfile[bin + 1] - depositAmount * 0.65f).coerceAtLeast(0.65f)
@@ -169,16 +173,18 @@ fun FallingLeavesEffect(
                                 leaf.settleProgress = 0f
                                 leaf.y = -(Random.nextFloat() * 0.12f + 0.04f)
                                 leaf.xBase = Random.nextFloat()
+                                leaf.currentX = leaf.xBase
                                 leaf.rotation = Random.nextFloat() * 360f
                             }
                             continue
                         }
 
-                        // Normal free-falling physics
+                        // Normal free-falling physics (serene, gentle, meditative drift)
                         leaf.y += leaf.speedY * dt
                         leaf.rotation += leaf.rotSpeed * dt
 
-                        val currentX = (leaf.xBase + sin(timeSec * leaf.swayFreq + leaf.swayPhase) * leaf.swayAmp).coerceIn(0.02f, 0.98f)
+                        val sway = sin(totalElapsedSec * leaf.swayFreq + leaf.swayPhase) * leaf.swayAmp
+                        leaf.currentX = (leaf.xBase + sway).coerceIn(0.02f, 0.98f)
 
                         if (leaf.isBurst) {
                             leaf.life -= dt * 0.35f
@@ -187,41 +193,46 @@ fun FallingLeavesEffect(
                                 continue
                             }
                         } else if (pileUpAtBottom) {
-                            val bin = (currentX * 31).toInt().coerceIn(0, 31)
+                            val bin = (leaf.currentX * 31).toInt().coerceIn(0, 31)
                             val groundY = groundProfile[bin]
 
                             // Trigger settling when leaf reaches ground surface
-                            if (leaf.y >= groundY - 0.005f) {
+                            if (leaf.y >= groundY - 0.004f) {
                                 leaf.isSettling = true
                                 leaf.settleProgress = 0f
-                                leaf.settleDuration = Random.nextFloat() * 0.15f + 0.35f // 0.35s - 0.50s cushioning
-                                leaf.settleStartX = currentX
+                                leaf.settleDuration = Random.nextFloat() * 0.20f + 0.45f // 0.45s - 0.65s gentle cushioning
+                                leaf.settleStartX = leaf.currentX
                                 leaf.settleStartY = leaf.y
                                 leaf.settleStartRot = leaf.rotation
 
                                 // Slight horizontal drift on impact
-                                val swayVel = (leaf.swayAmp * leaf.swayFreq)
-                                leaf.settleTargetX = (currentX + (Random.nextFloat() * 0.016f - 0.008f)).coerceIn(0.03f, 0.97f)
-                                leaf.settleTargetY = groundY + (Random.nextFloat() * 0.008f - 0.004f)
+                                leaf.settleTargetX = (leaf.currentX + (Random.nextFloat() * 0.012f - 0.006f)).coerceIn(0.03f, 0.97f)
+                                leaf.settleTargetY = groundY + (Random.nextFloat() * 0.006f - 0.003f)
 
-                                // Natural resting angle: leaves lie mostly horizontal, aligned with mound slope
+                                // Natural resting angle: leaves lie HORIZONTALLY (90° or 270°)
+                                // Path is drawn vertically along Y-axis, so 90°/270° = lying flat horizontally on ground!
+                                val normDeg = ((leaf.rotation % 360f) + 360f) % 360f
+                                val distTo90 = kotlin.math.abs(normDeg - 90f).let { if (it > 180f) 360f - it else it }
+                                val distTo270 = kotlin.math.abs(normDeg - 270f).let { if (it > 180f) 360f - it else it }
+                                val targetNorm = if (distTo90 <= distTo270) 90f else 270f
+
+                                var delta = (targetNorm - normDeg)
+                                if (delta > 180f) delta -= 360f
+                                if (delta < -180f) delta += 360f
+
                                 val leftBin = (bin - 1).coerceAtLeast(0)
                                 val rightBin = (bin + 1).coerceAtMost(31)
-                                val slopeAngleDeg = (groundProfile[rightBin] - groundProfile[leftBin]) * 350f // Slope tilt
+                                val slopeAngleDeg = (groundProfile[rightBin] - groundProfile[leftBin]) * 240f // Slope tilt
+                                val restJitter = Random.nextFloat() * 16f - 8f // -8° to +8° natural organic tilt
 
-                                // Find nearest flat resting angle (around 0°/360° or 180°)
-                                val normalizedRot = ((leaf.rotation % 360f) + 360f) % 360f
-                                val baseRestAngle = if (normalizedRot in 90f..270f) 180f else if (normalizedRot > 270f) 360f else 0f
-                                val restJitter = Random.nextFloat() * 26f - 13f // -13° to +13° natural tilt
-                                val fullRotations = (leaf.rotation / 360f).toInt() * 360f
-
-                                leaf.settleTargetRot = fullRotations + baseRestAngle + slopeAngleDeg + restJitter
+                                leaf.settleTargetRot = leaf.rotation + delta + slopeAngleDeg + restJitter
                             }
                         } else {
                             // Standard ambient drift (recycle when exiting bottom)
                             if (leaf.y >= 1.06f) {
                                 leaf.y = -(Random.nextFloat() * 0.10f + 0.04f)
                                 leaf.xBase = Random.nextFloat()
+                                leaf.currentX = leaf.xBase
                                 leaf.rotation = Random.nextFloat() * 360f
                             }
                         }
@@ -277,24 +288,11 @@ fun FallingLeavesEffect(
             }
         }
 
-        // 2. Draw Active Falling & Settling Leaves
+        // 2. Draw Active Falling & Settling Leaves (Directly from synchronized physics state)
         activeLeaves.forEach { leaf ->
-            val posX: Float
-            val posY: Float
-            val rot: Float
-
-            if (leaf.isSettling) {
-                // Use smooth settling interpolated coordinates
-                posX = (leaf.settleStartX + (leaf.settleTargetX - leaf.settleStartX) * (leaf.settleProgress.coerceIn(0f, 1f))) * width
-                posY = leaf.y * height
-                rot = leaf.rotation
-            } else {
-                val sway = sin(currentTimeSec * leaf.swayFreq + leaf.swayPhase) * (leaf.swayAmp * width)
-                posX = (leaf.xBase * width + sway).coerceIn(-30f, width + 30f)
-                posY = leaf.y * height
-                rot = leaf.rotation
-            }
-
+            val posX = leaf.currentX * width
+            val posY = leaf.y * height
+            val rot = leaf.rotation
             val currentAlpha = (leaf.alpha * leaf.life * ambientAlpha).coerceIn(0f, 1f)
 
             if (currentAlpha > 0.01f && posY > -40f && posY < height + 40f) {
@@ -430,15 +428,17 @@ private fun DrawScope.drawThemeParticle(
 
 private fun generateInitialActiveLeaves(count: Int, palette: List<Color>): List<ActiveLeaf> {
     return List(count) { i ->
+        val x = Random.nextFloat()
         ActiveLeaf(
-            xBase = Random.nextFloat(),
+            xBase = x,
+            currentX = x,
             y = (i.toFloat() / count.toFloat()) * 1.1f - 0.1f, // Staggered initial heights so leaves are actively falling from moment 0
-            speedY = Random.nextFloat() * 0.045f + 0.028f,
-            swayFreq = Random.nextFloat() * 1.4f + 1.1f,
-            swayAmp = Random.nextFloat() * 0.035f + 0.018f,
+            speedY = Random.nextFloat() * 0.010f + 0.009f, // Calm, peaceful, meditative descent
+            swayFreq = Random.nextFloat() * 0.5f + 0.6f,
+            swayAmp = Random.nextFloat() * 0.025f + 0.020f,
             swayPhase = Random.nextFloat() * 6.28f,
             rotation = Random.nextFloat() * 360f,
-            rotSpeed = (Random.nextFloat() - 0.5f) * 45f,
+            rotSpeed = (Random.nextFloat() - 0.5f) * 14f, // Gentle organic rocking
             size = Random.nextFloat() * 10f + 18f,
             alpha = Random.nextFloat() * 0.30f + 0.50f,
             color = palette.random()
@@ -448,15 +448,17 @@ private fun generateInitialActiveLeaves(count: Int, palette: List<Color>): List<
 
 private fun generateBurstLeaves(count: Int, palette: List<Color>): List<ActiveLeaf> {
     return List(count) {
+        val x = Random.nextFloat() * 0.8f + 0.1f
         ActiveLeaf(
-            xBase = Random.nextFloat() * 0.8f + 0.1f,
+            xBase = x,
+            currentX = x,
             y = Random.nextFloat() * 0.35f,
-            speedY = Random.nextFloat() * 0.09f + 0.05f,
-            swayFreq = Random.nextFloat() * 2.2f + 1.6f,
-            swayAmp = Random.nextFloat() * 0.05f + 0.025f,
+            speedY = Random.nextFloat() * 0.022f + 0.016f,
+            swayFreq = Random.nextFloat() * 0.9f + 0.8f,
+            swayAmp = Random.nextFloat() * 0.035f + 0.020f,
             swayPhase = Random.nextFloat() * 6.28f,
             rotation = Random.nextFloat() * 360f,
-            rotSpeed = (Random.nextFloat() - 0.5f) * 80f,
+            rotSpeed = (Random.nextFloat() - 0.5f) * 26f,
             size = Random.nextFloat() * 12f + 18f,
             alpha = Random.nextFloat() * 0.35f + 0.55f,
             color = palette.random(),
@@ -482,8 +484,9 @@ private fun generatePreStackedMound(count: Int, palette: List<Color>): List<Sett
         val xJitter = (random.nextFloat() - 0.5f) * 0.035f
         val xRatio = (goldX + xJitter).coerceIn(0.04f, 0.96f)
 
-        val baseAngle = if (i % 2 == 0) 0f else 180f
-        val tilt = (random.nextFloat() - 0.5f) * 36f
+        // Flat horizontal orientation (90° pointing right, 270° pointing left)
+        val baseAngle = if (i % 2 == 0) 90f else 270f
+        val tilt = (random.nextFloat() - 0.5f) * 20f
 
         SettledLeaf(
             x = xRatio,

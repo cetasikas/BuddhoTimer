@@ -49,15 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.3.3
-          name: "Buddho Timer v2.3.3"
+          tag_name: v2.3.4
+          name: "Buddho Timer v2.3.4"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.3.3
+            ## 🪷 Buddho Meditation Timer v2.3.4
             
-            - **🍃 Natural Touchdown & Cushioning Physics**: Falling leaves now smoothly decelerate and cushion upon touching the ground or leaf mound rather than snapping into place.
-            - **🍂 Natural Resting Angles & Contour Stacking**: Resting leaves settle horizontally, align to the local slope of accumulated mounds, and feature layered depth with soft ambient micro-sway.
-            - **🌬️ Silky Smooth Box Breathing Visualizer**: Replaced repeating loop timers with continuous monotonic frame synchronization, eliminating stutter and phase boundary discontinuities.
-            - **✨ Minimal Unboxed Breathing Typography**: Breathing phase names, instructions, and countdowns now float cleanly and minimally below the visualizer with smooth animated crossfades.
+            - **🍃 Calmer, Serene Falling Speed**: Greatly softened the descent speed and rocking motion of falling leaves for a peaceful, tranquil drift during meditation.
+            - **🍂 Zero Landing Jerk & Unified Frame Physics**: Directly synchronized horizontal position and drift to eliminate all coordinate jumping/snapping on touchdown.
+            - **🪶 Guaranteed Flat Horizontal Resting**: Fixed resting orientation geometry to 90°/270° with natural mound slope alignment so leaves always rest flat on the ground and atop other leaves instead of landing vertically.
+            - **🌬️ Silky Smooth Box Breathing Visualizer**: Discontinuity-free continuous phase transitions with living lung physics.
+            - **✨ Minimal Unboxed Breathing Typography**: Serene floating typography with clean animated crossfades.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
