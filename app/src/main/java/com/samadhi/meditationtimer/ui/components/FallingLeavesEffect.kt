@@ -72,6 +72,7 @@ fun FallingLeavesEffect(
     modifier: Modifier = Modifier,
     leafCount: Int = 16,
     triggerBurst: Int = 0,
+    dragVelocity: Float = 0f,
     ambientAlpha: Float = 0.32f,
     isGlowing: Boolean = false,
     pileUpAtBottom: Boolean = false,
@@ -94,7 +95,6 @@ fun FallingLeavesEffect(
         mutableStateListOf<SettledLeaf>().apply {
             if (pileUpAtBottom) {
                 if (initialSettledLeavesCount > 0) {
-                    // Exact count matching meditation duration
                     addAll(generatePreStackedMound(initialSettledLeavesCount, currentTheme.particlePalette))
                 } else if (sessionProgressRatio >= 0.95f) {
                     addAll(generatePreStackedMound(55, currentTheme.particlePalette))
@@ -108,6 +108,25 @@ fun FallingLeavesEffect(
         FloatArray(32) { 0.95f }
     }
 
+    // Real-time slider drag wind swirling reaction
+    LaunchedEffect(dragVelocity) {
+        if (dragVelocity != 0f) {
+            val dir = if (dragVelocity > 0) 1f else -1f
+            val intensity = kotlin.math.abs(dragVelocity).coerceIn(0.2f, 2.5f)
+            activeLeaves.forEach { leaf ->
+                val dx = leaf.currentX - 0.5f
+                val dy = leaf.y - 0.45f
+                val dist = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(0.08f)
+                val tx = (-dy / dist) * dir
+                val ty = (dx / dist) * dir
+                val swirlSpeed = (Random.nextFloat() * 0.45f + 0.35f) * intensity
+                leaf.vx += tx * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.15f
+                leaf.vy += ty * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.15f
+                leaf.rotSpeed += dir * (Random.nextFloat() * 200f + 100f)
+            }
+        }
+    }
+
     // Dynamic swirl & burst trigger for user actions / slider interactions
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {
@@ -118,12 +137,12 @@ fun FallingLeavesEffect(
                 val dist = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(0.08f)
                 val tx = (-dy / dist) * dir
                 val ty = (dx / dist) * dir
-                val swirlSpeed = Random.nextFloat() * 0.55f + 0.35f
-                leaf.vx += tx * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.20f
-                leaf.vy += ty * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.20f
-                leaf.rotSpeed += (Random.nextFloat() * 320f - 160f)
+                val swirlSpeed = Random.nextFloat() * 0.65f + 0.40f
+                leaf.vx += tx * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.25f
+                leaf.vy += ty * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.25f
+                leaf.rotSpeed += (Random.nextFloat() * 360f - 180f)
             }
-            val bursts = generateBurstLeaves(10, currentTheme.particlePalette)
+            val bursts = generateBurstLeaves(12, currentTheme.particlePalette)
             activeLeaves.addAll(bursts)
         }
     }

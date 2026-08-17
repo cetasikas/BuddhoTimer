@@ -26,7 +26,8 @@ fun ZenBranchSlider(
     value: Float,
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float> = 1f..120f,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSliding: ((Float) -> Unit)? = null
 ) {
     val currentTheme = LocalZenTheme.current
     val thumbPath = remember { Path() }
@@ -34,7 +35,7 @@ fun ZenBranchSlider(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(54.dp)
+            .height(60.dp)
             .padding(horizontal = 4.dp)
             .pointerInput(valueRange) {
                 detectTapGestures { offset ->
@@ -43,22 +44,28 @@ fun ZenBranchSlider(
                         val fraction = (offset.x / width).coerceIn(0f, 1f)
                         val newValue = valueRange.start + fraction * (valueRange.endInclusive - valueRange.start)
                         onValueChange(newValue)
+                        onSliding?.invoke(1.2f)
                     }
                 }
             }
             .pointerInput(valueRange) {
-                detectHorizontalDragGestures { change, _ ->
+                detectHorizontalDragGestures(
+                    onDragStart = { onSliding?.invoke(0.8f) },
+                    onDragEnd = { onSliding?.invoke(0f) },
+                    onDragCancel = { onSliding?.invoke(0f) }
+                ) { change, dragAmount ->
                     change.consume()
                     val width = size.width.toFloat()
                     if (width > 0) {
                         val fraction = (change.position.x / width).coerceIn(0f, 1f)
                         val newValue = valueRange.start + fraction * (valueRange.endInclusive - valueRange.start)
                         onValueChange(newValue)
+                        onSliding?.invoke(dragAmount)
                     }
                 }
             }
     ) {
-        Canvas(modifier = Modifier.fillMaxWidth().height(54.dp)) {
+        Canvas(modifier = Modifier.fillMaxWidth().height(60.dp)) {
             val width = size.width
             val height = size.height
             val centerY = height / 2f
