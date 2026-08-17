@@ -45,6 +45,23 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentQuote = MutableStateFlow(getRandomQuote())
     val currentQuote: StateFlow<WisdomQuote> = _currentQuote.asStateFlow()
 
+    // Box Breathing setup preferences
+    private val _selectedBreathingPatternId = MutableStateFlow(prefs.getString("breathing_pattern_id", "box") ?: "box")
+    val selectedBreathingPatternId: StateFlow<String> = _selectedBreathingPatternId.asStateFlow()
+
+    private val _breathingDurationMinutes = MutableStateFlow(prefs.getInt("breathing_duration_min", 5))
+    val breathingDurationMinutes: StateFlow<Int> = _breathingDurationMinutes.asStateFlow()
+
+    fun updateBreathingPattern(patternId: String) {
+        _selectedBreathingPatternId.value = patternId
+        prefs.edit().putString("breathing_pattern_id", patternId).apply()
+    }
+
+    fun updateBreathingDurationMinutes(minutes: Int) {
+        _breathingDurationMinutes.value = minutes
+        prefs.edit().putInt("breathing_duration_min", minutes).apply()
+    }
+
     private fun loadPersistedConfig(): TimerConfiguration {
         return TimerConfiguration(
             targetDurationMinutes = prefs.getInt("target_duration_min", 15),

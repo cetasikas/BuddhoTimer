@@ -515,10 +515,10 @@ fun SettingsScreen(
                     }
                 }
 
-                // 4. DISPLAY & STEALTH PREFERENCES
-                val displaySummary = if (config.tapToBlackoutEnabled) "Blackout Enabled" else "Standard"
+                // 4. DISPLAY & SCREEN TIMEOUT
+                val displaySummary = if (config.tapToBlackoutEnabled) "Blackout Enabled" else if (config.keepScreenAwake) "Keep Awake" else "Standard"
                 ExpandableSettingsCard(
-                    title = "Display & Stealth Mode",
+                    title = "Display & Screen Timeout",
                     icon = Icons.Default.DarkMode,
                     summaryValue = displaySummary,
                     isExpanded = expandedDisplay,
@@ -532,7 +532,7 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Tap to Blackout Screen", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("Tap during sits to turn display pure AMOLED black", fontSize = 11.sp, color = ZenTextSecondary)
+                                Text("Tap during sits to turn display pure AMOLED black, tap again to wake", fontSize = 11.sp, color = ZenTextSecondary)
                             }
                             Switch(
                                 checked = config.tapToBlackoutEnabled,
@@ -548,7 +548,7 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Keep Screen Awake", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("Keep display on during active meditation", fontSize = 11.sp, color = ZenTextSecondary)
+                                Text("Prevent your screen from sleeping automatically during active sessions", fontSize = 11.sp, color = ZenTextSecondary)
                             }
                             Switch(
                                 checked = config.keepScreenAwake,

@@ -1,24 +1,18 @@
 package com.samadhi.meditationtimer.ui.screens.breathing
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,20 +24,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -62,12 +48,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.samadhi.meditationtimer.domain.model.BreathPhase
@@ -86,7 +70,15 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
-@OptIn(ExperimentalLayoutApi::class)
+private fun android.content.Context.findActivity(): android.app.Activity? {
+    var currentContext = this
+    while (currentContext is android.content.ContextWrapper) {
+        if (currentContext is android.app.Activity) return currentContext
+        currentContext = currentContext.baseContext
+    }
+    return null
+}
+
 @Composable
 fun BreathingScreen(
     onClose: () -> Unit,
@@ -96,8 +88,15 @@ fun BreathingScreen(
     val soundHelper = remember { SoundHelper(context) }
     val prefs = remember { context.getSharedPreferences("timer_prefs", android.content.Context.MODE_PRIVATE) }
     val keepScreenAwake = remember { prefs.getBoolean("keep_screen_awake", true) }
+    val patternId = remember { prefs.getString("breathing_pattern_id", "box") ?: "box" }
+    val targetMinutes = remember { prefs.getInt("breathing_duration_min", 5) }
+    val targetTotalSec = targetMinutes * 60
 
-    // Keep Screen Awake based on user setting
+    val selectedPattern = remember {
+        BreathingPattern.allPatterns.find { it.id == patternId } ?: BreathingPattern.BOX_BREATHING
+    }
+
+    // Keep Screen Awake based on user preference
     androidx.compose.runtime.DisposableEffect(keepScreenAwake) {
         val activity = context.findActivity()
         if (keepScreenAwake) {
@@ -110,9 +109,7 @@ fun BreathingScreen(
         }
     }
 
-    var selectedPattern by remember { mutableStateOf(BreathingPattern.BOX_BREATHING) }
-    var isPatternsExpanded by remember { mutableStateOf(false) }
-    var isRunning by remember { mutableStateOf(false) }
+    var isRunning by remember { mutableStateOf(true) }
     var currentPhase by remember { mutableStateOf(BreathPhase.INHALE) }
     var phaseSecondsRemaining by remember { mutableIntStateOf(selectedPattern.inhaleSec) }
     var totalElapsedSec by remember { mutableIntStateOf(0) }
@@ -179,175 +176,60 @@ fun BreathingScreen(
             .fillMaxSize()
             .background(ZenObsidian)
     ) {
-        // Main Screen Flow
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Header Row with Mode Switcher & Close Button
+            // --- 1. MINIMAL IMMERSIVE TOP BAR ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Practice Mode Segment Switcher (Meditation vs Box Breathing)
+                // Current Pattern & Cycle Indicator Pill
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(ZenSurface.copy(alpha = 0.85f))
-                        .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
-                        .padding(3.dp),
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(ZenSurface.copy(alpha = 0.75f))
+                        .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Meditation Mode (Clickable to switch back immediately)
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable { onClose() }
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.SelfImprovement,
-                                contentDescription = null,
-                                tint = ZenTextMuted,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Meditation",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = ZenTextSecondary
-                            )
-                        }
-                    }
-
-                    // Box Breathing Mode (Active)
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(currentTheme.primary.copy(alpha = 0.25f))
-                            .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Air,
-                                contentDescription = null,
-                                tint = currentTheme.primaryLight,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Box Breathing",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = currentTheme.primaryLight
-                            )
-                        }
-                    }
+                    Text(
+                        text = selectedPattern.name,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = currentTheme.primaryLight
+                    )
+                    Text(
+                        text = " • Cycle $completedCycles",
+                        fontSize = 12.sp,
+                        color = ZenTextSecondary
+                    )
                 }
 
+                // Close / Finish Button
                 IconButton(
                     onClick = onClose,
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(ZenSurface)
+                        .background(ZenSurface.copy(alpha = 0.75f))
                         .border(1.dp, ZenBorder, CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close Breathing",
+                        contentDescription = "Exit Breathwork",
                         tint = ZenTextSecondary,
                         modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Collapsible Pattern Selector Strip
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(ZenSurface.copy(alpha = 0.85f))
-                    .border(1.dp, ZenBorder, RoundedCornerShape(12.dp))
-                    .clickable { isPatternsExpanded = !isPatternsExpanded }
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Pattern: ${selectedPattern.name}",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = ZenTextPrimary
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Icon(
-                    imageVector = if (isPatternsExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = ZenTextSecondary,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-
-            // Expanded Pattern Chips
-            AnimatedVisibility(
-                visible = isPatternsExpanded,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    BreathingPattern.allPatterns.forEach { pattern ->
-                        val isSelected = selectedPattern.id == pattern.id
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                selectedPattern = pattern
-                                currentPhase = BreathPhase.INHALE
-                                phaseSecondsRemaining = pattern.inhaleSec
-                                phaseProgress = 0f
-                                isPatternsExpanded = false
-                            },
-                            label = {
-                                Text(
-                                    text = pattern.name,
-                                    fontSize = 11.5.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                )
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = ZenSurface.copy(alpha = 0.7f),
-                                labelColor = ZenTextSecondary,
-                                selectedContainerColor = currentTheme.primary,
-                                selectedLabelColor = ZenObsidian
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
-                                enabled = true,
-                                selected = isSelected
-                            ),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // 3. Central Blooming Leaf Visualizer (Front and Center & Unobstructed)
+            // --- 2. CENTRAL LIVING BLOOMING LEAF VISUALIZER ---
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -362,19 +244,17 @@ fun BreathingScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // 4. Instructions & Countdown (Clean, Minimal & Unboxed Typography)
+            // --- 3. MINIMAL PHASE & COUNTDOWN INSTRUCTIONS ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                    .padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Large Elegant Countdown Number
+                // Large Minimalist Countdown
                 Text(
                     text = "$phaseSecondsRemaining",
-                    fontSize = 46.sp,
+                    fontSize = 50.sp,
                     fontWeight = FontWeight.Light,
                     color = Color.White,
                     letterSpacing = 1.sp
@@ -405,73 +285,34 @@ fun BreathingScreen(
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
                             text = phase.instruction,
-                            fontSize = 13.sp,
+                            fontSize = 12.5.sp,
                             fontWeight = FontWeight.Normal,
                             color = ZenTextSecondary,
                             textAlign = TextAlign.Center
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // 5. Stats Card (Cycles & Calm Time)
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.85f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = Brush.horizontalGradient(listOf(ZenBorder, ZenBorder))),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 18.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "COMPLETED CYCLES",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.1.sp,
-                            color = ZenTextSecondary
-                        )
-                        Text(
-                            text = "$completedCycles",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = currentTheme.primaryLight
-                        )
-                    }
-
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "CALM TIME",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.1.sp,
-                            color = ZenTextSecondary
-                        )
-                        Text(
-                            text = NotificationHelper.formatSeconds(totalElapsedSec),
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = currentTheme.primaryLight
-                        )
-                    }
-                }
+                // Time Elapsed vs Target
+                Text(
+                    text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = ZenTextMuted
+                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 6. Action Controls (Unwrapped, high-contrast button text)
+            // --- 4. MINIMAL CONTROL BAR ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Reset Button
                 IconButton(
                     onClick = {
                         totalElapsedSec = 0
@@ -481,27 +322,26 @@ fun BreathingScreen(
                         phaseProgress = 0f
                     },
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
-                        .background(ZenSurface)
+                        .background(ZenSurface.copy(alpha = 0.75f))
                         .border(1.dp, ZenBorder, CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "Reset Session",
+                        contentDescription = "Restart",
                         tint = ZenTextSecondary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
 
+                // Pause / Resume Button
                 Button(
-                    onClick = {
-                        isRunning = !isRunning
-                    },
+                    onClick = { isRunning = !isRunning },
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp),
-                    shape = RoundedCornerShape(14.dp),
+                        .height(48.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
                         contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
@@ -509,24 +349,31 @@ fun BreathingScreen(
                 ) {
                     Icon(
                         imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isRunning) "Pause" else "Start",
-                        modifier = Modifier.size(20.dp)
+                        contentDescription = if (isRunning) "Pause" else "Resume",
+                        modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = when {
-                            isRunning -> "Pause"
-                            totalElapsedSec == 0 -> "Begin Practice"
-                            else -> "Resume Practice"
-                        },
+                        text = if (isRunning) "Pause" else "Resume",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        maxLines = 1
+                        fontSize = 14.5.sp
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(2.dp))
+                // Finish Button
+                Button(
+                    onClick = onClose,
+                    modifier = Modifier.height(48.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ZenSurface.copy(alpha = 0.85f),
+                        contentColor = currentTheme.primaryLight
+                    ),
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
+                ) {
+                    Text("Finish", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
         }
     }
 }
@@ -543,23 +390,14 @@ private fun getPhaseDuration(phase: BreathPhase, pattern: BreathingPattern): Int
 private fun getNextPhase(current: BreathPhase, pattern: BreathingPattern): BreathPhase {
     return when (current) {
         BreathPhase.INHALE -> {
-            if (pattern.holdFullSec > 0) BreathPhase.HOLD_FULL else BreathPhase.EXHALE
+            if (pattern.holdFullSec > 0) BreathPhase.HOLD_FULL
+            else BreathPhase.EXHALE
         }
         BreathPhase.HOLD_FULL -> BreathPhase.EXHALE
         BreathPhase.EXHALE -> {
-            if (pattern.holdEmptySec > 0) BreathPhase.HOLD_EMPTY else BreathPhase.INHALE
+            if (pattern.holdEmptySec > 0) BreathPhase.HOLD_EMPTY
+            else BreathPhase.INHALE
         }
         BreathPhase.HOLD_EMPTY -> BreathPhase.INHALE
     }
-}
-
-private fun android.content.Context.findActivity(): android.app.Activity? {
-    var currentContext = this
-    while (currentContext is android.content.ContextWrapper) {
-        if (currentContext is android.app.Activity) {
-            return currentContext
-        }
-        currentContext = currentContext.baseContext
-    }
-    return null
 }
