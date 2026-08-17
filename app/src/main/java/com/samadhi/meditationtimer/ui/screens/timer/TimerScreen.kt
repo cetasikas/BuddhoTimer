@@ -109,38 +109,14 @@ fun TimerScreen(
     val presetDurations = listOf(5, 10, 15, 20, 30, 45, 60)
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        // 1. Dynamic Moonlit Plum Village Background
-        Image(
-            painter = painterResource(id = currentTheme.backgroundDrawableRes),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-            alpha = 0.20f
-        )
-
-        // Moonlit Gradient Overlay
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF060911).copy(alpha = 0.85f),
-                            Color(0xFF0A1120).copy(alpha = 0.68f),
-                            Color(0xFF060911).copy(alpha = 0.92f)
-                        )
-                    )
-                )
-        )
-
-        // 2. Interactive Falling Particles Ambient Animation
+        // 1. Subtle Interactive Falling Particles Ambient Animation on pure AMOLED black
         FallingLeavesEffect(
             leafCount = 16,
             triggerBurst = leafBurstTrigger,
-            ambientAlpha = 0.32f
+            ambientAlpha = 0.35f
         )
 
-        // 3. Compact Main Content (Fits on a single screen without scrolling overflow)
+        // 2. Compact Main Content (Fits on a single screen without scrolling overflow)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -181,7 +157,7 @@ fun TimerScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Zen Box Breathing",
+                                text = "Box Breathing",
                                 fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Medium,
                                 letterSpacing = 0.5.sp,

@@ -162,31 +162,7 @@ fun BreathingScreen(
             .fillMaxSize()
             .background(ZenObsidian)
     ) {
-        // 1. Dynamic Moonlit Backdrop (No falling leaves on breathing screen)
-        Image(
-            painter = painterResource(id = currentTheme.backgroundDrawableRes),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-            alpha = 0.18f
-        )
-
-        // Moonlit Gradient Scrim
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF060911).copy(alpha = 0.88f),
-                            Color(0xFF0A101D).copy(alpha = 0.75f),
-                            Color(0xFF060911).copy(alpha = 0.95f)
-                        )
-                    )
-                )
-        )
-
-        // 2. Main Screen Flow
+        // Main Screen Flow
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -221,7 +197,7 @@ fun BreathingScreen(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = "ZEN BREATHING",
+                            text = "BOX BREATHING",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.5.sp

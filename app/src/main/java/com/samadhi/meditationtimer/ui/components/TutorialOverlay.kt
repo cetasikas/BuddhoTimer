@@ -68,22 +68,27 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 import com.samadhi.meditationtimer.ui.theme.ZenTheme
 import com.samadhi.meditationtimer.ui.theme.ZenThemeId
 
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Storage
+
 private data class TutorialStep(
     val title: String,
     val subtitle: String,
     val description: String,
     val icon: ImageVector,
-    val isThemeStep: Boolean = false,
+    val isSettingsStep: Boolean = false,
     val isPermissionStep: Boolean = false
 )
 
 private val tutorialSteps = listOf(
     TutorialStep(
-        title = "Choose Your Zen Atmosphere",
-        subtitle = "Select your starting aesthetic (changeable anytime in Settings)",
-        description = "Each atmosphere features its own custom moonlit backdrop, animated falling particles, and harmonious color theme.",
-        icon = Icons.Default.Palette,
-        isThemeStep = true
+        title = "Personalized Settings",
+        subtitle = "Tailor your practice to your personal flow",
+        description = "Configure custom bell chimes, warm-up countdowns, auto Do Not Disturb, and data backups anytime in Settings.",
+        icon = Icons.Default.Tune,
+        isSettingsStep = true
     ),
     TutorialStep(
         title = "Minimal Meditation Timer",
@@ -94,7 +99,7 @@ private val tutorialSteps = listOf(
     TutorialStep(
         title = "Samadhi Overrun & Box Breathing",
         subtitle = "Deepen peace and anchor the breath",
-        description = "Enable Samadhi Overrun to let deep meditation continue uninterrupted past target time, or tap 'Zen Box Breathing' for 4-4-4-4 particle breathwork.",
+        description = "Enable Samadhi Overrun to let deep meditation continue uninterrupted past target time, or tap 'Box Breathing' for 4-4-4-4 particle breathwork.",
         icon = Icons.Default.HourglassBottom
     ),
     TutorialStep(
@@ -234,68 +239,49 @@ fun TutorialOverlay(
                 textAlign = TextAlign.Center
             )
 
-            // Step 1: Interactive Theme Picker
-            if (step.isThemeStep) {
+            // Step 1: Settings Overview Feature Cards
+            if (step.isSettingsStep) {
                 Spacer(modifier = Modifier.height(14.dp))
-                val themes = listOf(BambooTealTheme, SacredLotusTheme, SakuraTwilightTheme)
+                val settingsHighlights = listOf(
+                    Triple(Icons.Default.MusicNote, "Singing Bowls & Chimes", "Tibetan bowls, Japanese gongs, and bell chimes"),
+                    Triple(Icons.Default.Timer, "Warm-up Prep Countdown", "0s–15s posture preparation before timer starts"),
+                    Triple(Icons.Default.DoNotDisturb, "Auto Do Not Disturb", "Silence calls and notifications during sits"),
+                    Triple(Icons.Default.Storage, "100% Offline Backups", "Export and import your practice in JSON or CSV")
+                )
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    themes.forEach { theme ->
-                        val isSelected = currentTheme.id == theme.id
-                        Box(
+                    settingsHighlights.forEach { (icon, title, desc) ->
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    if (isSelected) theme.primary.copy(alpha = 0.20f)
-                                    else ZenSurfaceVariant.copy(alpha = 0.6f)
-                                )
-                                .border(
-                                    width = if (isSelected) 1.5.dp else 1.dp,
-                                    color = if (isSelected) theme.primaryLight else ZenBorder,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .clickable { onSelectTheme(theme.id) }
-                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(ZenSurfaceVariant.copy(alpha = 0.6f))
+                                .border(1.dp, ZenBorder.copy(alpha = 0.8f), RoundedCornerShape(10.dp))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(16.dp)
-                                            .clip(CircleShape)
-                                            .background(theme.primaryLight)
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text(
-                                            text = theme.title,
-                                            fontSize = 13.5.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = if (isSelected) theme.primaryLight else ZenTextPrimary
-                                        )
-                                        Text(
-                                            text = theme.id.subtitle,
-                                            fontSize = 11.sp,
-                                            color = ZenTextSecondary
-                                        )
-                                    }
-                                }
-                                if (isSelected) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
-                                        tint = theme.primaryLight,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = currentTheme.primaryLight,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = title,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ZenTextPrimary
+                                )
+                                Text(
+                                    text = desc,
+                                    fontSize = 10.5.sp,
+                                    color = ZenTextSecondary
+                                )
                             }
                         }
                     }

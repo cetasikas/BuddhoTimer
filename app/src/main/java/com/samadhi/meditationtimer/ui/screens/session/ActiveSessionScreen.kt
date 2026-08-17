@@ -105,7 +105,7 @@ fun ActiveSessionScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(if (isOledZenMode) Color.Black else ZenObsidian)
+            .background(Color.Black)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -115,55 +115,6 @@ fun ActiveSessionScreen(
                 }
             }
     ) {
-        if (!isOledZenMode) {
-            // Dynamic Moonlit Backdrop
-            Image(
-                painter = painterResource(id = currentTheme.backgroundDrawableRes),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-                alpha = 0.16f
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF060911).copy(alpha = 0.85f),
-                                Color(0xFF0A101D).copy(alpha = 0.70f),
-                                Color(0xFF060911).copy(alpha = 0.92f)
-                            )
-                        )
-                    )
-            )
-
-        val currentProgress = when (val status = timerStatus) {
-            is TimerStatus.Running -> {
-                if (status.isOverrun) 1.0f
-                else if (config.targetDurationSeconds > 0) (status.elapsedSeconds.toFloat() / config.targetDurationSeconds.toFloat()).coerceIn(0f, 1f)
-                else 0.5f
-            }
-            is TimerStatus.Paused -> {
-                if (status.isOverrun) 1.0f
-                else if (config.targetDurationSeconds > 0) (status.elapsedSeconds.toFloat() / config.targetDurationSeconds.toFloat()).coerceIn(0f, 1f)
-                else 0.5f
-            }
-            else -> 0f
-        }
-
-        if (config.showLeavesDuringMeditation) {
-            FallingLeavesEffect(
-                leafCount = config.meditationLeafCount,
-                triggerBurst = leavesBurstTrigger,
-                ambientAlpha = 0.32f,
-                isGlowing = true,
-                pileUpAtBottom = true,
-                sessionProgressRatio = currentProgress
-            )
-        }
-    }
 
         Box(
             modifier = Modifier

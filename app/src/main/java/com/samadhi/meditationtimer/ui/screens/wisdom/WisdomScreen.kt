@@ -85,34 +85,10 @@ fun WisdomScreen(
     var expandedTopicId by remember { mutableStateOf<String?>("start_here") }
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        // 1. Dynamic Moonlit Backdrop
-        Image(
-            painter = painterResource(id = currentTheme.backgroundDrawableRes),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-            alpha = 0.20f
-        )
-
-        // Moonlit Gradient Scrim
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF060911).copy(alpha = 0.85f),
-                            Color(0xFF0A101D).copy(alpha = 0.70f),
-                            Color(0xFF060911).copy(alpha = 0.92f)
-                        )
-                    )
-                )
-        )
-
-        // 2. Subtle Falling Particles
+        // 1. Subtle Falling Particles on pure AMOLED black
         FallingLeavesEffect(
             leafCount = 14,
-            ambientAlpha = 0.26f
+            ambientAlpha = 0.30f
         )
 
         Column(

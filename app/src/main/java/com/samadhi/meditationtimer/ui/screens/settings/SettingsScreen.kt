@@ -153,32 +153,10 @@ fun SettingsScreen(
     }
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        // Dynamic Moonlit Backdrop
-        Image(
-            painter = painterResource(id = currentTheme.backgroundDrawableRes),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-            alpha = 0.20f
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF060911).copy(alpha = 0.85f),
-                            Color(0xFF0A101D).copy(alpha = 0.70f),
-                            Color(0xFF060911).copy(alpha = 0.92f)
-                        )
-                    )
-                )
-        )
-
+        // Subtle Falling Particles on pure AMOLED black
         FallingLeavesEffect(
             leafCount = 14,
-            ambientAlpha = 0.26f
+            ambientAlpha = 0.30f
         )
 
         Column(
@@ -310,122 +288,9 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            // 2. MEDITATION VISUALS & LEAF DRIFT
-            Text(
-                text = "FALLING LEAVES & PARTICLES",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                color = currentTheme.primaryLight
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = if (config.showLeavesDuringMeditation) currentTheme.primaryLight else ZenTextMuted,
-                                modifier = Modifier.size(22.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Falling Leaves During Practice",
-                                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.5.sp, fontWeight = FontWeight.Bold),
-                                    color = ZenTextPrimary
-                                )
-                                Text(
-                                    text = "Drifting particles that naturally settle and stack at the bottom",
-                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
-                                    color = ZenTextSecondary
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        androidx.compose.material3.Switch(
-                            checked = config.showLeavesDuringMeditation,
-                            onCheckedChange = { timerViewModel.toggleShowLeavesDuringMeditation(it) },
-                            colors = androidx.compose.material3.SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = currentTheme.primary,
-                                uncheckedThumbColor = ZenTextMuted,
-                                uncheckedTrackColor = ZenSurfaceVariant
-                            )
-                        )
-                    }
-
-                    if (config.showLeavesDuringMeditation) {
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Text(
-                            text = "Leaf Density & Count",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = currentTheme.primaryLight
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        val leafDensityOptions = listOf(
-                            Pair(8, "Light (8)"),
-                            Pair(16, "Gentle (16)"),
-                            Pair(28, "Lush (28)"),
-                            Pair(42, "Breeze (42)")
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            leafDensityOptions.forEach { (count, label) ->
-                                val isSelected = config.meditationLeafCount == count
-                                FilterChip(
-                                    selected = isSelected,
-                                    onClick = { timerViewModel.updateMeditationLeafCount(count) },
-                                    label = {
-                                        Text(
-                                            text = label,
-                                            fontSize = 10.5.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        containerColor = ZenSurfaceVariant,
-                                        labelColor = ZenTextSecondary,
-                                        selectedContainerColor = currentTheme.primary,
-                                        selectedLabelColor = ZenObsidian
-                                    ),
-                                    border = FilterChipDefaults.filterChipBorder(
-                                        borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
-                                        enabled = true,
-                                        selected = isSelected
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.height(22.dp))
 
-            // 3. BELL SOUNDS
+            // 2. BELL SOUNDS
             Text(
                 text = "BELL SOUND & CHIMES",
                 fontSize = 12.sp,

@@ -2,13 +2,13 @@ package com.samadhi.meditationtimer.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Deep Moonlit Plum Village Zen Theme Colors
-val ZenObsidian = Color(0xFF060911)
-val ZenDarkBackground = Color(0xFF0A101D)
-val ZenMoonlitIndigo = Color(0xFF0E172A)
-val ZenSurface = Color(0xFF131F33)
-val ZenSurfaceVariant = Color(0xFF1C2B44)
-val ZenBorder = Color(0xFF263959)
+// Pure AMOLED Black Zen Theme Colors
+val ZenObsidian = Color(0xFF000000)
+val ZenDarkBackground = Color(0xFF000000)
+val ZenMoonlitIndigo = Color(0xFF070B14)
+val ZenSurface = Color(0xFF0F1726)
+val ZenSurfaceVariant = Color(0xFF182235)
+val ZenBorder = Color(0xFF223048)
 
 // 1. Moonlit Bamboo / Zen Teal Palette (Default)
 val ZenTeal = Color(0xFF2EA8A4)

@@ -80,32 +80,10 @@ fun HistoryScreen(
     var sessionToDelete by remember { mutableStateOf<MeditationSession?>(null) }
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        // Dynamic Moonlit Backdrop
-        Image(
-            painter = painterResource(id = currentTheme.backgroundDrawableRes),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-            alpha = 0.20f
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF060911).copy(alpha = 0.85f),
-                            Color(0xFF0A101D).copy(alpha = 0.70f),
-                            Color(0xFF060911).copy(alpha = 0.92f)
-                        )
-                    )
-                )
-        )
-
+        // Subtle Falling Particles on pure AMOLED black
         FallingLeavesEffect(
             leafCount = 14,
-            ambientAlpha = 0.26f
+            ambientAlpha = 0.30f
         )
 
         LazyColumn(

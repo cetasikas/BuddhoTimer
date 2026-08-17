@@ -49,16 +49,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.3.5
-          name: "Buddho Timer v2.3.5"
+          tag_name: v2.3.6
+          name: "Buddho Timer v2.3.6"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.3.5
+            ## 🪷 Buddho Meditation Timer v2.3.6
             
-            - **🍃 Multi-Tier Leaf Pile Stacking**: Leaves now realistically accumulate and stack upward in multiple organic tiers (`Base`, `Mid`, `Upper Mound`, `Top Peak`) with rich layered depth shading.
-            - **⚙️ Settings Option for Practice Leaves**: Added a toggle switch in Settings to enable/disable falling leaves during active meditation.
-            - **🍂 Configurable Leaf Density**: Added interactive selectors to choose particle count during practice: Light (8), Gentle (16), Lush (28), Breeze (42).
-            - **🪶 Session Duration Synchronization**: Summary screen renders the exact leaf mound accumulated during the meditation practice.
-            - **🌬️ Autumn Wind Blow-Away Animation**: Saving or discarding a session sweeps resting leaves into a gentle swirling autumn breeze that dissolves into the sky before returning to the main menu.
+            - **🖤 Pure AMOLED Black Across All Themes**: Removed busy backdrop images from all themes to feature pure AMOLED black, allowing falling particles and timer accents to shine subtly with maximum contrast and battery savings.
+            - **🧘 Pure Stillness Meditation Screen**: Removed all particle animations during active meditation for zero distractions.
+            - **🍂 Unified Timer & Overview Particles**: The session overview screen now shares the subtle ambient falling leaves from the timer screen, complete with a gentle autumn wind blow-away exit animation.
+            - **🌬️ Theme-Specific Box Breathing Visualizers**:
+              - *Bamboo Teal*: A living bamboo plant with articulating nodes and leaves that stretch on inhale and rest on exhale.
+              - *Sacred Lotus*: A radiant blooming lotus that blossoms on inhale and disperses into swirling golden particles on exhale.
+              - *Sakura Twilight*: An iconic 5-petal cherry blossom with orbiting petals expanding in twilight spirals.
+            - **✨ Streamlined Tutorial Overview**: Replaced theme picker in the onboarding tutorial with a comprehensive overview of customizable settings.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
