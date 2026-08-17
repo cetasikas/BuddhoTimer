@@ -309,39 +309,42 @@ private fun DrawScope.drawGlowingLeaf(
             }
         }
 
-        // Pass 1: Wide Luminous White Ambient Aura Glow (Pulsating softly with the breath)
-        val whiteOuterGlowAlpha = (0.42f * glowIntensity * dynamicAlpha).coerceIn(0f, 0.65f)
-        val whiteOuterGlowStroke = 12.0f * (0.75f + 0.50f * glowIntensity * expansionFactor)
+        // Pass 1: Subtle Luminous White Outer Atmosphere Aura (Soft edge framing)
+        val whiteOuterGlowAlpha = (0.24f * glowIntensity * dynamicAlpha).coerceIn(0f, 0.45f)
+        val whiteOuterGlowStroke = 9.0f * (0.75f + 0.45f * glowIntensity * expansionFactor)
         drawPath(
             path = path,
             color = Color.White.copy(alpha = whiteOuterGlowAlpha),
             style = Stroke(width = whiteOuterGlowStroke, cap = StrokeCap.Round)
         )
 
-        // Pass 2: Inner Brilliant White-Pearl Radiant Bloom
-        val whiteInnerGlowAlpha = (0.68f * glowIntensity * dynamicAlpha).coerceIn(0.20f, 0.90f)
-        val whiteInnerGlowStroke = 4.5f * (0.8f + 0.35f * glowIntensity)
+        // Pass 2: Rich Theme Colored Radiant Bloom (Emits the leaf's true theme pigment)
+        val themeBloomAlpha = (0.50f * glowIntensity * dynamicAlpha).coerceIn(0.15f, 0.75f)
+        val themeBloomStroke = 4.0f * (0.8f + 0.35f * glowIntensity)
         drawPath(
             path = path,
-            color = Color(0xFFFFFFF2).copy(alpha = whiteInnerGlowAlpha),
-            style = Stroke(width = whiteInnerGlowStroke, cap = StrokeCap.Round)
+            color = highlightColor.copy(alpha = themeBloomAlpha),
+            style = Stroke(width = themeBloomStroke, cap = StrokeCap.Round)
         )
 
-        // Pass 3: Solid Leaf Body Fill
-        drawPath(path = path, color = color)
-
-        // Pass 4: Crisp Luminous White Outer Rim Outline
-        val rimAlpha = (0.92f * dynamicAlpha).coerceIn(0.5f, 1.0f)
+        // Pass 3: Solid Rich Leaf Body Fill (100% Vibrant Theme Color)
         drawPath(
             path = path,
-            color = Color.White.copy(alpha = rimAlpha),
+            color = color.copy(alpha = (0.92f + 0.08f * expansionFactor).coerceIn(0.85f, 1.0f))
+        )
+
+        // Pass 4: Crisp Theme Highlight Outer Rim Outline
+        val rimAlpha = (0.92f * dynamicAlpha).coerceIn(0.6f, 1.0f)
+        drawPath(
+            path = path,
+            color = highlightColor.copy(alpha = rimAlpha),
             style = Stroke(width = 1.3f)
         )
 
-        // Pass 5: Luminous White Center Spine Vein
+        // Pass 5: Luminous Center Spine Vein
         drawPath(
             path = spinePath,
-            color = Color.White.copy(alpha = (rimAlpha * 0.80f)),
+            color = highlightColor.copy(alpha = (rimAlpha * 0.90f)),
             style = Stroke(width = 1.1f, cap = StrokeCap.Round)
         )
     }

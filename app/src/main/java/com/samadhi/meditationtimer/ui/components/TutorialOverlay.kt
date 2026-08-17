@@ -71,41 +71,52 @@ import com.samadhi.meditationtimer.ui.theme.ZenThemeId
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.AutoAwesome
+
+private data class FeatureHighlight(
+    val icon: ImageVector,
+    val title: String,
+    val desc: String
+)
 
 private data class TutorialStep(
     val title: String,
     val subtitle: String,
     val description: String,
     val icon: ImageVector,
-    val isSettingsStep: Boolean = false,
+    val features: List<FeatureHighlight> = emptyList(),
     val isPermissionStep: Boolean = false
 )
 
 private val tutorialSteps = listOf(
     TutorialStep(
-        title = "Personalized Settings",
-        subtitle = "Tailor your practice to your personal flow",
-        description = "Configure custom bell chimes, warm-up countdowns, auto Do Not Disturb, and data backups anytime in Settings.",
+        title = "Welcome to Buddho",
+        subtitle = "A 100% private, offline haven for stillness",
+        description = "Designed for deep mindful awareness with zero tracking, zero ads, and total distraction-free simplicity.",
+        icon = Icons.Default.Spa,
+        features = listOf(
+            FeatureHighlight(Icons.Default.SelfImprovement, "Minimalist Meditation Timer", "Flexible sits with Samadhi Overrun & breath pacing ring"),
+            FeatureHighlight(Icons.Default.Air, "Living Box Breathing", "Organic theme leaf breathwork with calming visual guidance"),
+            FeatureHighlight(Icons.Default.AutoAwesome, "Daily Buddhist Wisdom", "Curated teachings from prominent Buddhist masters")
+        )
+    ),
+    TutorialStep(
+        title = "Practice & Focus Essentials",
+        subtitle = "Tailored for tranquility and battery preservation",
+        description = "Powerful mindfulness tools built right into your daily practice flow.",
         icon = Icons.Default.Tune,
-        isSettingsStep = true
+        features = listOf(
+            FeatureHighlight(Icons.Default.DarkMode, "AMOLED Tap-to-Blackout", "Tap anywhere during sits for pure black stealth stillness"),
+            FeatureHighlight(Icons.Default.MusicNote, "Mindfulness Interval Bell", "Periodic Tibetan chimes & milestone track notch beads"),
+            FeatureHighlight(Icons.Default.NotificationsActive, "Meditation Reminders", "Gentle daily or interval reminder notifications outside the app")
+        )
     ),
     TutorialStep(
-        title = "Minimal Meditation Timer",
-        subtitle = "A serene, 100% offline companion for quiet stillness",
-        description = "Set your practice duration easily using the organic branch slider or one-tap glowing preset buttons. Practice with zero distractions.",
-        icon = Icons.Default.SelfImprovement
-    ),
-    TutorialStep(
-        title = "Samadhi Overrun & Box Breathing",
-        subtitle = "Deepen peace and anchor the breath",
-        description = "Enable Samadhi Overrun to let deep meditation continue uninterrupted past target time, or tap 'Box Breathing' for 4-4-4-4 particle breathwork.",
-        icon = Icons.Default.HourglassBottom
-    ),
-    TutorialStep(
-        title = "Recommended Permissions",
-        subtitle = "Ensure uninterrupted sits & background stability",
-        description = "Grant Do Not Disturb access to auto-silence incoming notifications, and exempt background battery optimization so Android never stops long sits.",
+        title = "Uninterrupted Practice",
+        subtitle = "Ensure background stability on Android",
+        description = "For seamless long sits, we recommend allowing Do Not Disturb (to silence calls during sits) and exempting battery optimization so Android never stops your timer.",
         icon = Icons.Default.DoNotDisturb,
         isPermissionStep = true
     )
@@ -154,7 +165,7 @@ fun TutorialOverlay(
                         Box(
                             modifier = Modifier
                                 .height(5.dp)
-                                .width(if (idx == currentStepIndex) 24.dp else 10.dp)
+                                .width(if (idx == currentStepIndex) 28.dp else 10.dp)
                                 .clip(RoundedCornerShape(3.dp))
                                 .background(
                                     if (idx == currentStepIndex) currentTheme.primaryLight
@@ -177,12 +188,12 @@ fun TutorialOverlay(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Glowing Icon Header
             Box(
                 modifier = Modifier
-                    .size(62.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.radialGradient(
@@ -199,11 +210,11 @@ fun TutorialOverlay(
                     imageVector = step.icon,
                     contentDescription = null,
                     tint = currentTheme.primaryLight,
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(28.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = step.title,
@@ -215,45 +226,38 @@ fun TutorialOverlay(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             Text(
                 text = step.subtitle,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontStyle = FontStyle.Italic,
-                    fontSize = 12.5.sp
+                    fontSize = 12.sp
                 ),
                 color = currentTheme.primaryLight,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = step.description,
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp
+                    fontSize = 12.5.sp,
+                    lineHeight = 17.5.sp
                 ),
                 color = ZenTextSecondary,
                 textAlign = TextAlign.Center
             )
 
-            // Step 1: Settings Overview Feature Cards
-            if (step.isSettingsStep) {
-                Spacer(modifier = Modifier.height(14.dp))
-                val settingsHighlights = listOf(
-                    Triple(Icons.Default.MusicNote, "Singing Bowls & Chimes", "Tibetan bowls, Japanese gongs, and bell chimes"),
-                    Triple(Icons.Default.Timer, "Warm-up Prep Countdown", "0s–15s posture preparation before timer starts"),
-                    Triple(Icons.Default.DoNotDisturb, "Auto Do Not Disturb", "Silence calls and notifications during sits"),
-                    Triple(Icons.Default.Storage, "100% Offline Backups", "Export and import your practice in JSON or CSV")
-                )
-
+            // Step Feature Cards (For steps with features list)
+            if (step.features.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    settingsHighlights.forEach { (icon, title, desc) ->
+                    step.features.forEach { (icon, title, desc) ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -273,7 +277,7 @@ fun TutorialOverlay(
                             Column {
                                 Text(
                                     text = title,
-                                    fontSize = 12.5.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = ZenTextPrimary
                                 )
@@ -288,9 +292,9 @@ fun TutorialOverlay(
                 }
             }
 
-            // Permissions Quick Access (Only on Step 4)
+            // Permissions Quick Access (On Permission Step)
             if (step.isPermissionStep) {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -324,12 +328,12 @@ fun TutorialOverlay(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                         border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
                     ) {
-                        Text("Disable Battery Opt", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text("Battery Settings", fontSize = 11.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             // Action Buttons
             Row(
@@ -349,8 +353,8 @@ fun TutorialOverlay(
                             currentStepIndex++
                         }
                     },
-                    modifier = Modifier.height(42.dp),
-                    shape = RoundedCornerShape(21.dp),
+                    modifier = Modifier.height(40.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = currentTheme.primary,
                         contentColor = Color(0xFF041014)
@@ -359,7 +363,7 @@ fun TutorialOverlay(
                     Text(
                         text = if (isLastStep) "Begin Practice" else "Next",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 13.5.sp
+                        fontSize = 13.sp
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Icon(
