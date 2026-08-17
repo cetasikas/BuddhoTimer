@@ -49,17 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.3.2
-          name: "Buddho Timer v2.3.2"
+          tag_name: v2.3.3
+          name: "Buddho Timer v2.3.3"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.3.2
+            ## 🪷 Buddho Meditation Timer v2.3.3
             
-            - **🍃 True Ground Sticking & Stacking Physics**: Falling leaves now genuinely land and stick to the ground when meditating, building up natural layers across the bottom.
-            - **📊 Session Overview Leaf Mound**: The meditation summary screen shows the stacked mound of fallen leaves from the practice.
-            - **🌬️ Unobstructed Zen Blooming Leaf Visualizer**: Cleanly separated breath instructions below the visualizer, collapsed pattern options, and enlarged blooming leaves with fluid ease-in/ease-out motion.
-            - **▶️ Clean Action Buttons**: Fixed text wrapping so "Begin Practice" never clips on any screen.
-            - **🍂 Immediate Initial Fall in Timer Screen**: Guaranteed continuous hardware clock ensuring leaves drift immediately from app launch.
-            - **100% Offline & Private**: Zero tracking, zero internet permissions, built for pure stillness.
+            - **🍃 Natural Touchdown & Cushioning Physics**: Falling leaves now smoothly decelerate and cushion upon touching the ground or leaf mound rather than snapping into place.
+            - **🍂 Natural Resting Angles & Contour Stacking**: Resting leaves settle horizontally, align to the local slope of accumulated mounds, and feature layered depth with soft ambient micro-sway.
+            - **🌬️ Silky Smooth Box Breathing Visualizer**: Replaced repeating loop timers with continuous monotonic frame synchronization, eliminating stutter and phase boundary discontinuities.
+            - **✨ Minimal Unboxed Breathing Typography**: Breathing phase names, instructions, and countdowns now float cleanly and minimally below the visualizer with smooth animated crossfades.
+            - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
           files: |

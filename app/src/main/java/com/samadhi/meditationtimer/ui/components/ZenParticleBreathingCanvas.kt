@@ -94,19 +94,19 @@ fun ZenParticleBreathingCanvas(
     }
 
     val infiniteTransition = rememberInfiniteTransition(label = "leafBreathingClock")
-    val shimmerTime by infiniteTransition.animateFloat(
+    val animClockSec by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 6.28f,
+        targetValue = 3600f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 6000, easing = LinearEasing),
+            animation = tween(durationMillis = 3600000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "shimmerRadian"
+        label = "animClockSec"
     )
 
     val corePulse by infiniteTransition.animateFloat(
-        initialValue = 0.85f,
-        targetValue = 1.15f,
+        initialValue = 0.88f,
+        targetValue = 1.12f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 2800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -122,16 +122,18 @@ fun ZenParticleBreathingCanvas(
             Pair(expansion, currentTheme.primaryLight)
         }
         BreathPhase.HOLD_FULL -> {
-            val suspensionPulse = (sin((shimmerTime * 2f).toDouble()) * 0.03).toFloat()
+            // Smooth sine wave over the hold duration: 0 at t=0, peak at t=0.5, 0 at t=1.0 (Zero discontinuity!)
+            val suspensionPulse = sin(phaseProgress * PI.toFloat()) * 0.035f
             Pair(1.0f + suspensionPulse, currentTheme.primaryLight)
         }
         BreathPhase.EXHALE -> {
-            // Converge gently back into stillness
+            // Converge gently back into stillness from 1.0 down to 0.24
             val contraction = 1.0f - (0.76f * easedProgress)
             Pair(contraction, currentTheme.overrunColor)
         }
         BreathPhase.HOLD_EMPTY -> {
-            val restingPulse = (sin((shimmerTime * 1.5f).toDouble()) * 0.02).toFloat()
+            // Smooth gentle resting wave over hold duration: 0 at t=0, 0 at t=1.0 (Zero discontinuity!)
+            val restingPulse = sin(phaseProgress * PI.toFloat()) * 0.015f
             Pair(0.24f + restingPulse, currentTheme.primaryDark)
         }
     }
@@ -176,21 +178,21 @@ fun ZenParticleBreathingCanvas(
             center = center
         )
 
-        // 3. Render Field of Blooming / Breathing Leaves
+        // 3. Render Field of Blooming / Breathing Leaves with Silky Smooth Continuous Flutter
         leaves.forEach { leaf ->
-            val flutter = (sin((shimmerTime * leaf.flutterSpeed + leaf.flutterPhase).toDouble()) * 3.0).toFloat()
+            val flutter = sin(animClockSec * leaf.flutterSpeed + leaf.flutterPhase) * 2.5f
             val dynamicR = maxRadius * leaf.normalizedRadius * leaf.baseRadiusScale * expansionFactor + flutter
-            val currentAngle = (leaf.angle.toDouble() + (shimmerTime.toDouble() * 0.05 * (1.0 - leaf.normalizedRadius.toDouble()))).toFloat()
+            val currentAngle = leaf.angle + (animClockSec * 0.035f * (1.0f - leaf.normalizedRadius))
 
-            val leafX = (center.x.toDouble() + cos(currentAngle.toDouble()) * dynamicR.toDouble()).toFloat()
-            val leafY = (center.y.toDouble() + sin(currentAngle.toDouble()) * dynamicR.toDouble()).toFloat()
+            val leafX = center.x + cos(currentAngle) * dynamicR
+            val leafY = center.y + sin(currentAngle) * dynamicR
 
-            val shimmerAlpha = (sin((shimmerTime * leaf.flutterSpeed * 1.4f + leaf.flutterPhase).toDouble()) * 0.12).toFloat()
+            val shimmerAlpha = sin(animClockSec * leaf.flutterSpeed * 1.2f + leaf.flutterPhase) * 0.08f
             val leafAlpha = (leaf.baseAlpha + shimmerAlpha).coerceIn(0.25f, 1.0f)
             val effectiveColor = leaf.color.copy(alpha = leafAlpha)
 
-            // Dynamic rotation pointing radially outward + fluttering sway
-            val rotationDeg = leaf.initialRotation + 90f + (sin((shimmerTime * 1.5f + leaf.flutterPhase).toDouble()) * 18f).toFloat()
+            // Continuous rotation pointing radially outward + subtle organic flutter
+            val rotationDeg = leaf.initialRotation + 90f + (sin(animClockSec * 1.2f + leaf.flutterPhase) * 12f)
 
             drawBloomingLeaf(
                 particleType = currentTheme.particleType,

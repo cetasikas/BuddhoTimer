@@ -1,10 +1,15 @@
 package com.samadhi.meditationtimer.ui.screens.breathing
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,6 +55,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,7 +104,7 @@ fun BreathingScreen(
     // Smooth sub-second progress for fluid blooming transition
     var phaseProgress by remember { mutableFloatStateOf(0.0f) }
 
-    // High precision breath cycle ticker
+    // High precision, hardware-synced breath cycle ticker (100% stutter-free)
     LaunchedEffect(isRunning, selectedPattern) {
         if (!isRunning) return@LaunchedEffect
 
@@ -110,27 +116,27 @@ fun BreathingScreen(
         var phaseStartTimeMs = System.currentTimeMillis()
 
         while (isActive && isRunning) {
-            val totalPhaseSec = getPhaseDuration(currentPhase, selectedPattern).coerceAtLeast(1)
-            val totalPhaseMs = totalPhaseSec * 1000L
-            val elapsedInPhaseMs = System.currentTimeMillis() - phaseStartTimeMs
+            withFrameNanos { _ ->
+                val totalPhaseSec = getPhaseDuration(currentPhase, selectedPattern).coerceAtLeast(1)
+                val totalPhaseMs = totalPhaseSec * 1000L
+                val elapsedInPhaseMs = System.currentTimeMillis() - phaseStartTimeMs
 
-            phaseProgress = (elapsedInPhaseMs.toFloat() / totalPhaseMs.toFloat()).coerceIn(0.0f, 1.0f)
-            val secRemaining = (totalPhaseSec - (elapsedInPhaseMs / 1000L).toInt()).coerceAtLeast(1)
-            phaseSecondsRemaining = secRemaining
+                phaseProgress = (elapsedInPhaseMs.toFloat() / totalPhaseMs.toFloat()).coerceIn(0.0f, 1.0f)
+                val secRemaining = (totalPhaseSec - (elapsedInPhaseMs / 1000L).toInt()).coerceAtLeast(1)
+                phaseSecondsRemaining = secRemaining
 
-            if (elapsedInPhaseMs >= totalPhaseMs) {
-                val nextPhase = getNextPhase(currentPhase, selectedPattern)
-                if (nextPhase == BreathPhase.INHALE) {
-                    completedCycles++
+                if (elapsedInPhaseMs >= totalPhaseMs) {
+                    val nextPhase = getNextPhase(currentPhase, selectedPattern)
+                    if (nextPhase == BreathPhase.INHALE) {
+                        completedCycles++
+                    }
+                    currentPhase = nextPhase
+                    phaseStartTimeMs = System.currentTimeMillis()
+                    phaseSecondsRemaining = getPhaseDuration(nextPhase, selectedPattern)
+                    phaseProgress = 0.0f
+                    soundHelper.triggerGentleVibration()
                 }
-                currentPhase = nextPhase
-                phaseStartTimeMs = System.currentTimeMillis()
-                phaseSecondsRemaining = getPhaseDuration(nextPhase, selectedPattern)
-                phaseProgress = 0.0f
-                soundHelper.triggerGentleVibration()
             }
-
-            delay(16L) // ~60 FPS smooth interpolation
         }
     }
 
@@ -343,54 +349,53 @@ fun BreathingScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // 4. Instructions & Countdown Card Positioned Cleanly BELOW the Visualizer
-            Box(
+            // 4. Instructions & Countdown (Clean, Minimal & Unboxed Typography)
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(ZenObsidian.copy(alpha = 0.88f))
-                    .border(1.2.dp, phaseColor.copy(alpha = 0.65f), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(phaseColor.copy(alpha = 0.20f))
-                                .border(1.dp, phaseColor.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                                .padding(horizontal = 12.dp, vertical = 3.dp)
-                        ) {
-                            Text(
-                                text = currentPhase.displayName.uppercase(),
-                                fontSize = 12.sp,
-                                letterSpacing = 2.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = phaseColor
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
+                // Large Elegant Countdown Number
+                Text(
+                    text = "$phaseSecondsRemaining",
+                    fontSize = 46.sp,
+                    fontWeight = FontWeight.Light,
+                    color = Color.White,
+                    letterSpacing = 1.sp
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                AnimatedContent(
+                    targetState = currentPhase,
+                    transitionSpec = {
+                        (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
+                            .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
+                    },
+                    label = "phaseTextFlow"
+                ) { phase ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Text(
-                            text = currentPhase.instruction,
+                            text = phase.displayName.uppercase(),
+                            fontSize = 17.sp,
+                            letterSpacing = 3.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = phaseColor,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = phase.instruction,
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = ZenTextSecondary
+                            fontWeight = FontWeight.Normal,
+                            color = ZenTextSecondary,
+                            textAlign = TextAlign.Center
                         )
                     }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Text(
-                        text = "$phaseSecondsRemaining",
-                        fontSize = 46.sp,
-                        fontWeight = FontWeight.Light,
-                        color = Color.White
-                    )
                 }
             }
 
