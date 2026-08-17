@@ -61,31 +61,31 @@ fun ZenParticleBreathingCanvas(
     currentPhase: BreathPhase,
     phaseProgress: Float,
     modifier: Modifier = Modifier,
-    particleCount: Int = 340
+    particleCount: Int = 460
 ) {
     val currentTheme = LocalZenTheme.current
 
-    // Generate 340 breathing dot & leaf particles with organic radial distribution
+    // Generate 460 breathing dot & leaf particles with organic radial distribution
     val particles = remember(particleCount, currentTheme.id) {
         val palette = currentTheme.particlePalette
         val goldenAngle = (PI * (3.0 - sqrt(5.0))).toFloat() // ~137.5 deg phyllotaxis
 
         List(particleCount) { i ->
             val angle = i * goldenAngle + (Random.nextFloat() - 0.5f) * 0.25f
-            val isLeaf = (i % 5 == 0) // 20% organic leaves, 80% luminous stardust dots
+            val isLeaf = (i % 3 == 0) // ~33% organic leaves, 67% luminous stardust dots
             val col = palette[i % palette.size]
 
             val homeR = (Random.nextFloat().pow(0.5f)) * 0.14f
             val expandR = (0.24f + (Random.nextFloat().pow(0.6f)) * 0.76f)
 
             val size = if (isLeaf) {
-                Random.nextFloat() * 6.0f + 14.0f
+                Random.nextFloat() * 8.0f + 16.0f
             } else {
-                Random.nextFloat() * 2.6f + 1.6f
+                Random.nextFloat() * 3.2f + 2.2f
             }
 
-            val glow = if (isLeaf) 5.0f else (Random.nextFloat() * 5.0f + 3.0f)
-            val op = (Random.nextFloat() * 0.35f + 0.55f).coerceIn(0.35f, 0.95f)
+            val glow = if (isLeaf) 8.0f else (Random.nextFloat() * 6.0f + 4.0f)
+            val op = (Random.nextFloat() * 0.25f + 0.75f).coerceIn(0.70f, 1.0f)
 
             BreathDotParticle(
                 index = i,
@@ -96,7 +96,7 @@ fun ZenParticleBreathingCanvas(
                 glow = glow,
                 opacity = op,
                 speed = Random.nextFloat() * 0.08f + 0.05f,
-                wobble = Random.nextFloat() * 2.2f + 1.0f,
+                wobble = Random.nextFloat() * 2.4f + 1.2f,
                 phase = Random.nextFloat() * 6.28318f,
                 isLeafBlade = isLeaf,
                 leafRotationOffset = Random.nextFloat() * 360f,
@@ -154,12 +154,12 @@ fun ZenParticleBreathingCanvas(
         if (maxRadius <= 0f) return@Canvas
 
         // 1. Atmosphere Radial Aura
-        val auraRadius = maxRadius * (0.32f + 0.70f * expansionFactor)
+        val auraRadius = maxRadius * (0.34f + 0.70f * expansionFactor)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    phaseGlowColor.copy(alpha = (0.24f * expansionFactor).coerceIn(0f, 0.42f)),
-                    currentTheme.primaryDark.copy(alpha = (0.09f * expansionFactor).coerceIn(0f, 0.20f)),
+                    phaseGlowColor.copy(alpha = (0.30f * expansionFactor).coerceIn(0f, 0.48f)),
+                    currentTheme.primaryDark.copy(alpha = (0.12f * expansionFactor).coerceIn(0f, 0.25f)),
                     Color.Transparent
                 ),
                 center = center,
@@ -170,12 +170,12 @@ fun ZenParticleBreathingCanvas(
         )
 
         // 2. Central Sanctuary Core Glow
-        val coreR = maxRadius * 0.12f * corePulse * (0.75f + 0.35f * expansionFactor)
+        val coreR = maxRadius * 0.13f * corePulse * (0.75f + 0.35f * expansionFactor)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    currentTheme.primaryLight.copy(alpha = 0.75f),
-                    currentTheme.primary.copy(alpha = 0.35f),
+                    currentTheme.primaryLight.copy(alpha = 0.85f),
+                    currentTheme.primary.copy(alpha = 0.45f),
                     Color.Transparent
                 ),
                 center = center,
@@ -200,12 +200,12 @@ fun ZenParticleBreathingCanvas(
             val pX = center.x + cos(curAngle) * r + wx
             val pY = center.y + sin(curAngle) * r + wy
 
-            val dynamicAlpha = p.opacity * (0.50f + expansionFactor * 0.50f)
+            val dynamicAlpha = p.opacity * (0.55f + expansionFactor * 0.45f)
 
             if (p.isLeafBlade) {
-                // Organic Theme-Specific Leaf Particle
+                // Organic Theme-Specific Leaf Particle with Luminous Glow
                 val rot = Math.toDegrees(curAngle.toDouble()).toFloat() + 90f + sin(animClockSec * 1.5f + p.phase) * 14f
-                val leafSize = p.size * (0.80f + 0.35f * expansionFactor)
+                val leafSize = p.size * (0.85f + 0.30f * expansionFactor)
 
                 drawThemeLeaf(
                     themeId = currentTheme.id,
@@ -213,21 +213,28 @@ fun ZenParticleBreathingCanvas(
                     center = Offset(pX, pY),
                     size = leafSize,
                     rotation = rot,
-                    color = p.color.copy(alpha = dynamicAlpha.coerceIn(0.2f, 0.95f)),
-                    highlightColor = currentTheme.primaryLight.copy(alpha = (dynamicAlpha * 0.75f).coerceIn(0.1f, 0.9f))
+                    color = p.color.copy(alpha = dynamicAlpha.coerceIn(0.40f, 1.0f)),
+                    highlightColor = currentTheme.primaryLight.copy(alpha = (dynamicAlpha * 0.90f).coerceIn(0.3f, 1.0f))
                 )
             } else {
-                // Luminous Breathing Dot (Glow pass + Crisp core pass)
-                // Pass 1: Diffused Glow Halo
+                // Luminous Breathing Dot (Multi-pass glow)
+                // Pass 1: Wide Ethereal Ambient Halo
                 drawCircle(
-                    color = p.color.copy(alpha = (dynamicAlpha * 0.08f).coerceIn(0f, 0.25f)),
-                    radius = p.size + p.glow * (0.8f + 0.4f * expansionFactor),
+                    color = p.color.copy(alpha = (dynamicAlpha * 0.20f).coerceIn(0f, 0.35f)),
+                    radius = p.size + p.glow * (1.2f + 0.4f * expansionFactor),
                     center = Offset(pX, pY)
                 )
 
-                // Pass 2: Brilliant Core Dot
+                // Pass 2: Mid Radiant Bloom
                 drawCircle(
-                    color = p.color.copy(alpha = dynamicAlpha.coerceIn(0.25f, 1.0f)),
+                    color = currentTheme.primaryLight.copy(alpha = (dynamicAlpha * 0.40f).coerceIn(0f, 0.60f)),
+                    radius = p.size + p.glow * 0.5f,
+                    center = Offset(pX, pY)
+                )
+
+                // Pass 3: Brilliant Core Dot
+                drawCircle(
+                    color = p.color.copy(alpha = dynamicAlpha.coerceIn(0.45f, 1.0f)),
                     radius = p.size * (0.85f + 0.25f * expansionFactor),
                     center = Offset(pX, pY)
                 )
@@ -304,9 +311,20 @@ private fun DrawScope.drawThemeLeaf(
             }
         }
 
+        // Pass 1: Outer glowing halo stroke
+        drawPath(
+            path = path,
+            color = highlightColor.copy(alpha = (highlightColor.alpha * 0.40f)),
+            style = Stroke(width = 3.5f)
+        )
+
+        // Pass 2: Main Leaf Body Fill
         drawPath(path = path, color = color)
-        drawPath(path = path, color = highlightColor, style = Stroke(width = 1.0f))
+
+        // Pass 3: Crisp Edge Highlight
+        drawPath(path = path, color = highlightColor, style = Stroke(width = 1.2f))
     }
 }
+
 
 
