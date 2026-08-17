@@ -49,16 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.3.1
-          name: "Buddho Timer v2.3.1"
+          tag_name: v2.3.2
+          name: "Buddho Timer v2.3.2"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.3.1
+            ## 🪷 Buddho Meditation Timer v2.3.2
             
-            - **🍃 Fluid Initial Animation & Pure Leaf Particles**: Fixed initial frame rendering for smooth falling leaves upon app launch, and removed all circle glow balls so only authentic theme leaves/petals fall.
-            - **🌬️ Zen Miniature Leaf Breathing Visualizer**: Replaced circular breath dots with miniature theme-adaptive leaves & petals that expand, shimmer, and contract with breath cycles.
-            - **▶️ Box Breathing Start Button & High-Contrast Readability**: Added dedicated "Begin Breathing Practice" starter button, fixed top close button title overlap, themed the breathing icon, and enhanced legibility for INHALE / HOLD / EXHALE phases.
-            - **🪵 Larger Tactile Slider Handle**: Expanded thumb pebble and sprout touch targets for smooth, effortless duration dragging.
-            - **☕ Donate Button**: Updated Ko-fi support header label to "Donate" next to the coffee cup icon.
+            - **🍃 True Ground Sticking & Stacking Physics**: Falling leaves now genuinely land and stick to the ground when meditating, building up natural layers across the bottom.
+            - **📊 Session Overview Leaf Mound**: The meditation summary screen shows the stacked mound of fallen leaves from the practice.
+            - **🌬️ Unobstructed Zen Blooming Leaf Visualizer**: Cleanly separated breath instructions below the visualizer, collapsed pattern options, and enlarged blooming leaves with fluid ease-in/ease-out motion.
+            - **▶️ Clean Action Buttons**: Fixed text wrapping so "Begin Practice" never clips on any screen.
+            - **🍂 Immediate Initial Fall in Timer Screen**: Guaranteed continuous hardware clock ensuring leaves drift immediately from app launch.
             - **100% Offline & Private**: Zero tracking, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

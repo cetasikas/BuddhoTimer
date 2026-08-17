@@ -29,20 +29,17 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-/**
- * Individual miniature leaf/petal particle in the breathing canvas.
- */
-private data class LeafBreathDot(
+private data class BreathLeaf(
     val index: Int,
     val angle: Float,
     val normalizedRadius: Float,
     val baseRadiusScale: Float,
     val leafSize: Float,
-    val leafRotation: Float,
+    val initialRotation: Float,
     val baseAlpha: Float,
     val color: Color,
-    val jitterSpeed: Float,
-    val jitterPhase: Float
+    val flutterSpeed: Float,
+    val flutterPhase: Float
 )
 
 private fun easeInOutCubic(x: Float): Float {
@@ -59,58 +56,59 @@ fun ZenParticleBreathingCanvas(
     currentPhase: BreathPhase,
     phaseProgress: Float,
     modifier: Modifier = Modifier,
-    particleCount: Int = 220
+    particleCount: Int = 140
 ) {
     val currentTheme = LocalZenTheme.current
 
     // Generate leaf particle field with phyllotaxis spiral distribution
-    val particles = remember(particleCount, currentTheme.id) {
+    val leaves = remember(particleCount, currentTheme.id) {
         val goldenAngle = (PI * (3.0 - sqrt(5.0))).toFloat() // ~137.5 deg
         val palette = currentTheme.particlePalette
 
         List(particleCount) { i ->
             val angle = i.toFloat() * goldenAngle
             val r = sqrt(i.toFloat() / particleCount.toFloat())
+            // Generously sized leaves for striking, tactile organic presence
             val size = when {
-                i % 18 == 0 -> Random.nextFloat() * 4.0f + 12.0f // Hero accent leaves
-                i % 5 == 0 -> Random.nextFloat() * 3.0f + 9.0f
-                else -> Random.nextFloat() * 2.5f + 6.5f
+                i % 12 == 0 -> Random.nextFloat() * 8.0f + 26.0f // Hero blooming leaves
+                i % 4 == 0 -> Random.nextFloat() * 6.0f + 20.0f
+                else -> Random.nextFloat() * 5.0f + 16.0f
             }
-            val alpha = (0.45f + 0.55f * (1.0f - r * 0.30f)).coerceIn(0.25f, 0.95f)
+            val alpha = (0.50f + 0.50f * (1.0f - r * 0.25f)).coerceIn(0.35f, 0.95f)
             val color = palette[i % palette.size]
-            val rot = Math.toDegrees(angle.toDouble()).toFloat() + (Random.nextFloat() - 0.5f) * 40f
+            val rot = Math.toDegrees(angle.toDouble()).toFloat()
 
-            LeafBreathDot(
+            BreathLeaf(
                 index = i,
                 angle = angle,
                 normalizedRadius = r,
-                baseRadiusScale = Random.nextFloat() * 0.15f + 0.92f,
+                baseRadiusScale = Random.nextFloat() * 0.12f + 0.94f,
                 leafSize = size,
-                leafRotation = rot,
+                initialRotation = rot,
                 baseAlpha = alpha,
                 color = color,
-                jitterSpeed = Random.nextFloat() * 1.5f + 1.0f,
-                jitterPhase = Random.nextFloat() * 6.28f
+                flutterSpeed = Random.nextFloat() * 1.5f + 1.2f,
+                flutterPhase = Random.nextFloat() * 6.28f
             )
         }
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "leafShimmer")
+    val infiniteTransition = rememberInfiniteTransition(label = "leafBreathingClock")
     val shimmerTime by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 6.28f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8000, easing = LinearEasing),
+            animation = tween(durationMillis = 6000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "shimmerRadian"
     )
 
     val corePulse by infiniteTransition.animateFloat(
-        initialValue = 0.88f,
-        targetValue = 1.12f,
+        initialValue = 0.85f,
+        targetValue = 1.15f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3200, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 2800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "corePulse"
@@ -119,20 +117,22 @@ fun ZenParticleBreathingCanvas(
     val easedProgress = easeInOutCubic(phaseProgress)
     val (expansionFactor, phaseGlowColor) = when (currentPhase) {
         BreathPhase.INHALE -> {
-            val expansion = 0.28f + (0.72f * easedProgress)
+            // Expand organically from sanctuary core (0.24) to full blooming perimeter (1.0)
+            val expansion = 0.24f + (0.76f * easedProgress)
             Pair(expansion, currentTheme.primaryLight)
         }
         BreathPhase.HOLD_FULL -> {
-            val suspensionPulse = (sin((shimmerTime * 2f).toDouble()) * 0.025).toFloat()
+            val suspensionPulse = (sin((shimmerTime * 2f).toDouble()) * 0.03).toFloat()
             Pair(1.0f + suspensionPulse, currentTheme.primaryLight)
         }
         BreathPhase.EXHALE -> {
-            val contraction = 1.0f - (0.72f * easedProgress)
+            // Converge gently back into stillness
+            val contraction = 1.0f - (0.76f * easedProgress)
             Pair(contraction, currentTheme.overrunColor)
         }
         BreathPhase.HOLD_EMPTY -> {
-            val restingPulse = (sin((shimmerTime * 1.5f).toDouble()) * 0.015).toFloat()
-            Pair(0.28f + restingPulse, currentTheme.primaryDark)
+            val restingPulse = (sin((shimmerTime * 1.5f).toDouble()) * 0.02).toFloat()
+            Pair(0.24f + restingPulse, currentTheme.primaryDark)
         }
     }
 
@@ -141,16 +141,16 @@ fun ZenParticleBreathingCanvas(
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val center = Offset(size.width / 2f, size.height / 2f)
-        val maxRadius = (size.minDimension / 2f) * 0.88f
+        val maxRadius = (size.minDimension / 2f) * 0.84f
         if (maxRadius <= 0f) return@Canvas
 
         // 1. Serene Radial Atmosphere Aura
-        val currentAtmosphereRadius = (maxRadius * expansionFactor * 1.15f).coerceAtLeast(30f)
+        val currentAtmosphereRadius = (maxRadius * expansionFactor * 1.20f).coerceAtLeast(40f)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    phaseGlowColor.copy(alpha = (0.20f * expansionFactor).coerceIn(0f, 1f)),
-                    currentTheme.primaryDark.copy(alpha = (0.08f * expansionFactor).coerceIn(0f, 1f)),
+                    phaseGlowColor.copy(alpha = (0.22f * expansionFactor).coerceIn(0f, 1f)),
+                    currentTheme.primaryDark.copy(alpha = (0.10f * expansionFactor).coerceIn(0f, 1f)),
                     Color.Transparent
                 ),
                 center = center,
@@ -161,12 +161,12 @@ fun ZenParticleBreathingCanvas(
         )
 
         // 2. Luminous Central Sanctuary Core
-        val coreRadius = (maxRadius * 0.20f * corePulse).coerceAtLeast(15f)
+        val coreRadius = (maxRadius * 0.18f * corePulse).coerceAtLeast(18f)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    currentTheme.primaryLight.copy(alpha = 0.35f),
-                    currentTheme.primary.copy(alpha = 0.15f),
+                    currentTheme.primaryLight.copy(alpha = 0.40f),
+                    currentTheme.primary.copy(alpha = 0.20f),
                     Color.Transparent
                 ),
                 center = center,
@@ -176,28 +176,28 @@ fun ZenParticleBreathingCanvas(
             center = center
         )
 
-        // 3. Render Field of Miniature Breathing Leaves/Petals
-        particles.forEach { dot ->
-            val jitter = (sin((shimmerTime * dot.jitterSpeed + dot.jitterPhase).toDouble()) * 2.5).toFloat()
-            val dynamicR = maxRadius * dot.normalizedRadius * dot.baseRadiusScale * expansionFactor + jitter
-            val currentAngle = (dot.angle.toDouble() + (shimmerTime.toDouble() * 0.04 * (1.0 - dot.normalizedRadius.toDouble()))).toFloat()
+        // 3. Render Field of Blooming / Breathing Leaves
+        leaves.forEach { leaf ->
+            val flutter = (sin((shimmerTime * leaf.flutterSpeed + leaf.flutterPhase).toDouble()) * 3.0).toFloat()
+            val dynamicR = maxRadius * leaf.normalizedRadius * leaf.baseRadiusScale * expansionFactor + flutter
+            val currentAngle = (leaf.angle.toDouble() + (shimmerTime.toDouble() * 0.05 * (1.0 - leaf.normalizedRadius.toDouble()))).toFloat()
 
             val leafX = (center.x.toDouble() + cos(currentAngle.toDouble()) * dynamicR.toDouble()).toFloat()
             val leafY = (center.y.toDouble() + sin(currentAngle.toDouble()) * dynamicR.toDouble()).toFloat()
 
-            val shimmerAlpha = (sin((shimmerTime * dot.jitterSpeed * 1.5f + dot.jitterPhase).toDouble()) * 0.15).toFloat()
-            val leafAlpha = (dot.baseAlpha + shimmerAlpha).coerceIn(0.18f, 1.0f)
-            val effectiveColor = dot.color.copy(alpha = leafAlpha)
+            val shimmerAlpha = (sin((shimmerTime * leaf.flutterSpeed * 1.4f + leaf.flutterPhase).toDouble()) * 0.12).toFloat()
+            val leafAlpha = (leaf.baseAlpha + shimmerAlpha).coerceIn(0.25f, 1.0f)
+            val effectiveColor = leaf.color.copy(alpha = leafAlpha)
 
-            val leafCenter = Offset(leafX, leafY)
-            val rotationDeg = dot.leafRotation + (shimmerTime * 5f)
+            // Dynamic rotation pointing radially outward + fluttering sway
+            val rotationDeg = leaf.initialRotation + 90f + (sin((shimmerTime * 1.5f + leaf.flutterPhase).toDouble()) * 18f).toFloat()
 
-            drawMiniatureLeaf(
+            drawBloomingLeaf(
                 particleType = currentTheme.particleType,
                 shapePath = leafPath,
                 detailPath = detailPath,
-                center = leafCenter,
-                size = dot.leafSize,
+                center = Offset(leafX, leafY),
+                size = leaf.leafSize * (0.85f + 0.25f * expansionFactor),
                 rotation = rotationDeg,
                 color = effectiveColor,
                 glowColor = phaseGlowColor
@@ -206,7 +206,7 @@ fun ZenParticleBreathingCanvas(
     }
 }
 
-private fun DrawScope.drawMiniatureLeaf(
+private fun DrawScope.drawBloomingLeaf(
     particleType: ParticleType,
     shapePath: Path,
     detailPath: Path,
@@ -220,76 +220,76 @@ private fun DrawScope.drawMiniatureLeaf(
         shapePath.reset()
         detailPath.reset()
 
-        val halfW = size * 0.40f
-        val halfH = size * 0.85f
+        val halfW = size * 0.42f
+        val halfH = size * 0.88f
 
         when (particleType) {
             ParticleType.BAMBOO_LEAF -> {
-                // Miniature Bodhi / Bamboo Leaf
+                // Pointed Bodhi / Bamboo Leaf
                 shapePath.moveTo(center.x, center.y - halfH)
                 shapePath.cubicTo(
-                    center.x + halfW * 1.1f, center.y - halfH * 0.3f,
-                    center.x + halfW * 0.8f, center.y + halfH * 0.4f,
+                    center.x + halfW * 1.15f, center.y - halfH * 0.32f,
+                    center.x + halfW * 0.85f, center.y + halfH * 0.38f,
                     center.x, center.y + halfH
                 )
                 shapePath.cubicTo(
-                    center.x - halfW * 0.8f, center.y + halfH * 0.4f,
-                    center.x - halfW * 1.1f, center.y - halfH * 0.3f,
+                    center.x - halfW * 0.85f, center.y + halfH * 0.38f,
+                    center.x - halfW * 1.15f, center.y - halfH * 0.32f,
                     center.x, center.y - halfH
                 )
                 shapePath.close()
 
-                detailPath.moveTo(center.x, center.y - halfH * 0.8f)
-                detailPath.lineTo(center.x, center.y + halfH * 0.8f)
+                detailPath.moveTo(center.x, center.y - halfH * 0.85f)
+                detailPath.lineTo(center.x, center.y + halfH * 0.85f)
             }
             ParticleType.LOTUS_PETAL -> {
-                // Miniature Lotus Petal
-                shapePath.moveTo(center.x, center.y - halfH * 0.9f)
+                // Broad Cupped Lotus Petal
+                shapePath.moveTo(center.x, center.y - halfH * 0.95f)
                 shapePath.cubicTo(
-                    center.x + halfW * 1.3f, center.y - halfH * 0.35f,
-                    center.x + halfW * 1.1f, center.y + halfH * 0.45f,
+                    center.x + halfW * 1.35f, center.y - halfH * 0.35f,
+                    center.x + halfW * 1.15f, center.y + halfH * 0.45f,
                     center.x, center.y + halfH
                 )
                 shapePath.cubicTo(
-                    center.x - halfW * 1.1f, center.y + halfH * 0.45f,
-                    center.x - halfW * 1.3f, center.y - halfH * 0.35f,
-                    center.x, center.y - halfH * 0.9f
+                    center.x - halfW * 1.15f, center.y + halfH * 0.45f,
+                    center.x - halfW * 1.35f, center.y - halfH * 0.35f,
+                    center.x, center.y - halfH * 0.95f
                 )
                 shapePath.close()
 
-                detailPath.moveTo(center.x, center.y - halfH * 0.75f)
-                detailPath.lineTo(center.x, center.y + halfH * 0.75f)
+                detailPath.moveTo(center.x, center.y - halfH * 0.80f)
+                detailPath.quadraticTo(center.x + halfW * 0.2f, center.y, center.x, center.y + halfH * 0.80f)
             }
             ParticleType.SAKURA_PETAL -> {
-                // Miniature Sakura Petal
-                val topY = center.y - halfH * 0.9f
+                // Notched Cherry Blossom Petal
+                val topY = center.y - halfH * 0.95f
                 shapePath.moveTo(center.x, center.y + halfH)
                 shapePath.cubicTo(
-                    center.x - halfW * 1.2f, center.y + halfH * 0.35f,
-                    center.x - halfW * 1.1f, center.y - halfH * 0.45f,
-                    center.x - halfW * 0.55f, topY
+                    center.x - halfW * 1.25f, center.y + halfH * 0.35f,
+                    center.x - halfW * 1.15f, center.y - halfH * 0.45f,
+                    center.x - halfW * 0.58f, topY
                 )
                 shapePath.quadraticTo(
                     center.x, topY + halfH * 0.22f,
-                    center.x + halfW * 0.55f, topY
+                    center.x + halfW * 0.58f, topY
                 )
                 shapePath.cubicTo(
-                    center.x + halfW * 1.1f, center.y - halfH * 0.45f,
-                    center.x + halfW * 1.2f, center.y + halfH * 0.35f,
+                    center.x + halfW * 1.15f, center.y - halfH * 0.45f,
+                    center.x + halfW * 1.25f, center.y + halfH * 0.35f,
                     center.x, center.y + halfH
                 )
                 shapePath.close()
             }
         }
 
-        // Fill miniature leaf body
+        // Fill leaf body
         drawPath(path = shapePath, color = color)
 
-        // Vein / Crease
+        // Vein / Texture line
         drawPath(
             path = detailPath,
-            color = Color(0xFF041014).copy(alpha = (0.28f * color.alpha).coerceIn(0.10f, 0.40f)),
-            style = Stroke(width = 0.8f)
+            color = Color(0xFF041014).copy(alpha = (0.30f * color.alpha).coerceIn(0.10f, 0.45f)),
+            style = Stroke(width = 1.0f)
         )
     }
 }

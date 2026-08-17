@@ -1,8 +1,14 @@
 package com.samadhi.meditationtimer.ui.screens.breathing
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +27,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -39,7 +47,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,24 +60,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.samadhi.meditationtimer.R
 import com.samadhi.meditationtimer.domain.model.BreathPhase
 import com.samadhi.meditationtimer.domain.model.BreathingPattern
 import com.samadhi.meditationtimer.service.NotificationHelper
 import com.samadhi.meditationtimer.service.SoundHelper
-import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.components.ZenParticleBreathingCanvas
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
-import com.samadhi.meditationtimer.ui.theme.ZenGoldGlow
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
-import com.samadhi.meditationtimer.ui.theme.ZenOverrunBlue
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
-import com.samadhi.meditationtimer.ui.theme.ZenTeal
-import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 import kotlinx.coroutines.delay
@@ -86,14 +88,14 @@ fun BreathingScreen(
     val soundHelper = remember { SoundHelper(context) }
 
     var selectedPattern by remember { mutableStateOf(BreathingPattern.BOX_BREATHING) }
+    var isPatternsExpanded by remember { mutableStateOf(false) }
     var isRunning by remember { mutableStateOf(false) }
     var currentPhase by remember { mutableStateOf(BreathPhase.INHALE) }
     var phaseSecondsRemaining by remember { mutableIntStateOf(selectedPattern.inhaleSec) }
     var totalElapsedSec by remember { mutableIntStateOf(0) }
     var completedCycles by remember { mutableIntStateOf(0) }
-    var leafBurstTrigger by remember { mutableIntStateOf(0) }
 
-    // Smooth sub-second progress for fluid particle transition
+    // Smooth sub-second progress for fluid blooming transition
     var phaseProgress by remember { mutableFloatStateOf(0.0f) }
 
     // High precision breath cycle ticker
@@ -154,7 +156,7 @@ fun BreathingScreen(
             .fillMaxSize()
             .background(ZenObsidian)
     ) {
-        // 1. Dynamic Moonlit Backdrop
+        // 1. Dynamic Moonlit Backdrop (No falling leaves on breathing screen)
         Image(
             painter = painterResource(id = currentTheme.backgroundDrawableRes),
             contentDescription = null,
@@ -170,29 +172,22 @@ fun BreathingScreen(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF060911).copy(alpha = 0.85f),
-                            Color(0xFF0A101D).copy(alpha = 0.70f),
+                            Color(0xFF060911).copy(alpha = 0.88f),
+                            Color(0xFF0A101D).copy(alpha = 0.75f),
                             Color(0xFF060911).copy(alpha = 0.95f)
                         )
                     )
                 )
         )
 
-        // 2. Subtle Falling Leaves Effect
-        FallingLeavesEffect(
-            leafCount = 14,
-            triggerBurst = leafBurstTrigger,
-            ambientAlpha = 0.25f
-        )
-
-        // 3. Main Screen Flow
+        // 2. Main Screen Flow
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Header Row (With proper spacing so Close button never overlaps title)
+            // Top Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -204,7 +199,7 @@ fun BreathingScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(currentTheme.primary.copy(alpha = 0.18f))
                             .border(1.dp, currentTheme.primary.copy(alpha = 0.4f), CircleShape),
@@ -217,7 +212,7 @@ fun BreathingScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
                             text = "ZEN BREATHING",
@@ -225,12 +220,14 @@ fun BreathingScreen(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.5.sp
                             ),
-                            color = ZenTextPrimary
+                            color = ZenTextPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = selectedPattern.subtitle,
+                            text = selectedPattern.name,
                             style = MaterialTheme.typography.bodySmall,
-                            color = ZenTextSecondary
+                            color = currentTheme.primaryLight
                         )
                     }
                 }
@@ -238,7 +235,7 @@ fun BreathingScreen(
                 IconButton(
                     onClick = onClose,
                     modifier = Modifier
-                        .size(38.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
                         .background(ZenSurface)
                         .border(1.dp, ZenBorder, CircleShape)
@@ -252,49 +249,84 @@ fun BreathingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Pattern Selection Chips
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            // Collapsible Pattern Selector Strip
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(ZenSurface.copy(alpha = 0.85f))
+                    .border(1.dp, ZenBorder, RoundedCornerShape(12.dp))
+                    .clickable { isPatternsExpanded = !isPatternsExpanded }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                BreathingPattern.allPatterns.forEach { pattern ->
-                    val isSelected = selectedPattern.id == pattern.id
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            selectedPattern = pattern
-                            currentPhase = BreathPhase.INHALE
-                            phaseSecondsRemaining = pattern.inhaleSec
-                            phaseProgress = 0f
-                            leafBurstTrigger++
-                        },
-                        label = {
-                            Text(
-                                text = pattern.name,
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = ZenSurface.copy(alpha = 0.7f),
-                            labelColor = ZenTextSecondary,
-                            selectedContainerColor = currentTheme.primary,
-                            selectedLabelColor = ZenObsidian
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
-                            enabled = true,
-                            selected = isSelected
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                Text(
+                    text = "Pattern: ${selectedPattern.name}",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = ZenTextPrimary
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    imageVector = if (isPatternsExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = ZenTextSecondary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            // Expanded Pattern Chips
+            AnimatedVisibility(
+                visible = isPatternsExpanded,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                FlowRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    BreathingPattern.allPatterns.forEach { pattern ->
+                        val isSelected = selectedPattern.id == pattern.id
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                selectedPattern = pattern
+                                currentPhase = BreathPhase.INHALE
+                                phaseSecondsRemaining = pattern.inhaleSec
+                                phaseProgress = 0f
+                                isPatternsExpanded = false
+                            },
+                            label = {
+                                Text(
+                                    text = pattern.name,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = ZenSurface.copy(alpha = 0.7f),
+                                labelColor = ZenTextSecondary,
+                                selectedContainerColor = currentTheme.primary,
+                                selectedLabelColor = ZenObsidian
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
+                                enabled = true,
+                                selected = isSelected
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                    }
                 }
             }
 
-            // Central Zen Particle Breath Visualizer (Miniature Leaves / Petals Breathing Field)
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // 3. Central Blooming Leaf Visualizer (Front and Center & Unobstructed)
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -305,70 +337,76 @@ fun BreathingScreen(
                     currentPhase = currentPhase,
                     phaseProgress = phaseProgress,
                     modifier = Modifier.fillMaxSize(),
-                    particleCount = 220
+                    particleCount = 140
                 )
+            }
 
-                // High-Contrast Sanctuary Breath Phase Typography Floating in Particle Field
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(ZenObsidian.copy(alpha = 0.85f))
-                        .border(1.5.dp, phaseColor.copy(alpha = 0.70f), RoundedCornerShape(24.dp))
-                        .padding(horizontal = 28.dp, vertical = 16.dp),
-                    contentAlignment = Alignment.Center
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // 4. Instructions & Countdown Card Positioned Cleanly BELOW the Visualizer
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(ZenObsidian.copy(alpha = 0.88f))
+                    .border(1.2.dp, phaseColor.copy(alpha = 0.65f), RoundedCornerShape(20.dp))
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        // High-Contrast Floating Badge
+                    Column(modifier = Modifier.weight(1f)) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(phaseColor.copy(alpha = 0.22f))
-                                .border(1.dp, phaseColor.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
-                                .padding(horizontal = 16.dp, vertical = 5.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(phaseColor.copy(alpha = 0.20f))
+                                .border(1.dp, phaseColor.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                .padding(horizontal = 12.dp, vertical = 3.dp)
                         ) {
                             Text(
                                 text = currentPhase.displayName.uppercase(),
-                                fontSize = 13.sp,
-                                letterSpacing = 3.sp,
+                                fontSize = 12.sp,
+                                letterSpacing = 2.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = phaseColor
                             )
                         }
-
                         Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "$phaseSecondsRemaining",
-                            fontSize = 62.sp,
-                            fontWeight = FontWeight.ExtraLight,
-                            color = ZenTextPrimary
-                        )
-
                         Text(
                             text = currentPhase.instruction,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = ZenTextSecondary,
-                            textAlign = TextAlign.Center
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = ZenTextSecondary
                         )
                     }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Text(
+                        text = "$phaseSecondsRemaining",
+                        fontSize = 46.sp,
+                        fontWeight = FontWeight.Light,
+                        color = Color.White
+                    )
                 }
             }
 
-            // Stats Card (Cycles & Calm Time)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 5. Stats Card (Cycles & Calm Time)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.85f)),
                 border = CardDefaults.outlinedCardBorder().copy(brush = Brush.horizontalGradient(listOf(ZenBorder, ZenBorder))),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(14.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                        .padding(horizontal = 18.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -377,12 +415,12 @@ fun BreathingScreen(
                             text = "COMPLETED CYCLES",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.2.sp,
+                            letterSpacing = 1.1.sp,
                             color = ZenTextSecondary
                         )
                         Text(
                             text = "$completedCycles",
-                            fontSize = 22.sp,
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = currentTheme.primaryLight
                         )
@@ -393,12 +431,12 @@ fun BreathingScreen(
                             text = "CALM TIME",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.2.sp,
+                            letterSpacing = 1.1.sp,
                             color = ZenTextSecondary
                         )
                         Text(
                             text = NotificationHelper.formatSeconds(totalElapsedSec),
-                            fontSize = 22.sp,
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = currentTheme.primaryLight
                         )
@@ -406,12 +444,12 @@ fun BreathingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Action Controls
+            // 6. Action Controls (Unwrapped, high-contrast button text)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
@@ -421,10 +459,9 @@ fun BreathingScreen(
                         currentPhase = BreathPhase.INHALE
                         phaseSecondsRemaining = selectedPattern.inhaleSec
                         phaseProgress = 0f
-                        leafBurstTrigger++
                     },
                     modifier = Modifier
-                        .size(54.dp)
+                        .size(50.dp)
                         .clip(CircleShape)
                         .background(ZenSurface)
                         .border(1.dp, ZenBorder, CircleShape)
@@ -433,19 +470,18 @@ fun BreathingScreen(
                         imageVector = Icons.Default.Refresh,
                         contentDescription = "Reset Session",
                         tint = ZenTextSecondary,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
                 Button(
                     onClick = {
                         isRunning = !isRunning
-                        leafBurstTrigger++
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .height(54.dp),
-                    shape = RoundedCornerShape(16.dp),
+                        .height(50.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
                         contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
@@ -454,22 +490,23 @@ fun BreathingScreen(
                     Icon(
                         imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = if (isRunning) "Pause" else "Start",
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = when {
-                            isRunning -> "Pause Practice"
-                            totalElapsedSec == 0 -> "Begin Breathing Practice"
-                            else -> "Resume Breathing"
+                            isRunning -> "Pause"
+                            totalElapsedSec == 0 -> "Begin Practice"
+                            else -> "Resume Practice"
                         },
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 15.sp,
+                        maxLines = 1
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
         }
     }
 }
