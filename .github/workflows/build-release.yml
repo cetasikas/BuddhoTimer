@@ -49,14 +49,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.4.0
-          name: "Buddho Timer v2.4.0"
+          tag_name: v2.4.1
+          name: "Buddho Timer v2.4.1"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.4.0
+            ## 🪷 Buddho Meditation Timer v2.4.1
             
-            - **🌟 Luminous Multi-Layer Glowing Particle Field**: Enhanced the box breathing visualizer with 460 particles featuring multi-pass radiant glow halos (ambient halo, mid bloom, and crisp radiant cores).
-            - **🍃 Lush Organic Leaf Density**: Increased organic leaf count by ~65% with enlarged leaf blades, dynamic fluttering rotation, outer glow strokes, and crisp edge highlights.
-            - **✨ Radiant Visual Clarity on AMOLED Black**: Boosted particle opacities, glow radii, and central atmosphere aura for striking, soothing visibility on deep black displays.
+            - **🍃 Pure 100% Leaf Breathing Field**: Replaced all dots with 220 lush, tactile theme-specific leaves (**Pointed Bamboo/Bodhi Leaves** for *Bamboo Teal*, **Cupped Petals** for *Sacred Lotus*, and **Notched Cherry Blossom Petals** for *Sakura Twilight*).
+            - **💓 Dynamic Breath-Synchronized Pulsating Glow**: Multi-tier radiant glowing halos swell and intensify in bloom during Inhale ($0.22 \rightarrow 1.0$), softly pulse at Hold Full, serenely dim during Exhale ($1.0 \rightarrow 0.22$), and settle in gentle stillness during Hold Empty.
+            - **✨ Crisp Detailed Veins & High-Contrast Edges**: Added central spine veins and luminous outer rim outlines for stunning visual clarity on AMOLED black screens.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

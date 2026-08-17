@@ -319,7 +319,7 @@ fun BreathingScreen(
                     currentPhase = currentPhase,
                     phaseProgress = phaseProgress,
                     modifier = Modifier.fillMaxSize(),
-                    particleCount = 140
+                    leafCount = 220
                 )
             }
 
