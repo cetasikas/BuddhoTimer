@@ -72,6 +72,8 @@ import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.IconButton
 
@@ -81,8 +83,10 @@ fun WisdomScreen(
     modifier: Modifier = Modifier
 ) {
     val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("wisdom_prefs", Context.MODE_PRIVATE) }
     val topics = remember { MeditationGuides.topicCards }
-    var expandedTopicId by remember { mutableStateOf<String?>("start_here") }
+    var expandedTopicId by remember { mutableStateOf<String?>(prefs.getString("expanded_topic_id", null)) }
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
         // 1. Subtle Falling Particles on pure AMOLED black
@@ -150,7 +154,9 @@ fun WisdomScreen(
                         topic = topic,
                         isExpanded = isExpanded,
                         onToggle = {
-                            expandedTopicId = if (isExpanded) null else topic.id
+                            val newId = if (isExpanded) null else topic.id
+                            expandedTopicId = newId
+                            prefs.edit().putString("expanded_topic_id", newId).apply()
                         }
                     )
                 }

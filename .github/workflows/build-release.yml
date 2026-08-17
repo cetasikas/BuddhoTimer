@@ -49,20 +49,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.3.6
-          name: "Buddho Timer v2.3.6"
+          tag_name: v2.3.7
+          name: "Buddho Timer v2.3.7"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.3.6
+            ## 🪷 Buddho Meditation Timer v2.3.7
             
-            - **🖤 Pure AMOLED Black Across All Themes**: Removed busy backdrop images from all themes to feature pure AMOLED black, allowing falling particles and timer accents to shine subtly with maximum contrast and battery savings.
-            - **🧘 Pure Stillness Meditation Screen**: Removed all particle animations during active meditation for zero distractions.
-            - **🍂 Unified Timer & Overview Particles**: The session overview screen now shares the subtle ambient falling leaves from the timer screen, complete with a gentle autumn wind blow-away exit animation.
-            - **🌬️ Theme-Specific Box Breathing Visualizers**:
-              - *Bamboo Teal*: A living bamboo plant with articulating nodes and leaves that stretch on inhale and rest on exhale.
-              - *Sacred Lotus*: A radiant blooming lotus that blossoms on inhale and disperses into swirling golden particles on exhale.
-              - *Sakura Twilight*: An iconic 5-petal cherry blossom with orbiting petals expanding in twilight spirals.
-            - **✨ Streamlined Tutorial Overview**: Replaced theme picker in the onboarding tutorial with a comprehensive overview of customizable settings.
-            - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
+            - **📚 Wisdom Guides Collapsed by Default & State Preservation**: Meditation guide topics are now collapsed by default upon opening, and the user's opened/collapsed topic state is automatically persisted across app sessions and restarts.
+            - **🌌 Hypnotic Particle-Based Box Breathing Visualizers**:
+              - *Bamboo Teal*: Bioluminescent stream particles flowing upwards like vital energy sap along 3 curving bamboo stalks, with glowing node rings and breathing canopy leaf constellations.
+              - *Sacred Lotus*: 180-particle sacred geometry mandala blooming in golden amber light on Inhale, and bursting into an ethereal swirling cosmic stardust nebula vortex on Exhale.
+              - *Sakura Twilight*: 160 glowing cherry blossom particles & rotating petal blades orbiting in Fibonacci golden spirals, expanding on Inhale and swirling into a whirlpool vortex on Exhale.
+            - **🖤 AMOLED Black & Offline Simplicity**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
           files: |
