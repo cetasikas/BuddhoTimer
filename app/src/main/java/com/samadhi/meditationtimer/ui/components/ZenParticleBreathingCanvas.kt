@@ -17,12 +17,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import com.samadhi.meditationtimer.domain.model.BreathPhase
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
-import com.samadhi.meditationtimer.ui.theme.ParticleType
 import com.samadhi.meditationtimer.ui.theme.ZenThemeId
 import kotlin.math.PI
 import kotlin.math.cos
@@ -39,28 +39,36 @@ private fun easeInOutCubic(x: Float): Float {
     }
 }
 
-private data class BambooStreamParticle(
-    val stalkIndex: Int,
-    val initialT: Float,
-    val flowSpeed: Float,
+// 🌠 Slow celestial shooting star / comet weaving between objects in unison with breath
+private data class BreathingComet(
+    val id: Int,
+    val baseAngle: Float,
+    val orbitSpeed: Float,
+    val radialPhase: Float,
+    val minRadiusRatio: Float,
+    val maxRadiusRatio: Float,
+    val trailLength: Int,
     val size: Float,
-    val lateralOffset: Float,
-    val phase: Float,
     val color: Color
 )
 
-private data class BambooLeafParticle(
-    val stalkIndex: Int,
-    val nodeLevel: Int,
+// 🎋 Bamboo Teal Mandala Particle (Pointed Bamboo Leaves & Stardust)
+private data class BambooMandalaParticle(
+    val ringIndex: Int,
     val leafIndex: Int,
-    val baseAngle: Float,
-    val distance: Float,
+    val tOnLeaf: Float,
     val size: Float,
+    val baseAngle: Float,
+    val dispersionAngle: Float,
+    val dispersionDistance: Float,
+    val dispersionSpeed: Float,
     val flutterSpeed: Float,
     val phase: Float,
+    val isLeafBlade: Boolean,
     val color: Color
 )
 
+// 🪷 Sacred Lotus Mandala Particle
 private data class LotusMandalaParticle(
     val ringIndex: Int,
     val petalIndex: Int,
@@ -73,6 +81,7 @@ private data class LotusMandalaParticle(
     val color: Color
 )
 
+// 🌸 Sakura Twilight Vortex Particle
 private data class SakuraVortexParticle(
     val index: Int,
     val armIndex: Int,
@@ -94,48 +103,61 @@ fun ZenParticleBreathingCanvas(
 ) {
     val currentTheme = LocalZenTheme.current
 
-    val bambooStreamParticles = remember(currentTheme.id) {
+    // 🌠 Slow breathing comets / shooting stars that weave gently between particles
+    val breathingComets = remember(currentTheme.id) {
         val palette = currentTheme.particlePalette
-        List(64) { i ->
-            BambooStreamParticle(
-                stalkIndex = i % 3,
-                initialT = (i.toFloat() / 64f),
-                flowSpeed = Random.nextFloat() * 0.12f + 0.18f,
-                size = Random.nextFloat() * 3.5f + 2.0f,
-                lateralOffset = (Random.nextFloat() - 0.5f) * 8f,
-                phase = Random.nextFloat() * 6.28f,
+        List(8) { i ->
+            BreathingComet(
+                id = i,
+                baseAngle = (i.toFloat() / 8f) * 6.28318f,
+                orbitSpeed = 0.09f + (i % 3) * 0.035f,
+                radialPhase = i * 1.35f,
+                minRadiusRatio = 0.22f + (i % 4) * 0.08f,
+                maxRadiusRatio = 0.72f + (i % 3) * 0.10f,
+                trailLength = 7,
+                size = Random.nextFloat() * 2.5f + 3.2f,
                 color = palette[i % palette.size]
             )
         }
     }
 
-    val bambooLeafParticles = remember(currentTheme.id) {
+    // 🎋 1. Bamboo Teal Radial Leaf Mandala
+    val bambooMandalaParticles = remember(currentTheme.id) {
         val palette = currentTheme.particlePalette
-        List(76) { i ->
-            val stalk = i % 3
-            val node = (i / 3) % 4 + 1
-            val side = if (i % 2 == 0) 1f else -1f
-            BambooLeafParticle(
-                stalkIndex = stalk,
-                nodeLevel = node,
-                leafIndex = i,
-                baseAngle = (if (side > 0) -30f else -150f) + (Random.nextFloat() - 0.5f) * 35f,
-                distance = Random.nextFloat() * 26f + 12f,
-                size = Random.nextFloat() * 7f + 10f,
-                flutterSpeed = Random.nextFloat() * 1.6f + 1.2f,
-                phase = Random.nextFloat() * 6.28f,
+        List(160) { i ->
+            val ring = when {
+                i < 36 -> 0  // Inner leaf bud
+                i < 96 -> 1  // Mid blooming bamboo leaves
+                else -> 2    // Outer celestial leaf canopy
+            }
+            val leavesInRing = if (ring == 0) 6 else if (ring == 1) 8 else 12
+            val leafIdx = i % leavesInRing
+            val t = ((i / leavesInRing) % 6).toFloat() / 5f
+            BambooMandalaParticle(
+                ringIndex = ring,
+                leafIndex = leafIdx,
+                tOnLeaf = t,
+                size = if (i % 2 == 0) Random.nextFloat() * 6f + 14f else Random.nextFloat() * 3.5f + 2.5f,
+                baseAngle = (leafIdx.toFloat() / leavesInRing.toFloat()) * 360f + (ring * 22.5f),
+                dispersionAngle = Random.nextFloat() * 6.28318f,
+                dispersionDistance = Random.nextFloat() * 0.85f + 0.20f,
+                dispersionSpeed = Random.nextFloat() * 0.8f + 0.6f,
+                flutterSpeed = Random.nextFloat() * 1.5f + 1.2f,
+                phase = Random.nextFloat() * 6.28318f,
+                isLeafBlade = (i % 2 == 0),
                 color = palette[i % palette.size]
             )
         }
     }
 
+    // 🪷 2. Sacred Lotus Particle Mandala
     val lotusMandalaParticles = remember(currentTheme.id) {
         val palette = currentTheme.particlePalette
         List(180) { i ->
             val ring = when {
-                i < 40 -> 0
-                i < 100 -> 1
-                else -> 2
+                i < 40 -> 0 // Inner bud
+                i < 100 -> 1 // Mid bloom
+                else -> 2   // Outer sacred radiance
             }
             val petalsInRing = if (ring == 0) 6 else if (ring == 1) 8 else 12
             val petal = i % petalsInRing
@@ -154,6 +176,7 @@ fun ZenParticleBreathingCanvas(
         }
     }
 
+    // 🌸 3. Sakura Twilight Vortex
     val sakuraVortexParticles = remember(currentTheme.id) {
         val palette = currentTheme.particlePalette
         List(160) { i ->
@@ -221,24 +244,39 @@ fun ZenParticleBreathingCanvas(
         val maxRadius = (size.minDimension / 2f) * 0.86f
         if (maxRadius <= 0f) return@Canvas
 
+        // 1. Atmosphere Radial Aura
+        val auraRadius = maxRadius * (0.35f + 0.68f * expansionFactor)
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    phaseGlowColor.copy(alpha = (0.24f * expansionFactor).coerceIn(0f, 0.42f)),
+                    currentTheme.primaryDark.copy(alpha = (0.09f * expansionFactor).coerceIn(0f, 0.20f)),
+                    Color.Transparent
+                ),
+                center = center,
+                radius = auraRadius
+            ),
+            radius = auraRadius,
+            center = center
+        )
+
+        // 2. Render Theme-Specific Breathing Mandala / Vortex
         when (currentTheme.id) {
             ZenThemeId.BAMBOO_TEAL -> {
-                drawBioluminescentBamboo(
+                // 🎋 1. BAMBOO RADIAL LEAF MANDALA
+                drawBambooLeafMandala(
                     center = center,
                     maxRadius = maxRadius,
                     expansion = expansionFactor,
-                    streamParticles = bambooStreamParticles,
-                    leafParticles = bambooLeafParticles,
+                    isExhale = (currentPhase == BreathPhase.EXHALE || currentPhase == BreathPhase.HOLD_EMPTY),
+                    particles = bambooMandalaParticles,
                     clockSec = animClockSec,
-                    corePulse = corePulse,
-                    primaryColor = currentTheme.primary,
                     primaryLight = currentTheme.primaryLight,
-                    primaryDark = currentTheme.primaryDark,
-                    phaseGlowColor = phaseGlowColor,
                     path = path1
                 )
             }
             ZenThemeId.SACRED_LOTUS -> {
+                // 🪷 2. SACRED LOTUS PARTICLE MANDALA & STARDUST DISPERSION
                 drawLotusParticleMandala(
                     center = center,
                     maxRadius = maxRadius,
@@ -246,167 +284,138 @@ fun ZenParticleBreathingCanvas(
                     isExhale = (currentPhase == BreathPhase.EXHALE || currentPhase == BreathPhase.HOLD_EMPTY),
                     particles = lotusMandalaParticles,
                     clockSec = animClockSec,
-                    corePulse = corePulse,
-                    primaryColor = currentTheme.primary,
-                    primaryLight = currentTheme.primaryLight,
-                    primaryDark = currentTheme.primaryDark,
-                    phaseGlowColor = phaseGlowColor,
                     path = path1
                 )
             }
             ZenThemeId.SAKURA_TWILIGHT -> {
+                // 🌸 3. SAKURA FIBONACCI TWILIGHT VORTEX
                 drawSakuraFibonacciVortex(
                     center = center,
                     maxRadius = maxRadius,
                     expansion = expansionFactor,
                     particles = sakuraVortexParticles,
                     clockSec = animClockSec,
-                    corePulse = corePulse,
-                    primaryColor = currentTheme.primary,
                     primaryLight = currentTheme.primaryLight,
-                    primaryDark = currentTheme.primaryDark,
-                    phaseGlowColor = phaseGlowColor,
                     path = path1
                 )
             }
         }
+
+        // 3. 🌠 Slow Shooting Star / Comet Streamers Weaving Through Field in Unison with Breath
+        drawBreathingCometStreamers(
+            center = center,
+            maxRadius = maxRadius,
+            expansion = expansionFactor,
+            comets = breathingComets,
+            clockSec = animClockSec,
+            primaryLight = currentTheme.primaryLight
+        )
+
+        // 4. Central Luminous Core
+        val coreR = maxRadius * 0.13f * corePulse * (0.78f + 0.32f * expansionFactor)
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    currentTheme.primaryLight.copy(alpha = 0.85f),
+                    currentTheme.primary.copy(alpha = 0.40f),
+                    Color.Transparent
+                ),
+                center = center,
+                radius = coreR
+            ),
+            radius = coreR,
+            center = center
+        )
     }
 }
 
-private fun DrawScope.drawBioluminescentBamboo(
+/**
+ * 🎋 Theme 1: Bamboo Leaf Radial Mandala
+ * A radiant teal/emerald mandala of pointed bamboo leaves and luminous jade stardust,
+ * expanding outwards into a blooming leaf sanctuary on Inhale and swirling gently on Exhale.
+ */
+private fun DrawScope.drawBambooLeafMandala(
     center: Offset,
     maxRadius: Float,
     expansion: Float,
-    streamParticles: List<BambooStreamParticle>,
-    leafParticles: List<BambooLeafParticle>,
+    isExhale: Boolean,
+    particles: List<BambooMandalaParticle>,
     clockSec: Float,
-    corePulse: Float,
-    primaryColor: Color,
     primaryLight: Color,
-    primaryDark: Color,
-    phaseGlowColor: Color,
     path: Path
 ) {
-    val auraRadius = maxRadius * (0.35f + 0.65f * expansion)
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                phaseGlowColor.copy(alpha = (0.24f * expansion).coerceIn(0f, 0.40f)),
-                primaryDark.copy(alpha = (0.08f * expansion).coerceIn(0f, 0.20f)),
-                Color.Transparent
-            ),
-            center = center,
-            radius = auraRadius
-        ),
-        radius = auraRadius,
-        center = center
-    )
+    particles.forEach { p ->
+        val leavesInRing = if (p.ringIndex == 0) 6 else if (p.ringIndex == 1) 8 else 12
+        val ringScale = if (p.ringIndex == 0) 0.35f else if (p.ringIndex == 1) 0.65f else 0.95f
+        val currentAngleDeg = p.baseAngle + (clockSec * 1.8f * (if (p.ringIndex % 2 == 0) 1f else -1f))
+        val rad = Math.toRadians(currentAngleDeg.toDouble())
 
-    val rootY = center.y + maxRadius * 0.72f
-    val baseStalkHeight = maxRadius * (0.42f + 0.92f * expansion)
-    val stalks = listOf(
-        Triple(0f, 1.0f, 0.08f),
-        Triple(-maxRadius * 0.28f, 0.88f, -0.16f),
-        Triple(maxRadius * 0.26f, 0.82f, 0.18f)
-    )
+        // Structured Mandala Position
+        val leafBaseR = maxRadius * ringScale * (0.22f + 0.68f * expansion)
+        val flutter = sin(clockSec * p.flutterSpeed + p.phase) * (4f + 4f * expansion)
+        val leafSweep = sin(p.tOnLeaf * PI.toFloat()) * (maxRadius * 0.12f * ringScale * expansion)
 
-    stalks.forEachIndexed { stalkIdx, (xOff, heightRatio, curveDir) ->
-        val stalkH = baseStalkHeight * heightRatio
-        val sway = sin(clockSec * 1.2f + stalkIdx * 1.5f) * (4.0f + 6.0f * expansion)
-        val stalkTopX = center.x + xOff + (curveDir * stalkH * 0.35f) + sway
-        val stalkBaseX = center.x + xOff * 0.65f
+        val structX = center.x + cos(rad).toFloat() * (leafBaseR * p.tOnLeaf) + cos(rad + PI / 2).toFloat() * (leafSweep + flutter)
+        val structY = center.y + sin(rad).toFloat() * (leafBaseR * p.tOnLeaf) + sin(rad + PI / 2).toFloat() * (leafSweep + flutter)
 
-        path.reset()
-        path.moveTo(stalkBaseX, rootY)
-        path.quadraticTo(
-            (stalkBaseX + stalkTopX) / 2f + (curveDir * 18f),
-            rootY - stalkH / 2f,
-            stalkTopX,
-            rootY - stalkH
-        )
+        // Dispersed Spiral Nebula Position (on Exhale)
+        val dispersionFactor = (1.40f - expansion * 0.65f)
+        val dispAngle = p.dispersionAngle + (clockSec * 0.15f * p.dispersionSpeed)
+        val dispR = maxRadius * p.dispersionDistance * dispersionFactor + sin(clockSec * p.dispersionSpeed + p.phase) * 6f
+        val dispX = center.x + cos(dispAngle).toFloat() * dispR
+        val dispY = center.y + sin(dispAngle).toFloat() * dispR
 
-        drawPath(
-            path = path,
-            color = primaryColor.copy(alpha = (0.22f + 0.18f * expansion).coerceIn(0.1f, 0.45f)),
-            style = Stroke(width = (4.5f * (0.8f + 0.3f * expansion)))
-        )
+        val disperseT = if (isExhale) (1.0f - (expansion - 0.24f) / 0.76f).coerceIn(0f, 1f) else 0f
+        val finalX = structX + (dispX - structX) * disperseT
+        val finalY = structY + (dispY - structY) * disperseT
 
-        for (node in 1..4) {
-            val t = node.toFloat() / 4.5f
-            val currX = stalkBaseX + (stalkTopX - stalkBaseX) * t + sin(t * PI.toFloat()) * (curveDir * 18f)
-            val currY = rootY - (stalkH * t)
-
-            drawCircle(
-                color = primaryLight.copy(alpha = (0.75f + 0.20f * expansion).coerceIn(0f, 1f)),
-                radius = 3.5f * (0.85f + 0.25f * expansion),
-                center = Offset(currX, currY)
-            )
+        val alpha = if (isExhale) {
+            (0.35f + (1f - expansion) * 0.60f).coerceIn(0.2f, 0.95f)
+        } else {
+            (0.40f + expansion * 0.55f).coerceIn(0.2f, 0.95f)
         }
-    }
 
-    streamParticles.forEach { p ->
-        val (xOff, heightRatio, curveDir) = stalks[p.stalkIndex]
-        val stalkH = baseStalkHeight * heightRatio
-        val sway = sin(clockSec * 1.2f + p.stalkIndex * 1.5f) * (4.0f + 6.0f * expansion)
-        val stalkTopX = center.x + xOff + (curveDir * stalkH * 0.35f) + sway
-        val stalkBaseX = center.x + xOff * 0.65f
+        if (p.isLeafBlade) {
+            // Pointed Bodhi / Bamboo Leaf Blade
+            val rot = currentAngleDeg + 90f + flutter * 2f
+            rotate(degrees = rot, pivot = Offset(finalX, finalY)) {
+                path.reset()
+                val size = p.size * (0.80f + 0.35f * expansion)
+                val halfW = size * 0.28f
+                val halfH = size * 0.85f
 
-        val t = ((p.initialT + clockSec * p.flowSpeed) % 1.0f)
-        val currX = stalkBaseX + (stalkTopX - stalkBaseX) * t + sin(t * PI.toFloat()) * (curveDir * 18f) + p.lateralOffset
-        val currY = rootY - (stalkH * t)
+                path.moveTo(finalX, finalY - halfH)
+                path.cubicTo(
+                    finalX + halfW * 1.15f, finalY - halfH * 0.35f,
+                    finalX + halfW * 0.85f, finalY + halfH * 0.35f,
+                    finalX, finalY + halfH
+                )
+                path.cubicTo(
+                    finalX - halfW * 0.85f, finalY + halfH * 0.35f,
+                    finalX - halfW * 1.15f, finalY - halfH * 0.35f,
+                    finalX, finalY - halfH
+                )
+                path.close()
 
-        val alpha = sin(t * PI.toFloat()) * (0.50f + 0.45f * expansion)
-        drawCircle(
-            color = p.color.copy(alpha = alpha.coerceIn(0f, 0.95f)),
-            radius = p.size * (0.8f + 0.3f * expansion),
-            center = Offset(currX, currY)
-        )
-    }
-
-    leafParticles.forEach { leaf ->
-        val (xOff, heightRatio, curveDir) = stalks[leaf.stalkIndex]
-        val stalkH = baseStalkHeight * heightRatio
-        val sway = sin(clockSec * 1.2f + leaf.stalkIndex * 1.5f) * (4.0f + 6.0f * expansion)
-        val stalkTopX = center.x + xOff + (curveDir * stalkH * 0.35f) + sway
-        val stalkBaseX = center.x + xOff * 0.65f
-
-        val t = leaf.nodeLevel.toFloat() / 4.5f
-        val nodeX = stalkBaseX + (stalkTopX - stalkBaseX) * t + sin(t * PI.toFloat()) * (curveDir * 18f)
-        val nodeY = rootY - (stalkH * t)
-
-        val leafFlutter = sin(clockSec * leaf.flutterSpeed + leaf.phase) * 6f
-        val currentDist = leaf.distance * (0.65f + 0.60f * expansion)
-        val rad = Math.toRadians((leaf.baseAngle + leafFlutter).toDouble())
-        val leafX = nodeX + cos(rad).toFloat() * currentDist
-        val leafY = nodeY + sin(rad).toFloat() * currentDist
-
-        val leafSize = leaf.size * (0.80f + 0.35f * expansion)
-        val leafRot = leaf.baseAngle + leafFlutter + 90f
-
-        rotate(degrees = leafRot, pivot = Offset(leafX, leafY)) {
-            path.reset()
-            val halfW = leafSize * 0.28f
-            val halfH = leafSize * 0.85f
-            path.moveTo(leafX, leafY - halfH)
-            path.cubicTo(
-                leafX + halfW * 1.15f, leafY - halfH * 0.35f,
-                leafX + halfW * 0.85f, leafY + halfH * 0.35f,
-                leafX, leafY + halfH
+                drawPath(path = path, color = p.color.copy(alpha = alpha))
+                drawPath(path = path, color = primaryLight.copy(alpha = alpha * 0.75f), style = Stroke(width = 1.0f))
+            }
+        } else {
+            // Jade Stardust Firefly
+            drawCircle(
+                color = p.color.copy(alpha = alpha),
+                radius = p.size * (0.85f + 0.30f * expansion),
+                center = Offset(finalX, finalY)
             )
-            path.cubicTo(
-                leafX - halfW * 0.85f, leafY + halfH * 0.35f,
-                leafX - halfW * 1.15f, leafY - halfH * 0.35f,
-                leafX, leafY - halfH
-            )
-            path.close()
-
-            val alpha = (0.55f + 0.40f * expansion).coerceIn(0.2f, 0.95f)
-            drawPath(path = path, color = leaf.color.copy(alpha = alpha))
-            drawPath(path = path, color = primaryLight.copy(alpha = (alpha * 0.7f)), style = Stroke(width = 1.0f))
         }
     }
 }
 
+/**
+ * 🪷 Theme 2: Sacred Lotus Particle Mandala & Cosmic Dispersion
+ * 180 luminous stardust particles forming a golden lotus mandala on Inhale,
+ * and bursting apart into a cosmic nebula vortex on Exhale.
+ */
 private fun DrawScope.drawLotusParticleMandala(
     center: Offset,
     maxRadius: Float,
@@ -414,28 +423,8 @@ private fun DrawScope.drawLotusParticleMandala(
     isExhale: Boolean,
     particles: List<LotusMandalaParticle>,
     clockSec: Float,
-    corePulse: Float,
-    primaryColor: Color,
-    primaryLight: Color,
-    primaryDark: Color,
-    phaseGlowColor: Color,
     path: Path
 ) {
-    val auraRadius = maxRadius * (0.35f + 0.70f * expansion)
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                phaseGlowColor.copy(alpha = (0.26f * expansion).coerceIn(0f, 0.45f)),
-                primaryDark.copy(alpha = (0.10f * expansion).coerceIn(0f, 0.22f)),
-                Color.Transparent
-            ),
-            center = center,
-            radius = auraRadius
-        ),
-        radius = auraRadius,
-        center = center
-    )
-
     particles.forEach { p ->
         val petalsInRing = if (p.ringIndex == 0) 6 else if (p.ringIndex == 1) 8 else 12
         val basePetalAngleDeg = (p.petalIndex.toFloat() / petalsInRing.toFloat()) * 360f + (p.ringIndex * 22.5f) + (clockSec * 2.0f)
@@ -470,51 +459,21 @@ private fun DrawScope.drawLotusParticleMandala(
             center = Offset(finalX, finalY)
         )
     }
-
-    val coreR = maxRadius * 0.14f * corePulse * (0.75f + 0.35f * expansion)
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                primaryLight.copy(alpha = 0.85f),
-                primaryColor.copy(alpha = 0.45f),
-                Color.Transparent
-            ),
-            center = center,
-            radius = coreR
-        ),
-        radius = coreR,
-        center = center
-    )
 }
 
+/**
+ * 🌸 Theme 3: Sakura Fibonacci Twilight Vortex
+ * 160 radiant cherry blossom particles & floating petal blades orbiting in golden ratio Fibonacci spirals.
+ */
 private fun DrawScope.drawSakuraFibonacciVortex(
     center: Offset,
     maxRadius: Float,
     expansion: Float,
     particles: List<SakuraVortexParticle>,
     clockSec: Float,
-    corePulse: Float,
-    primaryColor: Color,
     primaryLight: Color,
-    primaryDark: Color,
-    phaseGlowColor: Color,
     path: Path
 ) {
-    val auraRadius = maxRadius * (0.35f + 0.70f * expansion)
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                phaseGlowColor.copy(alpha = (0.24f * expansion).coerceIn(0f, 0.40f)),
-                primaryDark.copy(alpha = (0.09f * expansion).coerceIn(0f, 0.20f)),
-                Color.Transparent
-            ),
-            center = center,
-            radius = auraRadius
-        ),
-        radius = auraRadius,
-        center = center
-    )
-
     particles.forEach { p ->
         val spiralArmAngle = (p.armIndex * 72f) + (p.radiusRatio * 180f)
         val currentAngle = Math.toRadians((spiralArmAngle + (clockSec * 16f * p.orbitSpeed)).toDouble())
@@ -561,19 +520,75 @@ private fun DrawScope.drawSakuraFibonacciVortex(
             )
         }
     }
-
-    val coreR = maxRadius * 0.12f * corePulse * (0.80f + 0.30f * expansion)
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                primaryLight.copy(alpha = 0.85f),
-                primaryColor.copy(alpha = 0.40f),
-                Color.Transparent
-            ),
-            center = center,
-            radius = coreR
-        ),
-        radius = coreR,
-        center = center
-    )
 }
+
+/**
+ * 🌠 Ethereal Slow Breathing Comets / Shooting Stars
+ * Gracefully weaves through and between other objects along breathing orbital paths with luminous fading streamer trails.
+ */
+private fun DrawScope.drawBreathingCometStreamers(
+    center: Offset,
+    maxRadius: Float,
+    expansion: Float,
+    comets: List<BreathingComet>,
+    clockSec: Float,
+    primaryLight: Color
+) {
+    comets.forEach { comet ->
+        // Breathing orbital dynamics: radius expands/contracts in unison with breath
+        val currentRadiusRatio = comet.minRadiusRatio + (comet.maxRadiusRatio - comet.minRadiusRatio) * expansion
+        val baseR = maxRadius * currentRadiusRatio
+        val angleSpeed = comet.orbitSpeed * (0.85f + 0.30f * expansion)
+
+        var prevX = 0f
+        var prevY = 0f
+
+        // Draw Fading Trailing Tail Streamer (7 trailing steps)
+        for (step in comet.trailLength downTo 0) {
+            val lagSec = step * 0.055f
+            val historicClock = clockSec - lagSec
+            val theta = comet.baseAngle + (historicClock * angleSpeed) + sin(historicClock * 0.6f + comet.radialPhase) * 0.35f
+            val r = baseR + sin(historicClock * 0.8f + comet.radialPhase) * (maxRadius * 0.08f * expansion)
+
+            val x = center.x + cos(theta) * r
+            val y = center.y + sin(theta) * r
+
+            if (step < comet.trailLength) {
+                val trailT = 1.0f - (step.toFloat() / comet.trailLength.toFloat())
+                val trailAlpha = (trailT * (0.35f + 0.40f * expansion)).coerceIn(0f, 0.75f)
+                val strokeW = comet.size * (0.4f + trailT * 0.8f)
+
+                drawLine(
+                    color = comet.color.copy(alpha = trailAlpha),
+                    start = Offset(prevX, prevY),
+                    end = Offset(x, y),
+                    strokeWidth = strokeW,
+                    cap = StrokeCap.Round
+                )
+            }
+
+            prevX = x
+            prevY = y
+        }
+
+        // Draw Luminous Shooting Star Head
+        val headClock = clockSec
+        val headTheta = comet.baseAngle + (headClock * angleSpeed) + sin(headClock * 0.6f + comet.radialPhase) * 0.35f
+        val headR = baseR + sin(headClock * 0.8f + comet.radialPhase) * (maxRadius * 0.08f * expansion)
+        val headX = center.x + cos(headTheta) * headR
+        val headY = center.y + sin(headTheta) * headR
+
+        // Radiant comet halo & core
+        drawCircle(
+            color = comet.color.copy(alpha = (0.50f + 0.40f * expansion).coerceIn(0.2f, 0.95f)),
+            radius = comet.size * (0.90f + 0.30f * expansion),
+            center = Offset(headX, headY)
+        )
+        drawCircle(
+            color = primaryLight.copy(alpha = (0.75f + 0.25f * expansion).coerceIn(0.4f, 1.0f)),
+            radius = comet.size * 0.50f,
+            center = Offset(headX, headY)
+        )
+    }
+}
+

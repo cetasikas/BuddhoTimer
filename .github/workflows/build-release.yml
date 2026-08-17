@@ -49,17 +49,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.3.7
-          name: "Buddho Timer v2.3.7"
+          tag_name: v2.3.8
+          name: "Buddho Timer v2.3.8"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.3.7
+            ## 🪷 Buddho Meditation Timer v2.3.8
             
-            - **📚 Wisdom Guides Collapsed by Default & State Preservation**: Meditation guide topics are now collapsed by default upon opening, and the user's opened/collapsed topic state is automatically persisted across app sessions and restarts.
-            - **🌌 Hypnotic Particle-Based Box Breathing Visualizers**:
-              - *Bamboo Teal*: Bioluminescent stream particles flowing upwards like vital energy sap along 3 curving bamboo stalks, with glowing node rings and breathing canopy leaf constellations.
-              - *Sacred Lotus*: 180-particle sacred geometry mandala blooming in golden amber light on Inhale, and bursting into an ethereal swirling cosmic stardust nebula vortex on Exhale.
-              - *Sakura Twilight*: 160 glowing cherry blossom particles & rotating petal blades orbiting in Fibonacci golden spirals, expanding on Inhale and swirling into a whirlpool vortex on Exhale.
-            - **🖤 AMOLED Black & Offline Simplicity**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
+            - **🎋 Bamboo Leaf Radial Mandala**: Replaced vertical stalks with a radial teal/emerald mandala featuring pointed bamboo leaves, jade stardust, and blooming leaf tiers that expand on Inhale and swirl softly on Exhale.
+            - **🌠 Slow Breathing Celestial Comets**: Added shooting stars with luminous fading streamer trails that weave gracefully between particles in unison with the breath across all themes.
+            - **🪷 Sacred Lotus & 🌸 Sakura Twilight Refinements**: Harmonized particle dispersion speeds and luminous core pulses.
+            - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
           files: |
