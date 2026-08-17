@@ -199,6 +199,12 @@ fun MainAppScaffold() {
                         BreathingScreen(
                             onClose = {
                                 navController.popBackStack()
+                            },
+                            onSessionCompleted = { completedStatus ->
+                                completedSessionData = completedStatus
+                                navController.navigate(Screen.Summary.route) {
+                                    popUpTo(Screen.Timer.route)
+                                }
                             }
                         )
                     }

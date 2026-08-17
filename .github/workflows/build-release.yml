@@ -49,15 +49,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.5.4
-          name: "Buddho Timer v2.5.4"
+          tag_name: v2.5.5
+          name: "Buddho Timer v2.5.5"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.5.4
+            ## 🪷 Buddho Meditation Timer v2.5.5
             
-            - **🌬️ Dedicated Box Breathing Setup Screen**: On the main Timer tab, switching to Box Breathing loads a tailored setup interface with target duration sliders, quick presets (2m–20m), and interactive breathing pattern selector cards (*Box 4-4-4-4, 4-7-8 Deep Calm, Coherence 5-5, Gentle Box 3-3-3-3*).
-            - **✨ Minimal, Clutter-Free Active Breathwork Experience**: During active box breathing, all unnecessary menus, selectors, and bottom navigation bars are hidden for pure full-screen visual and mental immersion.
-            - **🔽 Bottom Mode Toggle**: Positioned the segmented mode toggle (`[ 🧘 Meditation | 🌬️ Box Breathing ]`) conveniently near the bottom above the primary action button.
-            - **📱 Crystal-Clear Settings Naming**: Renamed "Display & Stealth Mode" to **"Display & Screen Timeout"** with clear descriptions for *Tap to Blackout Screen* and *Keep Screen Awake*.
+            - **🍃 Dynamic Full-Screen Swirling Leaves Background**: Scrubbing the duration sliders on both meditation and breathwork setup screens now triggers subtle, organic full-screen swirling vortex motions in the background leaves, bringing tactile zen responsiveness to life.
+            - **🔽 Compact Box Breathing Setup Dropdown**: Replaced pattern cards with a sleek, 1-row dropdown menu selector on the setup screen so the entire Box Breathing configuration effortlessly fits on a single screen without scrolling.
+            - **🔄 On-the-Fly Breath Pattern Switching**: Added a top interactive dropdown pill in active breathwork sessions, allowing instantaneous switching between *Box 4-4-4-4, 4-7-8 Deep Calm, Coherence 5-5, and Gentle Box 3-3-3-3* mid-session.
+            - **📝 Unified Post-Session Reflection Overview**: Box breathing sessions now seamlessly navigate to the full Session Overview & Reflection screen upon completion (showing mindful quotes, mood selection, journal notes, and saving to history).
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

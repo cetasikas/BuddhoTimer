@@ -24,12 +24,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +49,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
@@ -56,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.samadhi.meditationtimer.domain.model.BreathPhase
 import com.samadhi.meditationtimer.domain.model.BreathingPattern
+import com.samadhi.meditationtimer.domain.model.TimerStatus
 import com.samadhi.meditationtimer.service.NotificationHelper
 import com.samadhi.meditationtimer.service.SoundHelper
 import com.samadhi.meditationtimer.ui.components.ZenParticleBreathingCanvas
@@ -82,19 +85,22 @@ private fun android.content.Context.findActivity(): android.app.Activity? {
 @Composable
 fun BreathingScreen(
     onClose: () -> Unit,
+    onSessionCompleted: (TimerStatus.Completed) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val soundHelper = remember { SoundHelper(context) }
     val prefs = remember { context.getSharedPreferences("timer_prefs", android.content.Context.MODE_PRIVATE) }
     val keepScreenAwake = remember { prefs.getBoolean("keep_screen_awake", true) }
+    val soundBellResName = remember { prefs.getString("sound_bell_res", SoundHelper.SOUND_TIBETAN_BOWL) ?: SoundHelper.SOUND_TIBETAN_BOWL }
     val patternId = remember { prefs.getString("breathing_pattern_id", "box") ?: "box" }
     val targetMinutes = remember { prefs.getInt("breathing_duration_min", 5) }
     val targetTotalSec = targetMinutes * 60
 
-    val selectedPattern = remember {
-        BreathingPattern.allPatterns.find { it.id == patternId } ?: BreathingPattern.BOX_BREATHING
+    var selectedPattern by remember {
+        mutableStateOf(BreathingPattern.allPatterns.find { it.id == patternId } ?: BreathingPattern.BOX_BREATHING)
     }
+    var isTopPatternDropdownOpen by remember { mutableStateOf(false) }
 
     // Keep Screen Awake based on user preference
     androidx.compose.runtime.DisposableEffect(keepScreenAwake) {
@@ -117,6 +123,19 @@ fun BreathingScreen(
 
     // Smooth sub-second progress for fluid blooming transition
     var phaseProgress by remember { mutableFloatStateOf(0.0f) }
+
+    fun finishSession() {
+        soundHelper.playChime(soundBellResName)
+        val now = System.currentTimeMillis()
+        val completedStatus = TimerStatus.Completed(
+            targetDurationSec = targetTotalSec,
+            actualDurationSec = totalElapsedSec.coerceAtLeast(1),
+            overrunSec = 0,
+            startTimeEpochMs = now - (totalElapsedSec * 1000L),
+            completedTimeEpochMs = now
+        )
+        onSessionCompleted(completedStatus)
+    }
 
     // High precision, hardware-synced breath cycle ticker (100% stutter-free)
     LaunchedEffect(isRunning, selectedPattern) {
@@ -160,6 +179,10 @@ fun BreathingScreen(
         while (isActive && isRunning) {
             delay(1000L)
             totalElapsedSec++
+            if (targetTotalSec > 0 && totalElapsedSec >= targetTotalSec) {
+                finishSession()
+                break
+            }
         }
     }
 
@@ -189,29 +212,76 @@ fun BreathingScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Current Pattern & Cycle Indicator Pill
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(ZenSurface.copy(alpha = 0.75f))
-                        .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = selectedPattern.name,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = currentTheme.primaryLight
-                    )
-                    Text(
-                        text = " • Cycle $completedCycles",
-                        fontSize = 12.sp,
-                        color = ZenTextSecondary
-                    )
+                // Interactive Pattern Selector Dropdown Pill
+                Box {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(ZenSurface.copy(alpha = 0.85f))
+                            .border(1.dp, currentTheme.primary.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+                            .clickable { isTopPatternDropdownOpen = true }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = selectedPattern.name,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = currentTheme.primaryLight
+                        )
+                        Text(
+                            text = " • Cycle $completedCycles",
+                            fontSize = 12.sp,
+                            color = ZenTextSecondary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Switch Pattern",
+                            tint = currentTheme.primaryLight,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = isTopPatternDropdownOpen,
+                        onDismissRequest = { isTopPatternDropdownOpen = false },
+                        modifier = Modifier
+                            .background(ZenSurface.copy(alpha = 0.96f))
+                            .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                    ) {
+                        BreathingPattern.allPatterns.forEach { pattern ->
+                            val isSelected = selectedPattern.id == pattern.id
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = pattern.name,
+                                            fontSize = 12.5.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
+                                        )
+                                        Text(
+                                            text = pattern.subtitle,
+                                            fontSize = 10.5.sp,
+                                            color = ZenTextSecondary
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    selectedPattern = pattern
+                                    currentPhase = BreathPhase.INHALE
+                                    phaseSecondsRemaining = pattern.inhaleSec
+                                    phaseProgress = 0f
+                                    prefs.edit().putString("breathing_pattern_id", pattern.id).apply()
+                                    isTopPatternDropdownOpen = false
+                                }
+                            )
+                        }
+                    }
                 }
 
-                // Close / Finish Button
+                // Close / Cancel Button
                 IconButton(
                     onClick = onClose,
                     modifier = Modifier
@@ -360,9 +430,9 @@ fun BreathingScreen(
                     )
                 }
 
-                // Finish Button
+                // Finish Button (Navigates to Session Summary Reflection)
                 Button(
-                    onClick = onClose,
+                    onClick = { finishSession() },
                     modifier = Modifier.height(48.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(

@@ -37,12 +37,14 @@ private data class ActiveLeaf(
     val swayAmp: Float,
     val swayPhase: Float,
     var rotation: Float,
-    val rotSpeed: Float,
+    var rotSpeed: Float,
     val size: Float,
     val alpha: Float,
     val color: Color,
     val isBurst: Boolean = false,
     var life: Float = 1.0f,
+    var vx: Float = 0f,
+    var vy: Float = 0f,
     // Landing / Settling transition state
     var isSettling: Boolean = false,
     var settleProgress: Float = 0.0f,
@@ -106,10 +108,22 @@ fun FallingLeavesEffect(
         FloatArray(32) { 0.95f }
     }
 
-    // Burst trigger for user actions
+    // Dynamic swirl & burst trigger for user actions / slider interactions
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {
-            val bursts = generateBurstLeaves(12, currentTheme.particlePalette)
+            val dir = if (Random.nextBoolean()) 1f else -1f
+            activeLeaves.forEach { leaf ->
+                val dx = leaf.currentX - 0.5f
+                val dy = leaf.y - 0.45f
+                val dist = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(0.08f)
+                val tx = (-dy / dist) * dir
+                val ty = (dx / dist) * dir
+                val swirlSpeed = Random.nextFloat() * 0.55f + 0.35f
+                leaf.vx += tx * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.20f
+                leaf.vy += ty * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.20f
+                leaf.rotSpeed += (Random.nextFloat() * 320f - 160f)
+            }
+            val bursts = generateBurstLeaves(10, currentTheme.particlePalette)
             activeLeaves.addAll(bursts)
         }
     }
@@ -143,7 +157,7 @@ fun FallingLeavesEffect(
         label = "animClockVal"
     )
 
-    // Physics update step with multi-tier stacking and ultra-smooth cushioning
+    // Physics update step with multi-tier stacking, whole-screen swirl, and ultra-smooth cushioning
     LaunchedEffect(currentTheme.id, pileUpAtBottom) {
         var lastTimeNanos = 0L
         var totalElapsedSec = 0f
@@ -162,7 +176,6 @@ fun FallingLeavesEffect(
                             // 🍂 Smooth Landing & Settling Phase (Decelerate, rotate to horizontal, cushion onto pile)
                             leaf.settleProgress += dt / leaf.settleDuration
                             val t = leaf.settleProgress.coerceIn(0f, 1f)
-                            // Smooth ease-out cubic for soft, organic touchdown
                             val ease = 1f - (1f - t) * (1f - t) * (1f - t)
 
                             leaf.currentX = leaf.settleStartX + (leaf.settleTargetX - leaf.settleStartX) * ease
@@ -170,7 +183,6 @@ fun FallingLeavesEffect(
                             leaf.rotation = leaf.settleStartRot + (leaf.settleTargetRot - leaf.settleStartRot) * ease
 
                             if (leaf.settleProgress >= 1f) {
-                                // Transition is complete -> Permanently settle on the bed
                                 if (settledLeaves.size < 130) {
                                     val bin = (leaf.settleTargetX * 31).toInt().coerceIn(0, 31)
                                     val layer = when {
@@ -192,7 +204,6 @@ fun FallingLeavesEffect(
                                         )
                                     )
 
-                                    // Multi-tier pile elevation rise: leaves stack visibly in growing mounds
                                     val depositAmount = 0.024f
                                     groundProfile[bin] = (groundProfile[bin] - depositAmount).coerceAtLeast(0.52f)
                                     if (bin > 0) groundProfile[bin - 1] = (groundProfile[bin - 1] - depositAmount * 0.72f).coerceAtLeast(0.52f)
@@ -201,9 +212,10 @@ fun FallingLeavesEffect(
                                     if (bin < 30) groundProfile[bin + 2] = (groundProfile[bin + 2] - depositAmount * 0.38f).coerceAtLeast(0.52f)
                                 }
 
-                                // Recycle to top as a new falling leaf
                                 leaf.isSettling = false
                                 leaf.settleProgress = 0f
+                                leaf.vx = 0f
+                                leaf.vy = 0f
                                 leaf.y = -(Random.nextFloat() * 0.12f + 0.04f)
                                 leaf.xBase = Random.nextFloat()
                                 leaf.currentX = leaf.xBase
@@ -212,12 +224,28 @@ fun FallingLeavesEffect(
                             continue
                         }
 
-                        // Normal free-falling physics (serene, gentle, meditative drift)
-                        leaf.y += leaf.speedY * dt
+                        // Normal free-falling + dynamic whole-screen swirl physics
+                        leaf.xBase = (leaf.xBase + leaf.vx * dt).coerceIn(0.01f, 0.99f)
+                        leaf.y += (leaf.speedY + leaf.vy) * dt
                         leaf.rotation += leaf.rotSpeed * dt
 
+                        // Velocity damping for smooth organic wind deceleration
+                        leaf.vx *= (1f - dt * 1.6f).coerceAtLeast(0f)
+                        leaf.vy *= (1f - dt * 1.6f).coerceAtLeast(0f)
+
                         val sway = sin(totalElapsedSec * leaf.swayFreq + leaf.swayPhase) * leaf.swayAmp
-                        leaf.currentX = (leaf.xBase + sway).coerceIn(0.02f, 0.98f)
+                        leaf.currentX = (leaf.xBase + sway).coerceIn(0.01f, 0.99f)
+
+                        // Wrap falling leaves when leaving viewport
+                        if (leaf.y > 1.10f && !pileUpAtBottom && !leaf.isBurst) {
+                            leaf.y = -(Random.nextFloat() * 0.12f + 0.04f)
+                            leaf.xBase = Random.nextFloat()
+                            leaf.currentX = leaf.xBase
+                            leaf.vx = 0f
+                            leaf.vy = 0f
+                        } else if (leaf.y < -0.20f) {
+                            leaf.y = 0.02f
+                        }
 
                         if (leaf.isBurst) {
                             leaf.life -= dt * 0.35f

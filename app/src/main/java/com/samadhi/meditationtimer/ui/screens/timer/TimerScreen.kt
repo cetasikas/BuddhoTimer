@@ -28,6 +28,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Spa
@@ -35,6 +37,8 @@ import androidx.compose.material.icons.outlined.Air
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -451,63 +455,112 @@ fun TimerScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Breathing Pattern Cards
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            BreathingPattern.allPatterns.forEach { pattern ->
-                                val isSelected = selectedPattern.id == pattern.id
-                                val cadenceText = when (pattern.id) {
-                                    "box" -> "4s In • 4s Hold • 4s Out • 4s Hold"
-                                    "478" -> "4s In • 7s Hold • 8s Out"
-                                    "resonant" -> "5s Inhale • 5s Exhale"
-                                    else -> "3s In • 3s Hold • 3s Out • 3s Hold"
-                                }
+                        // Compact Breathing Pattern Dropdown Selector (Fits 100% on one screen)
+                        var isPatternDropdownOpen by remember { mutableStateOf(false) }
 
-                                Card(
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .clickable { isPatternDropdownOpen = true },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = ZenSurface.copy(alpha = 0.75f)
+                                ),
+                                border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.4f)),
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            viewModel.updateBreathingPattern(pattern.id)
-                                            leafBurstTrigger++
-                                        },
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = if (isSelected) currentTheme.primary.copy(alpha = 0.18f) else ZenSurface.copy(alpha = 0.60f)
-                                    ),
-                                    border = BorderStroke(1.dp, if (isSelected) currentTheme.primaryLight else ZenBorder),
-                                    shape = RoundedCornerShape(12.dp)
+                                        .padding(horizontal = 14.dp, vertical = 11.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 14.dp, vertical = 9.dp),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                        modifier = Modifier.weight(1f)
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = pattern.name,
-                                                fontSize = 13.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-                                                color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
-                                            )
-                                            Text(
-                                                text = cadenceText,
-                                                fontSize = 11.sp,
-                                                color = if (isSelected) currentTheme.primaryLight.copy(alpha = 0.85f) else ZenTextSecondary
-                                            )
-                                        }
-                                        if (isSelected) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(currentTheme.primary.copy(alpha = 0.18f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
                                             Icon(
-                                                imageVector = Icons.Default.SelfImprovement,
+                                                imageVector = Icons.Outlined.Air,
                                                 contentDescription = null,
                                                 tint = currentTheme.primaryLight,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text(
+                                                text = selectedPattern.name,
+                                                fontSize = 13.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = currentTheme.primaryLight
+                                            )
+                                            Text(
+                                                text = when (selectedPattern.id) {
+                                                    "box" -> "4s In • 4s Hold • 4s Out • 4s Hold"
+                                                    "478" -> "4s In • 7s Hold • 8s Out"
+                                                    "resonant" -> "5s Inhale • 5s Exhale"
+                                                    else -> "3s In • 3s Hold • 3s Out • 3s Hold"
+                                                },
+                                                fontSize = 11.sp,
+                                                color = ZenTextSecondary
+                                            )
+                                        }
                                     }
+
+                                    Icon(
+                                        imageVector = if (isPatternDropdownOpen) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                        contentDescription = null,
+                                        tint = currentTheme.primaryLight,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = isPatternDropdownOpen,
+                                onDismissRequest = { isPatternDropdownOpen = false },
+                                modifier = Modifier
+                                    .background(ZenSurface.copy(alpha = 0.96f))
+                                    .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                            ) {
+                                BreathingPattern.allPatterns.forEach { pattern ->
+                                    val isSelected = selectedPattern.id == pattern.id
+                                    DropdownMenuItem(
+                                        text = {
+                                            Column {
+                                                Text(
+                                                    text = pattern.name,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
+                                                )
+                                                Text(
+                                                    text = pattern.subtitle,
+                                                    fontSize = 11.sp,
+                                                    color = ZenTextSecondary
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            viewModel.updateBreathingPattern(pattern.id)
+                                            isPatternDropdownOpen = false
+                                            leafBurstTrigger++
+                                        },
+                                        leadingIcon = {
+                                            if (isSelected) {
+                                                Icon(Icons.Default.SelfImprovement, contentDescription = null, tint = currentTheme.primaryLight, modifier = Modifier.size(16.dp))
+                                            }
+                                        }
+                                    )
                                 }
                             }
                         }
