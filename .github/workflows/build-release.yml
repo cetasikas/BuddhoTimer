@@ -49,14 +49,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.3.8
-          name: "Buddho Timer v2.3.8"
+          tag_name: v2.3.9
+          name: "Buddho Timer v2.3.9"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.3.8
+            ## 🪷 Buddho Meditation Timer v2.3.9
             
-            - **🎋 Bamboo Leaf Radial Mandala**: Replaced vertical stalks with a radial teal/emerald mandala featuring pointed bamboo leaves, jade stardust, and blooming leaf tiers that expand on Inhale and swirl softly on Exhale.
-            - **🌠 Slow Breathing Celestial Comets**: Added shooting stars with luminous fading streamer trails that weave gracefully between particles in unison with the breath across all themes.
-            - **🪷 Sacred Lotus & 🌸 Sakura Twilight Refinements**: Harmonized particle dispersion speeds and luminous core pulses.
+            - **✨ "A Thousand Dots, Breathing" Visualizer**: Redesigned the box breathing canvas inspired by the renowned *Sheets Works Breathing* interactive data visualization.
+            - **🍃 Fluid 340-Particle Breathing Field**: 340 glowing stardust dots and theme-specific organic leaves (bamboo leaves, lotus petals, and sakura petals) that gracefully expand on Inhale, suspend in tranquil shimmer on Hold Full, converge serenely on Exhale, and rest in peaceful stillness on Hold Empty.
+            - **🌟 Dual-Layer Diffused Glow & Multi-Frequency Harmonic Wobble**: Two-layer rendering featuring diffused ambient glow halos and crisp, radiant particle cores with organic sinusoidal drift.
+            - **🚫 Distraction-Free Breathwork**: Removed the distracting comet streamers for a clean, hypnotic, meditative flow.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
