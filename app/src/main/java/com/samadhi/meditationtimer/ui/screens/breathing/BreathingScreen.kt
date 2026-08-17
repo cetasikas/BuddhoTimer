@@ -92,6 +92,21 @@ fun BreathingScreen(
 ) {
     val context = LocalContext.current
     val soundHelper = remember { SoundHelper(context) }
+    val prefs = remember { context.getSharedPreferences("timer_prefs", android.content.Context.MODE_PRIVATE) }
+    val keepScreenAwake = remember { prefs.getBoolean("keep_screen_awake", true) }
+
+    // Keep Screen Awake based on user setting
+    androidx.compose.runtime.DisposableEffect(keepScreenAwake) {
+        val activity = context.findActivity()
+        if (keepScreenAwake) {
+            activity?.window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     var selectedPattern by remember { mutableStateOf(BreathingPattern.BOX_BREATHING) }
     var isPatternsExpanded by remember { mutableStateOf(false) }
@@ -512,4 +527,15 @@ private fun getNextPhase(current: BreathPhase, pattern: BreathingPattern): Breat
         }
         BreathPhase.HOLD_EMPTY -> BreathPhase.INHALE
     }
+}
+
+private fun android.content.Context.findActivity(): android.app.Activity? {
+    var currentContext = this
+    while (currentContext is android.content.ContextWrapper) {
+        if (currentContext is android.app.Activity) {
+            return currentContext
+        }
+        currentContext = currentContext.baseContext
+    }
+    return null
 }

@@ -49,14 +49,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.4.1
-          name: "Buddho Timer v2.4.1"
+          tag_name: v2.4.2
+          name: "Buddho Timer v2.4.2"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.4.1
+            ## 🪷 Buddho Meditation Timer v2.4.2
             
-            - **🍃 Pure 100% Leaf Breathing Field**: Replaced all dots with 220 lush, tactile theme-specific leaves (**Pointed Bamboo/Bodhi Leaves** for *Bamboo Teal*, **Cupped Petals** for *Sacred Lotus*, and **Notched Cherry Blossom Petals** for *Sakura Twilight*).
-            - **💓 Dynamic Breath-Synchronized Pulsating Glow**: Multi-tier radiant glowing halos swell and intensify in bloom during Inhale ($0.22 \rightarrow 1.0$), softly pulse at Hold Full, serenely dim during Exhale ($1.0 \rightarrow 0.22$), and settle in gentle stillness during Hold Empty.
-            - **✨ Crisp Detailed Veins & High-Contrast Edges**: Added central spine veins and luminous outer rim outlines for stunning visual clarity on AMOLED black screens.
+            - **🍃 Dynamic Spiral Orbit & Expanded Glow Halos**: Leaves in Box Breathing now organically swirl and expand along living logarithmic spiral orbits in synchrony with your breath ($0.22 \leftrightarrow 1.0$), with expansive pulsating glowing borders.
+            - **🌌 Soft Atmospheric Central Nebula**: Replaced the center core with an ultra-soft, diffused multi-stop ambient nebula with zero harsh solid dots.
+            - **🌑 Tap to Blackout Screen (Stealth Mode)**: Removed the old LED mode in favor of seamless full-screen AMOLED pure black stealth mode—simply tap anywhere during meditation to turn the screen completely dark, and tap again to wake.
+            - **🔔 Mindfulness Interval Bell Setting**: Added customizable periodic interval chimes (Off, 1m, 2m, 3m, 5m, 10m, 15m, 20m, 30m) to gently anchor your awareness back to the present moment.
+            - **📱 Keep Screen Awake Toggle**: Configurable setting to keep the screen active during meditation and box breathing practice without sleeping.
+            - **⚙️ Complete Settings Persistence**: All preferences, intervals, toggles, and leaf configurations persist reliably across app launches.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

@@ -22,7 +22,10 @@ data class TimerConfiguration(
     val isOpenEnded: Boolean = false,
     val isOverrunEnabled: Boolean = true,
     val showLeavesDuringMeditation: Boolean = true,
-    val meditationLeafCount: Int = 16
+    val meditationLeafCount: Int = 16,
+    val mindfulnessIntervalMinutes: Int = 0,
+    val tapToBlackoutEnabled: Boolean = true,
+    val keepScreenAwake: Boolean = true
 ) {
     val targetDurationSeconds: Int
         get() = if (isOpenEnded) 0 else targetDurationMinutes * 60

@@ -67,7 +67,8 @@ class MeditationTimerService : Service() {
                 val autoDnd = intent.getBooleanExtra(EXTRA_AUTO_DND, true)
                 val openEnded = intent.getBooleanExtra(EXTRA_OPEN_ENDED, false)
                 val soundBell = intent.getStringExtra(EXTRA_SOUND_BELL) ?: SoundHelper.SOUND_TIBETAN_BOWL
-                startTimer(targetSec, prepSec, autoDnd, openEnded, soundBell)
+                val mindfulnessIntervalMin = intent.getIntExtra(EXTRA_MINDFULNESS_INTERVAL_MIN, 0)
+                startTimer(targetSec, prepSec, autoDnd, openEnded, soundBell, mindfulnessIntervalMin)
             }
             ACTION_PAUSE -> pauseTimer()
             ACTION_RESUME -> resumeTimer()
@@ -82,7 +83,8 @@ class MeditationTimerService : Service() {
         prepSec: Int,
         autoDnd: Boolean,
         openEnded: Boolean,
-        soundBell: String
+        soundBell: String,
+        mindfulnessIntervalMin: Int
     ) {
         targetDurationSec = targetSec
         prepTimeSec = prepSec
@@ -129,8 +131,17 @@ class MeditationTimerService : Service() {
             soundHelper.playChime(soundBellResName, serviceScope)
 
             // 2. Active Session Loop
+            val intervalSec = mindfulnessIntervalMin * 60
             while (isActive) {
                 elapsedSeconds++
+
+                // Mindfulness Interval Bell (Chimes periodically if enabled)
+                if (intervalSec > 0 && elapsedSeconds > 0 && elapsedSeconds % intervalSec == 0) {
+                    // Only chime if not right at the end of a timed session (which plays the completion chime)
+                    if (isOpenEnded || elapsedSeconds != targetDurationSec) {
+                        soundHelper.playChime(soundBellResName, serviceScope)
+                    }
+                }
 
                 if (isOpenEnded) {
                     // Open-ended Stopwatch mode
@@ -358,6 +369,7 @@ class MeditationTimerService : Service() {
         const val EXTRA_AUTO_DND = "extra_auto_dnd"
         const val EXTRA_OPEN_ENDED = "extra_open_ended"
         const val EXTRA_SOUND_BELL = "extra_sound_bell"
+        const val EXTRA_MINDFULNESS_INTERVAL_MIN = "extra_mindfulness_interval_min"
 
         private val _timerStatus = MutableStateFlow<TimerStatus>(TimerStatus.Idle)
         val timerStatus: StateFlow<TimerStatus> = _timerStatus.asStateFlow()

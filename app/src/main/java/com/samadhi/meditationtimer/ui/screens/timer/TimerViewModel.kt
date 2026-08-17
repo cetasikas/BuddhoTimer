@@ -28,9 +28,11 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
     private val dndManager = DndManager(context)
     val soundHelper = SoundHelper(context)
 
+    private val prefs = context.getSharedPreferences("timer_prefs", Context.MODE_PRIVATE)
+
     val timerStatus: StateFlow<TimerStatus> = MeditationTimerService.timerStatus
 
-    private val _config = MutableStateFlow(TimerConfiguration())
+    private val _config = MutableStateFlow(loadPersistedConfig())
     val config: StateFlow<TimerConfiguration> = _config.asStateFlow()
 
     private val _isDndGranted = MutableStateFlow(dndManager.isDndAccessGranted)
@@ -43,36 +45,82 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentQuote = MutableStateFlow(getRandomQuote())
     val currentQuote: StateFlow<WisdomQuote> = _currentQuote.asStateFlow()
 
+    private fun loadPersistedConfig(): TimerConfiguration {
+        return TimerConfiguration(
+            targetDurationMinutes = prefs.getInt("target_duration_min", 15),
+            prepTimeSeconds = prefs.getInt("prep_time_sec", 5),
+            soundBellResName = prefs.getString("sound_bell_res", SoundHelper.SOUND_TIBETAN_BOWL) ?: SoundHelper.SOUND_TIBETAN_BOWL,
+            isAutoDndEnabled = prefs.getBoolean("auto_dnd", true),
+            isOpenEnded = prefs.getBoolean("open_ended", false),
+            isOverrunEnabled = prefs.getBoolean("overrun_enabled", true),
+            showLeavesDuringMeditation = prefs.getBoolean("show_leaves", true),
+            meditationLeafCount = prefs.getInt("meditation_leaf_count", 16),
+            mindfulnessIntervalMinutes = prefs.getInt("mindfulness_interval_min", 0),
+            tapToBlackoutEnabled = prefs.getBoolean("tap_to_blackout", true),
+            keepScreenAwake = prefs.getBoolean("keep_screen_awake", true)
+        )
+    }
+
+    private fun saveConfig(newConfig: TimerConfiguration) {
+        _config.value = newConfig
+        prefs.edit().apply {
+            putInt("target_duration_min", newConfig.targetDurationMinutes)
+            putInt("prep_time_sec", newConfig.prepTimeSeconds)
+            putString("sound_bell_res", newConfig.soundBellResName)
+            putBoolean("auto_dnd", newConfig.isAutoDndEnabled)
+            putBoolean("open_ended", newConfig.isOpenEnded)
+            putBoolean("overrun_enabled", newConfig.isOverrunEnabled)
+            putBoolean("show_leaves", newConfig.showLeavesDuringMeditation)
+            putInt("meditation_leaf_count", newConfig.meditationLeafCount)
+            putInt("mindfulness_interval_min", newConfig.mindfulnessIntervalMinutes)
+            putBoolean("tap_to_blackout", newConfig.tapToBlackoutEnabled)
+            putBoolean("keep_screen_awake", newConfig.keepScreenAwake)
+            apply()
+        }
+    }
+
     fun updateDurationMinutes(minutes: Int) {
-        _config.value = _config.value.copy(targetDurationMinutes = minutes, isOpenEnded = false)
+        saveConfig(_config.value.copy(targetDurationMinutes = minutes, isOpenEnded = false))
     }
 
     fun updatePrepTimeSeconds(seconds: Int) {
-        _config.value = _config.value.copy(prepTimeSeconds = seconds)
+        saveConfig(_config.value.copy(prepTimeSeconds = seconds))
     }
 
     fun toggleOpenEnded(isOpenEnded: Boolean) {
-        _config.value = _config.value.copy(isOpenEnded = isOpenEnded)
+        saveConfig(_config.value.copy(isOpenEnded = isOpenEnded))
     }
 
     fun toggleOverrun(isOverrunEnabled: Boolean) {
-        _config.value = _config.value.copy(isOverrunEnabled = isOverrunEnabled)
+        saveConfig(_config.value.copy(isOverrunEnabled = isOverrunEnabled))
     }
 
     fun toggleAutoDnd(enabled: Boolean) {
-        _config.value = _config.value.copy(isAutoDndEnabled = enabled)
+        saveConfig(_config.value.copy(isAutoDndEnabled = enabled))
     }
 
     fun toggleShowLeavesDuringMeditation(enabled: Boolean) {
-        _config.value = _config.value.copy(showLeavesDuringMeditation = enabled)
+        saveConfig(_config.value.copy(showLeavesDuringMeditation = enabled))
     }
 
     fun updateMeditationLeafCount(count: Int) {
-        _config.value = _config.value.copy(meditationLeafCount = count)
+        saveConfig(_config.value.copy(meditationLeafCount = count))
     }
 
     fun updateSoundBell(soundResName: String) {
-        _config.value = _config.value.copy(soundBellResName = soundResName)
+        saveConfig(_config.value.copy(soundBellResName = soundResName))
+    }
+
+    fun updateMindfulnessInterval(minutes: Int) {
+        saveConfig(_config.value.copy(mindfulnessIntervalMinutes = minutes))
+    }
+
+    fun toggleTapToBlackout(enabled: Boolean) {
+        saveConfig(_config.value.copy(tapToBlackoutEnabled = enabled))
+    }
+
+    fun toggleKeepScreenAwake(enabled: Boolean) {
+        saveConfig(_config.value.copy(keepScreenAwake = enabled))
     }
 
     fun refreshPermissions() {
@@ -101,6 +149,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_AUTO_DND, currentConfig.isAutoDndEnabled && _isDndGranted.value)
             putExtra(MeditationTimerService.EXTRA_OPEN_ENDED, currentConfig.isOpenEnded)
             putExtra(MeditationTimerService.EXTRA_SOUND_BELL, currentConfig.soundBellResName)
+            putExtra(MeditationTimerService.EXTRA_MINDFULNESS_INTERVAL_MIN, currentConfig.mindfulnessIntervalMinutes)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

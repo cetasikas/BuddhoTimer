@@ -157,12 +157,12 @@ fun ZenParticleBreathingCanvas(
         if (maxRadius <= 0f) return@Canvas
 
         // 1. Atmosphere Radial Aura (Pulsating in sync with breathing)
-        val auraRadius = maxRadius * (0.34f + 0.70f * expansionFactor)
+        val auraRadius = maxRadius * (0.38f + 0.70f * expansionFactor)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    phaseGlowColor.copy(alpha = (0.32f * glowPulseIntensity).coerceIn(0f, 0.55f)),
-                    currentTheme.primaryDark.copy(alpha = (0.14f * glowPulseIntensity).coerceIn(0f, 0.30f)),
+                    phaseGlowColor.copy(alpha = (0.28f * glowPulseIntensity).coerceIn(0f, 0.48f)),
+                    currentTheme.primaryDark.copy(alpha = (0.10f * glowPulseIntensity).coerceIn(0f, 0.22f)),
                     Color.Transparent
                 ),
                 center = center,
@@ -172,40 +172,41 @@ fun ZenParticleBreathingCanvas(
             center = center
         )
 
-        // 2. Central Sanctuary Core Glow (Pulsating)
-        val coreR = maxRadius * 0.13f * corePulse * (0.75f + 0.35f * expansionFactor)
+        // 2. Soft Deeply-Diffused Central Atmospheric Nebula (No dense solid dot)
+        val nebulaRadius = maxRadius * 0.42f * corePulse * (0.75f + 0.35f * expansionFactor)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    currentTheme.primaryLight.copy(alpha = (0.88f * glowPulseIntensity).coerceIn(0.4f, 1.0f)),
-                    currentTheme.primary.copy(alpha = (0.45f * glowPulseIntensity).coerceIn(0.2f, 0.7f)),
+                    currentTheme.primaryLight.copy(alpha = (0.28f * glowPulseIntensity).coerceIn(0f, 0.45f)),
+                    currentTheme.primary.copy(alpha = (0.12f * glowPulseIntensity).coerceIn(0f, 0.25f)),
+                    currentTheme.primaryDark.copy(alpha = (0.04f * glowPulseIntensity).coerceIn(0f, 0.12f)),
                     Color.Transparent
                 ),
                 center = center,
-                radius = coreR
+                radius = nebulaRadius
             ),
-            radius = coreR,
+            radius = nebulaRadius,
             center = center
         )
 
-        // 3. Render Living Field of 220 Breathing Leaves with Pulsating Glow Halos
+        // 3. Render Living Field of 220 Breathing Leaves with Dynamic Spiral Orbit & Pulsating Glow Halos
         leaves.forEach { leaf ->
             val homeR = leaf.homeRadiusRatio * maxRadius
             val expandR = leaf.expandRadiusRatio * maxRadius
             val r = homeR + (expandR - homeR) * expansionFactor
 
             // Multi-frequency harmonic organic wobble
-            val wx = sin(animClockSec * leaf.speed * 2.2f + leaf.phase) * leaf.wobble * (1.2f + 1.8f * expansionFactor)
-            val wy = cos(animClockSec * leaf.speed * 1.8f + leaf.phase * 1.3f) * leaf.wobble * (1.2f + 1.8f * expansionFactor)
-            val angleDrift = sin(animClockSec * leaf.speed * 0.5f + leaf.phase) * 0.08f
+            val wx = sin(animClockSec * leaf.speed * 2.2f + leaf.phase) * leaf.wobble * (1.4f + 2.2f * expansionFactor)
+            val wy = cos(animClockSec * leaf.speed * 1.8f + leaf.phase * 1.3f) * leaf.wobble * (1.4f + 2.2f * expansionFactor)
 
-            val curAngle = leaf.angle + angleDrift
-            val pX = center.x + cos(curAngle) * r + wx
-            val pY = center.y + sin(curAngle) * r + wy
+            // Dynamic breathing spiral orbit (rotates and expands gracefully with the breath)
+            val breathSpiralAngle = leaf.angle + (expansionFactor * 0.45f) + (animClockSec * leaf.speed * 2.0f)
+            val pX = center.x + cos(breathSpiralAngle) * r + wx
+            val pY = center.y + sin(breathSpiralAngle) * r + wy
 
             val dynamicAlpha = leaf.opacity * (0.60f + expansionFactor * 0.40f)
-            val flutter = sin(animClockSec * leaf.flutterSpeed + leaf.phase) * (10f + 8f * expansionFactor)
-            val rot = Math.toDegrees(curAngle.toDouble()).toFloat() + 90f + flutter
+            val flutter = sin(animClockSec * leaf.flutterSpeed + leaf.phase) * (14f + 16f * expansionFactor)
+            val rot = Math.toDegrees(breathSpiralAngle.toDouble()).toFloat() + 90f + flutter + (expansionFactor * 22f * (if (leaf.index % 2 == 0) 1f else -1f))
 
             val currentLeafSize = leaf.size * (0.85f + 0.30f * expansionFactor)
 
@@ -219,6 +220,7 @@ fun ZenParticleBreathingCanvas(
                 color = leaf.color.copy(alpha = dynamicAlpha.coerceIn(0.50f, 1.0f)),
                 highlightColor = currentTheme.primaryLight,
                 glowIntensity = glowPulseIntensity,
+                expansionFactor = expansionFactor,
                 dynamicAlpha = dynamicAlpha
             )
         }
@@ -235,6 +237,7 @@ private fun DrawScope.drawGlowingLeaf(
     color: Color,
     highlightColor: Color,
     glowIntensity: Float,
+    expansionFactor: Float,
     dynamicAlpha: Float
 ) {
     rotate(degrees = rotation, pivot = center) {
@@ -306,27 +309,29 @@ private fun DrawScope.drawGlowingLeaf(
             }
         }
 
-        // Pass 1: Wide Pulsating Glow Halo (Swells and dims with the breath)
-        val outerGlowAlpha = (0.28f * glowIntensity * dynamicAlpha).coerceIn(0f, 0.50f)
+        // Pass 1: Wide Pulsating Glow Halo (Swells generously with breathing)
+        val outerGlowAlpha = (0.38f * glowIntensity * dynamicAlpha).coerceIn(0f, 0.60f)
+        val outerGlowStroke = 11.0f * (0.75f + 0.45f * glowIntensity * expansionFactor)
         drawPath(
             path = path,
             color = highlightColor.copy(alpha = outerGlowAlpha),
-            style = Stroke(width = 7.0f * (0.8f + 0.4f * glowIntensity), cap = StrokeCap.Round)
+            style = Stroke(width = outerGlowStroke, cap = StrokeCap.Round)
         )
 
         // Pass 2: Inner Radiant Bloom
-        val innerGlowAlpha = (0.50f * glowIntensity * dynamicAlpha).coerceIn(0.1f, 0.75f)
+        val innerGlowAlpha = (0.60f * glowIntensity * dynamicAlpha).coerceIn(0.15f, 0.85f)
+        val innerGlowStroke = 4.5f * (0.8f + 0.35f * glowIntensity)
         drawPath(
             path = path,
             color = highlightColor.copy(alpha = innerGlowAlpha),
-            style = Stroke(width = 3.2f * (0.8f + 0.3f * glowIntensity), cap = StrokeCap.Round)
+            style = Stroke(width = innerGlowStroke, cap = StrokeCap.Round)
         )
 
         // Pass 3: Solid Leaf Body Fill
         drawPath(path = path, color = color)
 
         // Pass 4: Crisp Outer Rim Outline
-        val rimAlpha = (0.85f * dynamicAlpha).coerceIn(0.4f, 1.0f)
+        val rimAlpha = (0.90f * dynamicAlpha).coerceIn(0.4f, 1.0f)
         drawPath(
             path = path,
             color = highlightColor.copy(alpha = rimAlpha),

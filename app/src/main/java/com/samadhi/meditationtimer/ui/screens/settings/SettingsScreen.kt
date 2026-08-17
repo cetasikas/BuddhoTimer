@@ -52,6 +52,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -377,7 +379,154 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 3. PREPARATION TIME (WARM UP)
+            // 3. MINDFULNESS INTERVAL BELL
+            Text(
+                text = "MINDFULNESS INTERVAL BELL",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                color = currentTheme.primaryLight
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val mindfulnessOptions = listOf(0, 1, 2, 3, 5, 10, 15, 20, 30)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Periodic Mindfulness Chime",
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                        color = ZenTextPrimary
+                    )
+                    Text(
+                        text = "Chimes periodically during meditation to gently return your awareness to the present moment",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                        color = ZenTextSecondary
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        mindfulnessOptions.forEach { intervalMin ->
+                            val isSelected = config.mindfulnessIntervalMinutes == intervalMin
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { timerViewModel.updateMindfulnessInterval(intervalMin) },
+                                label = {
+                                    Text(
+                                        text = if (intervalMin == 0) "Off" else "${intervalMin}m",
+                                        fontSize = 12.sp
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = ZenSurfaceVariant,
+                                    labelColor = ZenTextSecondary,
+                                    selectedContainerColor = currentTheme.primary,
+                                    selectedLabelColor = ZenObsidian
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
+                                    enabled = true,
+                                    selected = isSelected
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 4. DISPLAY & PRACTICE PREFERENCES
+            Text(
+                text = "DISPLAY & PRACTICE PREFERENCES",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                color = currentTheme.primaryLight
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Tap to Blackout Screen
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Tap to Blackout Screen",
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                                color = ZenTextPrimary
+                            )
+                            Text(
+                                text = "Tap anywhere during meditation to turn the screen pure AMOLED black, tap again to wake",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
+                                color = ZenTextSecondary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Switch(
+                            checked = config.tapToBlackoutEnabled,
+                            onCheckedChange = { timerViewModel.toggleTapToBlackout(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = ZenObsidian,
+                                checkedTrackColor = currentTheme.primary,
+                                uncheckedThumbColor = ZenTextMuted,
+                                uncheckedTrackColor = ZenSurfaceVariant
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Keep Screen Awake
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Keep Screen Awake",
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                                color = ZenTextPrimary
+                            )
+                            Text(
+                                text = "Keep the display turned on during active meditation and box breathing",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
+                                color = ZenTextSecondary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Switch(
+                            checked = config.keepScreenAwake,
+                            onCheckedChange = { timerViewModel.toggleKeepScreenAwake(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = ZenObsidian,
+                                checkedTrackColor = currentTheme.primary,
+                                uncheckedThumbColor = ZenTextMuted,
+                                uncheckedTrackColor = ZenSurfaceVariant
+                            )
+                        )
+                    }
+                }
+            }
             Text(
                 text = "PREPARATION (WARM UP)",
                 fontSize = 12.sp,

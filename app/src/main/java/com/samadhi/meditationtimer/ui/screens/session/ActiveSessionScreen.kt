@@ -91,8 +91,22 @@ fun ActiveSessionScreen(
     val timerStatus by viewModel.timerStatus.collectAsState()
     val config by viewModel.config.collectAsState()
     val currentTheme = LocalZenTheme.current
-    var isOledZenMode by remember { mutableStateOf(false) }
+    var isScreenBlackedOut by remember { mutableStateOf(false) }
     var leavesBurstTrigger by remember { mutableIntStateOf(0) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Keep Screen Awake based on user setting
+    androidx.compose.runtime.DisposableEffect(config.keepScreenAwake) {
+        val activity = context.findActivity()
+        if (config.keepScreenAwake) {
+            activity?.window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     LaunchedEffect(timerStatus) {
         if (timerStatus is TimerStatus.Completed) {
@@ -110,189 +124,148 @@ fun ActiveSessionScreen(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) {
-                if (isOledZenMode) {
-                    isOledZenMode = false
+                if (config.tapToBlackoutEnabled) {
+                    isScreenBlackedOut = !isScreenBlackedOut
                 }
             }
     ) {
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-        // Top Navigation Controls (Cancel & OLED Dim Mode)
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // OLED Mode Toggle
-            IconButton(
-                onClick = { isOledZenMode = !isOledZenMode },
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(if (isOledZenMode) Color(0xFF111111) else ZenSurface)
+        if (isScreenBlackedOut) {
+            // Pure AMOLED Stealth Blackout (100% Black)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = if (isOledZenMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                    contentDescription = if (isOledZenMode) "Exit OLED Mode" else "OLED Deep Black Mode",
-                    tint = if (isOledZenMode) ZenTealLight else ZenTextSecondary,
-                    modifier = Modifier.size(20.dp)
+                Text(
+                    text = "•",
+                    fontSize = 14.sp,
+                    color = Color(0xFF222222),
+                    modifier = Modifier.alpha(0.3f)
                 )
             }
-
-            // Cancel Action
-            IconButton(
-                onClick = {
-                    viewModel.cancelSession()
-                    onSessionCancelled()
-                },
+        } else {
+            Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(if (isOledZenMode) Color(0xFF111111) else ZenSurface)
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel Practice",
-                    tint = ZenTextSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-
-        when (val status = timerStatus) {
-            is TimerStatus.Preparing -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                // Top Navigation Controls (Clean Minimal Cancel Action)
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
+                    IconButton(
+                        onClick = {
+                            viewModel.cancelSession()
+                            onSessionCancelled()
+                        },
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(currentTheme.primary.copy(alpha = 0.18f))
-                            .padding(horizontal = 18.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "PREPARATION",
-                            fontSize = 12.sp,
-                            letterSpacing = 3.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = currentTheme.primaryLight
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(28.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .size(160.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
-                            .background(ZenSurface.copy(alpha = 0.65f))
-                            .border(2.dp, currentTheme.primaryLight.copy(alpha = 0.6f), CircleShape),
-                        contentAlignment = Alignment.Center
+                            .background(ZenSurface)
                     ) {
-                        Text(
-                            text = "${status.remainingSeconds}",
-                            fontSize = 72.sp,
-                            fontWeight = FontWeight.ExtraLight,
-                            color = currentTheme.primaryLight
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cancel Practice",
+                            tint = ZenTextSecondary,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Text(
-                        text = "Settle into your posture & breathe gently",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = ZenTextSecondary
-                    )
                 }
-            }
 
-            is TimerStatus.Running, is TimerStatus.Paused -> {
-                val isPaused = status is TimerStatus.Paused
-                val remainingSec = if (status is TimerStatus.Running) status.remainingSeconds else (status as TimerStatus.Paused).remainingSeconds
-                val elapsedSec = if (status is TimerStatus.Running) status.elapsedSeconds else (status as TimerStatus.Paused).elapsedSeconds
-                val isOverrun = if (status is TimerStatus.Running) status.isOverrun else (status as TimerStatus.Paused).isOverrun
-
-                val totalTarget = config.targetDurationSeconds
-                val progress = if (totalTarget > 0) {
-                    (totalTarget - remainingSec).toFloat() / totalTarget.toFloat()
-                } else 1.0f
-
-                if (isOledZenMode) {
-                    // Minimalist OLED Deep Black Ambient Clock
-                    val pulseTransition = rememberInfiniteTransition(label = "oled_pulse")
-                    val pulseAlpha by pulseTransition.animateFloat(
-                        initialValue = 0.6f,
-                        targetValue = 1.0f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(4000, easing = FastOutSlowInEasing),
-                            repeatMode = RepeatMode.Reverse
-                        ),
-                        label = "pulseAlpha"
-                    )
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.alpha(if (isPaused) 0.5f else pulseAlpha)
-                    ) {
-                        Text(
-                            text = when {
-                                isPaused -> "PAUSED"
-                                isOverrun -> "+${NotificationHelper.formatSeconds(elapsedSec - totalTarget)}"
-                                config.isOpenEnded -> NotificationHelper.formatSeconds(elapsedSec)
-                                else -> NotificationHelper.formatSeconds(remainingSec)
-                            },
-                            fontSize = 84.sp,
-                            fontWeight = FontWeight.ExtraLight,
-                            color = if (isOverrun) currentTheme.overrunColor.copy(alpha = 0.9f) else currentTheme.primaryLight.copy(alpha = 0.9f)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = if (isOverrun) "Samadhi Overrun • Tap anywhere to view" else "Tap anywhere to wake controls",
-                            fontSize = 12.sp,
-                            color = Color(0xFF555555)
-                        )
-                    }
-                } else {
-                    // Standard Rich Interactive Session View
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        // Header Badge
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(
-                                    if (isOverrun) currentTheme.overrunColor.copy(alpha = 0.15f)
-                                    else currentTheme.primary.copy(alpha = 0.18f)
-                                )
-                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                when (val status = timerStatus) {
+                    is TimerStatus.Preparing -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(currentTheme.primary.copy(alpha = 0.18f))
+                                    .padding(horizontal = 18.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = "PREPARATION",
+                                    fontSize = 12.sp,
+                                    letterSpacing = 3.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = currentTheme.primaryLight
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(28.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .size(160.dp)
+                                    .clip(CircleShape)
+                                    .background(ZenSurface.copy(alpha = 0.65f))
+                                    .border(2.dp, currentTheme.primaryLight.copy(alpha = 0.6f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "${status.remainingSeconds}",
+                                    fontSize = 72.sp,
+                                    fontWeight = FontWeight.ExtraLight,
+                                    color = currentTheme.primaryLight
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
                             Text(
-                                text = when {
-                                    isPaused -> "PAUSED"
-                                    isOverrun -> "SAMADHI OVERRUN"
-                                    config.isOpenEnded -> "OPEN PRACTICE"
-                                    else -> "MEDITATING"
-                                },
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 2.sp,
-                                color = if (isOverrun) currentTheme.overrunColor else currentTheme.primaryLight
+                                text = "Settle into your posture & breathe gently",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = ZenTextSecondary
                             )
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(36.dp))
+                    is TimerStatus.Running, is TimerStatus.Paused -> {
+                        val isPaused = status is TimerStatus.Paused
+                        val remainingSec = if (status is TimerStatus.Running) status.remainingSeconds else (status as TimerStatus.Paused).remainingSeconds
+                        val elapsedSec = if (status is TimerStatus.Running) status.elapsedSeconds else (status as TimerStatus.Paused).elapsedSeconds
+                        val isOverrun = if (status is TimerStatus.Running) status.isOverrun else (status as TimerStatus.Paused).isOverrun
+
+                        val totalTarget = config.targetDurationSeconds
+                        val progress = if (totalTarget > 0) {
+                            (totalTarget - remainingSec).toFloat() / totalTarget.toFloat()
+                        } else 1.0f
+
+                        // Standard Rich Interactive Session View
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            // Header Badge
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(
+                                        if (isOverrun) currentTheme.overrunColor.copy(alpha = 0.15f)
+                                        else currentTheme.primary.copy(alpha = 0.18f)
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = when {
+                                        isPaused -> "PAUSED"
+                                        isOverrun -> "SAMADHI OVERRUN"
+                                        config.isOpenEnded -> "OPEN PRACTICE"
+                                        else -> "MEDITATING"
+                                    },
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 2.sp,
+                                    color = if (isOverrun) currentTheme.overrunColor else currentTheme.primaryLight
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(36.dp))
 
                         // Circular Progress Display
                         CircularTimerProgress(
@@ -405,14 +378,25 @@ fun ActiveSessionScreen(
                         }
                     }
                 }
-            }
 
-            else -> {
-                // Fallback / Loading
-                Text(text = "Initializing…", color = ZenTextMuted)
+                else -> {
+                    // Fallback / Loading
+                    Text(text = "Initializing…", color = ZenTextMuted)
+                }
             }
-        }
         }
     }
+}
+}
+
+private fun android.content.Context.findActivity(): android.app.Activity? {
+    var currentContext = this
+    while (currentContext is android.content.ContextWrapper) {
+        if (currentContext is android.app.Activity) {
+            return currentContext
+        }
+        currentContext = currentContext.baseContext
+    }
+    return null
 }
 
