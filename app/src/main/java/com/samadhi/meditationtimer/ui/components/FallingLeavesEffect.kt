@@ -108,42 +108,28 @@ fun FallingLeavesEffect(
         FloatArray(32) { 0.95f }
     }
 
-    // Real-time slider drag wind swirling reaction
+    // Real-time slider drag gentle horizontal wind breeze
     LaunchedEffect(dragVelocity) {
         if (dragVelocity != 0f) {
             val dir = if (dragVelocity > 0) 1f else -1f
-            val intensity = kotlin.math.abs(dragVelocity).coerceIn(0.2f, 2.5f)
             activeLeaves.forEach { leaf ->
-                val dx = leaf.currentX - 0.5f
-                val dy = leaf.y - 0.45f
-                val dist = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(0.08f)
-                val tx = (-dy / dist) * dir
-                val ty = (dx / dist) * dir
-                val swirlSpeed = (Random.nextFloat() * 0.45f + 0.35f) * intensity
-                leaf.vx += tx * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.15f
-                leaf.vy += ty * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.15f
-                leaf.rotSpeed += dir * (Random.nextFloat() * 200f + 100f)
+                // Soft horizontal breeze impulse in direction of drag
+                val breezeSpeed = Random.nextFloat() * 0.06f + 0.03f
+                leaf.vx += dir * breezeSpeed
+                leaf.rotSpeed = dir * (Random.nextFloat() * 25f + 15f)
             }
         }
     }
 
-    // Dynamic swirl & burst trigger for user actions / slider interactions
+    // Gentle burst trigger for presets / mode switch (soft gentle flutter)
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {
             val dir = if (Random.nextBoolean()) 1f else -1f
             activeLeaves.forEach { leaf ->
-                val dx = leaf.currentX - 0.5f
-                val dy = leaf.y - 0.45f
-                val dist = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(0.08f)
-                val tx = (-dy / dist) * dir
-                val ty = (dx / dist) * dir
-                val swirlSpeed = Random.nextFloat() * 0.65f + 0.40f
-                leaf.vx += tx * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.25f
-                leaf.vy += ty * swirlSpeed + (Random.nextFloat() - 0.5f) * 0.25f
-                leaf.rotSpeed += (Random.nextFloat() * 360f - 180f)
+                val breezeSpeed = Random.nextFloat() * 0.05f + 0.02f
+                leaf.vx += dir * breezeSpeed
+                leaf.rotSpeed = (Random.nextFloat() * 30f - 15f)
             }
-            val bursts = generateBurstLeaves(12, currentTheme.particlePalette)
-            activeLeaves.addAll(bursts)
         }
     }
 
@@ -176,7 +162,7 @@ fun FallingLeavesEffect(
         label = "animClockVal"
     )
 
-    // Physics update step with multi-tier stacking, whole-screen swirl, and ultra-smooth cushioning
+    // Physics update step with multi-tier stacking, serene gentle drift, and ultra-smooth cushioning
     LaunchedEffect(currentTheme.id, pileUpAtBottom) {
         var lastTimeNanos = 0L
         var totalElapsedSec = 0f
@@ -243,27 +229,25 @@ fun FallingLeavesEffect(
                             continue
                         }
 
-                        // Normal free-falling + dynamic whole-screen swirl physics
+                        // Peaceful downward drift with gentle horizontal breeze
                         leaf.xBase = (leaf.xBase + leaf.vx * dt).coerceIn(0.01f, 0.99f)
-                        leaf.y += (leaf.speedY + leaf.vy) * dt
+                        leaf.y += leaf.speedY * dt
                         leaf.rotation += leaf.rotSpeed * dt
 
                         // Velocity damping for smooth organic wind deceleration
-                        leaf.vx *= (1f - dt * 1.6f).coerceAtLeast(0f)
-                        leaf.vy *= (1f - dt * 1.6f).coerceAtLeast(0f)
+                        leaf.vx *= (1f - dt * 2.0f).coerceAtLeast(0f)
+                        leaf.rotSpeed *= (1f - dt * 1.5f)
 
                         val sway = sin(totalElapsedSec * leaf.swayFreq + leaf.swayPhase) * leaf.swayAmp
                         leaf.currentX = (leaf.xBase + sway).coerceIn(0.01f, 0.99f)
 
-                        // Wrap falling leaves when leaving viewport
-                        if (leaf.y > 1.10f && !pileUpAtBottom && !leaf.isBurst) {
+                        // Wrap falling leaves when leaving viewport bottom to top
+                        if (leaf.y > 1.08f && !pileUpAtBottom && !leaf.isBurst) {
                             leaf.y = -(Random.nextFloat() * 0.12f + 0.04f)
                             leaf.xBase = Random.nextFloat()
                             leaf.currentX = leaf.xBase
                             leaf.vx = 0f
                             leaf.vy = 0f
-                        } else if (leaf.y < -0.20f) {
-                            leaf.y = 0.02f
                         }
 
                         if (leaf.isBurst) {

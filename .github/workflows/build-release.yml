@@ -49,14 +49,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.5.6
-          name: "Buddho Timer v2.5.6"
+          tag_name: v2.5.7
+          name: "Buddho Timer v2.5.7"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.5.6
+            ## 🪷 Buddho Meditation Timer v2.5.7
             
-            - **🍃 Real-Time Slider Swirling Wind Physics**: Hooked real-time slider drag velocities and scrubbing directly to the particle engine with 26 ambient leaves, creating immediate, mesmerizing whole-screen swirling vortex motions whenever the branch slider or presets are adjusted.
-            - **📐 Balanced, Proportional Layout**: Eliminated awkward empty whitespace by enlarging the target duration numbers (78sp), expanding preset pill grids, enlarging cards and dropdowns, and harmoniously spacing all setup elements.
-            - **🔽 Compact Box Breathing Dropdown Setup**: Full breathwork setup fits cleanly on a single screen with zero scrolling required.
+            - **🍃 Meditative, Peaceful Falling Leaves Background**: Replaced rapid swirling with a gentle, slow downward drift and soft horizontal breeze across the screen on slider movement, completely eliminating edge rushing and unnatural upward motions.
+            - **📐 Full & Balanced Box Breathing Setup**: Added a 2-row preset grid (Row 1: 2m, 3m, 5m, 7m; Row 2: 10m, 15m, 20m, 30m) and an enriched pattern centerpiece card with visual phase cadence chips (e.g. `[ 4s Inhale ]` `[ 4s Hold ]` `[ 4s Exhale ]` `[ 4s Hold ]`), achieving perfect height and aesthetic symmetry with the meditation setup.
+            - **🔽 Compact Dropdown Selection**: Breathwork patterns and settings effortlessly fit on any device screen with zero scrolling required.
             - **🔄 Mid-Session Breathwork Pattern Switching**: Change breathing patterns on the fly via the top interactive pill.
             - **📝 Unified Post-Session Reflection Overview**: Breathwork sessions seamlessly navigate to full session overview with reflection notes, mood selection, and quote cards.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.

@@ -429,39 +429,70 @@ fun TimerScreen(
                                 .height(60.dp)
                         )
 
-                        // Quick Breathwork Duration Presets
-                        val breathPresets = listOf(2, 5, 10, 15, 20)
-                        Row(
+                        // 2-Row Balanced Presets for Box Breathing
+                        val breathRow1 = listOf(2, 3, 5, 7)
+                        val breathRow2 = listOf(10, 15, 20, 30)
+
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            breathPresets.forEach { dur ->
-                                val isSelected = breathingDurationMin == dur
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(if (isSelected) currentTheme.primary.copy(alpha = 0.24f) else ZenSurface.copy(alpha = 0.65f))
-                                        .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primaryLight else ZenBorder, RoundedCornerShape(16.dp))
-                                        .clickable {
-                                            viewModel.updateBreathingDurationMinutes(dur)
-                                            sliderDragVelocity = 1.2f
-                                            leafBurstTrigger++
-                                        }
-                                        .padding(vertical = 11.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "${dur}m",
-                                        fontSize = 13.5.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
-                                    )
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                breathRow1.forEach { dur ->
+                                    val isSelected = breathingDurationMin == dur
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(if (isSelected) currentTheme.primary.copy(alpha = 0.24f) else ZenSurface.copy(alpha = 0.65f))
+                                            .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primaryLight else ZenBorder, RoundedCornerShape(16.dp))
+                                            .clickable {
+                                                viewModel.updateBreathingDurationMinutes(dur)
+                                                sliderDragVelocity = 1.2f
+                                                leafBurstTrigger++
+                                            }
+                                            .padding(vertical = 11.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "${dur}m",
+                                            fontSize = 13.5.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
+                                        )
+                                    }
+                                }
+                            }
+
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                breathRow2.forEach { dur ->
+                                    val isSelected = breathingDurationMin == dur
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(if (isSelected) currentTheme.primary.copy(alpha = 0.24f) else ZenSurface.copy(alpha = 0.65f))
+                                            .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primaryLight else ZenBorder, RoundedCornerShape(16.dp))
+                                            .clickable {
+                                                viewModel.updateBreathingDurationMinutes(dur)
+                                                sliderDragVelocity = 1.2f
+                                                leafBurstTrigger++
+                                            }
+                                            .padding(vertical = 11.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "${dur}m",
+                                            fontSize = 13.5.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
+                                        )
+                                    }
                                 }
                             }
                         }
 
-                        // Compact Breathing Pattern Dropdown Selector (Fits 100% on one screen)
+                        // Rich Centerpiece Breathing Pattern Card with Phase Cadence Pills
                         var isPatternDropdownOpen by remember { mutableStateOf(false) }
 
                         Box(modifier = Modifier.fillMaxWidth()) {
@@ -471,63 +502,96 @@ fun TimerScreen(
                                     .clip(RoundedCornerShape(16.dp))
                                     .clickable { isPatternDropdownOpen = true },
                                 colors = CardDefaults.cardColors(
-                                    containerColor = ZenSurface.copy(alpha = 0.80f)
+                                    containerColor = ZenSurface.copy(alpha = 0.75f)
                                 ),
                                 border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.45f)),
                                 shape = RoundedCornerShape(16.dp)
                             ) {
-                                Row(
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp, vertical = 13.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Row(
+                                        modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.weight(1f)
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(36.dp)
-                                                .clip(CircleShape)
-                                                .background(currentTheme.primary.copy(alpha = 0.20f)),
-                                            contentAlignment = Alignment.Center
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f)
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Air,
-                                                contentDescription = null,
-                                                tint = currentTheme.primaryLight,
-                                                modifier = Modifier.size(18.dp)
-                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .clip(CircleShape)
+                                                    .background(currentTheme.primary.copy(alpha = 0.20f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Air,
+                                                    contentDescription = null,
+                                                    tint = currentTheme.primaryLight,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Column {
+                                                Text(
+                                                    text = selectedPattern.name,
+                                                    fontSize = 14.5.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = currentTheme.primaryLight
+                                                )
+                                                Text(
+                                                    text = selectedPattern.subtitle,
+                                                    fontSize = 11.5.sp,
+                                                    color = ZenTextSecondary
+                                                )
+                                            }
                                         }
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Column {
-                                            Text(
-                                                text = selectedPattern.name,
-                                                fontSize = 14.5.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = currentTheme.primaryLight
-                                            )
-                                            Text(
-                                                text = when (selectedPattern.id) {
-                                                    "box" -> "4s In • 4s Hold • 4s Out • 4s Hold"
-                                                    "478" -> "4s In • 7s Hold • 8s Out"
-                                                    "resonant" -> "5s Inhale • 5s Exhale"
-                                                    else -> "3s In • 3s Hold • 3s Out • 3s Hold"
-                                                },
-                                                fontSize = 12.sp,
-                                                color = ZenTextSecondary
-                                            )
-                                        }
+
+                                        Icon(
+                                            imageVector = if (isPatternDropdownOpen) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                            contentDescription = null,
+                                            tint = currentTheme.primaryLight,
+                                            modifier = Modifier.size(22.dp)
+                                        )
                                     }
 
-                                    Icon(
-                                        imageVector = if (isPatternDropdownOpen) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                        contentDescription = null,
-                                        tint = currentTheme.primaryLight,
-                                        modifier = Modifier.size(22.dp)
-                                    )
+                                    // Visual Cadence Phase Chips
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        val phaseList = when (selectedPattern.id) {
+                                            "box" -> listOf("4s Inhale", "4s Hold", "4s Exhale", "4s Hold")
+                                            "478" -> listOf("4s Inhale", "7s Hold", "8s Exhale")
+                                            "resonant" -> listOf("5s Inhale", "5s Exhale")
+                                            else -> listOf("3s Inhale", "3s Hold", "3s Exhale", "3s Hold")
+                                        }
+
+                                        phaseList.forEach { phaseLabel ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(currentTheme.primary.copy(alpha = 0.12f))
+                                                    .border(0.8.dp, currentTheme.primaryLight.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+                                                    .padding(vertical = 4.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = phaseLabel,
+                                                    fontSize = 10.5.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = currentTheme.primaryLight,
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
