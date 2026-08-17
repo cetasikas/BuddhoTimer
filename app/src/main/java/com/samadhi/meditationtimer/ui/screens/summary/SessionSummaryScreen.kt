@@ -180,7 +180,7 @@ fun SessionSummaryScreen(
                             color = currentTheme.primaryLight
                         )
                         Text(
-                            text = "Samadhi Overrun",
+                            text = "Extended Time",
                             fontSize = 12.sp,
                             color = currentTheme.primary
                         )

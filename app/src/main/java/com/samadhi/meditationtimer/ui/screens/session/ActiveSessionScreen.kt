@@ -254,7 +254,7 @@ fun ActiveSessionScreen(
                                 Text(
                                     text = when {
                                         isPaused -> "PAUSED"
-                                        isOverrun -> "SAMADHI OVERRUN"
+                                        isOverrun -> "EXTENDED TIME"
                                         config.isOpenEnded -> "OPEN PRACTICE"
                                         else -> "MEDITATING"
                                     },

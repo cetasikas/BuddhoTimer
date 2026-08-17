@@ -189,7 +189,7 @@ class MeditationTimerService : Service() {
                         )
                         updateNotification(
                             timeText = "+${NotificationHelper.formatSeconds(overrunSeconds)}",
-                            subText = "Samadhi Overrun • Total: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
+                            subText = "Extended Time • Total: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
                             isPaused = false,
                             isOverrun = true
                         )
@@ -267,7 +267,7 @@ class MeditationTimerService : Service() {
                             )
                             updateNotification(
                                 timeText = "+${NotificationHelper.formatSeconds(overrunSeconds)}",
-                                subText = "Samadhi Overrun • Total: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
+                                subText = "Extended Time • Total: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
                                 isPaused = false,
                                 isOverrun = true
                             )

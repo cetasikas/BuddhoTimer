@@ -57,7 +57,8 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             meditationLeafCount = prefs.getInt("meditation_leaf_count", 16),
             mindfulnessIntervalMinutes = prefs.getInt("mindfulness_interval_min", 0),
             tapToBlackoutEnabled = prefs.getBoolean("tap_to_blackout", true),
-            keepScreenAwake = prefs.getBoolean("keep_screen_awake", true)
+            keepScreenAwake = prefs.getBoolean("keep_screen_awake", true),
+            isBoxBreathingMode = prefs.getBoolean("box_breathing_mode", false)
         )
     }
 
@@ -75,6 +76,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putInt("mindfulness_interval_min", newConfig.mindfulnessIntervalMinutes)
             putBoolean("tap_to_blackout", newConfig.tapToBlackoutEnabled)
             putBoolean("keep_screen_awake", newConfig.keepScreenAwake)
+            putBoolean("box_breathing_mode", newConfig.isBoxBreathingMode)
             apply()
         }
     }
@@ -93,6 +95,10 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleOverrun(isOverrunEnabled: Boolean) {
         saveConfig(_config.value.copy(isOverrunEnabled = isOverrunEnabled))
+    }
+
+    fun toggleBoxBreathingMode(isBoxBreathing: Boolean) {
+        saveConfig(_config.value.copy(isBoxBreathingMode = isBoxBreathing))
     }
 
     fun toggleAutoDnd(enabled: Boolean) {

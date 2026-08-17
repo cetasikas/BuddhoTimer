@@ -12,16 +12,16 @@
     <string name="cancel_session">Cancel</string>
     <string name="preparing">Preparing…</string>
     <string name="meditating">Meditating</string>
-    <string name="overrun_active">Samadhi Overrun Mode</string>
+    <string name="overrun_active">Extended Practice Mode</string>
     <string name="target_time">Target</string>
     <string name="elapsed_time">Elapsed</string>
     <string name="open_ended">Open-Ended Session</string>
     
     <!-- Notifications -->
     <string name="notification_channel_timer_name">Meditation Session</string>
-    <string name="notification_channel_timer_desc">Shows ongoing countdown and overrun timer progress during meditation practice.</string>
+    <string name="notification_channel_timer_desc">Shows ongoing countdown and extended timer progress during meditation practice.</string>
     <string name="notification_title_meditating">Meditation in Progress</string>
-    <string name="notification_title_overrun">Samadhi Overrun (Extended)</string>
+    <string name="notification_title_overrun">Extended Time (Overtime)</string>
     <string name="notification_title_paused">Session Paused</string>
     <string name="notification_action_pause">Pause</string>
     <string name="notification_action_resume">Resume</string>

@@ -49,14 +49,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.5.1
-          name: "Buddho Timer v2.5.1"
+          tag_name: v2.5.2
+          name: "Buddho Timer v2.5.2"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.5.1
+            ## 🪷 Buddho Meditation Timer v2.5.2
             
-            - **🍃 Rich Vibrant Leaf Pigments in Box Breathing**: Enhanced the leaf render pipeline so the true theme pigments (serene moonlit teal, warm lotus amber-gold, midnight sakura blossom) shine through vividly with high saturation, framed by a soft ethereal white edge aura.
-            - **✨ Streamlined 3-Step Setup Tour**: Re-architected the initial onboarding overlay into a concise, punchy 3-slide guide highlighting Buddho's newest features (*AMOLED Tap-to-Blackout, Mindfulness Interval Bells, Daily Meditation Reminders, Living Box Breathing, and Curated Buddhist Wisdom*).
-            - **🔔 Meditation Reminders Outside App**: Customizable daily and periodic reminders with tranquil quotes to gently invite you into daily stillness.
+            - **🌬️ Integrated Box Breathing Mode Toggle**: Switched Box Breathing into a dedicated inline toggle directly on the Timer page right below "Continue Past Target Time". When toggled ON, the main action button dynamically becomes "Begin Box Breathing" with seamless 4-4-4-4 visual breathwork.
+            - **🧘 Clear Intuitive Naming**: Replaced confusing terms like "Samadhi Overrun" with clear, intuitive language (**"Continue Past Target Time"** on Timer and **"Extended Time"** in session tracking).
+            - **🍃 Rich Vibrant Leaf Pigments in Box Breathing**: Theme leaf colors (*Moonlit Bamboo Teal, Golden Lotus Amber, Sakura Twilight Rose*) shine through with full saturation framed by a soft ethereal white edge aura.
+            - **✨ Streamlined 3-Step Setup Tour**: Concise setup onboarding showcasing all new capabilities with zero clutter.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

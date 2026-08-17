@@ -97,7 +97,7 @@ private val tutorialSteps = listOf(
         description = "Designed for deep mindful awareness with zero tracking, zero ads, and total distraction-free simplicity.",
         icon = Icons.Default.Spa,
         features = listOf(
-            FeatureHighlight(Icons.Default.SelfImprovement, "Minimalist Meditation Timer", "Flexible sits with Samadhi Overrun & breath pacing ring"),
+            FeatureHighlight(Icons.Default.SelfImprovement, "Minimalist Meditation Timer", "Flexible sits with Continuous Timing & breath pacing ring"),
             FeatureHighlight(Icons.Default.Air, "Living Box Breathing", "Organic theme leaf breathwork with calming visual guidance"),
             FeatureHighlight(Icons.Default.AutoAwesome, "Daily Buddhist Wisdom", "Curated teachings from prominent Buddhist masters")
         )
