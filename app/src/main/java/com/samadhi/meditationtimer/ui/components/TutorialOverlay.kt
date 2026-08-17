@@ -93,7 +93,7 @@ private data class TutorialStep(
 
 private val tutorialSteps = listOf(
     TutorialStep(
-        title = "Welcome to Buddho",
+        title = "Welcome to Buddho Timer",
         subtitle = "A 100% private, offline haven for stillness",
         description = "Designed for deep mindful awareness with zero tracking, zero ads, and total distraction-free simplicity.",
         icon = Icons.Default.Spa,
@@ -191,7 +191,7 @@ fun TutorialOverlay(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Glowing Icon Header
+            // Step Hero Icon
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -207,12 +207,21 @@ fun TutorialOverlay(
                     .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.5f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = step.icon,
-                    contentDescription = null,
-                    tint = currentTheme.primaryLight,
-                    modifier = Modifier.size(28.dp)
-                )
+                if (currentStepIndex == 0) {
+                    BuddhaOutlineLogo(
+                        size = 36.dp,
+                        tint = currentTheme.primaryLight,
+                        strokeWidth = 2.0f,
+                        showEnsoCircle = false
+                    )
+                } else {
+                    Icon(
+                        imageVector = step.icon,
+                        contentDescription = null,
+                        tint = currentTheme.primaryLight,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))

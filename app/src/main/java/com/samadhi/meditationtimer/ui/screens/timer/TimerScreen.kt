@@ -126,36 +126,27 @@ fun TimerScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // --- 1. TOP HEADER (BRANDING & DONATE) ---
+            // --- 1. TOP HEADER (BUDDHO TIMER BRANDING & DONATE) ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(currentTheme.primary.copy(alpha = 0.18f))
-                            .border(1.dp, currentTheme.primary.copy(alpha = 0.4f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Spa,
-                            contentDescription = null,
-                            tint = currentTheme.primaryLight,
-                            modifier = Modifier.size(19.dp)
-                        )
-                    }
+                    com.samadhi.meditationtimer.ui.components.BuddhaOutlineLogo(
+                        size = 38.dp,
+                        tint = currentTheme.primaryLight,
+                        strokeWidth = 2.2f,
+                        showEnsoCircle = true
+                    )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = "BUDDHO",
+                            text = "Buddho Timer",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                letterSpacing = 2.5.sp,
-                                fontSize = 14.5.sp
+                                letterSpacing = 1.2.sp,
+                                fontSize = 15.sp
                             ),
                             color = ZenTextPrimary
                         )

@@ -49,16 +49,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.5.7
-          name: "Buddho Timer v2.5.7"
+          tag_name: v2.5.8
+          name: "Buddho Timer v2.5.8"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.5.7
+            ## 🪷 Buddho Meditation Timer v2.5.8
             
-            - **🍃 Meditative, Peaceful Falling Leaves Background**: Replaced rapid swirling with a gentle, slow downward drift and soft horizontal breeze across the screen on slider movement, completely eliminating edge rushing and unnatural upward motions.
-            - **📐 Full & Balanced Box Breathing Setup**: Added a 2-row preset grid (Row 1: 2m, 3m, 5m, 7m; Row 2: 10m, 15m, 20m, 30m) and an enriched pattern centerpiece card with visual phase cadence chips (e.g. `[ 4s Inhale ]` `[ 4s Hold ]` `[ 4s Exhale ]` `[ 4s Hold ]`), achieving perfect height and aesthetic symmetry with the meditation setup.
-            - **🔽 Compact Dropdown Selection**: Breathwork patterns and settings effortlessly fit on any device screen with zero scrolling required.
-            - **🔄 Mid-Session Breathwork Pattern Switching**: Change breathing patterns on the fly via the top interactive pill.
-            - **📝 Unified Post-Session Reflection Overview**: Breathwork sessions seamlessly navigate to full session overview with reflection notes, mood selection, and quote cards.
+            - **🧘 Minimal Meditating Buddha Outline Logo**: Designed a clean, vector Enso outline logo of the seated Buddha in Anjali Mudra prayer/lotus meditation position, rendered crisp in pure theme pigments.
+            - **🏷️ Renamed to "Buddho Timer"**: Updated top-left header branding and tutorial overlay to "Buddho Timer".
+            - **🎯 Duration & Settings as the Majestic Focal Point**: Bold 78sp target numbers with glowing auras, prominent 2-row preset grids, living branch sliders, and rich cadence cards establish a majestic, distraction-free focal center.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
