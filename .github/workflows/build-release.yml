@@ -49,15 +49,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.5.2
-          name: "Buddho Timer v2.5.2"
+          tag_name: v2.5.3
+          name: "Buddho Timer v2.5.3"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.5.2
+            ## 🪷 Buddho Meditation Timer v2.5.3
             
-            - **🌬️ Integrated Box Breathing Mode Toggle**: Switched Box Breathing into a dedicated inline toggle directly on the Timer page right below "Continue Past Target Time". When toggled ON, the main action button dynamically becomes "Begin Box Breathing" with seamless 4-4-4-4 visual breathwork.
-            - **🧘 Clear Intuitive Naming**: Replaced confusing terms like "Samadhi Overrun" with clear, intuitive language (**"Continue Past Target Time"** on Timer and **"Extended Time"** in session tracking).
-            - **🍃 Rich Vibrant Leaf Pigments in Box Breathing**: Theme leaf colors (*Moonlit Bamboo Teal, Golden Lotus Amber, Sakura Twilight Rose*) shine through with full saturation framed by a soft ethereal white edge aura.
-            - **✨ Streamlined 3-Step Setup Tour**: Concise setup onboarding showcasing all new capabilities with zero clutter.
+            - **🔄 Seamless Top Mode Switcher**: Added symmetric mode switchers in the header of both the Meditation Timer and Box Breathing screens (`[ 🧘 Meditation | 🌬️ Box Breathing ]`) allowing instantaneous 1-tap switching between sitting meditation and visual breathwork.
+            - **📐 Fixed Duration Presets Grid**: Replaced cramped presets with a balanced 2-row symmetric layout (Row 1: 5m, 10m, 15m, 20m; Row 2: 25m, 30m, 45m, 60m), completely resolving truncation and black block clipping.
+            - **🗂️ Ultra-Compact Accordion Settings Menu**: Refactored the settings screen into sleek expandable accordion cards with live status badges and smooth animated dropdown disclosures.
+            - **🎯 Centered Tutorial Permission Buttons**: Perfectly centered DND and Battery button labels on the onboarding permission step.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

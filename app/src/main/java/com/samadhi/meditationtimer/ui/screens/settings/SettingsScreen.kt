@@ -6,6 +6,11 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,10 +41,16 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DoNotDisturb
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.TableChart
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -70,15 +81,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.samadhi.meditationtimer.service.SoundHelper
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.screens.timer.TimerViewModel
@@ -95,40 +102,167 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 import com.samadhi.meditationtimer.ui.theme.ZenThemeId
 
+@Composable
+private fun ExpandableSettingsCard(
+    title: String,
+    icon: ImageVector,
+    summaryValue: String? = null,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val currentTheme = LocalZenTheme.current
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onToggle() },
+        colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.82f)),
+        border = CardDefaults.outlinedCardBorder().copy(
+            brush = SolidColor(if (isExpanded) currentTheme.primary.copy(alpha = 0.55f) else ZenBorder)
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(currentTheme.primary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = currentTheme.primaryLight,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = ZenTextPrimary
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (!isExpanded && summaryValue != null) {
+                        Text(
+                            text = summaryValue,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = currentTheme.primaryLight,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(currentTheme.primary.copy(alpha = 0.12f))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = ZenTextMuted,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column(modifier = Modifier.padding(top = 14.dp)) {
+                    content()
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
-@SuppressLint("BatteryLife")
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     timerViewModel: TimerViewModel,
-    onNavigateBack: () -> Unit = {},
-    onShowTutorial: () -> Unit = {},
-    onSelectTheme: (ZenThemeId) -> Unit = {},
+    onNavigateBack: () -> Unit,
+    onShowTutorial: () -> Unit,
+    onSelectTheme: (ZenThemeId) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val currentTheme = LocalZenTheme.current
-    val isDndGranted by viewModel.isDndGranted.collectAsState()
-    val isBatteryOptIgnored by viewModel.isBatteryOptIgnored.collectAsState()
-    val statusMessage by viewModel.statusMessage.collectAsState()
-    val config by timerViewModel.config.collectAsState()
-
     val context = LocalContext.current
     val soundHelper = remember { SoundHelper(context) }
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val config by timerViewModel.config.collectAsState()
+    val isDndGranted by timerViewModel.isDndGranted.collectAsState()
+    val isBatteryOptIgnored by timerViewModel.isBatteryOptIgnored.collectAsState()
+    val statusMessage by viewModel.statusMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val prepOptions = listOf(0, 5, 10, 15)
+    // Expandable accordion states (Default compact/collapsed)
+    var expandedTheme by remember { mutableStateOf(false) }
+    var expandedChime by remember { mutableStateOf(false) }
+    var expandedInterval by remember { mutableStateOf(false) }
+    var expandedDisplay by remember { mutableStateOf(false) }
+    var expandedReminder by remember { mutableStateOf(false) }
+    var expandedPrep by remember { mutableStateOf(false) }
+    var expandedPermissions by remember { mutableStateOf(false) }
+    var expandedBackup by remember { mutableStateOf(false) }
 
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshPermissions()
+    // Reminder state
+    val reminderPrefs = remember { context.getSharedPreferences("timer_prefs", android.content.Context.MODE_PRIVATE) }
+    var reminderEnabled by remember { mutableStateOf(reminderPrefs.getBoolean("daily_reminder_enabled", false)) }
+    var reminderMode by remember { mutableStateOf(reminderPrefs.getString("reminder_mode", "daily") ?: "daily") }
+    var reminderHour by remember { mutableIntStateOf(reminderPrefs.getInt("reminder_hour", 8)) }
+    var reminderIntervalHours by remember { mutableIntStateOf(reminderPrefs.getInt("reminder_interval_hours", 4)) }
+
+    val postNotificationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                reminderEnabled = true
+                reminderPrefs.edit().putBoolean("daily_reminder_enabled", true).apply()
+                if (reminderMode == "interval") {
+                    com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
+                } else {
+                    com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
+                }
             }
         }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
+    )
+
+    // Document Launchers
+    val exportJsonLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? -> uri?.let { viewModel.exportJsonBackup(it) } }
+
+    val exportCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri: Uri? -> uri?.let { viewModel.exportCsvBackup(it) } }
+
+    val importJsonLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? -> uri?.let { viewModel.importJsonBackup(it) } }
+
+    DisposableEffect(Unit) {
+        timerViewModel.refreshPermissions()
+        onDispose { }
     }
 
     LaunchedEffect(statusMessage) {
@@ -138,36 +272,13 @@ fun SettingsScreen(
         }
     }
 
-    // SAF Document Launchers
-    val exportJsonLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/json")
-    ) { uri: Uri? ->
-        uri?.let { viewModel.exportJsonBackup(it) }
-    }
-
-    val exportCsvLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/csv")
-    ) { uri: Uri? ->
-        uri?.let { viewModel.exportCsvBackup(it) }
-    }
-
-    val importJsonLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        uri?.let { viewModel.importJsonBackup(it) }
-    }
-
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        // Subtle Falling Particles on pure AMOLED black
-        FallingLeavesEffect(
-            leafCount = 14,
-            ambientAlpha = 0.30f
-        )
+        FallingLeavesEffect(leafCount = 14, ambientAlpha = 0.30f)
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 18.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(16.dp))
@@ -205,935 +316,600 @@ fun SettingsScreen(
                         color = ZenTextPrimary
                     )
                     Text(
-                        text = "Themes, chimes, permissions, and backups",
+                        text = "Tap any section to configure preferences",
                         style = MaterialTheme.typography.bodySmall,
                         color = ZenTextSecondary
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // 1. ATMOSPHERE & THEMES
-            Text(
-                text = "ATMOSPHERE & THEME",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                color = currentTheme.primaryLight
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val availableThemes = listOf(BambooTealTheme, SacredLotusTheme, SakuraTwilightTheme)
+            // --- COMPACT ACCORDION SECTIONS ---
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                availableThemes.forEach { theme ->
-                    val isSelected = currentTheme.id == theme.id
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .clickable { onSelectTheme(theme.id) },
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) theme.primary.copy(alpha = 0.18f) else ZenSurface.copy(alpha = 0.75f)
-                        ),
-                        border = CardDefaults.outlinedCardBorder().copy(
-                            brush = SolidColor(if (isSelected) theme.primaryLight else ZenBorder)
-                        ),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
+                // 1. ATMOSPHERE & THEME
+                ExpandableSettingsCard(
+                    title = "Atmosphere & Theme",
+                    icon = Icons.Default.Palette,
+                    summaryValue = currentTheme.title,
+                    isExpanded = expandedTheme,
+                    onToggle = { expandedTheme = !expandedTheme }
+                ) {
+                    val availableThemes = listOf(BambooTealTheme, SacredLotusTheme, SakuraTwilightTheme)
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        availableThemes.forEach { theme ->
+                            val isSelected = currentTheme.id == theme.id
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { onSelectTheme(theme.id) },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected) theme.primary.copy(alpha = 0.18f) else ZenSurfaceVariant.copy(alpha = 0.6f)
+                                ),
+                                border = CardDefaults.outlinedCardBorder().copy(
+                                    brush = SolidColor(if (isSelected) theme.primaryLight else ZenBorder)
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(16.dp)
+                                                .clip(CircleShape)
+                                                .background(theme.primaryLight)
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text(
+                                                text = theme.title,
+                                                fontSize = 13.5.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isSelected) theme.primaryLight else ZenTextPrimary
+                                            )
+                                            Text(
+                                                text = theme.id.subtitle,
+                                                fontSize = 11.sp,
+                                                color = ZenTextSecondary
+                                            )
+                                        }
+                                    }
+                                    if (isSelected) {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = "Selected",
+                                            tint = theme.primaryLight,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 2. BELL SOUND & CHIMES
+                val currentSoundTitle = SoundHelper.soundOptions.find { it.id == config.soundBellResName }?.title ?: "Singing Bowl"
+                ExpandableSettingsCard(
+                    title = "Bell Sound & Chimes",
+                    icon = Icons.Default.MusicNote,
+                    summaryValue = currentSoundTitle,
+                    isExpanded = expandedChime,
+                    onToggle = { expandedChime = !expandedChime }
+                ) {
+                    Column {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                            Text(
+                                text = "Start & Finish Chime",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ZenTextPrimary
+                            )
+                            OutlinedButton(
+                                onClick = { soundHelper.playChime(config.soundBellResName) },
+                                modifier = Modifier.height(30.dp),
+                                shape = RoundedCornerShape(15.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .clip(CircleShape)
-                                        .background(theme.primaryLight)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = theme.title,
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontSize = 14.5.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                        ),
-                                        color = if (isSelected) theme.primaryLight else ZenTextPrimary
-                                    )
-                                    Text(
-                                        text = theme.id.subtitle,
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
-                                        color = ZenTextSecondary
-                                    )
-                                }
-                            }
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = "Selected",
-                                    tint = theme.primaryLight,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                Text("Preview", fontSize = 11.5.sp, fontWeight = FontWeight.Medium)
                             }
                         }
-                    }
-                }
-            }
 
-            Spacer(modifier = Modifier.height(22.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
-            Spacer(modifier = Modifier.height(22.dp))
-
-            // 2. BELL SOUNDS
-            Text(
-                text = "BELL SOUND & CHIMES",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                color = currentTheme.primaryLight
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.MusicNote,
-                                contentDescription = null,
-                                tint = currentTheme.primaryLight,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Start & End Chime",
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                                color = ZenTextPrimary
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        OutlinedButton(
-                            onClick = { soundHelper.playChime(config.soundBellResName) },
-                            modifier = Modifier.height(34.dp),
-                            shape = RoundedCornerShape(17.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
-                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
-                        ) {
-                            Text("Preview", fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        SoundHelper.soundOptions.forEach { soundOption ->
-                            val isSelected = config.soundBellResName == soundOption.id
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = {
-                                    timerViewModel.updateSoundBell(soundOption.id)
-                                    soundHelper.playChime(soundOption.id)
-                                },
-                                label = { Text(soundOption.title, fontSize = 12.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = ZenSurfaceVariant,
-                                    labelColor = ZenTextSecondary,
-                                    selectedContainerColor = currentTheme.primary,
-                                    selectedLabelColor = ZenObsidian
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
-                                    enabled = true,
-                                    selected = isSelected
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 3. MINDFULNESS INTERVAL BELL
-            Text(
-                text = "MINDFULNESS INTERVAL BELL",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                color = currentTheme.primaryLight
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val mindfulnessOptions = listOf(0, 1, 2, 3, 5, 10, 15, 20, 30)
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Periodic Mindfulness Chime",
-                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                        color = ZenTextPrimary
-                    )
-                    Text(
-                        text = "Chimes periodically during meditation to gently return your awareness to the present moment",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                        color = ZenTextSecondary
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        mindfulnessOptions.forEach { intervalMin ->
-                            val isSelected = config.mindfulnessIntervalMinutes == intervalMin
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { timerViewModel.updateMindfulnessInterval(intervalMin) },
-                                label = {
-                                    Text(
-                                        text = if (intervalMin == 0) "Off" else "${intervalMin}m",
-                                        fontSize = 12.sp
+                            SoundHelper.soundOptions.forEach { soundOption ->
+                                val isSelected = config.soundBellResName == soundOption.id
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        timerViewModel.updateSoundBell(soundOption.id)
+                                        soundHelper.playChime(soundOption.id)
+                                    },
+                                    label = { Text(soundOption.title, fontSize = 11.5.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = ZenSurfaceVariant,
+                                        labelColor = ZenTextSecondary,
+                                        selectedContainerColor = currentTheme.primary,
+                                        selectedLabelColor = ZenObsidian
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
+                                        enabled = true,
+                                        selected = isSelected
                                     )
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = ZenSurfaceVariant,
-                                    labelColor = ZenTextSecondary,
-                                    selectedContainerColor = currentTheme.primary,
-                                    selectedLabelColor = ZenObsidian
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
-                                    enabled = true,
-                                    selected = isSelected
                                 )
-                            )
+                            }
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 4. DISPLAY & PRACTICE PREFERENCES
-            Text(
-                text = "DISPLAY & PRACTICE PREFERENCES",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                color = currentTheme.primaryLight
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    // Tap to Blackout Screen
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Tap to Blackout Screen",
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                                color = ZenTextPrimary
-                            )
-                            Text(
-                                text = "Tap anywhere during meditation to turn the screen pure AMOLED black, tap again to wake",
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
-                                color = ZenTextSecondary
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Switch(
-                            checked = config.tapToBlackoutEnabled,
-                            onCheckedChange = { timerViewModel.toggleTapToBlackout(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = ZenObsidian,
-                                checkedTrackColor = currentTheme.primary,
-                                uncheckedThumbColor = ZenTextMuted,
-                                uncheckedTrackColor = ZenSurfaceVariant
-                            )
+                // 3. MINDFULNESS INTERVAL BELL
+                val intervalSummary = if (config.mindfulnessIntervalMinutes == 0) "Off" else "${config.mindfulnessIntervalMinutes}m"
+                ExpandableSettingsCard(
+                    title = "Mindfulness Interval Bell",
+                    icon = Icons.Default.Timer,
+                    summaryValue = intervalSummary,
+                    isExpanded = expandedInterval,
+                    onToggle = { expandedInterval = !expandedInterval }
+                ) {
+                    val mindfulnessOptions = listOf(0, 1, 2, 3, 5, 10, 15, 20, 30)
+                    Column {
+                        Text(
+                            text = "Periodic chimes return awareness to the present moment.",
+                            fontSize = 11.5.sp,
+                            color = ZenTextSecondary
                         )
-                    }
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Keep Screen Awake
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Keep Screen Awake",
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                                color = ZenTextPrimary
-                            )
-                            Text(
-                                text = "Keep the display turned on during active meditation and box breathing",
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
-                                color = ZenTextSecondary
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Switch(
-                            checked = config.keepScreenAwake,
-                            onCheckedChange = { timerViewModel.toggleKeepScreenAwake(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = ZenObsidian,
-                                checkedTrackColor = currentTheme.primary,
-                                uncheckedThumbColor = ZenTextMuted,
-                                uncheckedTrackColor = ZenSurfaceVariant
-                            )
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 5. MEDITATION REMINDERS (OUTSIDE APP)
-            Text(
-                text = "MEDITATION REMINDERS",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                color = currentTheme.primaryLight
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val reminderPrefs = remember { context.getSharedPreferences("timer_prefs", android.content.Context.MODE_PRIVATE) }
-            var reminderEnabled by remember { mutableStateOf(reminderPrefs.getBoolean("daily_reminder_enabled", false)) }
-            var reminderMode by remember { mutableStateOf(reminderPrefs.getString("reminder_mode", "daily") ?: "daily") }
-            var reminderHour by remember { mutableIntStateOf(reminderPrefs.getInt("reminder_hour", 8)) }
-            var reminderIntervalHours by remember { mutableIntStateOf(reminderPrefs.getInt("reminder_interval_hours", 4)) }
-
-            val postNotificationLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.RequestPermission(),
-                onResult = { isGranted ->
-                    if (isGranted) {
-                        reminderEnabled = true
-                        reminderPrefs.edit().putBoolean("daily_reminder_enabled", true).apply()
-                        if (reminderMode == "interval") {
-                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
-                        } else {
-                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            mindfulnessOptions.forEach { intervalMin ->
+                                val isSelected = config.mindfulnessIntervalMinutes == intervalMin
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { timerViewModel.updateMindfulnessInterval(intervalMin) },
+                                    label = {
+                                        Text(
+                                            text = if (intervalMin == 0) "Off" else "${intervalMin}m",
+                                            fontSize = 11.5.sp
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = ZenSurfaceVariant,
+                                        labelColor = ZenTextSecondary,
+                                        selectedContainerColor = currentTheme.primary,
+                                        selectedLabelColor = ZenObsidian
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
+                                        enabled = true,
+                                        selected = isSelected
+                                    )
+                                )
+                            }
                         }
                     }
                 }
-            )
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Remind Me to Meditate",
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                                color = ZenTextPrimary
-                            )
-                            Text(
-                                text = "Send gentle mindfulness notifications outside the app",
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
-                                color = ZenTextSecondary
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Switch(
-                            checked = reminderEnabled,
-                            onCheckedChange = { isChecked ->
-                                if (isChecked && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                                    val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
-                                        context,
-                                        android.Manifest.permission.POST_NOTIFICATIONS
-                                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-
-                                    if (!hasPermission) {
-                                        postNotificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                                        return@Switch
-                                    }
-                                }
-
-                                reminderEnabled = isChecked
-                                reminderPrefs.edit().putBoolean("daily_reminder_enabled", isChecked).apply()
-
-                                if (isChecked) {
-                                    if (reminderMode == "interval") {
-                                        com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
-                                    } else {
-                                        com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
-                                    }
-                                } else {
-                                    com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.cancelReminder(context)
-                                }
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = ZenObsidian,
-                                checkedTrackColor = currentTheme.primary,
-                                uncheckedThumbColor = ZenTextMuted,
-                                uncheckedTrackColor = ZenSurfaceVariant
-                            )
-                        )
-                    }
-
-                    if (reminderEnabled) {
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        // Reminder Frequency Mode (Daily vs Interval)
+                // 4. DISPLAY & STEALTH PREFERENCES
+                val displaySummary = if (config.tapToBlackoutEnabled) "Blackout Enabled" else "Standard"
+                ExpandableSettingsCard(
+                    title = "Display & Stealth Mode",
+                    icon = Icons.Default.DarkMode,
+                    summaryValue = displaySummary,
+                    isExpanded = expandedDisplay,
+                    onToggle = { expandedDisplay = !expandedDisplay }
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            FilterChip(
-                                selected = reminderMode == "daily",
-                                onClick = {
-                                    reminderMode = "daily"
-                                    reminderPrefs.edit().putString("reminder_mode", "daily").apply()
-                                    com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
-                                },
-                                label = { Text("Daily Schedule", fontSize = 12.sp) },
-                                modifier = Modifier.weight(1f),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = ZenSurfaceVariant,
-                                    labelColor = ZenTextSecondary,
-                                    selectedContainerColor = currentTheme.primary,
-                                    selectedLabelColor = ZenObsidian
-                                )
-                            )
-
-                            FilterChip(
-                                selected = reminderMode == "interval",
-                                onClick = {
-                                    reminderMode = "interval"
-                                    reminderPrefs.edit().putString("reminder_mode", "interval").apply()
-                                    com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
-                                },
-                                label = { Text("Periodic Interval", fontSize = 12.sp) },
-                                modifier = Modifier.weight(1f),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = ZenSurfaceVariant,
-                                    labelColor = ZenTextSecondary,
-                                    selectedContainerColor = currentTheme.primary,
-                                    selectedLabelColor = ZenObsidian
-                                )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Tap to Blackout Screen", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text("Tap during sits to turn display pure AMOLED black", fontSize = 11.sp, color = ZenTextSecondary)
+                            }
+                            Switch(
+                                checked = config.tapToBlackoutEnabled,
+                                onCheckedChange = { timerViewModel.toggleTapToBlackout(it) },
+                                colors = SwitchDefaults.colors(checkedThumbColor = ZenObsidian, checkedTrackColor = currentTheme.primary)
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        if (reminderMode == "daily") {
-                            Text(
-                                text = "Reminder Time",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = ZenTextSecondary
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Keep Screen Awake", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text("Keep display on during active meditation", fontSize = 11.sp, color = ZenTextSecondary)
+                            }
+                            Switch(
+                                checked = config.keepScreenAwake,
+                                onCheckedChange = { timerViewModel.toggleKeepScreenAwake(it) },
+                                colors = SwitchDefaults.colors(checkedThumbColor = ZenObsidian, checkedTrackColor = currentTheme.primary)
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
+                        }
+                    }
+                }
 
-                            val hourPresets = listOf(6, 7, 8, 9, 12, 18, 20, 21, 22)
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                hourPresets.forEach { h ->
-                                    val isSelected = reminderHour == h
-                                    val timeLabel = when {
-                                        h == 0 -> "12 AM"
-                                        h < 12 -> "$h AM"
-                                        h == 12 -> "12 PM"
-                                        else -> "${h - 12} PM"
+                // 5. MEDITATION REMINDERS (OUTSIDE APP)
+                val reminderSummary = if (!reminderEnabled) "Off" else if (reminderMode == "interval") "Every ${reminderIntervalHours}h" else "${if (reminderHour == 0) 12 else if (reminderHour <= 12) reminderHour else reminderHour - 12}${if (reminderHour < 12) "AM" else "PM"}"
+                ExpandableSettingsCard(
+                    title = "Meditation Reminders",
+                    icon = Icons.Default.NotificationsActive,
+                    summaryValue = reminderSummary,
+                    isExpanded = expandedReminder,
+                    onToggle = { expandedReminder = !expandedReminder }
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Daily Mindfulness Reminders", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text("Gentle notifications with Buddhist wisdom quotes", fontSize = 11.sp, color = ZenTextSecondary)
+                            }
+                            Switch(
+                                checked = reminderEnabled,
+                                onCheckedChange = { isChecked ->
+                                    if (isChecked && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                        val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                                            context,
+                                            android.Manifest.permission.POST_NOTIFICATIONS
+                                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+                                        if (!hasPermission) {
+                                            postNotificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                            return@Switch
+                                        }
                                     }
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = {
-                                            reminderHour = h
-                                            reminderPrefs.edit().putInt("reminder_hour", h).apply()
-                                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, h, 0)
-                                        },
-                                        label = { Text(timeLabel, fontSize = 11.5.sp) },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            containerColor = ZenSurfaceVariant,
-                                            labelColor = ZenTextSecondary,
-                                            selectedContainerColor = currentTheme.primary,
-                                            selectedLabelColor = ZenObsidian
-                                        ),
-                                        border = FilterChipDefaults.filterChipBorder(
-                                            borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
-                                            enabled = true,
-                                            selected = isSelected
-                                        )
+
+                                    reminderEnabled = isChecked
+                                    reminderPrefs.edit().putBoolean("daily_reminder_enabled", isChecked).apply()
+
+                                    if (isChecked) {
+                                        if (reminderMode == "interval") {
+                                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
+                                        } else {
+                                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
+                                        }
+                                    } else {
+                                        com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.cancelReminder(context)
+                                    }
+                                },
+                                colors = SwitchDefaults.colors(checkedThumbColor = ZenObsidian, checkedTrackColor = currentTheme.primary)
+                            )
+                        }
+
+                        if (reminderEnabled) {
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                FilterChip(
+                                    selected = reminderMode == "daily",
+                                    onClick = {
+                                        reminderMode = "daily"
+                                        reminderPrefs.edit().putString("reminder_mode", "daily").apply()
+                                        com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
+                                    },
+                                    label = { Text("Daily Schedule", fontSize = 11.5.sp) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = currentTheme.primary,
+                                        selectedLabelColor = ZenObsidian
                                     )
+                                )
+
+                                FilterChip(
+                                    selected = reminderMode == "interval",
+                                    onClick = {
+                                        reminderMode = "interval"
+                                        reminderPrefs.edit().putString("reminder_mode", "interval").apply()
+                                        com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
+                                    },
+                                    label = { Text("Periodic Interval", fontSize = 11.5.sp) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = currentTheme.primary,
+                                        selectedLabelColor = ZenObsidian
+                                    )
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (reminderMode == "daily") {
+                                val hourPresets = listOf(6, 7, 8, 9, 12, 18, 20, 21, 22)
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    hourPresets.forEach { h ->
+                                        val isSelected = reminderHour == h
+                                        val timeLabel = when {
+                                            h == 0 -> "12 AM"
+                                            h < 12 -> "$h AM"
+                                            h == 12 -> "12 PM"
+                                            else -> "${h - 12} PM"
+                                        }
+                                        FilterChip(
+                                            selected = isSelected,
+                                            onClick = {
+                                                reminderHour = h
+                                                reminderPrefs.edit().putInt("reminder_hour", h).apply()
+                                                com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, h, 0)
+                                            },
+                                            label = { Text(timeLabel, fontSize = 11.sp) },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = currentTheme.primary,
+                                                selectedLabelColor = ZenObsidian
+                                            )
+                                        )
+                                    }
+                                }
+                            } else {
+                                val intervalOptions = listOf(2, 3, 4, 6, 8, 12)
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    intervalOptions.forEach { hrs ->
+                                        val isSelected = reminderIntervalHours == hrs
+                                        FilterChip(
+                                            selected = isSelected,
+                                            onClick = {
+                                                reminderIntervalHours = hrs
+                                                reminderPrefs.edit().putInt("reminder_interval_hours", hrs).apply()
+                                                com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, hrs)
+                                            },
+                                            label = { Text("Every ${hrs}h", fontSize = 11.sp) },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = currentTheme.primary,
+                                                selectedLabelColor = ZenObsidian
+                                            )
+                                        )
+                                    }
                                 }
                             }
-                        } else {
-                            Text(
-                                text = "Interval Cadence",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = ZenTextSecondary
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
 
-                            val intervalOptions = listOf(2, 3, 4, 6, 8, 12)
-                            FlowRow(
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            OutlinedButton(
+                                onClick = {
+                                    val quote = com.samadhi.meditationtimer.data.wisdom.MeditationGuides.wisdomQuotes.random()
+                                    val helper = com.samadhi.meditationtimer.service.NotificationHelper(context)
+                                    helper.showReminderNotification("Time for Stillness 🪷", "“${quote.quote}” — ${quote.author}")
+                                },
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                shape = RoundedCornerShape(10.dp),
+                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenBorder))
                             ) {
-                                intervalOptions.forEach { hrs ->
-                                    val isSelected = reminderIntervalHours == hrs
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = {
-                                            reminderIntervalHours = hrs
-                                            reminderPrefs.edit().putInt("reminder_interval_hours", hrs).apply()
-                                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, hrs)
-                                        },
-                                        label = { Text("Every ${hrs}h", fontSize = 11.5.sp) },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            containerColor = ZenSurfaceVariant,
-                                            labelColor = ZenTextSecondary,
-                                            selectedContainerColor = currentTheme.primary,
-                                            selectedLabelColor = ZenObsidian
-                                        ),
-                                        border = FilterChipDefaults.filterChipBorder(
-                                            borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
-                                            enabled = true,
-                                            selected = isSelected
-                                        )
+                                Text("Send Test Reminder Notification", fontSize = 11.5.sp, color = currentTheme.primaryLight)
+                            }
+                        }
+                    }
+                }
+
+                // 6. WARM-UP PREPARATION
+                val prepSummary = if (config.prepTimeSeconds == 0) "None" else "${config.prepTimeSeconds}s"
+                val prepOptions = listOf(0, 5, 10, 15)
+                ExpandableSettingsCard(
+                    title = "Warm-up Preparation",
+                    icon = Icons.Default.Timer,
+                    summaryValue = prepSummary,
+                    isExpanded = expandedPrep,
+                    onToggle = { expandedPrep = !expandedPrep }
+                ) {
+                    Column {
+                        Text("Posture adjustment countdown before timer begins.", fontSize = 11.5.sp, color = ZenTextSecondary)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            prepOptions.forEach { prepSec ->
+                                val isSelected = config.prepTimeSeconds == prepSec
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { timerViewModel.updatePrepTimeSeconds(prepSec) },
+                                    label = { Text(if (prepSec == 0) "None" else "${prepSec}s", fontSize = 11.5.sp) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = currentTheme.primary,
+                                        selectedLabelColor = ZenObsidian
                                     )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 7. SYSTEM PERMISSIONS
+                val permSummary = if (isDndGranted && isBatteryOptIgnored) "Optimized" else "Action Needed"
+                ExpandableSettingsCard(
+                    title = "System Permissions",
+                    icon = Icons.Default.Security,
+                    summaryValue = permSummary,
+                    isExpanded = expandedPermissions,
+                    onToggle = { expandedPermissions = !expandedPermissions }
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Do Not Disturb Access", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text(if (isDndGranted) "Auto-silence enabled" else "Required to silence notifications", fontSize = 11.sp, color = ZenTextSecondary)
+                            }
+                            if (isDndGranted) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = currentTheme.primaryLight, modifier = Modifier.size(20.dp))
+                            } else {
+                                OutlinedButton(
+                                    onClick = { context.startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }) },
+                                    modifier = Modifier.height(30.dp),
+                                    shape = RoundedCornerShape(15.dp),
+                                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
+                                ) {
+                                    Text("Grant", fontSize = 11.5.sp, color = currentTheme.primaryLight)
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Background Execution", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text(if (isBatteryOptIgnored) "Safe from Android sleep kill" else "Recommended for long sits", fontSize = 11.sp, color = ZenTextSecondary)
+                            }
+                            if (isBatteryOptIgnored) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = currentTheme.primaryLight, modifier = Modifier.size(20.dp))
+                            } else {
+                                OutlinedButton(
+                                    onClick = { context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }) },
+                                    modifier = Modifier.height(30.dp),
+                                    shape = RoundedCornerShape(15.dp),
+                                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
+                                ) {
+                                    Text("Disable", fontSize = 11.5.sp, color = currentTheme.primaryLight)
+                                }
+                            }
+                        }
+                    }
+                }
 
-                        // Test Notification Button
-                        OutlinedButton(
-                            onClick = {
-                                val quote = com.samadhi.meditationtimer.data.wisdom.MeditationGuides.wisdomQuotes.random()
-                                val helper = com.samadhi.meditationtimer.service.NotificationHelper(context)
-                                helper.showReminderNotification(
-                                    "Time for Stillness 🪷",
-                                    "“${quote.quote}” — ${quote.author}"
-                                )
-                            },
+                // 8. DATA BACKUP & EXPORT
+                ExpandableSettingsCard(
+                    title = "Data Backup & Portability",
+                    icon = Icons.Default.CloudUpload,
+                    summaryValue = "Offline Backups",
+                    isExpanded = expandedBackup,
+                    onToggle = { expandedBackup = !expandedBackup }
+                ) {
+                    Column {
+                        Text("Export or restore your meditation sessions and journal notes in JSON or CSV format.", fontSize = 11.5.sp, color = ZenTextSecondary)
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = { exportJsonLauncher.launch("buddho_backup_${System.currentTimeMillis()}.json") },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(10.dp),
+                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
+                            ) {
+                                Icon(Icons.Default.CloudUpload, contentDescription = null, tint = currentTheme.primaryLight, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("JSON", fontSize = 11.sp, color = currentTheme.primaryLight)
+                            }
+
+                            OutlinedButton(
+                                onClick = { exportCsvLauncher.launch("buddho_sessions_${System.currentTimeMillis()}.csv") },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(10.dp),
+                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
+                            ) {
+                                Icon(Icons.Default.TableChart, contentDescription = null, tint = currentTheme.primaryLight, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("CSV", fontSize = 11.sp, color = currentTheme.primaryLight)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        FilledTonalButton(
+                            onClick = { importJsonLauncher.launch(arrayOf("application/json", "*/*")) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(10.dp),
-                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenBorder))
+                            colors = ButtonDefaults.filledTonalButtonColors(containerColor = ZenSurfaceVariant, contentColor = ZenTextPrimary)
                         ) {
-                            Text("Send Test Reminder Notification", fontSize = 12.sp, color = currentTheme.primaryLight)
+                            Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Restore from JSON Backup", fontSize = 11.5.sp)
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 6. PREPARATION (WARM UP)
-            Text(
-                text = "PREPARATION (WARM UP)",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                color = currentTheme.primaryLight
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Countdown before timer starts",
-                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                        color = ZenTextPrimary
-                    )
-                    Text(
-                        text = "Allows you to get into a comfortable meditation posture",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                        color = ZenTextSecondary
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        prepOptions.forEach { prepSec ->
-                            val isSelected = config.prepTimeSeconds == prepSec
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { timerViewModel.updatePrepTimeSeconds(prepSec) },
-                                label = {
-                                    Text(
-                                        text = if (prepSec == 0) "None" else "${prepSec}s",
-                                        fontSize = 12.sp
-                                    )
-                                },
-                                modifier = Modifier.weight(1f),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = ZenSurfaceVariant,
-                                    labelColor = ZenTextSecondary,
-                                    selectedContainerColor = currentTheme.primary,
-                                    selectedLabelColor = ZenObsidian
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    borderColor = if (isSelected) currentTheme.primaryLight else ZenBorder,
-                                    enabled = true,
-                                    selected = isSelected
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 4. SYSTEM PERMISSIONS
-            Text(
-                text = "SYSTEM PERMISSIONS",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                color = currentTheme.primaryLight
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Do Not Disturb & Battery Optimization
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    // DND Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DoNotDisturb,
-                                contentDescription = null,
-                                tint = if (isDndGranted) currentTheme.primaryLight else ZenTextMuted,
-                                modifier = Modifier.size(22.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Do Not Disturb Access",
-                                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                                    color = ZenTextPrimary
-                                )
-                                Text(
-                                    text = if (isDndGranted) "Granted (Auto-silence enabled)" else "Permission required for auto-DND",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                                    color = if (isDndGranted) currentTheme.primaryLight else ZenTextSecondary
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        if (isDndGranted) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Granted",
-                                tint = currentTheme.primaryLight,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        } else {
-                            OutlinedButton(
-                                onClick = {
-                                    context.startActivity(
-                                        Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
-                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                        }
-                                    )
-                                },
-                                modifier = Modifier.height(34.dp),
-                                shape = RoundedCornerShape(17.dp),
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
-                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
-                            ) {
-                                Text("Grant", fontSize = 12.sp, color = currentTheme.primaryLight, fontWeight = FontWeight.Medium)
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Battery Optimization Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.BatteryChargingFull,
-                                contentDescription = null,
-                                tint = if (isBatteryOptIgnored) currentTheme.primaryLight else ZenTextMuted,
-                                modifier = Modifier.size(22.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Background Execution",
-                                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                                    color = ZenTextPrimary
-                                )
-                                Text(
-                                    text = if (isBatteryOptIgnored) "Unrestricted (Safe from OS kill)" else "Recommended for long sessions",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                                    color = if (isBatteryOptIgnored) currentTheme.primaryLight else ZenTextSecondary
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        if (isBatteryOptIgnored) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Ignored",
-                                tint = currentTheme.primaryLight,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        } else {
-                            OutlinedButton(
-                                onClick = {
-                                    context.startActivity(
-                                        Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
-                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                        }
-                                    )
-                                },
-                                modifier = Modifier.height(34.dp),
-                                shape = RoundedCornerShape(17.dp),
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
-                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
-                            ) {
-                                Text("Disable", fontSize = 12.sp, color = currentTheme.primaryLight, fontWeight = FontWeight.Medium)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 5. TUTORIAL & APP GUIDE
-            Text(
-                text = "TUTORIAL & HELP",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                color = currentTheme.primaryLight
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable { onShowTutorial() },
-                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.35f))),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Row(
+                // 9. TUTORIAL QUICK ACCESS
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { onShowTutorial() },
+                    colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.82f)),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.35f))),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(currentTheme.primary.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = currentTheme.primaryLight,
-                                modifier = Modifier.size(20.dp)
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(currentTheme.primary.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = currentTheme.primaryLight, modifier = Modifier.size(18.dp))
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text("Show Tutorial Tour", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text("3-step feature & atmosphere walkthrough", fontSize = 11.sp, color = ZenTextSecondary)
+                            }
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Show Tutorial & Quick Guide",
-                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
-                                color = ZenTextPrimary
-                            )
-                            Text(
-                                text = "Walkthrough of atmosphere, features, and permissions",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                                color = ZenTextSecondary
-                            )
-                        }
-                    }
 
-                    FilledTonalButton(
-                        onClick = onShowTutorial,
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = currentTheme.primary,
-                            contentColor = ZenObsidian
-                        ),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Text("Open", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        FilledTonalButton(
+                            onClick = onShowTutorial,
+                            colors = ButtonDefaults.filledTonalButtonColors(containerColor = currentTheme.primary, contentColor = ZenObsidian),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Open", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 6. DATA BACKUP & EXPORT
-            Text(
-                text = "DATA BACKUP & PORTABILITY",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                color = currentTheme.primaryLight
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.75f)),
-                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "100% Offline & Private",
-                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
-                        color = ZenTextPrimary
-                    )
-                    Text(
-                        text = "Export your meditation logs and reflections locally or restore from backup files.",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                        color = ZenTextSecondary
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { exportJsonLauncher.launch("buddho_backup_${System.currentTimeMillis()}.json") },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
-                        ) {
-                            Icon(Icons.Default.CloudUpload, contentDescription = null, tint = currentTheme.primaryLight, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Export JSON", fontSize = 11.sp, color = currentTheme.primaryLight)
-                        }
-
-                        OutlinedButton(
-                            onClick = { exportCsvLauncher.launch("buddho_sessions_${System.currentTimeMillis()}.csv") },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
-                        ) {
-                            Icon(Icons.Default.TableChart, contentDescription = null, tint = currentTheme.primaryLight, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Export CSV", fontSize = 11.sp, color = currentTheme.primaryLight)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    FilledTonalButton(
-                        onClick = { importJsonLauncher.launch(arrayOf("application/json", "*/*")) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = ZenSurfaceVariant,
-                            contentColor = ZenTextPrimary
-                        )
-                    ) {
-                        Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Restore from JSON Backup", fontSize = 12.sp)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(32.dp))
         }
 
         SnackbarHost(

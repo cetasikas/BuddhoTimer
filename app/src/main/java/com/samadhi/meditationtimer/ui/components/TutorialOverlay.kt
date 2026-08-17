@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -309,10 +310,17 @@ fun TutorialOverlay(
                         },
                         modifier = Modifier.weight(1f).height(38.dp),
                         shape = RoundedCornerShape(19.dp),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                         border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
                     ) {
-                        Text("Grant DND", fontSize = 11.5.sp, fontWeight = FontWeight.Medium)
+                        Text(
+                            text = "Grant DND",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
 
                     OutlinedButton(
@@ -325,10 +333,17 @@ fun TutorialOverlay(
                         },
                         modifier = Modifier.weight(1f).height(38.dp),
                         shape = RoundedCornerShape(19.dp),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                         border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
                     ) {
-                        Text("Battery Settings", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text(
+                            text = "Battery Settings",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }

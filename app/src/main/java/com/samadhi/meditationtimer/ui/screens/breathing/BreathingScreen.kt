@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -79,6 +80,7 @@ import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
+import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 import kotlinx.coroutines.delay
@@ -184,48 +186,70 @@ fun BreathingScreen(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Header Row
+            // Top Header Row with Mode Switcher & Close Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                // Practice Mode Segment Switcher (Meditation vs Box Breathing)
                 Row(
-                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(ZenSurface.copy(alpha = 0.85f))
+                        .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                        .padding(3.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Meditation Mode (Clickable to switch back immediately)
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(currentTheme.primary.copy(alpha = 0.18f))
-                            .border(1.dp, currentTheme.primary.copy(alpha = 0.4f), CircleShape),
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { onClose() }
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Air,
-                            contentDescription = null,
-                            tint = currentTheme.primaryLight,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.SelfImprovement,
+                                contentDescription = null,
+                                tint = ZenTextMuted,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Meditation",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = ZenTextSecondary
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(
-                            text = "BOX BREATHING",
-                            style = MaterialTheme.typography.titleMedium.copy(
+
+                    // Box Breathing Mode (Active)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(currentTheme.primary.copy(alpha = 0.25f))
+                            .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Air,
+                                contentDescription = null,
+                                tint = currentTheme.primaryLight,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Box Breathing",
+                                fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.5.sp
-                            ),
-                            color = ZenTextPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = selectedPattern.name,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = currentTheme.primaryLight
-                        )
+                                color = currentTheme.primaryLight
+                            )
+                        }
                     }
                 }
 
