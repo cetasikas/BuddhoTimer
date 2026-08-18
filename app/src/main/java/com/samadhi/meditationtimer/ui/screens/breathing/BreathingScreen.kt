@@ -475,9 +475,9 @@ fun BreathingScreen(
                 ) { phase ->
                     Text(
                         text = phase.instruction,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = ZenTextSecondary,
+                        fontSize = 15.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = ZenTextPrimary.copy(alpha = 0.90f),
                         textAlign = TextAlign.Center,
                         maxLines = 2
                     )
@@ -487,9 +487,10 @@ fun BreathingScreen(
 
                 Text(
                     text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = ZenTextMuted
+                    fontSize = 17.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ZenTextPrimary.copy(alpha = 0.80f),
+                    letterSpacing = 0.5.sp
                 )
             }
 

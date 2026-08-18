@@ -49,17 +49,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.23.0
-          name: "Buddho Timer v2.23.0"
+          tag_name: v2.24.0
+          name: "Buddho Timer v2.24.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.23.0
+            ## 🪷 Buddho Meditation Timer v2.24.0
             
-            - **🍃 Seamless Background & App Switch Persistence**:
-              - Leaf stacking now dynamically synchronizes with elapsed meditation seconds upon resuming or switching apps, catching up and retaining the exact ground floor state.
-            - **🍂 Organic Aerodynamic Gliding Physics**:
-              - Replaced vertical plumb-line descent with wide, natural diagonal sweeps, aerodynamic banking tilts, and 3D tumbling flutter.
-            - **🧘 Box Breathing Overview Distinction**:
-              - Box Breathing overview screen now displays ambient floating particles without bottom leaf stacking.
+            - **🛡️ Bulletproof Stability & Crash Prevention**:
+              - Fixed `ConcurrentModificationException` during meditation and screen transitions by making particle animation state thread-safe and immune to concurrent iterations.
+              - Fixed native `AudioTrack` resource leak, ensuring chime audio tracks are cleanly closed after playback.
+            - **🌬️ Distraction-Free Box Breathing**:
+              - Removed ambient background drifting leaves in Box Breathing mode to keep focus entirely on the central living Ensō breathwork.
+              - Enlarged and enhanced visibility of bottom phase instructions and session progress timer for effortless glanceability.
+            - **📦 Seamless APK Installation & ProGuard Hardening**:
+              - Bumped version code to 56 for smooth updates and added explicit ProGuard keep rules for all local database DAOs and service handlers.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions.
           draft: false
           prerelease: false

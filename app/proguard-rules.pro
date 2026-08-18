@@ -15,4 +15,7 @@
 # Domain & Data models
 -keep class com.samadhi.meditationtimer.data.backup.model.** { *; }
 -keep class com.samadhi.meditationtimer.data.local.entity.** { *; }
+-keep class com.samadhi.meditationtimer.data.local.dao.** { *; }
 -keep class com.samadhi.meditationtimer.domain.model.** { *; }
+-keep class com.samadhi.meditationtimer.data.wisdom.** { *; }
+-keep class com.samadhi.meditationtimer.service.** { *; }

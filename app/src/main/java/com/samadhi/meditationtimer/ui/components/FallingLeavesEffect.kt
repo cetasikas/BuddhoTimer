@@ -115,7 +115,7 @@ fun FallingLeavesEffect(
 
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {
-            leaves.filter { !it.isResting }.forEach { it.rotSpeed = (Random.nextFloat() * 16f - 8f) }
+            leaves.toList().filter { !it.isResting }.forEach { it.rotSpeed = (Random.nextFloat() * 16f - 8f) }
         }
     }
 
@@ -159,11 +159,14 @@ fun FallingLeavesEffect(
                     val dt = ((nowNanos - lastTimeNanos) / 1_000_000_000f).coerceIn(0.001f, 0.05f)
                     totalElapsedSec += dt
 
-                    leaves.forEachIndexed { _, leaf ->
+                    val toAdd = mutableListOf<Leaf>()
+                    val snapshot = leaves.toList()
+
+                    snapshot.forEach { leaf ->
                         if (leaf.isResting) {
                             // Gentle ambient breathing sway for resting leaves
                             leaf.rotation += dt * 0.35f * sin(totalElapsedSec * 0.5f + leaf.restSwayPhase)
-                            return@forEachIndexed
+                            return@forEach
                         }
 
                         if (leaf.isSettling) {
@@ -181,9 +184,9 @@ fun FallingLeavesEffect(
                                 leaf.rotSpeed = 0f
 
                                 // Spawn fresh airborne leaf at top
-                                val restingCount = leaves.count { it.isResting }
+                                val restingCount = snapshot.count { it.isResting }
                                 if (restingCount < maxRestingLeaves) {
-                                    leaves.add(
+                                    toAdd.add(
                                         createSingleFallingLeaf(
                                             currentTheme.particlePalette,
                                             spawnAbove = true
@@ -191,7 +194,7 @@ fun FallingLeavesEffect(
                                     )
                                 }
                             }
-                            return@forEachIndexed
+                            return@forEach
                         }
 
                         // --- Dynamic Gliding & Floating Flight Physics ---
@@ -220,12 +223,12 @@ fun FallingLeavesEffect(
                             leaf.xBase = Random.nextFloat() * 0.84f + 0.08f
                             leaf.currentX = leaf.xBase
                             leaf.driftVx = (Random.nextFloat() - 0.5f) * 0.035f
-                            return@forEachIndexed
+                            return@forEach
                         }
 
                         // Pile mode: trigger smooth landing at bottom
                         if (pileUpAtBottom && leaf.y >= 0.91f) {
-                            val restingCount = leaves.count { it.isResting }
+                            val restingCount = snapshot.count { it.isResting }
                             if (restingCount < maxRestingLeaves) {
                                 leaf.isSettling = true
                                 leaf.settleProgress = 0f
@@ -252,6 +255,10 @@ fun FallingLeavesEffect(
                             }
                         }
                     }
+
+                    if (toAdd.isNotEmpty()) {
+                        leaves.addAll(toAdd)
+                    }
                 }
                 lastTimeNanos = nowNanos
             }
@@ -268,8 +275,9 @@ fun FallingLeavesEffect(
         if (w <= 0f || h <= 0f) return@Canvas
 
         val breathingWave = (sin(t * 1.3f) * 0.5f + 0.5f)
+        val renderLeaves = leaves.toList()
 
-        leaves.forEach { leaf ->
+        renderLeaves.forEach { leaf ->
             val px = leaf.currentX * w
             val py = leaf.y * h
 

@@ -43,21 +43,6 @@ private data class EnsoUnit(
     val colorVariant: Float      // Shading variation
 )
 
-/**
- * Ambient falling background leaves/petals in Box Breathing mode.
- */
-private data class AmbientFallingLeaf(
-    val relX: Float,
-    val relY: Float,
-    val speedY: Float,
-    val driftFreq: Float,
-    val driftAmp: Float,
-    val scale: Float,
-    val initialRot: Float,
-    val rotSpeed: Float,
-    val baseAlpha: Float
-)
-
 @Composable
 fun ZenParticleBreathingCanvas(
     currentPhase: BreathPhase,
@@ -100,24 +85,6 @@ fun ZenParticleBreathingCanvas(
         }
     }
 
-    // Precompute 18 ambient falling background leaves/petals
-    val fallingLeaves = remember {
-        val rand = Random(42)
-        List(18) {
-            AmbientFallingLeaf(
-                relX = 0.06f + rand.nextFloat() * 0.88f,
-                relY = rand.nextFloat(),
-                speedY = 0.016f + rand.nextFloat() * 0.022f,
-                driftFreq = 0.35f + rand.nextFloat() * 0.65f,
-                driftAmp = 0.04f + rand.nextFloat() * 0.05f,
-                scale = 0.45f + rand.nextFloat() * 0.40f,
-                initialRot = rand.nextFloat() * 360f,
-                rotSpeed = (rand.nextFloat() - 0.5f) * 45f,
-                baseAlpha = 0.16f + rand.nextFloat() * 0.16f
-            )
-        }
-    }
-
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
@@ -125,18 +92,7 @@ fun ZenParticleBreathingCanvas(
         val center = Offset(width / 2f, height / 2f)
         val ensoBaseRadius = minDim * 0.43f // Enlarged to make full, magnificent use of screen space
 
-        // 1. Draw ambient falling background leaves matching active theme
-        drawAmbientFallingLeaves(
-            fallingLeaves = fallingLeaves,
-            minDim = minDim,
-            animClockSec = animClockSec,
-            themeId = zenTheme.id,
-            primary = zenTheme.primary,
-            primaryLight = zenTheme.primaryLight,
-            primaryDark = zenTheme.primaryDark
-        )
-
-        // 2. Draw the living Zen Ensō with top anchor leaf persisting on Hold Empty
+        // Draw the living Zen Ensō with top anchor leaf persisting on Hold Empty
         drawZenEnsoGarland(
             ensoUnits = ensoUnits,
             center = center,
@@ -150,76 +106,6 @@ fun ZenParticleBreathingCanvas(
             primaryLight = zenTheme.primaryLight,
             primaryDark = zenTheme.primaryDark
         )
-    }
-}
-
-// =========================================================================
-// AMBIENT FALLING BACKGROUND LEAVES / PETALS
-// =========================================================================
-
-private fun DrawScope.drawAmbientFallingLeaves(
-    fallingLeaves: List<AmbientFallingLeaf>,
-    minDim: Float,
-    animClockSec: Float,
-    themeId: ZenThemeId,
-    primary: Color,
-    primaryLight: Color,
-    primaryDark: Color
-) {
-    val boundW = size.width * 0.88f
-    val boundH = size.height * 0.88f
-    val startX = size.width * 0.06f
-    val startY = size.height * 0.06f
-
-    for (leaf in fallingLeaves) {
-        val yProg = (animClockSec * leaf.speedY + leaf.relY) % 1.0f
-        val posY = startY + yProg * boundH
-        val sway = sin(animClockSec * leaf.driftFreq + leaf.relX * 10f) * (minDim * leaf.driftAmp)
-        val posX = (startX + leaf.relX * boundW + sway).coerceIn(startX, startX + boundW)
-        val rot = leaf.initialRot + animClockSec * leaf.rotSpeed
-        val finalScale = (minDim / 380f) * leaf.scale
-
-        val leafCenter = Offset(posX, posY)
-
-        when (themeId) {
-            ZenThemeId.BAMBOO_TEAL -> {
-                drawEnsoBambooLeaf(
-                    center = leafCenter,
-                    scale = finalScale,
-                    rotation = rot,
-                    alpha = leaf.baseAlpha,
-                    colorVariant = 0.5f,
-                    primary = primary,
-                    primaryLight = primaryLight,
-                    primaryDark = primaryDark
-                )
-            }
-            ZenThemeId.SACRED_LOTUS -> {
-                drawEnsoLotusPetal(
-                    center = leafCenter,
-                    scale = finalScale,
-                    rotation = rot,
-                    alpha = leaf.baseAlpha,
-                    colorVariant = 0.5f,
-                    primary = primary,
-                    primaryLight = primaryLight,
-                    primaryDark = primaryDark
-                )
-            }
-            ZenThemeId.SAKURA_TWILIGHT -> {
-                drawEnsoSakuraPetal(
-                    center = leafCenter,
-                    scale = finalScale,
-                    rotation = rot,
-                    alpha = leaf.baseAlpha,
-                    colorVariant = 0.5f,
-                    isFloret = false,
-                    primary = primary,
-                    primaryLight = primaryLight,
-                    primaryDark = primaryDark
-                )
-            }
-        }
     }
 }
 

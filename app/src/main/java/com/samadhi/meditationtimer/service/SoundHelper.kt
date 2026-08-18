@@ -61,7 +61,7 @@ class SoundHelper(private val context: Context) {
     /**
      * Deep Tibetan Singing Bowl: Warm, mellow bronze resonance with soft 50ms attack & soothing 1.8Hz binaural pulse
      */
-    private fun synthesizeSingingBowlSound() {
+    private suspend fun synthesizeSingingBowlSound() {
         val sampleRate = 44100
         val durationSeconds = 5.0
         val numSamples = (durationSeconds * sampleRate).toInt()
@@ -100,7 +100,7 @@ class SoundHelper(private val context: Context) {
     /**
      * Zen Bronze Temple Bell (Keisu): Rich bronze warmth with gentle mallet strike and pure sustained ring
      */
-    private fun synthesizeZenTempleBell() {
+    private suspend fun synthesizeZenTempleBell() {
         val sampleRate = 44100
         val durationSeconds = 5.5
         val numSamples = (durationSeconds * sampleRate).toInt()
@@ -138,7 +138,7 @@ class SoundHelper(private val context: Context) {
     /**
      * Ting-Sha Chimes: Crystal-clear, soft celestial chime with pure lingering resonance
      */
-    private fun synthesizeTingshaChime() {
+    private suspend fun synthesizeTingshaChime() {
         val sampleRate = 44100
         val durationSeconds = 4.5
         val numSamples = (durationSeconds * sampleRate).toInt()
@@ -170,7 +170,7 @@ class SoundHelper(private val context: Context) {
     /**
      * Moktak / Temple Woodblock: Organic warm resonant wooden knock
      */
-    private fun synthesizeMoktak() {
+    private suspend fun synthesizeMoktak() {
         val sampleRate = 44100
         val durationSeconds = 1.4
         val numSamples = (durationSeconds * sampleRate).toInt()
@@ -197,27 +197,45 @@ class SoundHelper(private val context: Context) {
         playPcmBuffer(buffer, sampleRate)
     }
 
-    private fun playPcmBuffer(buffer: ShortArray, sampleRate: Int) {
-        val audioTrack = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(sampleRate)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                    .build()
-            )
-            .setBufferSizeInBytes(buffer.size * 2)
-            .setTransferMode(AudioTrack.MODE_STATIC)
-            .build()
+    private suspend fun playPcmBuffer(buffer: ShortArray, sampleRate: Int) {
+        var audioTrack: AudioTrack? = null
+        try {
+            audioTrack = AudioTrack.Builder()
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(sampleRate)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build()
+                )
+                .setBufferSizeInBytes(buffer.size * 2)
+                .setTransferMode(AudioTrack.MODE_STATIC)
+                .build()
 
-        audioTrack.write(buffer, 0, buffer.size)
-        audioTrack.play()
+            audioTrack.write(buffer, 0, buffer.size)
+            audioTrack.play()
+
+            val durationMs = (buffer.size.toDouble() / sampleRate * 1000.0).toLong() + 250L
+            kotlinx.coroutines.delay(durationMs)
+        } catch (e: Exception) {
+            Log.e(TAG, "AudioTrack playback error", e)
+            playSystemFallbackSound()
+        } finally {
+            try {
+                if (audioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                    audioTrack.stop()
+                }
+                audioTrack?.release()
+            } catch (e: Exception) {
+                Log.w(TAG, "Error releasing AudioTrack", e)
+            }
+        }
     }
 
     private fun playSystemFallbackSound() {
