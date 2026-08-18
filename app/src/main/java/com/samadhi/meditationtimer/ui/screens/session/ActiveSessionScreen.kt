@@ -174,12 +174,13 @@ fun ActiveSessionScreen(
                 }
             }
     ) {
-        // 1. Ambient Falling Leaves with Smooth Ground Pile Accumulation (Kept permanently mounted)
+        // 1. Ambient Falling Leaves (permanently mounted, restored on resume via elapsedMeditationSeconds)
         if (config.showLeavesDuringMeditation) {
             FallingLeavesEffect(
                 leafCount = config.meditationLeafCount.coerceIn(10, 24),
                 pileUpAtBottom = true,
                 sessionProgressRatio = sessionProgress,
+                elapsedMeditationSeconds = elapsedMeditationSec,
                 ambientAlpha = 0.38f,
                 isBlowingAway = isBlowingAway,
                 onBlowAwayComplete = {

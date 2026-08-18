@@ -77,6 +77,7 @@ fun FallingLeavesEffect(
     pileUpAtBottom: Boolean = false,
     sessionProgressRatio: Float = 0.0f,
     initialSettledLeavesCount: Int = 0,
+    elapsedMeditationSeconds: Int = 0,
     isBlowingAway: Boolean = false,
     onBlowAwayComplete: () -> Unit = {}
 ) {
@@ -88,11 +89,20 @@ fun FallingLeavesEffect(
         }
     }
 
-    // Scattered settled leaves — land wherever they fall and fade softly into place
+    // Scattered settled leaves — seeded once on (re)creation, stable during live session.
+    // elapsedMeditationSeconds is NOT a recomposition key; it's only read once at creation time
+    // so the list is stable mid-session but restores correctly after an app minimize/resume.
     val settledLeaves = remember(currentTheme.id, pileUpAtBottom) {
         mutableStateListOf<SettledLeaf>().apply {
-            if (pileUpAtBottom && initialSettledLeavesCount > 0) {
-                addAll(generatePreScatteredLeaves(initialSettledLeavesCount, currentTheme.particlePalette))
+            if (pileUpAtBottom) {
+                val seedCount = when {
+                    initialSettledLeavesCount > 0 -> initialSettledLeavesCount
+                    elapsedMeditationSeconds > 15  -> (elapsedMeditationSeconds / 20).coerceIn(1, 85)
+                    else -> 0
+                }
+                if (seedCount > 0) {
+                    addAll(generatePreScatteredLeaves(seedCount, currentTheme.particlePalette))
+                }
             }
         }
     }
