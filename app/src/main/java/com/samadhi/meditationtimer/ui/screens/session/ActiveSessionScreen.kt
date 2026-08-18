@@ -141,6 +141,12 @@ fun ActiveSessionScreen(
     var isBlowingAway by remember { mutableStateOf(false) }
     var pendingExitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
+    val elapsedMeditationSec = when (val s = timerStatus) {
+        is TimerStatus.Running -> s.elapsedSeconds
+        is TimerStatus.Paused -> s.elapsedSeconds
+        else -> 0
+    }
+
     val sessionProgress = when (val s = timerStatus) {
         is TimerStatus.Running -> {
             val targetSec = config.targetDurationSeconds
@@ -168,10 +174,27 @@ fun ActiveSessionScreen(
                 }
             }
     ) {
+        // 1. Ambient Falling Leaves with Smooth Ground Pile Accumulation (Kept permanently mounted)
+        if (config.showLeavesDuringMeditation) {
+            FallingLeavesEffect(
+                leafCount = config.meditationLeafCount.coerceIn(10, 24),
+                pileUpAtBottom = true,
+                sessionProgressRatio = sessionProgress,
+                elapsedMeditationSeconds = elapsedMeditationSec,
+                ambientAlpha = 0.38f,
+                isBlowingAway = isBlowingAway,
+                onBlowAwayComplete = {
+                    pendingExitAction?.invoke()
+                }
+            )
+        }
+
         if (isScreenBlackedOut) {
-            // Pure AMOLED Stealth Blackout (100% Black)
+            // Pure AMOLED Stealth Blackout (100% Black overlay covers screen without unmounting canvas)
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -182,20 +205,6 @@ fun ActiveSessionScreen(
                 )
             }
         } else {
-            // Ambient Falling Leaves with Smooth Ground Pile Accumulation
-            if (config.showLeavesDuringMeditation) {
-                FallingLeavesEffect(
-                    leafCount = config.meditationLeafCount.coerceIn(10, 24),
-                    pileUpAtBottom = true,
-                    sessionProgressRatio = sessionProgress,
-                    ambientAlpha = 0.38f,
-                    isBlowingAway = isBlowingAway,
-                    onBlowAwayComplete = {
-                        pendingExitAction?.invoke()
-                    }
-                )
-            }
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()

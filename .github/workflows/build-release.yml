@@ -49,17 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.16.0
-          name: "Buddho Timer v2.16.0"
+          tag_name: v2.17.0
+          name: "Buddho Timer v2.17.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.16.0
+            ## 🪷 Buddho Meditation Timer v2.17.0
             
-            - **🍂 Natural Zero-Start & Organic Leaf Accumulation**:
-              - Meditation sessions now begin with a completely clean ground (0 leaves).
-              - Leaves float down gently from the sky one by one (~20s descent) with natural sway and soft inward wind drift.
-              - Leaves land gently right where they touch down with smooth deceleration (no sudden horizontal snaps or fast flying), gradually building up a serene central mound as meditation time elapses.
-            - **🧘 Preserved Mound on Practice Summary Screen**:
-              - The accumulated leaf pile remains in place during session reflection and blows away peacefully upon screen exit.
+            - **🍃 Seamless Leaf Pile Persistence across Blackouts & App Resumes**:
+              - The settling canvas is now permanently mounted during active meditation sessions, preserving the accumulated ground mound when tapping to blackout and un-blackout.
+              - Accurately restores and continues the organic leaf mound when resuming the app from background.
+            - **🧘 Accurate Accumulation on Practice Overview Screen**:
+              - The Practice Overview screen preserves the exact accumulated botanical mound earned throughout the session's duration.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

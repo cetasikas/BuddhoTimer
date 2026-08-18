@@ -94,12 +94,14 @@ fun SessionSummaryScreen(
         var isBlowingAway by remember { mutableStateOf(false) }
         var pendingExitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-        // Accumulated leaf mound preserved from the meditation session
+        // Accumulated leaf mound accurately reflecting session duration
+        val accumulatedLeafCount = (completedStatus.actualDurationSec / 18).coerceIn(0, 85)
         FallingLeavesEffect(
             leafCount = 14,
             ambientAlpha = 0.35f,
             pileUpAtBottom = true,
-            initialSettledLeavesCount = (completedStatus.actualDurationSec / 15).coerceIn(24, 75),
+            initialSettledLeavesCount = accumulatedLeafCount,
+            elapsedMeditationSeconds = completedStatus.actualDurationSec,
             isBlowingAway = isBlowingAway,
             onBlowAwayComplete = {
                 pendingExitAction?.invoke()

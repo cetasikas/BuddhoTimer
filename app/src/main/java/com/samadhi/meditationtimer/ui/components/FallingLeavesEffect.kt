@@ -79,6 +79,7 @@ fun FallingLeavesEffect(
     pileUpAtBottom: Boolean = false,
     sessionProgressRatio: Float = 0.0f,
     initialSettledLeavesCount: Int = 0,
+    elapsedMeditationSeconds: Int = 0,
     isBlowingAway: Boolean = false,
     onBlowAwayComplete: () -> Unit = {}
 ) {
@@ -96,12 +97,23 @@ fun FallingLeavesEffect(
         FloatArray(32) { 0.94f }
     }
 
+    // Determine initial mound count (from explicitly passed count or elapsed meditation seconds)
+    val effectiveSeedCount = remember(initialSettledLeavesCount, elapsedMeditationSeconds) {
+        if (initialSettledLeavesCount > 0) {
+            initialSettledLeavesCount
+        } else if (elapsedMeditationSeconds > 10) {
+            (elapsedMeditationSeconds / 18).coerceIn(1, 85)
+        } else {
+            0
+        }
+    }
+
     // Settled leaves on the ground: Starts completely empty (0 leaves) at meditation start,
-    // or loaded with initial count on practice summary / overview screen
-    val settledLeaves = remember(currentTheme.id, pileUpAtBottom, initialSettledLeavesCount) {
+    // or loaded with accurate count if app was resumed or on summary overview screen
+    val settledLeaves = remember(currentTheme.id, pileUpAtBottom, effectiveSeedCount) {
         mutableStateListOf<SettledLeaf>().apply {
-            if (pileUpAtBottom && initialSettledLeavesCount > 0) {
-                val initialPile = generatePreStackedMound(initialSettledLeavesCount, currentTheme.particlePalette)
+            if (pileUpAtBottom && effectiveSeedCount > 0) {
+                val initialPile = generatePreStackedMound(effectiveSeedCount, currentTheme.particlePalette)
                 addAll(initialPile)
 
                 initialPile.forEach { leaf ->
