@@ -49,15 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.18.0
-          name: "Buddho Timer v2.18.0"
+          tag_name: v2.19.0
+          name: "Buddho Timer v2.19.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.18.0
+            ## 🪷 Buddho Meditation Timer v2.19.0
             
-            - **🍃 Seamless & Natural Leaf Pile Physics Fixed**:
-              - Fixed state recreation issue so settled leaves never vanish or jump abruptly.
-              - Every falling leaf smoothly descends and lands directly at its touchdown position, continuously accumulating on the pile in real time.
-              - 100% reliable blackout toggle without disturbing the falling or settled leaves.
+            - **🌸 Sacred Zen Botanical Mandala Leaf Engine**:
+              - Leaves float down and nest one by one into a symmetrical botanical mandala at the bottom center.
+              - 3 concentric rings (Foundation → Interlocking Mid → Inner Crown → Golden Core) unfold as your practice deepens.
+              - A soft luminous core jewel blossoms when the inner layers complete.
+              - Mandala persists on the Practice Overview and dissolves in a gentle whirlwind on exit.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
