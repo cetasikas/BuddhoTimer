@@ -49,17 +49,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.5.9
-          name: "Buddho Timer v2.5.9"
+          tag_name: v2.6.0
+          name: "Buddho Timer v2.6.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.5.9
+            ## 🪷 Buddho Meditation Timer v2.6.0
             
-            - **🎋 Distinct Theme Botanicals in Box Breathing**: Transformed Box Breathing animations to render distinct, theme-authentic plants:
-              - *Moonlit Bamboo*: Slender lanceolate bamboo foliage blades with culm joint sheath notches and parallel venation.
-              - *Golden Lotus*: Broad cupped sacred water lily petals with glowing golden ribbing.
-              - *Sakura Twilight*: Delicate notched cherry blossom petals with heart-cleft apex and stamen glow.
-            - **✨ Enhanced Tactile Slider Animations**: Added dynamic expanding radiant halo aura and sprout bloom on the branch slider thumb during drag.
-            - **🧘 Minimal Meditating Buddha Outline Logo & "Buddho Timer" Branding**: Clean vector Enso outline logo of the seated Buddha in meditation.
+            - **🍃 Decluttered & Spacious Setup Screens**: Removed clutter with single-row essential presets, expansive tranquil padding, and clean typography for pure zen focus.
+            - **🎋 Authentic High-Definition Botanical Breathing Species**: Complete visual overhaul of breathwork animations:
+              - *Moonlit Bamboo*: Multi-leaf authentic bamboo branch sprigs with joint node stems and lanceolate foliage.
+              - *Golden Lotus*: Concentric sacred lotus flower petals blooming open with golden vein filigree.
+              - *Sakura Twilight*: 5-petal cherry blossom florets and notched sakura petals.
+            - **🔍 Crystal-Clear Breathwork Method Differentiator**: High-contrast method badges (`[ EQUAL 4-PHASE BOX ]`, `[ DEEP SLEEP & RELAX ]`, `[ HEART COHERENCE ]`, `[ GENTLE BEGINNER ]`) with explicit step-by-step cadence breakdowns.
+            - **💖 Moved Donate Button to Settings**: Placed the Support / Donate action in the top right of the Settings screen.
+            - **🧘 Pure Ambient Falling Leaves**: Background leaves fall in a peaceful, natural, serene vertical drift uncoupled from dragging.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

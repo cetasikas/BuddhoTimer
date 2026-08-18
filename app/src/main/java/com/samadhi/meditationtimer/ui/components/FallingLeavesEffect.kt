@@ -108,27 +108,11 @@ fun FallingLeavesEffect(
         FloatArray(32) { 0.95f }
     }
 
-    // Real-time slider drag gentle horizontal wind breeze
-    LaunchedEffect(dragVelocity) {
-        if (dragVelocity != 0f) {
-            val dir = if (dragVelocity > 0) 1f else -1f
-            activeLeaves.forEach { leaf ->
-                // Soft horizontal breeze impulse in direction of drag
-                val breezeSpeed = Random.nextFloat() * 0.06f + 0.03f
-                leaf.vx += dir * breezeSpeed
-                leaf.rotSpeed = dir * (Random.nextFloat() * 25f + 15f)
-            }
-        }
-    }
-
-    // Gentle burst trigger for presets / mode switch (soft gentle flutter)
+    // Gentle ambient flutter on preset / setting change
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {
-            val dir = if (Random.nextBoolean()) 1f else -1f
             activeLeaves.forEach { leaf ->
-                val breezeSpeed = Random.nextFloat() * 0.05f + 0.02f
-                leaf.vx += dir * breezeSpeed
-                leaf.rotSpeed = (Random.nextFloat() * 30f - 15f)
+                leaf.rotSpeed = (Random.nextFloat() * 16f - 8f)
             }
         }
     }

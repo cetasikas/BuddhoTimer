@@ -309,8 +309,7 @@ fun BreathingScreen(
                 ZenParticleBreathingCanvas(
                     currentPhase = currentPhase,
                     phaseProgress = phaseProgress,
-                    modifier = Modifier.fillMaxSize(),
-                    leafCount = 220
+                    modifier = Modifier.fillMaxSize()
                 )
             }
 
