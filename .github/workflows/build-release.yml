@@ -49,15 +49,21 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.10.0
-          name: "Buddho Timer v2.10.0"
+          tag_name: v2.11.0
+          name: "Buddho Timer v2.11.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.10.0
+            ## 🪷 Buddho Meditation Timer v2.11.0
             
-            - **✨ Dynamic Calm Milestone Notches & Traveling Half-Circle Bead**: Smooth orbital indicator with capsule notches marking the stopping points for inhalation, hold, and exhalation without static circle lines.
-            - **🌿 Fluid Organic Botanical Fields**: Dynamic, flowing bamboo leaves, golden lotus petals, and cherry blossom florets that breathe with natural organic motion.
-            - **🌑 True Immersive System Blackout**: Tap-to-blackout now completely hides the Android notification status bar and navigation buttons during meditation and breathwork.
-            - **📏 Single-Screen Overview & Uniform Chips**: Perfect viewport fitting for the post-session completion reflection screen and uniform sizing for timing chips.
+            - **⭕ Sacred Zen Ensō Botanical Breath Visualizer**:
+              - *Inhale*: Leaves and petals sweep smoothly clockwise from the top, forming an organic Zen circle (Ensō).
+              - *Hold Full*: The complete Ensō garland glows with soft harmonic breathing illumination.
+              - *Exhale*: The circle gently un-makes and dissolves itself, with leaves floating peacefully into the mist.
+              - *Hold Empty*: Pure tranquil stillness (Śūnyatā / Emptiness) before the next breath.
+            - **🎋 Bespoke Botanical Themes**:
+              - *Moonlit Bamboo*: Organic jade & emerald bamboo leaves forming a calligraphic bamboo wreath.
+              - *Sacred Lotus*: Golden & coral lotus petals layered in a radiant sacred garland.
+              - *Sakura Twilight*: Delicate pink cherry florets and notched petals swirling in a sakura wreath.
+            - **📱 Discard Button Padding Refinement**: Improved layout and balanced padding on the completion reflection screen.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

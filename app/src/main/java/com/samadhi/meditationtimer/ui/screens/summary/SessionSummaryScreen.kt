@@ -401,14 +401,20 @@ fun SessionSummaryScreen(
                     enabled = !isBlowingAway,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(38.dp),
+                        .height(42.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 4.dp, horizontal = 12.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
                     border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenBorder))
                 ) {
-                    Text(text = "Discard", fontSize = 12.5.sp)
+                    Text(
+                        text = "Discard",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
+            Spacer(modifier = Modifier.height(6.dp))
         }
     }
 }
