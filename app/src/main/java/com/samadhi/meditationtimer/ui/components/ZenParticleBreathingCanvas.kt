@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import com.samadhi.meditationtimer.domain.model.BreathPhase
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
+import com.samadhi.meditationtimer.ui.theme.ParticleType
 import com.samadhi.meditationtimer.ui.theme.ZenThemeId
 import kotlin.math.PI
 import kotlin.math.cos
@@ -40,7 +41,7 @@ private fun easeInOutCubic(x: Float): Float {
     }
 }
 
-private data class BreathLeafEntity(
+private data class BreathPlantEntity(
     val index: Int,
     val angle: Float,
     val homeRadiusRatio: Float,
@@ -64,8 +65,8 @@ fun ZenParticleBreathingCanvas(
 ) {
     val currentTheme = LocalZenTheme.current
 
-    // Generate 220 breathing leaves distributed in a living phyllotaxis spiral
-    val leaves = remember(leafCount, currentTheme.id) {
+    // Generate 220 breathing botanical entities distributed in an organic phyllotaxis spiral
+    val plantEntities = remember(leafCount, currentTheme.id) {
         val palette = currentTheme.particlePalette
         val goldenAngle = (PI * (3.0 - sqrt(5.0))).toFloat() // ~137.5 deg phyllotaxis
 
@@ -76,9 +77,9 @@ fun ZenParticleBreathingCanvas(
             val homeR = (Random.nextFloat().pow(0.5f)) * 0.14f
             val expandR = (0.22f + (Random.nextFloat().pow(0.55f)) * 0.78f)
 
-            // Varied sizes with hero blooming leaves
+            // Varied sizes with hero blooming elements
             val size = when {
-                i % 10 == 0 -> Random.nextFloat() * 6.0f + 24.0f // Hero leaves
+                i % 10 == 0 -> Random.nextFloat() * 6.0f + 25.0f // Hero plant elements
                 i % 3 == 0 -> Random.nextFloat() * 5.0f + 19.0f
                 else -> Random.nextFloat() * 4.0f + 15.0f
             }
@@ -86,7 +87,7 @@ fun ZenParticleBreathingCanvas(
             val glow = Random.nextFloat() * 3.0f + 6.0f
             val op = (Random.nextFloat() * 0.20f + 0.80f).coerceIn(0.75f, 1.0f)
 
-            BreathLeafEntity(
+            BreathPlantEntity(
                 index = i,
                 angle = angle,
                 homeRadiusRatio = homeR,
@@ -103,7 +104,7 @@ fun ZenParticleBreathingCanvas(
         }
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "leafBreathingClock")
+    val infiniteTransition = rememberInfiniteTransition(label = "plantBreathingClock")
     val animClockSec by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 3600f,
@@ -142,199 +143,210 @@ fun ZenParticleBreathingCanvas(
             Triple(contraction, currentTheme.overrunColor, glow)
         }
         BreathPhase.HOLD_EMPTY -> {
-            val restingPulse = sin(phaseProgress * PI.toFloat()) * 0.015f
-            val glow = 0.35f + sin(phaseProgress * PI.toFloat()) * 0.10f
-            Triple(0.22f + restingPulse, currentTheme.primaryDark, glow)
+            val quietPulse = sin(phaseProgress * PI.toFloat()) * 0.020f
+            val quietGlow = 0.35f + sin(phaseProgress * PI.toFloat()) * 0.12f
+            Triple(0.22f + quietPulse, currentTheme.primary, quietGlow)
         }
     }
 
-    val leafPath = remember { Path() }
-    val spinePath = remember { Path() }
-
     Canvas(modifier = modifier.fillMaxSize()) {
-        val center = Offset(size.width / 2f, size.height / 2f)
-        val maxRadius = (size.minDimension / 2f) * 0.86f
-        if (maxRadius <= 0f) return@Canvas
+        val width = size.width
+        val height = size.height
+        val center = Offset(width / 2f, height / 2f)
+        val maxAvailableRadius = (width.coerceAtMost(height) * 0.44f)
 
-        // 1. Atmosphere Radial Aura (Pulsating in sync with breathing)
-        val auraRadius = maxRadius * (0.38f + 0.70f * expansionFactor)
+        // 1. Serene Diffuse Atmosphere Aura (Pure Organic Ambient Glow)
+        val coreAuraRadius = maxAvailableRadius * (0.35f + 0.65f * expansionFactor) * corePulse
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    phaseGlowColor.copy(alpha = (0.28f * glowPulseIntensity).coerceIn(0f, 0.48f)),
-                    currentTheme.primaryDark.copy(alpha = (0.10f * glowPulseIntensity).coerceIn(0f, 0.22f)),
+                    phaseGlowColor.copy(alpha = (0.28f * glowPulseIntensity).coerceIn(0.08f, 0.42f)),
+                    currentTheme.primary.copy(alpha = (0.14f * glowPulseIntensity).coerceIn(0.03f, 0.22f)),
                     Color.Transparent
                 ),
                 center = center,
-                radius = auraRadius
+                radius = coreAuraRadius * 1.35f
             ),
-            radius = auraRadius,
+            radius = coreAuraRadius * 1.35f,
             center = center
         )
 
-        // 2. Soft Deeply-Diffused Central Atmospheric Nebula (No dense solid dot)
-        val nebulaRadius = maxRadius * 0.42f * corePulse * (0.75f + 0.35f * expansionFactor)
+        // 2. Translucent Breath Boundary Ring (Expands/contracts with breath cycle)
+        val ringRadius = maxAvailableRadius * expansionFactor
         drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    currentTheme.primaryLight.copy(alpha = (0.28f * glowPulseIntensity).coerceIn(0f, 0.45f)),
-                    currentTheme.primary.copy(alpha = (0.12f * glowPulseIntensity).coerceIn(0f, 0.25f)),
-                    currentTheme.primaryDark.copy(alpha = (0.04f * glowPulseIntensity).coerceIn(0f, 0.12f)),
-                    Color.Transparent
-                ),
-                center = center,
-                radius = nebulaRadius
-            ),
-            radius = nebulaRadius,
-            center = center
+            color = phaseGlowColor.copy(alpha = (0.16f * glowPulseIntensity).coerceIn(0.05f, 0.30f)),
+            radius = ringRadius,
+            center = center,
+            style = Stroke(width = 1.8f)
         )
 
-        // 3. Render Living Field of 220 Breathing Leaves with Dynamic Spiral Orbit & Pulsating Glow Halos
-        leaves.forEach { leaf ->
-            val homeR = leaf.homeRadiusRatio * maxRadius
-            val expandR = leaf.expandRadiusRatio * maxRadius
-            val r = homeR + (expandR - homeR) * expansionFactor
+        // 3. Render Theme Botanical Plants (Bamboo Leaves, Lotus Petals, Sakura Blossoms)
+        val path = Path()
+        val spinePath = Path()
 
-            // Multi-frequency harmonic organic wobble (calm, slow drift)
-            val wx = sin(animClockSec * leaf.speed * 0.9f + leaf.phase) * leaf.wobble * (1.1f + 1.4f * expansionFactor)
-            val wy = cos(animClockSec * leaf.speed * 0.7f + leaf.phase * 1.3f) * leaf.wobble * (1.1f + 1.4f * expansionFactor)
+        for (plant in plantEntities) {
+            val entityProgress = (expansionFactor + sin(animClockSec * plant.speed + plant.phase) * 0.025f).coerceIn(0.16f, 1.05f)
+            val currentRadius = maxAvailableRadius * (plant.homeRadiusRatio + (plant.expandRadiusRatio - plant.homeRadiusRatio) * entityProgress)
 
-            // Dynamic breathing spiral orbit (Much slower, tranquil meditative drift)
-            val breathSpiralAngle = leaf.angle + (expansionFactor * 0.16f) + (animClockSec * leaf.speed * 0.45f)
-            val pX = center.x + cos(breathSpiralAngle) * r + wx
-            val pY = center.y + sin(breathSpiralAngle) * r + wy
+            val orbitDrift = animClockSec * (0.018f * (1.0f - plant.homeRadiusRatio))
+            val currentAngle = plant.angle + orbitDrift + (sin(animClockSec * plant.flutterSpeed + plant.phase) * 0.045f)
 
-            val dynamicAlpha = leaf.opacity * (0.65f + expansionFactor * 0.35f)
-            val flutter = sin(animClockSec * leaf.flutterSpeed * 0.4f + leaf.phase) * (5f + 6f * expansionFactor)
-            val rot = Math.toDegrees(breathSpiralAngle.toDouble()).toFloat() + 90f + flutter + (expansionFactor * 9f * (if (leaf.index % 2 == 0) 1f else -1f))
+            val px = center.x + cos(currentAngle) * currentRadius
+            val py = center.y + sin(currentAngle) * currentRadius
 
-            val currentLeafSize = leaf.size * (0.85f + 0.30f * expansionFactor)
+            // Dynamic rotation pointing organically outward with gentle breathing tilt
+            val outwardAngleDeg = Math.toDegrees(currentAngle.toDouble()).toFloat() + 90f
+            val naturalFlutter = sin(animClockSec * plant.flutterSpeed + plant.phase) * plant.wobble * 4.5f
+            val plantRotation = outwardAngleDeg + naturalFlutter
 
-            drawGlowingLeaf(
+            val growthScale = (0.45f + 0.55f * expansionFactor) * (1.0f + 0.06f * sin(animClockSec * 2.0f + plant.phase))
+            val entitySize = plant.size * growthScale
+
+            val entityAlpha = (plant.opacity * (0.75f + 0.25f * expansionFactor)).coerceIn(0.55f, 1.0f)
+            val glowIntensity = (plant.baseGlow / 7.0f) * glowPulseIntensity
+
+            drawThemeBotanicalElement(
                 themeId = currentTheme.id,
-                path = leafPath,
-                spinePath = spinePath,
-                center = Offset(pX, pY),
-                size = currentLeafSize,
-                rotation = rot,
-                color = leaf.color.copy(alpha = dynamicAlpha.coerceIn(0.55f, 1.0f)),
-                highlightColor = currentTheme.primaryLight,
-                glowIntensity = glowPulseIntensity,
+                particleType = currentTheme.particleType,
+                center = Offset(px, py),
+                size = entitySize,
+                rotation = plantRotation,
+                color = plant.color,
+                highlightColor = phaseGlowColor,
                 expansionFactor = expansionFactor,
-                dynamicAlpha = dynamicAlpha
+                glowIntensity = glowIntensity,
+                dynamicAlpha = entityAlpha,
+                path = path,
+                spinePath = spinePath
             )
         }
     }
 }
 
-private fun DrawScope.drawGlowingLeaf(
+private fun DrawScope.drawThemeBotanicalElement(
     themeId: ZenThemeId,
-    path: Path,
-    spinePath: Path,
+    particleType: ParticleType,
     center: Offset,
     size: Float,
     rotation: Float,
     color: Color,
     highlightColor: Color,
-    glowIntensity: Float,
     expansionFactor: Float,
-    dynamicAlpha: Float
+    glowIntensity: Float,
+    dynamicAlpha: Float,
+    path: Path,
+    spinePath: Path
 ) {
     rotate(degrees = rotation, pivot = center) {
+        val halfW = size * 0.38f
+        val halfH = size * 0.75f
         path.reset()
         spinePath.reset()
-        val halfW = size * 0.38f
-        val halfH = size * 0.86f
 
         when (themeId) {
             ZenThemeId.BAMBOO_TEAL -> {
-                // Pointed Bamboo / Bodhi Leaf
-                val bHalfW = size * 0.28f
-                path.moveTo(center.x, center.y - halfH)
+                // 🎋 Moonlit Bamboo: Slender, pointed lanceolate bamboo blade with node stalk & parallel venation
+                val bWidth = size * 0.24f
+                path.moveTo(center.x, center.y - halfH * 1.05f) // Sharp bamboo apex tip
                 path.cubicTo(
-                    center.x + bHalfW * 1.15f, center.y - halfH * 0.35f,
-                    center.x + bHalfW * 0.85f, center.y + halfH * 0.35f,
-                    center.x, center.y + halfH
+                    center.x + bWidth * 1.25f, center.y - halfH * 0.40f,
+                    center.x + bWidth * 0.90f, center.y + halfH * 0.45f,
+                    center.x, center.y + halfH * 0.95f // Stalk base
                 )
                 path.cubicTo(
-                    center.x - bHalfW * 0.85f, center.y + halfH * 0.35f,
-                    center.x - bHalfW * 1.15f, center.y - halfH * 0.35f,
-                    center.x, center.y - halfH
+                    center.x - bWidth * 0.90f, center.y + halfH * 0.45f,
+                    center.x - bWidth * 1.25f, center.y - halfH * 0.40f,
+                    center.x, center.y - halfH * 1.05f
                 )
                 path.close()
 
-                spinePath.moveTo(center.x, center.y - halfH * 0.82f)
-                spinePath.lineTo(center.x, center.y + halfH * 0.82f)
+                // Bamboo main spine vein + side notch
+                spinePath.moveTo(center.x, center.y - halfH * 0.95f)
+                spinePath.lineTo(center.x, center.y + halfH * 0.85f)
+
+                // Bamboo culm joint sheath notch
+                spinePath.moveTo(center.x - bWidth * 0.45f, center.y + halfH * 0.55f)
+                spinePath.lineTo(center.x + bWidth * 0.45f, center.y + halfH * 0.55f)
             }
             ZenThemeId.SACRED_LOTUS -> {
-                // Broad Cupped Lotus Petal
-                path.moveTo(center.x, center.y - halfH * 0.95f)
+                // 🪷 Golden Lotus: Broad, gracefully cupped sacred lotus water lily petal
+                val lWidth = size * 0.46f
+                path.moveTo(center.x, center.y - halfH * 1.02f) // Pointed petal tip
                 path.cubicTo(
-                    center.x + halfW * 1.35f, center.y - halfH * 0.35f,
-                    center.x + halfW * 1.15f, center.y + halfH * 0.45f,
-                    center.x, center.y + halfH
+                    center.x + lWidth * 1.25f, center.y - halfH * 0.30f,
+                    center.x + lWidth * 1.10f, center.y + halfH * 0.50f,
+                    center.x, center.y + halfH * 0.90f // Cupped base
                 )
                 path.cubicTo(
-                    center.x - halfW * 1.15f, center.y + halfH * 0.45f,
-                    center.x - halfW * 1.35f, center.y - halfH * 0.35f,
-                    center.x, center.y - halfH * 0.95f
+                    center.x - lWidth * 1.10f, center.y + halfH * 0.50f,
+                    center.x - lWidth * 1.25f, center.y - halfH * 0.30f,
+                    center.x, center.y - halfH * 1.02f
                 )
                 path.close()
 
-                spinePath.moveTo(center.x, center.y - halfH * 0.78f)
-                spinePath.quadraticTo(center.x + halfW * 0.15f, center.y, center.x, center.y + halfH * 0.78f)
+                // Lotus central spine + gentle radiating rib curves
+                spinePath.moveTo(center.x, center.y - halfH * 0.85f)
+                spinePath.lineTo(center.x, center.y + halfH * 0.75f)
+
+                spinePath.moveTo(center.x - lWidth * 0.35f, center.y - halfH * 0.20f)
+                spinePath.quadraticTo(center.x, center.y + halfH * 0.30f, center.x + lWidth * 0.35f, center.y - halfH * 0.20f)
             }
             ZenThemeId.SAKURA_TWILIGHT -> {
-                // Notched Cherry Blossom Petal
+                // 🌸 Sakura Twilight: Iconic notched cherry blossom petal with heart-cleft apex
+                val sWidth = size * 0.42f
                 val topY = center.y - halfH * 0.95f
-                path.moveTo(center.x, center.y + halfH)
+                val notchDepth = halfH * 0.22f
+
+                path.moveTo(center.x, center.y + halfH * 0.90f) // Petal base
                 path.cubicTo(
-                    center.x - halfW * 1.20f, center.y + halfH * 0.35f,
-                    center.x - halfW * 1.10f, center.y - halfH * 0.45f,
-                    center.x - halfW * 0.55f, topY
+                    center.x - sWidth * 1.15f, center.y + halfH * 0.40f,
+                    center.x - sWidth * 1.05f, center.y - halfH * 0.40f,
+                    center.x - sWidth * 0.52f, topY // Left lobe
                 )
+                // Center heart notch cleft
                 path.quadraticTo(
-                    center.x, topY + halfH * 0.20f,
-                    center.x + halfW * 0.55f, topY
+                    center.x, topY + notchDepth,
+                    center.x + sWidth * 0.52f, topY // Right lobe
                 )
                 path.cubicTo(
-                    center.x + halfW * 1.10f, center.y - halfH * 0.45f,
-                    center.x + halfW * 1.20f, center.y + halfH * 0.35f,
-                    center.x, center.y + halfH
+                    center.x + sWidth * 1.05f, center.y - halfH * 0.40f,
+                    center.x + sWidth * 1.15f, center.y + halfH * 0.40f,
+                    center.x, center.y + halfH * 0.90f
                 )
                 path.close()
 
-                spinePath.moveTo(center.x, topY + halfH * 0.35f)
-                spinePath.lineTo(center.x, center.y + halfH * 0.80f)
+                // Sakura delicate stamen vein
+                spinePath.moveTo(center.x, topY + notchDepth * 1.3f)
+                spinePath.lineTo(center.x, center.y + halfH * 0.75f)
             }
         }
 
-        // Pass 1: Subtle Luminous White Outer Atmosphere Aura (Soft edge framing)
-        val whiteOuterGlowAlpha = (0.24f * glowIntensity * dynamicAlpha).coerceIn(0f, 0.45f)
-        val whiteOuterGlowStroke = 9.0f * (0.75f + 0.45f * glowIntensity * expansionFactor)
+        // Pass 1: Luminous Outer Aura (Soft organic framing)
+        val outerGlowAlpha = (0.22f * glowIntensity * dynamicAlpha).coerceIn(0f, 0.40f)
+        val outerGlowStroke = 8.0f * (0.75f + 0.40f * glowIntensity * expansionFactor)
         drawPath(
             path = path,
-            color = Color.White.copy(alpha = whiteOuterGlowAlpha),
-            style = Stroke(width = whiteOuterGlowStroke, cap = StrokeCap.Round)
+            color = Color.White.copy(alpha = outerGlowAlpha),
+            style = Stroke(width = outerGlowStroke, cap = StrokeCap.Round)
         )
 
-        // Pass 2: Rich Theme Colored Radiant Bloom (Emits the leaf's true theme pigment)
-        val themeBloomAlpha = (0.50f * glowIntensity * dynamicAlpha).coerceIn(0.15f, 0.75f)
-        val themeBloomStroke = 4.0f * (0.8f + 0.35f * glowIntensity)
+        // Pass 2: Vibrant Theme Colored Radiant Bloom
+        val bloomAlpha = (0.52f * glowIntensity * dynamicAlpha).coerceIn(0.18f, 0.75f)
+        val bloomStroke = 3.8f * (0.8f + 0.35f * glowIntensity)
         drawPath(
             path = path,
-            color = highlightColor.copy(alpha = themeBloomAlpha),
-            style = Stroke(width = themeBloomStroke, cap = StrokeCap.Round)
+            color = highlightColor.copy(alpha = bloomAlpha),
+            style = Stroke(width = bloomStroke, cap = StrokeCap.Round)
         )
 
-        // Pass 3: Solid Rich Leaf Body Fill (100% Vibrant Theme Color)
+        // Pass 3: Solid Rich Botanical Body Fill (100% Theme Pigment)
         drawPath(
             path = path,
             color = color.copy(alpha = (0.92f + 0.08f * expansionFactor).coerceIn(0.85f, 1.0f))
         )
 
-        // Pass 4: Crisp Theme Highlight Outer Rim Outline
-        val rimAlpha = (0.92f * dynamicAlpha).coerceIn(0.6f, 1.0f)
+        // Pass 4: Crisp Theme Highlight Outer Edge Outline
+        val rimAlpha = (0.90f * dynamicAlpha).coerceIn(0.6f, 1.0f)
         drawPath(
             path = path,
             color = highlightColor.copy(alpha = rimAlpha),
@@ -349,6 +361,3 @@ private fun DrawScope.drawGlowingLeaf(
         )
     }
 }
-
-
-

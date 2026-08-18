@@ -1,5 +1,7 @@
 package com.samadhi.meditationtimer.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -8,7 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -31,14 +36,27 @@ fun ZenBranchSlider(
 ) {
     val currentTheme = LocalZenTheme.current
     val thumbPath = remember { Path() }
+    var isDragging by remember { mutableStateOf(false) }
+
+    val dragHaloScale by animateFloatAsState(
+        targetValue = if (isDragging) 1.35f else 1.0f,
+        animationSpec = tween(180),
+        label = "dragHaloScale"
+    )
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(60.dp)
+            .height(64.dp)
             .padding(horizontal = 4.dp)
             .pointerInput(valueRange) {
-                detectTapGestures { offset ->
+                detectTapGestures(
+                    onPress = {
+                        isDragging = true
+                        tryAwaitRelease()
+                        isDragging = false
+                    }
+                ) { offset ->
                     val width = size.width.toFloat()
                     if (width > 0) {
                         val fraction = (offset.x / width).coerceIn(0f, 1f)
@@ -50,9 +68,18 @@ fun ZenBranchSlider(
             }
             .pointerInput(valueRange) {
                 detectHorizontalDragGestures(
-                    onDragStart = { onSliding?.invoke(0.8f) },
-                    onDragEnd = { onSliding?.invoke(0f) },
-                    onDragCancel = { onSliding?.invoke(0f) }
+                    onDragStart = {
+                        isDragging = true
+                        onSliding?.invoke(0.8f)
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                        onSliding?.invoke(0f)
+                    },
+                    onDragCancel = {
+                        isDragging = false
+                        onSliding?.invoke(0f)
+                    }
                 ) { change, dragAmount ->
                     change.consume()
                     val width = size.width.toFloat()
@@ -65,20 +92,20 @@ fun ZenBranchSlider(
                 }
             }
     ) {
-        Canvas(modifier = Modifier.fillMaxWidth().height(60.dp)) {
+        Canvas(modifier = Modifier.fillMaxWidth().height(64.dp)) {
             val width = size.width
             val height = size.height
             val centerY = height / 2f
 
             val fraction = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(0f, 1f)
-            val thumbX = (fraction * width).coerceIn(14f, width - 14f)
+            val thumbX = (fraction * width).coerceIn(16f, width - 16f)
 
             // 1. INACTIVE STEM (Ahead of thumb): Organic Dormant Slate/Wood Branch
             drawLine(
                 color = Color(0xFF1E293B),
                 start = Offset(thumbX, centerY),
                 end = Offset(width, centerY),
-                strokeWidth = 8.0f,
+                strokeWidth = 9.0f,
                 cap = StrokeCap.Round
             )
             // Subtle branch grain line
@@ -86,7 +113,7 @@ fun ZenBranchSlider(
                 color = Color(0xFF334155),
                 start = Offset(thumbX + 4f, centerY - 1.5f),
                 end = Offset(width - 2f, centerY - 1.5f),
-                strokeWidth = 2.5f,
+                strokeWidth = 2.8f,
                 cap = StrokeCap.Round
             )
 
@@ -94,12 +121,12 @@ fun ZenBranchSlider(
             val nodeSpacing = width / 6f
             for (i in 1..5) {
                 val nodeX = i * nodeSpacing
-                if (nodeX > thumbX + 10f) {
+                if (nodeX > thumbX + 12f) {
                     drawLine(
                         color = Color(0xFF475569),
-                        start = Offset(nodeX, centerY - 6.5f),
-                        end = Offset(nodeX, centerY + 6.5f),
-                        strokeWidth = 3.0f,
+                        start = Offset(nodeX, centerY - 7f),
+                        end = Offset(nodeX, centerY + 7f),
+                        strokeWidth = 3.2f,
                         cap = StrokeCap.Round
                     )
                 }
@@ -122,69 +149,77 @@ fun ZenBranchSlider(
                     brush = activeBrush,
                     start = Offset(0f, centerY),
                     end = Offset(thumbX, centerY),
-                    strokeWidth = 9.5f,
+                    strokeWidth = 11.0f,
                     cap = StrokeCap.Round
                 )
 
                 // Luminous top highlight
                 drawLine(
-                    color = currentTheme.primaryLight.copy(alpha = 0.55f),
-                    start = Offset(4f, centerY - 2f),
-                    end = Offset(thumbX - 2f, centerY - 2f),
-                    strokeWidth = 2.5f,
+                    color = currentTheme.primaryLight.copy(alpha = 0.65f),
+                    start = Offset(4f, centerY - 2.5f),
+                    end = Offset(thumbX - 2f, centerY - 2.5f),
+                    strokeWidth = 3.0f,
                     cap = StrokeCap.Round
                 )
 
                 // Living Branch Nodes
                 for (i in 1..5) {
                     val nodeX = i * nodeSpacing
-                    if (nodeX < thumbX - 10f) {
+                    if (nodeX < thumbX - 12f) {
                         drawLine(
                             color = currentTheme.primaryLight,
-                            start = Offset(nodeX, centerY - 7f),
-                            end = Offset(nodeX, centerY + 7f),
-                            strokeWidth = 3.0f,
+                            start = Offset(nodeX, centerY - 8f),
+                            end = Offset(nodeX, centerY + 8f),
+                            strokeWidth = 3.5f,
                             cap = StrokeCap.Round
                         )
                     }
                 }
             }
 
-            // 3. THUMB: Theme-adaptive Zen Sprout Pebble (Enlarged & Highly Tactile)
-            // Glowing Halo
+            // 3. THUMB: Theme-adaptive Zen Sprout Pebble with Dynamic Drag Halo
+            // Outer Radiant Aura
             drawCircle(
-                color = currentTheme.primary.copy(alpha = 0.35f),
-                radius = 26.0f,
+                color = currentTheme.primary.copy(alpha = if (isDragging) 0.45f else 0.28f),
+                radius = 28.0f * dragHaloScale,
+                center = Offset(thumbX, centerY)
+            )
+
+            // Inner Radiant Ring
+            drawCircle(
+                color = currentTheme.primaryLight.copy(alpha = if (isDragging) 0.65f else 0.38f),
+                radius = 20.0f * dragHaloScale,
                 center = Offset(thumbX, centerY)
             )
 
             // Pebble Core
             drawCircle(
-                color = Color(0xFF0C1322),
-                radius = 16.0f,
+                color = Color(0xFF0A101D),
+                radius = 16.5f,
                 center = Offset(thumbX, centerY)
             )
+
             // Pebble Outer Theme Ring
             drawCircle(
                 color = currentTheme.primaryLight,
-                radius = 16.0f,
+                radius = 16.5f,
                 center = Offset(thumbX, centerY),
-                style = Stroke(width = 3.2f)
+                style = Stroke(width = 3.4f)
             )
 
-            // Sprout silhouette matching theme (Enlarged)
+            // Sprout silhouette matching theme (Enlarged & Clear)
             thumbPath.reset()
             when (currentTheme.particleType) {
                 ParticleType.BAMBOO_LEAF -> {
-                    // Sprouted Bodhi Leaf
+                    // Sprouted Bamboo Blade
                     thumbPath.moveTo(thumbX, centerY - 6f)
                     thumbPath.cubicTo(
                         thumbX + 9f, centerY - 16f,
-                        thumbX + 14f, centerY - 21f,
-                        thumbX + 16f, centerY - 28f
+                        thumbX + 14f, centerY - 22f,
+                        thumbX + 16f, centerY - 30f
                     )
                     thumbPath.cubicTo(
-                        thumbX + 5f, centerY - 24f,
+                        thumbX + 5f, centerY - 25f,
                         thumbX + 1f, centerY - 15f,
                         thumbX, centerY - 6f
                     )
@@ -193,13 +228,13 @@ fun ZenBranchSlider(
                     // Lotus Bud
                     thumbPath.moveTo(thumbX, centerY - 6f)
                     thumbPath.cubicTo(
-                        thumbX + 10f, centerY - 16f,
-                        thumbX + 9f, centerY - 24f,
-                        thumbX, centerY - 29f
+                        thumbX + 11f, centerY - 16f,
+                        thumbX + 10f, centerY - 25f,
+                        thumbX, centerY - 31f
                     )
                     thumbPath.cubicTo(
-                        thumbX - 9f, centerY - 24f,
-                        thumbX - 10f, centerY - 16f,
+                        thumbX - 10f, centerY - 25f,
+                        thumbX - 11f, centerY - 16f,
                         thumbX, centerY - 6f
                     )
                 }
@@ -207,22 +242,21 @@ fun ZenBranchSlider(
                     // Sakura Blossom Bud
                     thumbPath.moveTo(thumbX, centerY - 6f)
                     thumbPath.cubicTo(
-                        thumbX + 10f, centerY - 16f,
-                        thumbX + 8f, centerY - 26f,
-                        thumbX + 3f, centerY - 29f
+                        thumbX + 11f, centerY - 16f,
+                        thumbX + 9f, centerY - 27f,
+                        thumbX + 3f, centerY - 30f
                     )
                     thumbPath.quadraticTo(
-                        thumbX, centerY - 24f,
-                        thumbX - 3f, centerY - 29f
+                        thumbX, centerY - 25f,
+                        thumbX - 3f, centerY - 30f
                     )
                     thumbPath.cubicTo(
-                        thumbX - 8f, centerY - 26f,
-                        thumbX - 10f, centerY - 16f,
+                        thumbX - 9f, centerY - 27f,
+                        thumbX - 11f, centerY - 16f,
                         thumbX, centerY - 6f
                     )
                 }
             }
-            thumbPath.close()
 
             drawPath(
                 path = thumbPath,

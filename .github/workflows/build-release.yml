@@ -49,14 +49,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.5.8
-          name: "Buddho Timer v2.5.8"
+          tag_name: v2.5.9
+          name: "Buddho Timer v2.5.9"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.5.8
+            ## 🪷 Buddho Meditation Timer v2.5.9
             
-            - **🧘 Minimal Meditating Buddha Outline Logo**: Designed a clean, vector Enso outline logo of the seated Buddha in Anjali Mudra prayer/lotus meditation position, rendered crisp in pure theme pigments.
-            - **🏷️ Renamed to "Buddho Timer"**: Updated top-left header branding and tutorial overlay to "Buddho Timer".
-            - **🎯 Duration & Settings as the Majestic Focal Point**: Bold 78sp target numbers with glowing auras, prominent 2-row preset grids, living branch sliders, and rich cadence cards establish a majestic, distraction-free focal center.
+            - **🎋 Distinct Theme Botanicals in Box Breathing**: Transformed Box Breathing animations to render distinct, theme-authentic plants:
+              - *Moonlit Bamboo*: Slender lanceolate bamboo foliage blades with culm joint sheath notches and parallel venation.
+              - *Golden Lotus*: Broad cupped sacred water lily petals with glowing golden ribbing.
+              - *Sakura Twilight*: Delicate notched cherry blossom petals with heart-cleft apex and stamen glow.
+            - **✨ Enhanced Tactile Slider Animations**: Added dynamic expanding radiant halo aura and sprout bloom on the branch slider thumb during drag.
+            - **🧘 Minimal Meditating Buddha Outline Logo & "Buddho Timer" Branding**: Clean vector Enso outline logo of the seated Buddha in meditation.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
