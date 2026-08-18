@@ -1,6 +1,5 @@
 package com.samadhi.meditationtimer.ui.components
 
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -20,37 +19,28 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.scale
 import com.samadhi.meditationtimer.domain.model.BreathPhase
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
-import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenThemeId
-import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlin.math.sqrt
 import kotlin.random.Random
 
-private fun easeInOutCubic(x: Float): Float {
-    val t = x.coerceIn(0f, 1f)
-    return if (t < 0.5f) {
-        4f * t * t * t
-    } else {
-        1f - (-2f * t + 2f).let { it * it * it } / 2f
-    }
-}
-
-private data class AmbientPetal(
-    val id: Int,
-    val initialAngle: Float,
-    val distanceRatio: Float,
+/**
+ * Data structure for ambient floating botanical particles (bamboo leaves, lotus petals, sakura petals).
+ */
+private data class AmbientBotanicalParticle(
+    val relX: Float,
+    val relY: Float,
+    val speedY: Float,
+    val driftSpeedX: Float,
     val baseScale: Float,
-    val rotationSpeed: Float,
-    val colorIndex: Int
+    val initialRotation: Float,
+    val rotSpeed: Float,
+    val alphaBase: Float
 )
 
 @Composable
@@ -59,171 +49,89 @@ fun ZenParticleBreathingCanvas(
     phaseProgress: Float,
     modifier: Modifier = Modifier
 ) {
-    val currentTheme = LocalZenTheme.current
+    val zenTheme = LocalZenTheme.current
 
-    // Ambient floating particles surrounding the hero subject
-    val ambientPetals = remember(currentTheme.id) {
-        val count = 16
-        val goldenAngle = (PI * (3.0 - sqrt(5.0))).toFloat()
-        List(count) { i ->
-            AmbientPetal(
-                id = i,
-                initialAngle = i * goldenAngle + Random.nextFloat() * 0.4f,
-                distanceRatio = 0.50f + (i.toFloat() / count.toFloat()) * 0.45f,
-                baseScale = Random.nextFloat() * 0.4f + 0.7f,
-                rotationSpeed = (Random.nextFloat() - 0.5f) * 40f,
-                colorIndex = i % currentTheme.particlePalette.size
+    // Smooth ambient time clock
+    val infiniteTransition = rememberInfiniteTransition(label = "ZenCanvasClock")
+    val animClockSec by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 60f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(60000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "ZenAnimClock"
+    )
+
+    // Precompute bounded ambient particles
+    val ambientParticles = remember {
+        val rand = Random(42)
+        List(30) {
+            AmbientBotanicalParticle(
+                relX = 0.12f + rand.nextFloat() * 0.76f,
+                relY = 0.10f + rand.nextFloat() * 0.80f,
+                speedY = 0.015f + rand.nextFloat() * 0.025f,
+                driftSpeedX = 0.4f + rand.nextFloat() * 0.8f,
+                baseScale = 0.65f + rand.nextFloat() * 0.65f,
+                initialRotation = rand.nextFloat() * 360f,
+                rotSpeed = (rand.nextFloat() - 0.5f) * 45f,
+                alphaBase = 0.35f + rand.nextFloat() * 0.45f
             )
         }
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "livingBreathClock")
-    val animClockSec by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 3600f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3600000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "animClockSec"
-    )
-
-    val corePulse by infiniteTransition.animateFloat(
-        initialValue = 0.92f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "corePulse"
-    )
-
-    val easedProgress = easeInOutCubic(phaseProgress)
-    val (growthFactor, phaseGlowColor, glowPulseIntensity) = when (currentPhase) {
-        BreathPhase.INHALE -> {
-            val growth = 0.28f + (0.72f * easedProgress)
-            val glow = 0.35f + (0.65f * easedProgress)
-            Triple(growth, currentTheme.primaryLight, glow)
-        }
-        BreathPhase.HOLD_FULL -> {
-            val suspensionPulse = sin(phaseProgress * PI.toFloat()) * 0.035f
-            val glowPulse = 1.0f + sin(phaseProgress * PI.toFloat()) * 0.25f
-            Triple(1.0f + suspensionPulse, currentTheme.primaryLight, glowPulse)
-        }
-        BreathPhase.EXHALE -> {
-            val contraction = 1.0f - (0.72f * easedProgress)
-            val glow = 1.0f - (0.65f * easedProgress)
-            Triple(contraction, currentTheme.overrunColor, glow)
-        }
-        BreathPhase.HOLD_EMPTY -> {
-            val quietPulse = sin(phaseProgress * PI.toFloat()) * 0.020f
-            val quietGlow = 0.35f + sin(phaseProgress * PI.toFloat()) * 0.12f
-            Triple(0.28f + quietPulse, currentTheme.primary, quietGlow)
-        }
+    // Continuous breath growth factor [0.0f .. 1.0f]
+    val growthFactor = when (currentPhase) {
+        BreathPhase.INHALE -> phaseProgress
+        BreathPhase.HOLD_FULL -> 1.0f
+        BreathPhase.EXHALE -> (1.0f - phaseProgress)
+        BreathPhase.HOLD_EMPTY -> 0.0f
     }
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
+        val minDim = minOf(width, height)
         val center = Offset(width / 2f, height / 2f)
-        val minDim = width.coerceAtMost(height)
 
-        // 1. Ambient Background Breath Glow Aura
-        val auraRadius = minDim * (0.32f + 0.38f * growthFactor) * corePulse
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    phaseGlowColor.copy(alpha = (0.24f * glowPulseIntensity).coerceIn(0.06f, 0.40f)),
-                    currentTheme.primary.copy(alpha = (0.10f * glowPulseIntensity).coerceIn(0.02f, 0.20f)),
-                    Color.Transparent
-                ),
-                center = center,
-                radius = auraRadius * 1.35f
-            ),
-            radius = auraRadius * 1.35f,
-            center = center
-        )
-
-        // 2. Ambient Drifting Petals in Outer Orbit
-        val palette = currentTheme.particlePalette
-        for (petal in ambientPetals) {
-            val orbitRadius = minDim * (petal.distanceRatio * (0.85f + 0.15f * growthFactor))
-            val currentAngle = petal.initialAngle + animClockSec * (0.025f / petal.distanceRatio)
-            val px = center.x + cos(currentAngle) * orbitRadius
-            val py = center.y + sin(currentAngle) * orbitRadius
-            val rot = (Math.toDegrees(currentAngle.toDouble()).toFloat()) + petal.rotationSpeed * animClockSec
-            val pColor = palette[petal.colorIndex]
-
-            when (currentTheme.id) {
-                ZenThemeId.BAMBOO_TEAL -> {
-                    drawSingleBambooLeaf(
-                        tip = Offset(px, py),
-                        scale = petal.baseScale * (0.8f + 0.2f * growthFactor),
-                        rotation = rot,
-                        leafColor = pColor.copy(alpha = 0.45f),
-                        rimColor = phaseGlowColor.copy(alpha = 0.50f)
-                    )
-                }
-                ZenThemeId.SACRED_LOTUS -> {
-                    drawSingleLotusPetal(
-                        tip = Offset(px, py),
-                        scale = petal.baseScale * (0.7f + 0.3f * growthFactor),
-                        rotation = rot,
-                        petalColor = pColor.copy(alpha = 0.40f),
-                        rimColor = phaseGlowColor.copy(alpha = 0.50f)
-                    )
-                }
-                ZenThemeId.SAKURA_TWILIGHT -> {
-                    drawSingleSakuraPetal(
-                        center = Offset(px, py),
-                        scale = petal.baseScale * (0.75f + 0.25f * growthFactor),
-                        rotation = rot,
-                        petalColor = pColor.copy(alpha = 0.50f),
-                        rimColor = phaseGlowColor.copy(alpha = 0.55f)
-                    )
-                }
-            }
-        }
-
-        // 3. Render Bespoke Hero Theme Breathing Animation
-        when (currentTheme.id) {
+        when (zenTheme.id) {
             ZenThemeId.BAMBOO_TEAL -> {
-                // 🎋 1. LIVING GROWING BAMBOO STALK THAT BREATHES
-                drawLivingBambooStalk(
+                drawMoonlitBambooBreathing(
                     center = center,
                     minDim = minDim,
                     growthFactor = growthFactor,
+                    currentPhase = currentPhase,
                     animClockSec = animClockSec,
-                    primaryColor = currentTheme.primary,
-                    primaryLight = currentTheme.primaryLight,
-                    primaryDark = currentTheme.primaryDark,
-                    glowIntensity = glowPulseIntensity
+                    primaryColor = zenTheme.primary,
+                    primaryLight = zenTheme.primaryLight,
+                    primaryDark = zenTheme.primaryDark,
+                    ambientParticles = ambientParticles
                 )
             }
             ZenThemeId.SACRED_LOTUS -> {
-                // 🪷 2. SACRED LOTUS FLOWER ON LILY PAD WITH RIPPLES
-                drawSacredLotusOnLilyPad(
+                drawSacredLotusBreathing(
                     center = center,
                     minDim = minDim,
-                    bloomFactor = growthFactor,
+                    growthFactor = growthFactor,
+                    currentPhase = currentPhase,
                     animClockSec = animClockSec,
-                    primaryColor = currentTheme.primary,
-                    primaryLight = currentTheme.primaryLight,
-                    primaryDark = currentTheme.primaryDark,
-                    glowIntensity = glowPulseIntensity
+                    primaryColor = zenTheme.primary,
+                    primaryLight = zenTheme.primaryLight,
+                    primaryDark = zenTheme.primaryDark,
+                    ambientParticles = ambientParticles
                 )
             }
             ZenThemeId.SAKURA_TWILIGHT -> {
-                // 🌸 3. BLOOMING CHERRY BLOSSOM WITH STAMENS & TWILIGHT GLOW
-                drawSakuraCherryBlossom(
+                drawSakuraTwilightBreathing(
                     center = center,
                     minDim = minDim,
-                    bloomFactor = growthFactor,
+                    growthFactor = growthFactor,
+                    currentPhase = currentPhase,
                     animClockSec = animClockSec,
-                    primaryColor = currentTheme.primary,
-                    primaryLight = currentTheme.primaryLight,
-                    primaryDark = currentTheme.primaryDark,
-                    glowIntensity = glowPulseIntensity
+                    primaryColor = zenTheme.primary,
+                    primaryLight = zenTheme.primaryLight,
+                    primaryDark = zenTheme.primaryDark,
+                    ambientParticles = ambientParticles
                 )
             }
         }
@@ -231,431 +139,523 @@ fun ZenParticleBreathingCanvas(
 }
 
 // =========================================================================
-// 🎋 1. THEME: MOONLIT BAMBOO — LIVING GROWING & SWAYING BAMBOO STALK
+// 1. MOONLIT BAMBOO: LIVING BAMBOO STALK WITH GROWING BRANCHES & UNFURLING LEAVES
 // =========================================================================
-private fun DrawScope.drawLivingBambooStalk(
+
+private fun DrawScope.drawMoonlitBambooBreathing(
     center: Offset,
     minDim: Float,
     growthFactor: Float,
+    currentPhase: BreathPhase,
     animClockSec: Float,
     primaryColor: Color,
     primaryLight: Color,
     primaryDark: Color,
-    glowIntensity: Float
+    ambientParticles: List<AmbientBotanicalParticle>
 ) {
-    val stalkBaseY = center.y + minDim * 0.38f
-    val fullHeight = minDim * 0.72f
-    val currentHeight = fullHeight * (0.35f + 0.65f * growthFactor)
-    val stalkTopY = stalkBaseY - currentHeight
-    val stalkWidth = minDim * 0.038f * (0.85f + 0.15f * growthFactor)
+    val stalkBaseX = center.x
+    val stalkBottomY = center.y + minDim * 0.42f
+    val stalkTopY = center.y - minDim * 0.40f
+    val stalkTotalHeight = stalkBottomY - stalkTopY
+    val stalkWidth = minDim * 0.048f
 
-    // Gentle natural wind sway
-    val swayOffset = sin(animClockSec * 1.2f) * (minDim * 0.024f * growthFactor)
+    // Soft wind sway
+    val swayOffset = sin(animClockSec * 1.2f) * (minDim * 0.015f)
 
-    // 1. Ground Node Base / Soil Mist Aura
-    drawOval(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                primaryColor.copy(alpha = 0.30f * glowIntensity),
-                primaryDark.copy(alpha = 0.15f),
-                Color.Transparent
-            ),
-            center = Offset(center.x, stalkBaseY),
-            radius = minDim * 0.22f
-        ),
-        topLeft = Offset(center.x - minDim * 0.22f, stalkBaseY - minDim * 0.05f),
-        size = Size(minDim * 0.44f, minDim * 0.10f)
-    )
+    // 1. Draw Ambient Floating Bamboo Leaves (Strictly bounded to canvas)
+    drawAmbientBotanicals(
+        particles = ambientParticles,
+        minDim = minDim,
+        animClockSec = animClockSec,
+        growthFactor = growthFactor,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
+    ) { pCenter, pScale, pRot, pColor, pRim ->
+        drawSingleBambooLeaf(
+            center = pCenter,
+            scale = pScale * 0.85f,
+            rotation = pRot,
+            fillColor = pColor,
+            rimColor = pRim
+        )
+    }
 
-    // 2. Draw 4 Segmented Bamboo Culms (Internodes)
-    val nodeCount = 4
-    val segmentHeight = currentHeight / nodeCount
+    // 2. Draw Main Bamboo Culm (Segmented with Node Rings)
+    val numSegments = 5
+    val segmentHeight = stalkTotalHeight / numSegments
 
-    for (i in 0 until nodeCount) {
-        val segBottomY = stalkBaseY - (i * segmentHeight)
-        val segTopY = stalkBaseY - ((i + 1) * segmentHeight)
+    for (i in 0 until numSegments) {
+        val segBottomY = stalkBottomY - (i * segmentHeight)
+        val segTopY = segBottomY - segmentHeight
 
-        // Calculate slight progressive sway curvature
-        val bottomCurve = (i.toFloat() / nodeCount) * swayOffset
-        val topCurve = ((i + 1).toFloat() / nodeCount) * swayOffset
+        val segSwayBottom = swayOffset * (i.toFloat() / numSegments)
+        val segSwayTop = swayOffset * ((i + 1).toFloat() / numSegments)
 
-        val bx = center.x + bottomCurve
-        val tx = center.x + topCurve
-
-        // Draw Culm Segment Body
-        val culmPath = Path().apply {
-            moveTo(bx - stalkWidth / 2f, segBottomY)
-            lineTo(tx - stalkWidth * 0.46f, segTopY + 2f)
-            lineTo(tx + stalkWidth * 0.46f, segTopY + 2f)
-            lineTo(bx + stalkWidth / 2f, segBottomY)
+        val segPath = Path().apply {
+            moveTo(stalkBaseX - stalkWidth / 2f + segSwayBottom, segBottomY)
+            lineTo(stalkBaseX + stalkWidth / 2f + segSwayBottom, segBottomY)
+            lineTo(stalkBaseX + stalkWidth * 0.46f + segSwayTop, segTopY)
+            lineTo(stalkBaseX - stalkWidth * 0.46f + segSwayTop, segTopY)
             close()
         }
 
-        // Culm Fill with subtle vertical bamboo gradient
+        // Bamboo culm gradient
         drawPath(
-            path = culmPath,
+            path = segPath,
             brush = Brush.horizontalGradient(
                 colors = listOf(
                     primaryDark.copy(alpha = 0.95f),
                     primaryColor.copy(alpha = 0.95f),
-                    primaryLight.copy(alpha = 0.90f),
-                    primaryColor.copy(alpha = 0.95f),
+                    primaryLight.copy(alpha = 0.95f),
                     primaryDark.copy(alpha = 0.95f)
                 ),
-                startX = bx - stalkWidth,
-                endX = bx + stalkWidth
+                startX = stalkBaseX - stalkWidth / 2f,
+                endX = stalkBaseX + stalkWidth / 2f
             )
         )
 
-        // Culm Rim Outline
-        drawPath(
-            path = culmPath,
-            color = primaryLight.copy(alpha = 0.45f),
-            style = Stroke(width = 1.0f)
-        )
-
-        // 3. Bamboo Node Ring (Joint)
-        val nodeY = segTopY
-        val nodeX = tx
+        // Node Ring Joint
+        val nodeCenter = Offset(stalkBaseX + segSwayBottom, segBottomY)
         drawOval(
-            color = primaryLight.copy(alpha = 0.95f),
-            topLeft = Offset(nodeX - stalkWidth * 0.65f, nodeY - stalkWidth * 0.22f),
-            size = Size(stalkWidth * 1.3f, stalkWidth * 0.44f)
-        )
-        // Node Ridge Glow
-        drawOval(
-            color = primaryColor.copy(alpha = 0.85f),
-            topLeft = Offset(nodeX - stalkWidth * 0.55f, nodeY - stalkWidth * 0.14f),
-            size = Size(stalkWidth * 1.1f, stalkWidth * 0.28f)
-        )
-
-        // 4. Branchlets and Leaf Sprigs Emerging from Nodes
-        val isLeftBranch = i % 2 == 0
-        val branchAngle = if (isLeftBranch) -38f + (swayOffset * 0.4f) else 38f + (swayOffset * 0.4f)
-        val branchLength = minDim * 0.12f * (0.6f + 0.4f * growthFactor)
-
-        drawBambooBranchletCluster(
-            nodeOrigin = Offset(nodeX, nodeY),
-            angle = branchAngle,
-            branchLength = branchLength,
-            growthFactor = growthFactor,
-            primaryColor = primaryColor,
-            primaryLight = primaryLight,
-            primaryDark = primaryDark,
-            glowIntensity = glowIntensity,
-            leafCount = if (i == nodeCount - 1) 4 else 3
-        )
-    }
-
-    // 5. Crown Tip Shoots & Leaves at Apex
-    drawBambooCrown(
-        apex = Offset(center.x + swayOffset, stalkTopY),
-        minDim = minDim,
-        growthFactor = growthFactor,
-        primaryColor = primaryColor,
-        primaryLight = primaryLight,
-        glowIntensity = glowIntensity
-    )
-}
-
-private fun DrawScope.drawBambooBranchletCluster(
-    nodeOrigin: Offset,
-    angle: Float,
-    branchLength: Float,
-    growthFactor: Float,
-    primaryColor: Color,
-    primaryLight: Color,
-    primaryDark: Color,
-    glowIntensity: Float,
-    leafCount: Int
-) {
-    val rad = Math.toRadians(angle.toDouble()).toFloat()
-    val branchEnd = Offset(
-        nodeOrigin.x + sin(rad) * branchLength,
-        nodeOrigin.y - cos(rad) * branchLength * 0.65f
-    )
-
-    // Draw Branchlet Stem
-    drawLine(
-        color = primaryDark.copy(alpha = 0.90f),
-        start = nodeOrigin,
-        end = branchEnd,
-        strokeWidth = 2.4f,
-        cap = StrokeCap.Round
-    )
-    drawLine(
-        color = primaryLight.copy(alpha = 0.60f),
-        start = nodeOrigin,
-        end = branchEnd,
-        strokeWidth = 1.0f,
-        cap = StrokeCap.Round
-    )
-
-    // Fan of Lanceolate Bamboo Leaves
-    val leafSpreadAngles = when (leafCount) {
-        4 -> listOf(-28f, -10f, 10f, 28f)
-        else -> listOf(-24f, 0f, 24f)
-    }
-
-    for (leafAngle in leafSpreadAngles) {
-        val totalLeafRot = angle + leafAngle + (if (angle < 0) -15f else 15f)
-        drawSingleBambooLeaf(
-            tip = branchEnd,
-            scale = (0.75f + 0.45f * growthFactor) * (branchLength / 45f),
-            rotation = totalLeafRot,
-            leafColor = primaryColor,
-            rimColor = primaryLight
-        )
-    }
-}
-
-private fun DrawScope.drawBambooCrown(
-    apex: Offset,
-    minDim: Float,
-    growthFactor: Float,
-    primaryColor: Color,
-    primaryLight: Color,
-    glowIntensity: Float
-) {
-    // Apex Glow Aura
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                primaryLight.copy(alpha = 0.35f * glowIntensity),
-                primaryColor.copy(alpha = 0.15f),
-                Color.Transparent
+            brush = Brush.horizontalGradient(
+                colors = listOf(primaryLight, primaryDark, primaryLight),
+                startX = nodeCenter.x - stalkWidth * 0.65f,
+                endX = nodeCenter.x + stalkWidth * 0.65f
             ),
-            center = apex,
-            radius = minDim * 0.14f * growthFactor
-        ),
-        radius = minDim * 0.14f * growthFactor,
-        center = apex
-    )
+            topLeft = Offset(nodeCenter.x - stalkWidth * 0.62f, nodeCenter.y - stalkWidth * 0.16f),
+            size = Size(stalkWidth * 1.24f, stalkWidth * 0.32f)
+        )
 
-    val crownAngles = listOf(-35f, -14f, 0f, 14f, 35f)
-    for (ang in crownAngles) {
+        // 3. Branches and Leaves Growing Outward from Nodes during Inhale
+        if (i in 1..4) {
+            val isRightBranch = (i % 2 == 1)
+            val branchDir = if (isRightBranch) 1f else -1f
+            val nodeX = stalkBaseX + segSwayBottom + (branchDir * stalkWidth * 0.5f)
+            val nodeY = segBottomY
+
+            // Branch growth calculation: grows outward and arches up with inhale
+            val branchLength = minDim * 0.18f * (0.35f + 0.65f * growthFactor)
+            val branchAngleDeg = if (isRightBranch) -38f + (swayOffset * 2f) else -142f - (swayOffset * 2f)
+            val branchAngleRad = Math.toRadians(branchAngleDeg.toDouble()).toFloat()
+
+            val branchTipX = nodeX + cos(branchAngleRad) * branchLength
+            val branchTipY = nodeY + sin(branchAngleRad) * branchLength
+
+            // Draw branch twig
+            drawLine(
+                brush = Brush.linearGradient(
+                    colors = listOf(primaryLight, primaryDark),
+                    start = Offset(nodeX, nodeY),
+                    end = Offset(branchTipX, branchTipY)
+                ),
+                start = Offset(nodeX, nodeY),
+                end = Offset(branchTipX, branchTipY),
+                strokeWidth = 2.2f,
+                cap = StrokeCap.Round
+            )
+
+            // Clusters of Lanceolate Leaves Sprouting along Branch and Tip
+            val leafScale = (minDim / 380f) * (0.25f + 0.75f * growthFactor)
+            val leafCount = 3 + (i % 2)
+
+            for (l in 0 until leafCount) {
+                val tAlongBranch = (l + 1).toFloat() / (leafCount + 1)
+                val leafOriginX = nodeX + (branchTipX - nodeX) * tAlongBranch
+                val leafOriginY = nodeY + (branchTipY - nodeY) * tAlongBranch
+
+                val fanAngle = (l - leafCount / 2f) * 22f * (0.5f + 0.5f * growthFactor)
+                val leafRot = branchAngleDeg + fanAngle
+
+                drawSingleBambooLeaf(
+                    center = Offset(leafOriginX, leafOriginY),
+                    scale = leafScale * (0.85f + (l * 0.15f)),
+                    rotation = leafRot,
+                    fillColor = primaryDark,
+                    rimColor = primaryLight
+                )
+            }
+        }
+    }
+
+    // Top Crown Bamboo Shoots
+    val topX = stalkBaseX + swayOffset
+    val topY = stalkTopY
+    val crownScale = (minDim / 360f) * (0.35f + 0.65f * growthFactor)
+    val crownAngles = listOf(-80f, -55f, -100f, -30f, -125f)
+    for (ca in crownAngles) {
         drawSingleBambooLeaf(
-            tip = apex,
-            scale = (0.85f + 0.50f * growthFactor) * (minDim / 340f),
-            rotation = ang,
-            leafColor = primaryColor,
+            center = Offset(topX, topY),
+            scale = crownScale,
+            rotation = ca + (swayOffset * 1.5f),
+            fillColor = primaryDark,
             rimColor = primaryLight
         )
     }
 }
 
 private fun DrawScope.drawSingleBambooLeaf(
-    tip: Offset,
+    center: Offset,
     scale: Float,
     rotation: Float,
-    leafColor: Color,
+    fillColor: Color,
     rimColor: Color
 ) {
-    rotate(degrees = rotation, pivot = tip) {
-        val len = scale * 48f
-        val wid = scale * 12f
+    rotate(degrees = rotation, pivot = center) {
+        val len = scale * 34f
+        val wid = scale * 8.5f
 
         val path = Path().apply {
-            moveTo(tip.x, tip.y) // Base attachment
+            moveTo(center.x, center.y) // Stalk attachment
             cubicTo(
-                tip.x - wid * 0.8f, tip.y - len * 0.35f,
-                tip.x - wid * 1.1f, tip.y - len * 0.70f,
-                tip.x, tip.y - len // Pointed tip
+                center.x - wid * 0.8f, center.y + len * 0.35f,
+                center.x - wid, center.y + len * 0.75f,
+                center.x, center.y + len // Leaf tip
             )
             cubicTo(
-                tip.x + wid * 1.1f, tip.y - len * 0.70f,
-                tip.x + wid * 0.8f, tip.y - len * 0.35f,
-                tip.x, tip.y
+                center.x + wid, center.y + len * 0.75f,
+                center.x + wid * 0.8f, center.y + len * 0.35f,
+                center.x, center.y
             )
             close()
         }
 
-        // Leaf Body Fill
+        // Fill with deep bamboo jade
         drawPath(
             path = path,
-            color = leafColor.copy(alpha = 0.92f)
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    rimColor.copy(alpha = 0.95f),
+                    fillColor.copy(alpha = 0.92f),
+                    Color(0xFF0F3025).copy(alpha = 0.90f)
+                ),
+                startY = center.y,
+                endY = center.y + len
+            )
         )
-
-        // Leaf Rim Outline
-        drawPath(
-            path = path,
-            color = rimColor.copy(alpha = 0.85f),
-            style = Stroke(width = 1.0f)
-        )
-
-        // Leaf Center Midrib
+        // Elegant Leaf Spine Midrib
         drawLine(
+            color = rimColor.copy(alpha = 0.80f),
+            start = center,
+            end = Offset(center.x, center.y + len * 0.92f),
+            strokeWidth = 1.0f
+        )
+        // Leaf Outline
+        drawPath(
+            path = path,
             color = rimColor.copy(alpha = 0.75f),
-            start = tip,
-            end = Offset(tip.x, tip.y - len * 0.92f),
-            strokeWidth = 1.0f,
-            cap = StrokeCap.Round
+            style = Stroke(width = 1.1f)
         )
     }
 }
 
 // =========================================================================
-// 🪷 2. THEME: SACRED LOTUS — SACRED LOTUS FLOWER ON LILY PAD
+// 2. SACRED LOTUS: TRADITIONAL ASIAN ART MULTI-LOTUS & FLOATING PADS
 // =========================================================================
-private fun DrawScope.drawSacredLotusOnLilyPad(
+
+private fun DrawScope.drawSacredLotusBreathing(
     center: Offset,
     minDim: Float,
-    bloomFactor: Float,
+    growthFactor: Float,
+    currentPhase: BreathPhase,
     animClockSec: Float,
     primaryColor: Color,
     primaryLight: Color,
     primaryDark: Color,
-    glowIntensity: Float
+    ambientParticles: List<AmbientBotanicalParticle>
 ) {
-    val waterCenter = Offset(center.x, center.y + minDim * 0.14f)
-
-    // 1. Concentric Water Ripples Under Lily Pad
-    for (rIndex in 0..2) {
-        val ripplePhase = ((animClockSec * 0.4f + rIndex * 0.33f) % 1.0f)
-        val rippleRadius = minDim * (0.20f + 0.22f * ripplePhase) * (0.85f + 0.15f * bloomFactor)
-        val rippleAlpha = ((1.0f - ripplePhase) * 0.35f * glowIntensity).coerceIn(0f, 0.45f)
-
-        drawOval(
-            color = primaryLight.copy(alpha = rippleAlpha),
-            topLeft = Offset(waterCenter.x - rippleRadius, waterCenter.y - rippleRadius * 0.40f),
-            size = Size(rippleRadius * 2f, rippleRadius * 0.80f),
-            style = Stroke(width = 1.4f)
-        )
-    }
-
-    // 2. Floating Lily Pad (Disc with Notch & Radial Veins)
-    val padWidth = minDim * 0.54f * (0.88f + 0.12f * bloomFactor)
-    val padHeight = padWidth * 0.45f
-    val padCenter = waterCenter
-
-    val padPath = Path().apply {
-        val rect = Rect(padCenter.x - padWidth / 2f, padCenter.y - padHeight / 2f, padCenter.x + padWidth / 2f, padCenter.y + padHeight / 2f)
-        addOval(rect)
-    }
-
-    // Lily Pad Fill (Deep emerald-gold aquatic tone)
-    drawPath(
-        path = padPath,
-        brush = Brush.radialGradient(
-            colors = listOf(
-                Color(0xFF2E6038).copy(alpha = 0.95f),
-                Color(0xFF1B4026).copy(alpha = 0.95f),
-                primaryDark.copy(alpha = 0.95f)
-            ),
-            center = padCenter,
-            radius = padWidth * 0.5f
-        )
-    )
-    // Lily Pad Rim Glow
-    drawPath(
-        path = padPath,
-        color = primaryLight.copy(alpha = 0.65f),
-        style = Stroke(width = 1.6f)
-    )
-
-    // Lily Pad Radial Veins
-    val veinAngles = listOf(-140f, -100f, -60f, -20f, 20f, 60f, 100f, 140f)
-    for (vAngle in veinAngles) {
-        val vRad = Math.toRadians(vAngle.toDouble()).toFloat()
-        val vx = padCenter.x + cos(vRad) * (padWidth * 0.46f)
-        val vy = padCenter.y + sin(vRad) * (padHeight * 0.46f)
-        drawLine(
-            color = primaryLight.copy(alpha = 0.35f),
-            start = padCenter,
-            end = Offset(vx, vy),
-            strokeWidth = 1.0f
-        )
-    }
-
-    // 3. Sacred Lotus Blossom Blooming Seated on the Lily Pad
-    val lotusOrigin = Offset(padCenter.x, padCenter.y - minDim * 0.04f)
-    val petalBaseScale = (minDim / 300f)
-
-    // Outer Petal Tier (Expands broadly outward during inhale)
-    val outerPetalCount = 8
-    for (i in 0 until outerPetalCount) {
-        val angle = (i * (360f / outerPetalCount))
-        val petalExpansion = bloomFactor * 1.0f
-        val rotAngle = angle * petalExpansion + (sin(animClockSec * 0.8f + i) * 3f)
-        val petalScale = petalBaseScale * (0.85f + 0.35f * bloomFactor)
-
+    // 1. Ambient Floating Lotus Petals (Strictly bounded to canvas)
+    drawAmbientBotanicals(
+        particles = ambientParticles,
+        minDim = minDim,
+        animClockSec = animClockSec,
+        growthFactor = growthFactor,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
+    ) { pCenter, pScale, pRot, pColor, pRim ->
         drawSingleLotusPetal(
-            tip = lotusOrigin,
+            tip = pCenter,
+            scale = pScale * 0.75f,
+            rotation = pRot,
+            petalColor = pColor,
+            rimColor = pRim
+        )
+    }
+
+    val baseY = center.y + minDim * 0.40f
+
+    // 2. Broad Curved Lotus Pads (Lily Pads) at Base (Emerald Green with Vertical Gold Veins)
+    // Left Lotus Pad
+    drawAsianLotusPad(
+        center = Offset(center.x - minDim * 0.28f, baseY - minDim * 0.05f),
+        width = minDim * 0.46f,
+        height = minDim * 0.26f,
+        tiltDeg = -14f,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
+    )
+
+    // Right Lotus Pad
+    drawAsianLotusPad(
+        center = Offset(center.x + minDim * 0.26f, baseY - minDim * 0.02f),
+        width = minDim * 0.44f,
+        height = minDim * 0.24f,
+        tiltDeg = 16f,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
+    )
+
+    // 3. Slender Rising Stems & Multi-Lotus Flowers at Varying Heights
+    // (A) Top High Hero Lotus Flower (Rises high and blooms magnificently)
+    val topStemX = center.x
+    val topTargetY = center.y - minDim * 0.24f
+    val topCurrentY = baseY - (baseY - topTargetY) * (0.75f + 0.25f * growthFactor)
+    drawLotusStem(
+        start = Offset(topStemX, baseY),
+        end = Offset(topStemX, topCurrentY),
+        stemColor = primaryDark,
+        goldColor = primaryLight
+    )
+    drawMultiTierLotusBlossom(
+        origin = Offset(topStemX, topCurrentY),
+        scale = (minDim / 320f) * (0.70f + 0.35f * growthFactor),
+        bloomRatio = growthFactor,
+        animClockSec = animClockSec,
+        primaryColor = primaryColor,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
+    )
+
+    // (B) Left Mid-Tier Blooming Lotus (Elegantly cup-shaped bloom)
+    val leftStemX = center.x - minDim * 0.24f
+    val leftTargetY = center.y - minDim * 0.04f
+    val leftCurrentY = baseY - (baseY - leftTargetY) * (0.60f + 0.40f * growthFactor)
+    drawLotusStem(
+        start = Offset(leftStemX + minDim * 0.04f, baseY),
+        end = Offset(leftStemX, leftCurrentY),
+        stemColor = primaryDark,
+        goldColor = primaryLight
+    )
+    drawMultiTierLotusBlossom(
+        origin = Offset(leftStemX, leftCurrentY),
+        scale = (minDim / 340f) * (0.55f + 0.40f * growthFactor),
+        bloomRatio = (growthFactor * 0.90f),
+        animClockSec = animClockSec + 1.5f,
+        primaryColor = primaryColor,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
+    )
+
+    // (C) Right Mid-High Lotus Bud / Emerging Blossom (Rising on right)
+    val rightStemX = center.x + minDim * 0.16f
+    val rightTargetY = center.y - minDim * 0.10f
+    val rightCurrentY = baseY - (baseY - rightTargetY) * (0.50f + 0.50f * growthFactor)
+    drawLotusStem(
+        start = Offset(rightStemX - minDim * 0.02f, baseY),
+        end = Offset(rightStemX, rightCurrentY),
+        stemColor = primaryDark,
+        goldColor = primaryLight
+    )
+    drawLotusBud(
+        origin = Offset(rightStemX, rightCurrentY),
+        scale = (minDim / 350f) * (0.65f + 0.35f * growthFactor),
+        openProgress = growthFactor,
+        primaryColor = primaryColor,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
+    )
+
+    // (D) Right Low Bud (Emerging above right pad)
+    val lowRightStemX = center.x + minDim * 0.34f
+    val lowRightTargetY = center.y + minDim * 0.10f
+    val lowRightCurrentY = baseY - (baseY - lowRightTargetY) * (0.40f + 0.60f * growthFactor)
+    drawLotusStem(
+        start = Offset(lowRightStemX - minDim * 0.01f, baseY),
+        end = Offset(lowRightStemX, lowRightCurrentY),
+        stemColor = primaryDark,
+        goldColor = primaryLight
+    )
+    drawLotusBud(
+        origin = Offset(lowRightStemX, lowRightCurrentY),
+        scale = (minDim / 380f) * (0.50f + 0.30f * growthFactor),
+        openProgress = growthFactor * 0.70f,
+        primaryColor = primaryColor,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
+    )
+}
+
+private fun DrawScope.drawAsianLotusPad(
+    center: Offset,
+    width: Float,
+    height: Float,
+    tiltDeg: Float,
+    primaryLight: Color,
+    primaryDark: Color
+) {
+    rotate(degrees = tiltDeg, pivot = center) {
+        val rect = Rect(center.x - width / 2f, center.y - height / 2f, center.x + width / 2f, center.y + height / 2f)
+        val padPath = Path().apply {
+            addOval(rect)
+        }
+
+        // Deep Teal-Emerald Lotus Pad Shading
+        drawPath(
+            path = padPath,
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    Color(0xFF2D624F),
+                    Color(0xFF1E4637),
+                    Color(0xFF0F261E)
+                ),
+                center = center,
+                radius = width * 0.55f
+            )
+        )
+
+        // Radial Gold Vein Filigree
+        val veinAngles = listOf(-150f, -120f, -90f, -60f, -30f, 0f, 30f, 60f, 90f, 120f, 150f)
+        for (vDeg in veinAngles) {
+            val vRad = Math.toRadians(vDeg.toDouble()).toFloat()
+            val vx = center.x + cos(vRad) * (width * 0.46f)
+            val vy = center.y + sin(vRad) * (height * 0.46f)
+            drawLine(
+                color = primaryLight.copy(alpha = 0.35f),
+                start = center,
+                end = Offset(vx, vy),
+                strokeWidth = 1.1f
+            )
+        }
+
+        // Outer Rim Accent
+        drawPath(
+            path = padPath,
+            color = primaryLight.copy(alpha = 0.65f),
+            style = Stroke(width = 1.3f)
+        )
+    }
+}
+
+private fun DrawScope.drawLotusStem(
+    start: Offset,
+    end: Offset,
+    stemColor: Color,
+    goldColor: Color
+) {
+    // Elegant slender stem
+    drawLine(
+        brush = Brush.verticalGradient(
+            colors = listOf(goldColor, stemColor, Color(0xFF132F24)),
+            startY = end.y,
+            endY = start.y
+        ),
+        start = start,
+        end = end,
+        strokeWidth = 2.4f,
+        cap = StrokeCap.Round
+    )
+}
+
+private fun DrawScope.drawMultiTierLotusBlossom(
+    origin: Offset,
+    scale: Float,
+    bloomRatio: Float,
+    animClockSec: Float,
+    primaryColor: Color,
+    primaryLight: Color,
+    primaryDark: Color
+) {
+    // Outer Tier Petals (Spread wide on bloom)
+    val outerCount = 7
+    for (i in 0 until outerCount) {
+        val angle = (i - (outerCount - 1) / 2f) * (26f + 16f * bloomRatio)
+        val sway = sin(animClockSec * 1.1f + i) * 2f
+        val petalScale = scale * (0.80f + 0.35f * bloomRatio)
+        drawSingleLotusPetal(
+            tip = origin,
             scale = petalScale,
-            rotation = rotAngle,
+            rotation = angle + sway - 90f,
             petalColor = primaryDark,
             rimColor = primaryLight
         )
     }
 
-    // Mid Petal Tier (Radiant Golden Lotus Petals)
-    val midPetalCount = 6
-    for (i in 0 until midPetalCount) {
-        val angle = (i * (360f / midPetalCount)) + 30f
-        val petalExpansion = bloomFactor * 0.85f
-        val rotAngle = angle * petalExpansion + (sin(animClockSec * 0.8f + i + 2) * 2f)
-        val petalScale = petalBaseScale * (0.95f + 0.30f * bloomFactor)
-
+    // Mid Tier Petals (Lush Coral/Rose Petals)
+    val midCount = 5
+    for (i in 0 until midCount) {
+        val angle = (i - (midCount - 1) / 2f) * (20f + 12f * bloomRatio)
+        val sway = sin(animClockSec * 1.1f + i + 2) * 1.5f
+        val petalScale = scale * (0.90f + 0.25f * bloomRatio)
         drawSingleLotusPetal(
-            tip = lotusOrigin,
+            tip = origin,
             scale = petalScale,
-            rotation = rotAngle,
+            rotation = angle + sway - 90f,
             petalColor = primaryColor,
             rimColor = primaryLight
         )
     }
 
-    // Inner Petal Tier (Embraces the center bud)
-    val innerPetalCount = 5
-    for (i in 0 until innerPetalCount) {
-        val angle = (i * (360f / innerPetalCount)) + 18f
-        val petalExpansion = bloomFactor * 0.65f
-        val rotAngle = angle * petalExpansion
-        val petalScale = petalBaseScale * (0.75f + 0.25f * bloomFactor)
-
-        drawSingleLotusPetal(
-            tip = lotusOrigin,
-            scale = petalScale,
-            rotation = rotAngle,
-            petalColor = Color(0xFFFFE082),
-            rimColor = Color(0xFFFFF8E1)
-        )
-    }
-
-    // 4. Central Golden Stamen Receptacle / Seed Pod
-    val coreRadius = minDim * 0.055f * (0.75f + 0.25f * bloomFactor)
+    // Inner Stamen Glow Pod
+    val podRadius = scale * 10f * (0.6f + 0.4f * bloomRatio)
     drawCircle(
         brush = Brush.radialGradient(
-            colors = listOf(
-                Color(0xFFFFF9C4),
-                Color(0xFFFFD54F),
-                primaryColor
-            ),
-            center = lotusOrigin,
-            radius = coreRadius
+            colors = listOf(primaryLight, primaryColor, primaryDark),
+            center = origin,
+            radius = podRadius
         ),
-        radius = coreRadius,
-        center = lotusOrigin
+        radius = podRadius,
+        center = origin
     )
     drawCircle(
-        color = primaryLight,
-        radius = coreRadius,
-        center = lotusOrigin,
+        color = primaryLight.copy(alpha = 0.90f),
+        radius = podRadius,
+        center = origin,
         style = Stroke(width = 1.2f)
     )
+}
 
-    // Stamen Pollen Dots
-    val dotCount = 7
-    for (d in 0 until dotCount) {
-        val dAngle = (d * (360f / dotCount)) * (PI.toFloat() / 180f)
-        val dx = lotusOrigin.x + cos(dAngle) * (coreRadius * 0.55f)
-        val dy = lotusOrigin.y + sin(dAngle) * (coreRadius * 0.55f)
-        drawCircle(
-            color = primaryDark,
-            radius = coreRadius * 0.18f,
-            center = Offset(dx, dy)
+private fun DrawScope.drawLotusBud(
+    origin: Offset,
+    scale: Float,
+    openProgress: Float,
+    primaryColor: Color,
+    primaryLight: Color,
+    primaryDark: Color
+) {
+    val budHeight = scale * 40f
+    val budWidth = scale * 18f * (0.8f + 0.3f * openProgress)
+
+    val path = Path().apply {
+        moveTo(origin.x, origin.y)
+        cubicTo(
+            origin.x - budWidth, origin.y - budHeight * 0.4f,
+            origin.x - budWidth * 0.6f, origin.y - budHeight,
+            origin.x, origin.y - budHeight
         )
+        cubicTo(
+            origin.x + budWidth * 0.6f, origin.y - budHeight,
+            origin.x + budWidth, origin.y - budHeight * 0.4f,
+            origin.x, origin.y
+        )
+        close()
     }
+
+    drawPath(
+        path = path,
+        brush = Brush.verticalGradient(
+            colors = listOf(
+                primaryLight.copy(alpha = 0.95f),
+                primaryColor.copy(alpha = 0.92f),
+                primaryDark.copy(alpha = 0.90f)
+            ),
+            startY = origin.y - budHeight,
+            endY = origin.y
+        )
+    )
+    drawPath(
+        path = path,
+        color = primaryLight.copy(alpha = 0.85f),
+        style = Stroke(width = 1.1f)
+    )
 }
 
 private fun DrawScope.drawSingleLotusPetal(
@@ -666,183 +666,218 @@ private fun DrawScope.drawSingleLotusPetal(
     rimColor: Color
 ) {
     rotate(degrees = rotation, pivot = tip) {
-        val len = scale * 52f
-        val wid = scale * 22f
+        val len = scale * 48f
+        val wid = scale * 19f
 
         val path = Path().apply {
-            moveTo(tip.x, tip.y) // Base attachment
+            moveTo(tip.x, tip.y) // Base of petal
             cubicTo(
-                tip.x - wid * 1.15f, tip.y - len * 0.35f,
-                tip.x - wid * 1.20f, tip.y - len * 0.70f,
-                tip.x, tip.y - len // Pointed apex
+                tip.x - wid, tip.y + len * 0.45f,
+                tip.x - wid * 0.65f, tip.y + len,
+                tip.x, tip.y + len // Outer tip
             )
             cubicTo(
-                tip.x + wid * 1.20f, tip.y - len * 0.70f,
-                tip.x + wid * 1.15f, tip.y - len * 0.35f,
+                tip.x + wid * 0.65f, tip.y + len,
+                tip.x + wid, tip.y + len * 0.45f,
                 tip.x, tip.y
             )
             close()
         }
 
-        // Petal Gradient Fill
         drawPath(
             path = path,
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    rimColor.copy(alpha = 0.95f),
                     petalColor.copy(alpha = 0.92f),
-                    petalColor.copy(alpha = 0.85f)
+                    rimColor.copy(alpha = 0.90f),
+                    Color(0xFFFFF8E7).copy(alpha = 0.95f)
                 ),
-                startY = tip.y - len,
-                endY = tip.y
+                startY = tip.y,
+                endY = tip.y + len
             )
         )
-
-        // Petal Rim
-        drawPath(
-            path = path,
-            color = rimColor.copy(alpha = 0.90f),
-            style = Stroke(width = 1.1f)
-        )
-
-        // Lotus Vein Rib
         drawLine(
-            color = rimColor.copy(alpha = 0.65f),
+            color = rimColor.copy(alpha = 0.70f),
             start = tip,
-            end = Offset(tip.x, tip.y - len * 0.88f),
+            end = Offset(tip.x, tip.y + len * 0.90f),
             strokeWidth = 1.0f
         )
-    }
-}
-
-// =========================================================================
-// 🌸 3. THEME: SAKURA TWILIGHT — BLOOMING CHERRY BLOSSOM & TWIG
-// =========================================================================
-private fun DrawScope.drawSakuraCherryBlossom(
-    center: Offset,
-    minDim: Float,
-    bloomFactor: Float,
-    animClockSec: Float,
-    primaryColor: Color,
-    primaryLight: Color,
-    primaryDark: Color,
-    glowIntensity: Float
-) {
-    val branchStart = Offset(center.x - minDim * 0.34f, center.y + minDim * 0.22f)
-    val branchEnd = Offset(center.x + minDim * 0.30f, center.y - minDim * 0.20f)
-    val heroOrigin = center
-
-    // 1. Organic Cherry Blossom Twig
-    val twigPath = Path().apply {
-        moveTo(branchStart.x, branchStart.y)
-        cubicTo(
-            center.x - minDim * 0.16f, center.y + minDim * 0.14f,
-            center.x - minDim * 0.05f, center.y - minDim * 0.04f,
-            branchEnd.x, branchEnd.y
-        )
-    }
-
-    // Twig Body
-    drawPath(
-        path = twigPath,
-        color = Color(0xFF3E1C2B).copy(alpha = 0.90f),
-        style = Stroke(width = 4.2f, cap = StrokeCap.Round)
-    )
-    drawPath(
-        path = twigPath,
-        color = primaryLight.copy(alpha = 0.45f),
-        style = Stroke(width = 1.2f, cap = StrokeCap.Round)
-    )
-
-    // 2. Side Blossom Buds on Twig
-    val budPositions = listOf(
-        Pair(Offset(center.x - minDim * 0.18f, center.y + minDim * 0.10f), -45f),
-        Pair(Offset(center.x + minDim * 0.18f, center.y - minDim * 0.12f), 55f)
-    )
-    for ((budPos, budRot) in budPositions) {
-        drawSakuraBud(
-            origin = budPos,
-            rotation = budRot,
-            scale = (minDim / 400f) * (0.8f + 0.2f * bloomFactor),
-            primaryColor = primaryColor,
-            primaryLight = primaryLight
-        )
-    }
-
-    // 3. Central Hero 5-Petal Cherry Blossom (Expands & Blooms with breath)
-    val flowerScale = (minDim / 260f) * (0.60f + 0.40f * bloomFactor)
-    val gentleSway = sin(animClockSec * 0.9f) * 4f
-
-    rotate(degrees = gentleSway, pivot = heroOrigin) {
-        // Draw 5 Notched Heart-Tipped Cherry Blossom Petals
-        for (i in 0..4) {
-            val petalAngle = (i * 72f)
-            rotate(degrees = petalAngle, pivot = heroOrigin) {
-                drawSakuraHeroPetal(
-                    origin = heroOrigin,
-                    scale = flowerScale,
-                    bloomFactor = bloomFactor,
-                    primaryColor = primaryColor,
-                    primaryLight = primaryLight,
-                    primaryDark = primaryDark
-                )
-            }
-        }
-
-        // 4. Pistils & Stamens Radiating from Center
-        val stamenCount = 10
-        val stamenLength = flowerScale * 26f * (0.75f + 0.25f * bloomFactor)
-
-        for (s in 0 until stamenCount) {
-            val sAngle = (s * (360f / stamenCount)) * (PI.toFloat() / 180f)
-            val sx = heroOrigin.x + cos(sAngle) * stamenLength
-            val sy = heroOrigin.y + sin(sAngle) * stamenLength
-
-            // Stamen Filament Thread
-            drawLine(
-                color = primaryLight.copy(alpha = 0.85f),
-                start = heroOrigin,
-                end = Offset(sx, sy),
-                strokeWidth = 1.0f,
-                cap = StrokeCap.Round
-            )
-            // Stamen Anther Dot (Glowing magenta/gold)
-            drawCircle(
-                color = Color(0xFFFFD1DC),
-                radius = flowerScale * 2.4f,
-                center = Offset(sx, sy)
-            )
-            drawCircle(
-                color = Color(0xFFFF4081),
-                radius = flowerScale * 1.4f,
-                center = Offset(sx, sy)
-            )
-        }
-
-        // 5. Central Pistil Core
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    Color(0xFFFF80AB),
-                    primaryColor,
-                    primaryDark
-                ),
-                center = heroOrigin,
-                radius = flowerScale * 12f
-            ),
-            radius = flowerScale * 12f,
-            center = heroOrigin
-        )
-        drawCircle(
-            color = primaryLight.copy(alpha = 0.90f),
-            radius = flowerScale * 12f,
-            center = heroOrigin,
+        drawPath(
+            path = path,
+            color = rimColor.copy(alpha = 0.85f),
             style = Stroke(width = 1.2f)
         )
     }
 }
 
-private fun DrawScope.drawSakuraHeroPetal(
+// =========================================================================
+// 3. SAKURA TWILIGHT: ORGANIC CHERRY BLOSSOM BRANCH WITH FLOWERING SHOOTS
+// =========================================================================
+
+private fun DrawScope.drawSakuraTwilightBreathing(
+    center: Offset,
+    minDim: Float,
+    growthFactor: Float,
+    currentPhase: BreathPhase,
+    animClockSec: Float,
+    primaryColor: Color,
+    primaryLight: Color,
+    primaryDark: Color,
+    ambientParticles: List<AmbientBotanicalParticle>
+) {
+    // 1. Ambient Floating Sakura Petals (Strictly bounded to canvas)
+    drawAmbientBotanicals(
+        particles = ambientParticles,
+        minDim = minDim,
+        animClockSec = animClockSec,
+        growthFactor = growthFactor,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
+    ) { pCenter, pScale, pRot, pColor, pRim ->
+        drawSingleSakuraPetal(
+            center = pCenter,
+            scale = pScale * 0.85f,
+            rotation = pRot,
+            petalColor = pColor,
+            rimColor = pRim
+        )
+    }
+
+    // 2. Organic Cherry Blossom Main Bough / Branch
+    val branchStartX = center.x - minDim * 0.42f
+    val branchStartY = center.y + minDim * 0.18f
+    val branchMidX = center.x
+    val branchMidY = center.y - minDim * 0.05f
+    val branchEndX = center.x + minDim * 0.40f
+    val branchEndY = center.y - minDim * 0.22f
+
+    val boughPath = Path().apply {
+        moveTo(branchStartX, branchStartY)
+        quadraticTo(branchMidX, branchMidY, branchEndX, branchEndY)
+    }
+
+    // Draw Dark Wooden Sakura Bough
+    drawPath(
+        path = boughPath,
+        brush = Brush.linearGradient(
+            colors = listOf(Color(0xFF382226), Color(0xFF523338), Color(0xFF2A161A)),
+            start = Offset(branchStartX, branchStartY),
+            end = Offset(branchEndX, branchEndY)
+        ),
+        style = Stroke(width = 4.5f, cap = StrokeCap.Round)
+    )
+
+    // 3. Flowering Florets and Twigs Along the Branch that Bloom on Inhale
+    data class SakuraFlowerSite(
+        val posX: Float,
+        val posY: Float,
+        val twigAngle: Float,
+        val twigLen: Float,
+        val flowerBaseScale: Float,
+        val bloomDelay: Float
+    )
+
+    val flowerSites = listOf(
+        SakuraFlowerSite(center.x, center.y - minDim * 0.05f, -75f, minDim * 0.08f, 1.10f, 0.0f),       // Center Hero Blossom
+        SakuraFlowerSite(center.x - minDim * 0.22f, center.y + minDim * 0.08f, -115f, minDim * 0.06f, 0.85f, 0.15f), // Left Blossom
+        SakuraFlowerSite(center.x + minDim * 0.20f, center.y - minDim * 0.14f, -45f, minDim * 0.07f, 0.90f, 0.10f),  // Right Mid Blossom
+        SakuraFlowerSite(center.x + minDim * 0.35f, center.y - minDim * 0.20f, -25f, minDim * 0.05f, 0.75f, 0.25f),  // Far Right Bud/Blossom
+        SakuraFlowerSite(center.x - minDim * 0.10f, center.y + minDim * 0.02f, 105f, minDim * 0.06f, 0.80f, 0.20f)   // Lower Hanging Blossom
+    )
+
+    for ((idx, site) in flowerSites.withIndex()) {
+        // Individual site bloom progress
+        val siteBloom = ((growthFactor - site.bloomDelay) / (1.0f - site.bloomDelay)).coerceIn(0.2f, 1.0f)
+        val twigRad = Math.toRadians(site.twigAngle.toDouble()).toFloat()
+        val twigTipX = site.posX + cos(twigRad) * (site.twigLen * (0.6f + 0.4f * siteBloom))
+        val twigTipY = site.posY + sin(twigRad) * (site.twigLen * (0.6f + 0.4f * siteBloom))
+
+        // Twig line
+        drawLine(
+            color = Color(0xFF4A2D33),
+            start = Offset(site.posX, site.posY),
+            end = Offset(twigTipX, twigTipY),
+            strokeWidth = 2.0f,
+            cap = StrokeCap.Round
+        )
+
+        // 5-Petal Cherry Blossom Blooming at Twig Tip
+        val floretScale = (minDim / 320f) * site.flowerBaseScale * (0.50f + 0.50f * siteBloom)
+        drawSakura5PetalFlower(
+            origin = Offset(twigTipX, twigTipY),
+            scale = floretScale,
+            bloomFactor = siteBloom,
+            animClockSec = animClockSec + idx,
+            primaryColor = primaryColor,
+            primaryLight = primaryLight,
+            primaryDark = primaryDark
+        )
+    }
+}
+
+private fun DrawScope.drawSakura5PetalFlower(
+    origin: Offset,
+    scale: Float,
+    bloomFactor: Float,
+    animClockSec: Float,
+    primaryColor: Color,
+    primaryLight: Color,
+    primaryDark: Color
+) {
+    // 5 Notched Heart-Cleft Cherry Blossom Petals
+    for (i in 0 until 5) {
+        val baseAngle = i * 72f
+        val sway = sin(animClockSec * 1.2f + i) * 2f
+        val petalRot = baseAngle + sway
+
+        rotate(degrees = petalRot, pivot = origin) {
+            drawSakuraSingleHeartPetal(
+                origin = origin,
+                scale = scale,
+                bloomFactor = bloomFactor,
+                primaryColor = primaryColor,
+                primaryLight = primaryLight,
+                primaryDark = primaryDark
+            )
+        }
+    }
+
+    // Glowing Stamen Filaments & Anthers
+    val stamenCount = 10
+    for (s in 0 until stamenCount) {
+        val sAngle = s * (360f / stamenCount)
+        val sRad = Math.toRadians(sAngle.toDouble()).toFloat()
+        val sLen = scale * 16f * (0.6f + 0.4f * bloomFactor)
+        val sx = origin.x + cos(sRad) * sLen
+        val sy = origin.y + sin(sRad) * sLen
+
+        drawLine(
+            color = primaryLight.copy(alpha = 0.85f),
+            start = origin,
+            end = Offset(sx, sy),
+            strokeWidth = 1.0f,
+            cap = StrokeCap.Round
+        )
+        drawCircle(
+            color = Color(0xFFFFD1DC),
+            radius = scale * 2.0f,
+            center = Offset(sx, sy)
+        )
+    }
+
+    // Central Pistil Glow
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(Color(0xFFFF80AB), primaryColor, primaryDark),
+            center = origin,
+            radius = scale * 8f
+        ),
+        radius = scale * 8f,
+        center = origin
+    )
+}
+
+private fun DrawScope.drawSakuraSingleHeartPetal(
     origin: Offset,
     scale: Float,
     bloomFactor: Float,
@@ -850,15 +885,15 @@ private fun DrawScope.drawSakuraHeroPetal(
     primaryLight: Color,
     primaryDark: Color
 ) {
-    val len = scale * 56f
-    val wid = scale * 26f * (0.85f + 0.15f * bloomFactor)
-    val notch = len * 0.18f
+    val len = scale * 42f * (0.80f + 0.20f * bloomFactor)
+    val wid = scale * 20f * (0.85f + 0.15f * bloomFactor)
+    val notch = len * 0.16f
 
     val path = Path().apply {
-        moveTo(origin.x, origin.y) // Center origin
+        moveTo(origin.x, origin.y)
         cubicTo(
-            origin.x - wid * 1.15f, origin.y - len * 0.40f,
-            origin.x - wid * 0.95f, origin.y - len,
+            origin.x - wid * 1.1f, origin.y - len * 0.40f,
+            origin.x - wid * 0.9f, origin.y - len,
             origin.x - wid * 0.45f, origin.y - len
         )
         // Distinctive Sakura Heart Notch Cleft at tip
@@ -867,14 +902,13 @@ private fun DrawScope.drawSakuraHeroPetal(
             origin.x + wid * 0.45f, origin.y - len
         )
         cubicTo(
-            origin.x + wid * 0.95f, origin.y - len,
-            origin.x + wid * 1.15f, origin.y - len * 0.40f,
+            origin.x + wid * 0.9f, origin.y - len,
+            origin.x + wid * 1.1f, origin.y - len * 0.40f,
             origin.x, origin.y
         )
         close()
     }
 
-    // Radiant Twilight Petal Gradient
     drawPath(
         path = path,
         brush = Brush.verticalGradient(
@@ -887,36 +921,11 @@ private fun DrawScope.drawSakuraHeroPetal(
             endY = origin.y
         )
     )
-
-    // Petal Outline
     drawPath(
         path = path,
         color = primaryLight.copy(alpha = 0.88f),
         style = Stroke(width = 1.1f)
     )
-}
-
-private fun DrawScope.drawSakuraBud(
-    origin: Offset,
-    rotation: Float,
-    scale: Float,
-    primaryColor: Color,
-    primaryLight: Color
-) {
-    rotate(degrees = rotation, pivot = origin) {
-        val s = scale * 14f
-        drawOval(
-            color = primaryColor,
-            topLeft = Offset(origin.x - s * 0.5f, origin.y - s * 1.2f),
-            size = Size(s, s * 1.4f)
-        )
-        drawOval(
-            color = primaryLight,
-            topLeft = Offset(origin.x - s * 0.5f, origin.y - s * 1.2f),
-            size = Size(s, s * 1.4f),
-            style = Stroke(width = 1.0f)
-        )
-    }
 }
 
 private fun DrawScope.drawSingleSakuraPetal(
@@ -927,9 +936,9 @@ private fun DrawScope.drawSingleSakuraPetal(
     rimColor: Color
 ) {
     rotate(degrees = rotation, pivot = center) {
-        val len = scale * 26f
-        val wid = scale * 12f
-        val notch = len * 0.16f
+        val len = scale * 24f
+        val wid = scale * 11f
+        val notch = len * 0.15f
 
         val path = Path().apply {
             moveTo(center.x, center.y + len * 0.4f)
@@ -950,7 +959,58 @@ private fun DrawScope.drawSingleSakuraPetal(
             close()
         }
 
-        drawPath(path = path, color = petalColor)
-        drawPath(path = path, color = rimColor, style = Stroke(width = 1.0f))
+        drawPath(
+            path = path,
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    rimColor.copy(alpha = 0.90f),
+                    petalColor.copy(alpha = 0.85f)
+                ),
+                startY = center.y - len,
+                endY = center.y + len * 0.4f
+            )
+        )
+        drawPath(path = path, color = rimColor.copy(alpha = 0.70f), style = Stroke(width = 1.0f))
+    }
+}
+
+// =========================================================================
+// AMBIENT BOTANICAL PARTICLES (STRICTLY CONSTRAINED TO VISIBLE SCREEN BOUNDS)
+// =========================================================================
+
+private inline fun DrawScope.drawAmbientBotanicals(
+    particles: List<AmbientBotanicalParticle>,
+    minDim: Float,
+    animClockSec: Float,
+    growthFactor: Float,
+    primaryLight: Color,
+    primaryDark: Color,
+    drawLeaf: (center: Offset, scale: Float, rotation: Float, fill: Color, rim: Color) -> Unit
+) {
+    val minX = size.width * 0.08f
+    val maxX = size.width * 0.92f
+    val minY = size.height * 0.08f
+    val maxY = size.height * 0.92f
+    val boundW = maxX - minX
+    val boundH = maxY - minY
+
+    for (p in particles) {
+        // Continuous smooth wrapped motion strictly within bounds
+        val cycleProgress = (animClockSec * p.speedY + p.relY) % 1.0f
+        val curY = minY + cycleProgress * boundH
+
+        val driftX = sin(animClockSec * p.driftSpeedX + p.relX * 10f) * (minDim * 0.08f)
+        val curX = (minX + (p.relX * boundW) + driftX).coerceIn(minX, maxX)
+
+        val rotation = p.initialRotation + animClockSec * p.rotSpeed
+        val dynamicScale = (minDim / 380f) * p.baseScale * (0.80f + 0.20f * growthFactor)
+
+        drawLeaf(
+            Offset(curX, curY),
+            dynamicScale,
+            rotation,
+            primaryDark.copy(alpha = p.alphaBase),
+            primaryLight.copy(alpha = p.alphaBase + 0.15f)
+        )
     }
 }

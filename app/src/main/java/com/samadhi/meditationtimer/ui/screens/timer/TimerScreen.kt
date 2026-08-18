@@ -118,78 +118,76 @@ fun TimerScreen(
             ambientAlpha = 0.38f
         )
 
-        // 2. Beautifully proportioned main container with balanced spacing
+        // 2. Beautifully proportioned main container fitted perfectly to viewport
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 22.dp, vertical = 16.dp)
+                .padding(horizontal = 20.dp, vertical = 10.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             // --- 1. TOP HEADER (BUDDHO TIMER BRANDING) ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 4.dp),
+                    .padding(top = 2.dp, bottom = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
                 com.samadhi.meditationtimer.ui.components.BuddhaOutlineLogo(
-                    size = 42.dp,
+                    size = 36.dp,
                     tint = currentTheme.primaryLight,
-                    strokeWidth = 2.2f,
+                    strokeWidth = 2.0f,
                     showEnsoCircle = true
                 )
-                Spacer(modifier = Modifier.width(14.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
                         text = "Buddho Timer",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.2.sp,
-                            fontSize = 17.sp
+                            letterSpacing = 1.0.sp,
+                            fontSize = 15.5.sp
                         ),
                         color = ZenTextPrimary
                     )
                     Text(
                         text = if (config.isBoxBreathingMode) "Living Breathwork • Pranayama" else "Mindful Stillness • Samadhi",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                         color = currentTheme.primaryLight
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
             // --- 2. DYNAMIC SETUP CONTENT (MEDITATION VS BOX BREATHING) ---
             AnimatedContent(
                 targetState = config.isBoxBreathingMode,
                 transitionSpec = {
-                    fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(180))
+                    fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(160))
                 },
                 label = "PracticeModeSetup",
                 modifier = Modifier.fillMaxWidth()
             ) { isBoxMode ->
                 if (!isBoxMode) {
-                    // === MEDITATION TIMER SETUP (BALANCED & SPACIOUS) ===
+                    // === MEDITATION TIMER SETUP (CLEAN & PERFECTLY FITTED) ===
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 2.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         // Large Bold Duration Display
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 2.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
                                 text = "${config.targetDurationMinutes}",
-                                fontSize = 82.sp,
+                                fontSize = 72.sp,
                                 fontWeight = FontWeight.ExtraLight,
                                 letterSpacing = (-2).sp,
                                 color = ZenTextPrimary,
@@ -197,9 +195,9 @@ fun TimerScreen(
                             )
                             Text(
                                 text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
-                                fontSize = 13.5.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 4.sp,
+                                letterSpacing = 3.sp,
                                 color = currentTheme.primaryLight,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
@@ -214,33 +212,33 @@ fun TimerScreen(
                             valueRange = 1f..120f,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(68.dp)
+                                .height(54.dp)
                         )
 
                         // Clean Row of Essential Presets
                         val meditationPresets = listOf(5, 15, 30, 45, 60)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             meditationPresets.forEach { duration ->
                                 val isSelected = config.targetDurationMinutes == duration
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .clip(RoundedCornerShape(16.dp))
+                                        .clip(RoundedCornerShape(14.dp))
                                         .background(if (isSelected) currentTheme.primary.copy(alpha = 0.28f) else ZenSurface.copy(alpha = 0.70f))
-                                        .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primaryLight else ZenBorder, RoundedCornerShape(16.dp))
+                                        .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primaryLight else ZenBorder, RoundedCornerShape(14.dp))
                                         .clickable {
                                             viewModel.updateDurationMinutes(duration)
                                             leafBurstTrigger++
                                         }
-                                        .padding(vertical = 13.dp),
+                                        .padding(vertical = 9.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = "${duration}m",
-                                        fontSize = 14.sp,
+                                        fontSize = 13.5.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                         color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
                                     )
@@ -252,10 +250,10 @@ fun TimerScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(18.dp))
+                                .clip(RoundedCornerShape(16.dp))
                                 .background(ZenSurface.copy(alpha = 0.75f))
-                                .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(18.dp))
-                                .padding(horizontal = 18.dp, vertical = 14.dp)
+                                .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -266,15 +264,14 @@ fun TimerScreen(
                                     Text(
                                         text = "Continue Past Target Time",
                                         style = MaterialTheme.typography.titleMedium.copy(
-                                            fontSize = 14.5.sp,
+                                            fontSize = 13.5.sp,
                                             fontWeight = FontWeight.SemiBold
                                         ),
                                         color = ZenTextPrimary
                                     )
-                                    Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = "Keep counting up after target time is reached",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                                         color = ZenTextSecondary
                                     )
                                 }
@@ -293,27 +290,27 @@ fun TimerScreen(
                         }
                     }
                 } else {
-                    // === BOX BREATHING SETUP (BALANCED, DISTINCT & FORMATTED) ===
+                    // === BOX BREATHING SETUP (CLEAN & PERFECTLY FITTED) ===
                     val cycleDurationSec = selectedPattern.totalCycleSec
                     val estimatedCycles = (breathingDurationMin * 60) / cycleDurationSec.coerceAtLeast(1)
 
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 2.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         // Large Duration & Cycles Display
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 2.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
                                 text = "$breathingDurationMin",
-                                fontSize = 82.sp,
+                                fontSize = 72.sp,
                                 fontWeight = FontWeight.ExtraLight,
                                 letterSpacing = (-2).sp,
                                 color = ZenTextPrimary,
@@ -321,9 +318,9 @@ fun TimerScreen(
                             )
                             Text(
                                 text = "$estimatedCycles CYCLES • $breathingDurationMin MINUTES",
-                                fontSize = 13.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 3.sp,
+                                letterSpacing = 2.5.sp,
                                 color = currentTheme.primaryLight,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
@@ -338,33 +335,33 @@ fun TimerScreen(
                             valueRange = 1f..30f,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(68.dp)
+                                .height(54.dp)
                         )
 
                         // 1 Clean Row of Breath Presets
                         val breathPresets = listOf(2, 5, 10, 15, 20)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             breathPresets.forEach { dur ->
                                 val isSelected = breathingDurationMin == dur
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .clip(RoundedCornerShape(16.dp))
+                                        .clip(RoundedCornerShape(14.dp))
                                         .background(if (isSelected) currentTheme.primary.copy(alpha = 0.28f) else ZenSurface.copy(alpha = 0.70f))
-                                        .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primaryLight else ZenBorder, RoundedCornerShape(16.dp))
+                                        .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primaryLight else ZenBorder, RoundedCornerShape(14.dp))
                                         .clickable {
                                             viewModel.updateBreathingDurationMinutes(dur)
                                             leafBurstTrigger++
                                         }
-                                        .padding(vertical = 13.dp),
+                                        .padding(vertical = 9.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = "${dur}m",
-                                        fontSize = 14.sp,
+                                        fontSize = 13.5.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                         color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
                                     )
@@ -386,19 +383,19 @@ fun TimerScreen(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(18.dp))
+                                    .clip(RoundedCornerShape(16.dp))
                                     .clickable { isPatternDropdownOpen = true },
                                 colors = CardDefaults.cardColors(
                                     containerColor = ZenSurface.copy(alpha = 0.85f)
                                 ),
                                 border = BorderStroke(1.2.dp, currentTheme.primary.copy(alpha = 0.55f)),
-                                shape = RoundedCornerShape(18.dp)
+                                shape = RoundedCornerShape(16.dp)
                             ) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -406,27 +403,18 @@ fun TimerScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(6.dp))
-                                                    .background(currentTheme.primary.copy(alpha = 0.18f))
-                                                    .border(0.8.dp, currentTheme.primaryLight.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
-                                                    .padding(horizontal = 8.dp, vertical = 3.dp)
-                                            ) {
-                                                Text(
-                                                    text = patternCategory,
-                                                    fontSize = 10.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    letterSpacing = 1.sp,
-                                                    color = currentTheme.primaryLight
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.height(4.dp))
                                             Text(
                                                 text = selectedPattern.name,
-                                                fontSize = 15.5.sp,
+                                                fontSize = 14.5.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = ZenTextPrimary
+                                            )
+                                            Text(
+                                                text = patternCategory,
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                letterSpacing = 0.8.sp,
+                                                color = currentTheme.primaryLight
                                             )
                                         }
 
@@ -434,14 +422,14 @@ fun TimerScreen(
                                             imageVector = if (isPatternDropdownOpen) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                             contentDescription = "Select Pattern",
                                             tint = currentTheme.primaryLight,
-                                            modifier = Modifier.size(24.dp)
+                                            modifier = Modifier.size(22.dp)
                                         )
                                     }
 
                                     // Phase Timing Visual Chips
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         when (selectedPattern.id) {
@@ -480,118 +468,88 @@ fun TimerScreen(
                                 }
                             }
 
-                            // Distinct, Beautifully Formatted Dropdown Options
+                            // Clean, Uncluttered Dropdown Menu
                             DropdownMenu(
                                 expanded = isPatternDropdownOpen,
                                 onDismissRequest = { isPatternDropdownOpen = false },
                                 modifier = Modifier
-                                    .fillMaxWidth(0.92f)
+                                    .fillMaxWidth(0.90f)
                                     .background(ZenSurface.copy(alpha = 0.98f))
-                                    .border(1.2.dp, currentTheme.primary.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
-                                    .padding(vertical = 6.dp)
+                                    .border(1.2.dp, currentTheme.primary.copy(alpha = 0.50f), RoundedCornerShape(16.dp))
+                                    .padding(vertical = 4.dp)
                             ) {
-                                data class PatternItemData(
+                                data class PatternMenuItem(
                                     val id: String,
-                                    val name: String,
-                                    val tag: String,
-                                    val description: String,
-                                    val phasesText: List<String>
+                                    val title: String,
+                                    val summary: String
                                 )
 
-                                val patternsData = listOf(
-                                    PatternItemData(
+                                val patternsList = listOf(
+                                    PatternMenuItem(
                                         id = "box",
-                                        name = "Box Breathing (4-4-4-4)",
-                                        tag = "FOCUS & STRESS RESET",
-                                        description = "Equal 4-phase tactical nervous system reset",
-                                        phasesText = listOf("4s In", "4s Hold", "4s Out", "4s Hold")
+                                        title = "Box Breathing (4-4-4-4)",
+                                        summary = "Focus & Stress Reset • 4s In • 4s Hold • 4s Out • 4s Hold"
                                     ),
-                                    PatternItemData(
+                                    PatternMenuItem(
                                         id = "478",
-                                        name = "4-7-8 Deep Relaxation",
-                                        tag = "SLEEP & DEEP CALM",
-                                        description = "Vagal brake stimulation for sleep & soothing calm",
-                                        phasesText = listOf("4s In", "7s Hold", "8s Out")
+                                        title = "4-7-8 Deep Relaxation",
+                                        summary = "Deep Sleep & Relaxation • 4s In • 7s Hold • 8s Out"
                                     ),
-                                    PatternItemData(
+                                    PatternMenuItem(
                                         id = "resonant",
-                                        name = "Coherence Breathing (5-5)",
-                                        tag = "HEART COHERENCE",
-                                        description = "Smooth rhythm for heart rate variability & balance",
-                                        phasesText = listOf("5s Inhale", "5s Exhale")
+                                        title = "Coherence Breathing (5-5)",
+                                        summary = "Heart Coherence • 5s Inhale • 5s Exhale"
                                     ),
-                                    PatternItemData(
+                                    PatternMenuItem(
                                         id = "gentle_box",
-                                        name = "Gentle Box (3-3-3-3)",
-                                        tag = "BEGINNER FRIENDLY",
-                                        description = "Gentle 3-phase flow for easing into breath control",
-                                        phasesText = listOf("3s In", "3s Hold", "3s Out", "3s Hold")
+                                        title = "Gentle Box (3-3-3-3)",
+                                        summary = "Beginner Friendly • 3s In • 3s Hold • 3s Out • 3s Hold"
                                     )
                                 )
 
-                                patternsData.forEach { item ->
+                                patternsList.forEach { item ->
                                     val isSelected = selectedPattern.id == item.id
                                     DropdownMenuItem(
                                         text = {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 6.dp),
-                                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                Column(
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .padding(vertical = 2.dp)
                                                 ) {
                                                     Text(
-                                                        text = item.name,
+                                                        text = item.title,
                                                         fontSize = 14.sp,
-                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                         color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
                                                     )
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .clip(RoundedCornerShape(4.dp))
-                                                            .background(if (isSelected) currentTheme.primary.copy(alpha = 0.25f) else ZenBorder.copy(alpha = 0.4f))
-                                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                                    ) {
-                                                        Text(
-                                                            text = item.tag,
-                                                            fontSize = 9.sp,
-                                                            fontWeight = FontWeight.Bold,
-                                                            letterSpacing = 0.8.sp,
-                                                            color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
-                                                        )
-                                                    }
+                                                    Spacer(modifier = Modifier.height(2.dp))
+                                                    Text(
+                                                        text = item.summary,
+                                                        fontSize = 11.5.sp,
+                                                        color = if (isSelected) currentTheme.primaryLight.copy(alpha = 0.85f) else ZenTextSecondary
+                                                    )
                                                 }
 
-                                                Text(
-                                                    text = item.description,
-                                                    fontSize = 11.5.sp,
-                                                    color = ZenTextSecondary
-                                                )
-
-                                                // Chips row
-                                                Row(
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    item.phasesText.forEach { phaseStr ->
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .clip(RoundedCornerShape(4.dp))
-                                                                .background(if (isSelected) currentTheme.primary.copy(alpha = 0.15f) else Color(0x18FFFFFF))
-                                                                .border(0.5.dp, if (isSelected) currentTheme.primaryLight.copy(alpha = 0.35f) else Color(0x28FFFFFF), RoundedCornerShape(4.dp))
-                                                                .padding(horizontal = 5.dp, vertical = 1.5.dp)
-                                                        ) {
-                                                            Text(
-                                                                text = phaseStr,
-                                                                fontSize = 10.sp,
-                                                                fontWeight = FontWeight.Medium,
-                                                                color = if (isSelected) currentTheme.primaryLight else ZenTextMuted
-                                                            )
-                                                        }
+                                                if (isSelected) {
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(24.dp)
+                                                            .clip(CircleShape)
+                                                            .background(currentTheme.primary.copy(alpha = 0.35f)),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.PlayArrow,
+                                                            contentDescription = "Active Pattern",
+                                                            tint = currentTheme.primaryLight,
+                                                            modifier = Modifier.size(14.dp)
+                                                        )
                                                     }
                                                 }
                                             }
@@ -604,7 +562,12 @@ fun TimerScreen(
                                         modifier = Modifier
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                             .clip(RoundedCornerShape(10.dp))
-                                            .background(if (isSelected) currentTheme.primary.copy(alpha = 0.12f) else Color.Transparent)
+                                            .background(if (isSelected) currentTheme.primary.copy(alpha = 0.20f) else Color.Transparent)
+                                            .border(
+                                                if (isSelected) 1.2.dp else 0.dp,
+                                                if (isSelected) currentTheme.primaryLight.copy(alpha = 0.70f) else Color.Transparent,
+                                                RoundedCornerShape(10.dp)
+                                            )
                                     )
                                 }
                             }
@@ -613,31 +576,29 @@ fun TimerScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
             // --- 3. BOTTOM CONTROLS (MODE TOGGLE + PRIMARY ACTION BUTTON) ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                    .padding(bottom = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Practice Mode Toggle
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(ZenSurface.copy(alpha = 0.85f))
-                        .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
-                        .padding(4.dp),
+                        .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                        .padding(3.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Meditation Option
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(if (!config.isBoxBreathingMode) currentTheme.primary.copy(alpha = 0.25f) else Color.Transparent)
-                            .border(1.dp, if (!config.isBoxBreathingMode) currentTheme.primaryLight.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(20.dp))
+                            .border(1.dp, if (!config.isBoxBreathingMode) currentTheme.primaryLight.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(16.dp))
                             .clickable {
                                 if (config.isBoxBreathingMode) {
                                     viewModel.toggleBoxBreathingMode(false)
@@ -645,7 +606,7 @@ fun TimerScreen(
                                     leafBurstTrigger++
                                 }
                             }
-                            .padding(horizontal = 18.dp, vertical = 8.dp),
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -653,12 +614,12 @@ fun TimerScreen(
                                 imageVector = Icons.Default.SelfImprovement,
                                 contentDescription = null,
                                 tint = if (!config.isBoxBreathingMode) currentTheme.primaryLight else ZenTextMuted,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Meditation",
-                                fontSize = 13.sp,
+                                fontSize = 12.5.sp,
                                 fontWeight = if (!config.isBoxBreathingMode) FontWeight.Bold else FontWeight.Medium,
                                 color = if (!config.isBoxBreathingMode) currentTheme.primaryLight else ZenTextSecondary
                             )
@@ -668,9 +629,9 @@ fun TimerScreen(
                     // Box Breathing Option
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(if (config.isBoxBreathingMode) currentTheme.primary.copy(alpha = 0.25f) else Color.Transparent)
-                            .border(1.dp, if (config.isBoxBreathingMode) currentTheme.primaryLight.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(20.dp))
+                            .border(1.dp, if (config.isBoxBreathingMode) currentTheme.primaryLight.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(16.dp))
                             .clickable {
                                 if (!config.isBoxBreathingMode) {
                                     viewModel.toggleBoxBreathingMode(true)
@@ -678,7 +639,7 @@ fun TimerScreen(
                                     leafBurstTrigger++
                                 }
                             }
-                            .padding(horizontal = 18.dp, vertical = 8.dp),
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -686,12 +647,12 @@ fun TimerScreen(
                                 imageVector = Icons.Outlined.Air,
                                 contentDescription = null,
                                 tint = if (config.isBoxBreathingMode) currentTheme.primaryLight else ZenTextMuted,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Box Breathing",
-                                fontSize = 13.sp,
+                                fontSize = 12.5.sp,
                                 fontWeight = if (config.isBoxBreathingMode) FontWeight.Bold else FontWeight.Medium,
                                 color = if (config.isBoxBreathingMode) currentTheme.primaryLight else ZenTextSecondary
                             )
@@ -703,9 +664,9 @@ fun TimerScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(58.dp)
-                        .shadow(12.dp, RoundedCornerShape(20.dp), spotColor = currentTheme.primary)
-                        .clip(RoundedCornerShape(20.dp))
+                        .height(52.dp)
+                        .shadow(10.dp, RoundedCornerShape(18.dp), spotColor = currentTheme.primary)
+                        .clip(RoundedCornerShape(18.dp))
                         .background(
                             Brush.horizontalGradient(
                                 colors = listOf(
@@ -715,7 +676,7 @@ fun TimerScreen(
                                 )
                             )
                         )
-                        .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                        .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
                         .clickable {
                             sliderDragVelocity = 1.5f
                             leafBurstTrigger++
@@ -736,14 +697,14 @@ fun TimerScreen(
                             imageVector = if (config.isBoxBreathingMode) Icons.Outlined.Air else Icons.Default.PlayArrow,
                             contentDescription = null,
                             tint = Color(0xFF041014),
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = if (config.isBoxBreathingMode) "Begin Box Breathing" else "Begin Practice",
-                            fontSize = 17.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp,
+                            letterSpacing = 0.8.sp,
                             color = Color(0xFF041014)
                         )
                     }

@@ -247,37 +247,32 @@ fun BreathingScreen(
                         expanded = isTopPatternDropdownOpen,
                         onDismissRequest = { isTopPatternDropdownOpen = false },
                         modifier = Modifier
-                            .fillMaxWidth(0.88f)
+                            .fillMaxWidth(0.90f)
                             .background(ZenSurface.copy(alpha = 0.98f))
-                            .border(1.2.dp, currentTheme.primary.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+                            .border(1.2.dp, currentTheme.primary.copy(alpha = 0.50f), RoundedCornerShape(16.dp))
                             .padding(vertical = 4.dp)
                     ) {
-                        data class TopPatternItem(
+                        data class TopPatternMenuItem(
                             val pattern: BreathingPattern,
-                            val tag: String,
-                            val phases: List<String>
+                            val summary: String
                         )
 
                         val topPatterns = listOf(
-                            TopPatternItem(
+                            TopPatternMenuItem(
                                 pattern = BreathingPattern.BOX_BREATHING,
-                                tag = "FOCUS & STRESS RESET",
-                                phases = listOf("4s In", "4s Hold", "4s Out", "4s Hold")
+                                summary = "Focus & Stress Reset • 4s In • 4s Hold • 4s Out • 4s Hold"
                             ),
-                            TopPatternItem(
+                            TopPatternMenuItem(
                                 pattern = BreathingPattern.RELAX_4_7_8,
-                                tag = "SLEEP & DEEP CALM",
-                                phases = listOf("4s In", "7s Hold", "8s Out")
+                                summary = "Deep Sleep & Relaxation • 4s In • 7s Hold • 8s Out"
                             ),
-                            TopPatternItem(
+                            TopPatternMenuItem(
                                 pattern = BreathingPattern.RESONANT_BREATH,
-                                tag = "HEART COHERENCE",
-                                phases = listOf("5s Inhale", "5s Exhale")
+                                summary = "Heart Coherence • 5s Inhale • 5s Exhale"
                             ),
-                            TopPatternItem(
+                            TopPatternMenuItem(
                                 pattern = BreathingPattern.TRANQUIL_3_3_3_3,
-                                tag = "BEGINNER FRIENDLY",
-                                phases = listOf("3s In", "3s Hold", "3s Out", "3s Hold")
+                                summary = "Beginner Friendly • 3s In • 3s Hold • 3s Out • 3s Hold"
                             )
                         )
 
@@ -285,61 +280,45 @@ fun BreathingScreen(
                             val isSelected = selectedPattern.id == item.pattern.id
                             DropdownMenuItem(
                                 text = {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp),
-                                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        Column(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .padding(vertical = 2.dp)
                                         ) {
                                             Text(
                                                 text = item.pattern.name,
-                                                fontSize = 13.5.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                                fontSize = 14.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                 color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
                                             )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = item.summary,
+                                                fontSize = 11.5.sp,
+                                                color = if (isSelected) currentTheme.primaryLight.copy(alpha = 0.85f) else ZenTextSecondary
+                                            )
+                                        }
+
+                                        if (isSelected) {
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             Box(
                                                 modifier = Modifier
-                                                    .clip(RoundedCornerShape(4.dp))
-                                                    .background(if (isSelected) currentTheme.primary.copy(alpha = 0.25f) else ZenBorder.copy(alpha = 0.4f))
-                                                    .padding(horizontal = 5.dp, vertical = 1.5.dp)
+                                                    .size(24.dp)
+                                                    .clip(CircleShape)
+                                                    .background(currentTheme.primary.copy(alpha = 0.35f)),
+                                                contentAlignment = Alignment.Center
                                             ) {
-                                                Text(
-                                                    text = item.tag,
-                                                    fontSize = 8.5.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    letterSpacing = 0.6.sp,
-                                                    color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
+                                                Icon(
+                                                    imageVector = Icons.Default.PlayArrow,
+                                                    contentDescription = "Active Pattern",
+                                                    tint = currentTheme.primaryLight,
+                                                    modifier = Modifier.size(14.dp)
                                                 )
-                                            }
-                                        }
-                                        Text(
-                                            text = item.pattern.subtitle,
-                                            fontSize = 11.sp,
-                                            color = ZenTextSecondary
-                                        )
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            item.phases.forEach { pStr ->
-                                                Box(
-                                                    modifier = Modifier
-                                                        .clip(RoundedCornerShape(3.dp))
-                                                        .background(if (isSelected) currentTheme.primary.copy(alpha = 0.15f) else Color(0x18FFFFFF))
-                                                        .border(0.5.dp, if (isSelected) currentTheme.primaryLight.copy(alpha = 0.35f) else Color(0x28FFFFFF), RoundedCornerShape(3.dp))
-                                                        .padding(horizontal = 4.dp, vertical = 1.dp)
-                                                ) {
-                                                    Text(
-                                                        text = pStr,
-                                                        fontSize = 9.5.sp,
-                                                        color = if (isSelected) currentTheme.primaryLight else ZenTextMuted
-                                                    )
-                                                }
                                             }
                                         }
                                     }
@@ -353,9 +332,14 @@ fun BreathingScreen(
                                     isTopPatternDropdownOpen = false
                                 },
                                 modifier = Modifier
-                                    .padding(horizontal = 4.dp, vertical = 1.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) currentTheme.primary.copy(alpha = 0.12f) else Color.Transparent)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (isSelected) currentTheme.primary.copy(alpha = 0.20f) else Color.Transparent)
+                                    .border(
+                                        if (isSelected) 1.2.dp else 0.dp,
+                                        if (isSelected) currentTheme.primaryLight.copy(alpha = 0.70f) else Color.Transparent,
+                                        RoundedCornerShape(10.dp)
+                                    )
                             )
                         }
                     }
