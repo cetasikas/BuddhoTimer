@@ -101,7 +101,6 @@ fun SessionSummaryScreen(
             ambientAlpha = 0.35f,
             pileUpAtBottom = true,
             initialSettledLeavesCount = accumulatedLeafCount,
-            elapsedMeditationSeconds = completedStatus.actualDurationSec,
             isBlowingAway = isBlowingAway,
             onBlowAwayComplete = {
                 pendingExitAction?.invoke()

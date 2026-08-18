@@ -180,7 +180,6 @@ fun ActiveSessionScreen(
                 leafCount = config.meditationLeafCount.coerceIn(10, 24),
                 pileUpAtBottom = true,
                 sessionProgressRatio = sessionProgress,
-                elapsedMeditationSeconds = elapsedMeditationSec,
                 ambientAlpha = 0.38f,
                 isBlowingAway = isBlowingAway,
                 onBlowAwayComplete = {
