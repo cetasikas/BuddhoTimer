@@ -49,21 +49,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.15.0
-          name: "Buddho Timer v2.15.0"
+          tag_name: v2.16.0
+          name: "Buddho Timer v2.16.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.15.0
+            ## 🪷 Buddho Meditation Timer v2.16.0
             
-            - **🍂 Natural Central Leaf Pile Accumulation**:
-              - Falling leaves drift gently inward with a soft central breeze and settle on top of each other in a realistic Gaussian botanical mound.
-              - The pile grows and deepens naturally as meditation time elapses.
-            - **🧘 Seamless Persistence on Overview Screen**:
-              - The accumulated leaf pile remains sitting peacefully at the bottom of the Practice Summary / Overview screen.
-              - When saving or discarding the session, the pile gracefully blows away in a peaceful gust of wind upon screen exit.
-            - **🌸 Realistic Sakura Cherry Blossoms**:
-              - Authentic elongated ovate petals with delicate tip clefts and natural floret dispersal.
-            - **⏰ Random Waking-Hour Meditation Reminders (8 AM – 9 PM)**:
-              - Surprise mindfulness reminder delivered during active waking hours.
+            - **🍂 Natural Zero-Start & Organic Leaf Accumulation**:
+              - Meditation sessions now begin with a completely clean ground (0 leaves).
+              - Leaves float down gently from the sky one by one (~20s descent) with natural sway and soft inward wind drift.
+              - Leaves land gently right where they touch down with smooth deceleration (no sudden horizontal snaps or fast flying), gradually building up a serene central mound as meditation time elapses.
+            - **🧘 Preserved Mound on Practice Summary Screen**:
+              - The accumulated leaf pile remains in place during session reflection and blows away peacefully upon screen exit.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
