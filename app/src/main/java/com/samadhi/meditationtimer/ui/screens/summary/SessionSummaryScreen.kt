@@ -94,10 +94,12 @@ fun SessionSummaryScreen(
         var isBlowingAway by remember { mutableStateOf(false) }
         var pendingExitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-        // Same ambient falling leaves as TimerScreen on pure AMOLED black
+        // Accumulated leaf mound preserved from the meditation session
         FallingLeavesEffect(
-            leafCount = 16,
+            leafCount = 14,
             ambientAlpha = 0.35f,
+            pileUpAtBottom = true,
+            initialSettledLeavesCount = (completedStatus.actualDurationSec / 15).coerceIn(24, 75),
             isBlowingAway = isBlowingAway,
             onBlowAwayComplete = {
                 pendingExitAction?.invoke()

@@ -49,19 +49,21 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.14.0
-          name: "Buddho Timer v2.14.0"
+          tag_name: v2.15.0
+          name: "Buddho Timer v2.15.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.14.0
+            ## 🪷 Buddho Meditation Timer v2.15.0
             
-            - **🌸 Realistic & Artistic Sakura Geometry**:
-              - Replaced sharp heart shapes with authentic elongated ovate cherry blossom petals featuring subtle, delicate tip clefts.
-              - Organic non-systematic placement of flowering florets along the Ensō garland with golden-pink stamen filaments.
-            - **⏰ Random Daily Mindfulness Reminders (Waking Hours)**:
-              - New reminder mode in Settings delivering a surprise mindfulness reminder at a random time during active waking hours (8:00 AM – 9:00 PM).
-            - **🍂 Active Meditation Falling Leaves & Ground Pile Accumulation**:
-              - Theme-matched botanical leaves gently drift downward during meditation and settle naturally along the ground into a soothing botanical mound as time elapses.
-              - Leaves blow away in a gentle gust of wind upon session completion or exit.
+            - **🍂 Natural Central Leaf Pile Accumulation**:
+              - Falling leaves drift gently inward with a soft central breeze and settle on top of each other in a realistic Gaussian botanical mound.
+              - The pile grows and deepens naturally as meditation time elapses.
+            - **🧘 Seamless Persistence on Overview Screen**:
+              - The accumulated leaf pile remains sitting peacefully at the bottom of the Practice Summary / Overview screen.
+              - When saving or discarding the session, the pile gracefully blows away in a peaceful gust of wind upon screen exit.
+            - **🌸 Realistic Sakura Cherry Blossoms**:
+              - Authentic elongated ovate petals with delicate tip clefts and natural floret dispersal.
+            - **⏰ Random Waking-Hour Meditation Reminders (8 AM – 9 PM)**:
+              - Surprise mindfulness reminder delivered during active waking hours.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

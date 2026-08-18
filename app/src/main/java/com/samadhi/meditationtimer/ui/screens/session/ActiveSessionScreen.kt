@@ -412,21 +412,9 @@ fun ActiveSessionScreen(
                                 )
                             }
 
-                            // Complete / Finish Button
+                            // Complete / Finish Button (Preserves leaf pile for the overview screen)
                             Button(
-                                onClick = {
-                                    if (!isBlowingAway) {
-                                        pendingExitAction = {
-                                            viewModel.finishSession()
-                                        }
-                                        if (config.showLeavesDuringMeditation) {
-                                            isBlowingAway = true
-                                        } else {
-                                            pendingExitAction?.invoke()
-                                        }
-                                    }
-                                },
-                                enabled = !isBlowingAway,
+                                onClick = { viewModel.finishSession() },
                                 modifier = Modifier
                                     .height(56.dp)
                                     .clip(RoundedCornerShape(28.dp)),
