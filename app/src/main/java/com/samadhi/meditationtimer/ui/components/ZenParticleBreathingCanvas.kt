@@ -406,7 +406,7 @@ private fun DrawScope.drawZenEnsoGarland(
                     rotation = tangentRotation,
                     alpha = unitAlpha,
                     colorVariant = unit.colorVariant,
-                    isFloret = (unit.index % 5 == 0),
+                    isFloret = (unit.index in listOf(0, 8, 17, 26, 35)),
                     primary = primary,
                     primaryLight = primaryLight,
                     primaryDark = primaryDark
@@ -584,37 +584,37 @@ private fun DrawScope.drawEnsoSakuraPetal(
     primaryDark: Color
 ) {
     if (isFloret) {
-        // Refined, artistic 5-petal cherry blossom with layered translucent petals & glowing stamens
+        // Refined, artistic 5-petal cherry blossom with natural ovate petals & glowing stamens
         rotate(degrees = rotation, pivot = center) {
-            val floretScale = scale * 0.85f
+            val floretScale = scale * 0.90f
 
-            // Layer 1: 5 Main Petals with delicate heart notches
+            // Layer 1: 5 Main Petals with subtle natural tip cleft
             for (p in 0 until 5) {
                 rotate(degrees = p * 72f, pivot = center) {
                     val pLen = floretScale * 22f
-                    val pWid = floretScale * 11.5f
-                    val pNotch = pLen * 0.16f
+                    val pWid = floretScale * 11f
+                    val pCleft = pLen * 0.06f
 
                     val path = Path().apply {
                         moveTo(center.x, center.y)
                         cubicTo(
-                            center.x - pWid * 1.1f, center.y - pLen * 0.35f,
-                            center.x - pWid * 0.9f, center.y - pLen,
-                            center.x - pWid * 0.45f, center.y - pLen
+                            center.x - pWid * 0.9f, center.y - pLen * 0.35f,
+                            center.x - pWid * 0.95f, center.y - pLen * 0.85f,
+                            center.x - pWid * 0.35f, center.y - pLen
                         )
                         quadraticTo(
-                            center.x, center.y - pLen + pNotch,
-                            center.x + pWid * 0.45f, center.y - pLen
+                            center.x, center.y - pLen + pCleft,
+                            center.x + pWid * 0.35f, center.y - pLen
                         )
                         cubicTo(
-                            center.x + pWid * 0.9f, center.y - pLen,
-                            center.x + pWid * 1.1f, center.y - pLen * 0.35f,
+                            center.x + pWid * 0.95f, center.y - pLen * 0.85f,
+                            center.x + pWid * 0.9f, center.y - pLen * 0.35f,
                             center.x, center.y
                         )
                         close()
                     }
 
-                    // Petal Gradient: Translucent blush white tip to vibrant magenta base
+                    // Petal Gradient: Soft translucent blush tip to luminous magenta base
                     drawPath(
                         path = path,
                         brush = Brush.verticalGradient(
@@ -631,8 +631,8 @@ private fun DrawScope.drawEnsoSakuraPetal(
                     // Delicate petal rim stroke
                     drawPath(
                         path = path,
-                        color = primaryLight.copy(alpha = 0.70f * alpha),
-                        style = Stroke(width = 1.0f)
+                        color = primaryLight.copy(alpha = 0.65f * alpha),
+                        style = Stroke(width = 0.9f)
                     )
                 }
             }
@@ -642,7 +642,7 @@ private fun DrawScope.drawEnsoSakuraPetal(
             for (s in 0 until stamenCount) {
                 val sAngle = s * (360f / stamenCount) + 18f
                 val sRad = Math.toRadians(sAngle.toDouble()).toFloat()
-                val sLen = floretScale * 10f
+                val sLen = floretScale * 9.5f
                 val sx = center.x + cos(sRad) * sLen
                 val sy = center.y + sin(sRad) * sLen
 
@@ -657,7 +657,7 @@ private fun DrawScope.drawEnsoSakuraPetal(
                 // Golden Pollen Anther
                 drawCircle(
                     color = Color(0xFFFFE4B5).copy(alpha = 0.95f * alpha),
-                    radius = floretScale * 1.5f,
+                    radius = floretScale * 1.4f,
                     center = Offset(sx, sy)
                 )
             }
@@ -672,33 +672,33 @@ private fun DrawScope.drawEnsoSakuraPetal(
                         Color.Transparent
                     ),
                     center = center,
-                    radius = floretScale * 4.5f
+                    radius = floretScale * 4.2f
                 ),
-                radius = floretScale * 4.5f,
+                radius = floretScale * 4.2f,
                 center = center
             )
         }
     } else {
-        // Individual Notched Sakura Petal with heart notch
+        // Individual realistic Sakura Petal (elongated, natural ovate with subtle cleft)
         rotate(degrees = rotation, pivot = center) {
             val len = scale * 34f
-            val wid = scale * 15f
-            val notch = len * 0.16f
+            val wid = scale * 13.5f
+            val cleft = len * 0.06f
 
             val path = Path().apply {
                 moveTo(center.x, center.y + len * 0.45f)
                 cubicTo(
-                    center.x - wid * 1.1f, center.y + len * 0.10f,
-                    center.x - wid * 0.95f, center.y - len * 0.50f,
-                    center.x - wid * 0.42f, center.y - len * 0.55f
+                    center.x - wid * 0.95f, center.y + len * 0.15f,
+                    center.x - wid * 1.0f, center.y - len * 0.40f,
+                    center.x - wid * 0.35f, center.y - len * 0.55f
                 )
                 quadraticTo(
-                    center.x, center.y - len * 0.55f + notch,
-                    center.x + wid * 0.42f, center.y - len * 0.55f
+                    center.x, center.y - len * 0.55f + cleft,
+                    center.x + wid * 0.35f, center.y - len * 0.55f
                 )
                 cubicTo(
-                    center.x + wid * 0.95f, center.y - len * 0.50f,
-                    center.x + wid * 1.1f, center.y + len * 0.10f,
+                    center.x + wid * 1.0f, center.y - len * 0.40f,
+                    center.x + wid * 0.95f, center.y + len * 0.15f,
                     center.x, center.y + len * 0.45f
                 )
                 close()
@@ -708,7 +708,7 @@ private fun DrawScope.drawEnsoSakuraPetal(
                 path = path,
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFFFF0F5).copy(alpha = 0.95f * alpha),
+                        Color(0xFFFFF5F8).copy(alpha = 0.95f * alpha),
                         primaryLight.copy(alpha = 0.90f * alpha),
                         primary.copy(alpha = 0.85f * alpha),
                         primaryDark.copy(alpha = 0.80f * alpha)
@@ -719,8 +719,8 @@ private fun DrawScope.drawEnsoSakuraPetal(
             )
             drawPath(
                 path = path,
-                color = primaryLight.copy(alpha = 0.75f * alpha),
-                style = Stroke(width = 1.0f)
+                color = primaryLight.copy(alpha = 0.70f * alpha),
+                style = Stroke(width = 0.9f)
             )
         }
     }

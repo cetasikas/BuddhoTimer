@@ -138,6 +138,23 @@ fun ActiveSessionScreen(
         }
     }
 
+    var isBlowingAway by remember { mutableStateOf(false) }
+    var pendingExitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val sessionProgress = when (val s = timerStatus) {
+        is TimerStatus.Running -> {
+            val targetSec = config.targetDurationSeconds
+            if (targetSec > 0) (s.elapsedSeconds.toFloat() / targetSec.toFloat()).coerceIn(0f, 1f)
+            else ((s.elapsedSeconds % 1800).toFloat() / 1800f)
+        }
+        is TimerStatus.Paused -> {
+            val targetSec = config.targetDurationSeconds
+            if (targetSec > 0) (s.elapsedSeconds.toFloat() / targetSec.toFloat()).coerceIn(0f, 1f)
+            else ((s.elapsedSeconds % 1800).toFloat() / 1800f)
+        }
+        else -> 0.0f
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -165,6 +182,20 @@ fun ActiveSessionScreen(
                 )
             }
         } else {
+            // Ambient Falling Leaves with Smooth Ground Pile Accumulation
+            if (config.showLeavesDuringMeditation) {
+                FallingLeavesEffect(
+                    leafCount = config.meditationLeafCount.coerceIn(10, 24),
+                    pileUpAtBottom = true,
+                    sessionProgressRatio = sessionProgress,
+                    ambientAlpha = 0.38f,
+                    isBlowingAway = isBlowingAway,
+                    onBlowAwayComplete = {
+                        pendingExitAction?.invoke()
+                    }
+                )
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -181,9 +212,19 @@ fun ActiveSessionScreen(
                 ) {
                     IconButton(
                         onClick = {
-                            viewModel.cancelSession()
-                            onSessionCancelled()
+                            if (!isBlowingAway) {
+                                pendingExitAction = {
+                                    viewModel.cancelSession()
+                                    onSessionCancelled()
+                                }
+                                if (config.showLeavesDuringMeditation) {
+                                    isBlowingAway = true
+                                } else {
+                                    pendingExitAction?.invoke()
+                                }
+                            }
                         },
+                        enabled = !isBlowingAway,
                         modifier = Modifier
                             .size(44.dp)
                             .clip(CircleShape)
@@ -373,7 +414,19 @@ fun ActiveSessionScreen(
 
                             // Complete / Finish Button
                             Button(
-                                onClick = { viewModel.finishSession() },
+                                onClick = {
+                                    if (!isBlowingAway) {
+                                        pendingExitAction = {
+                                            viewModel.finishSession()
+                                        }
+                                        if (config.showLeavesDuringMeditation) {
+                                            isBlowingAway = true
+                                        } else {
+                                            pendingExitAction?.invoke()
+                                        }
+                                    }
+                                },
+                                enabled = !isBlowingAway,
                                 modifier = Modifier
                                     .height(56.dp)
                                     .clip(RoundedCornerShape(28.dp)),

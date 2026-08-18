@@ -239,10 +239,10 @@ fun SettingsScreen(
             if (isGranted) {
                 reminderEnabled = true
                 reminderPrefs.edit().putBoolean("daily_reminder_enabled", true).apply()
-                if (reminderMode == "interval") {
-                    com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
-                } else {
-                    com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
+                when (reminderMode) {
+                    "random" -> com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleRandomDailyReminder(context)
+                    "interval" -> com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
+                    else -> com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
                 }
             }
         }
@@ -604,7 +604,7 @@ fun SettingsScreen(
                 }
 
                 // 5. MEDITATION REMINDERS (OUTSIDE APP)
-                val reminderSummary = if (!reminderEnabled) "Off" else if (reminderMode == "interval") "Every ${reminderIntervalHours}h" else "${if (reminderHour == 0) 12 else if (reminderHour <= 12) reminderHour else reminderHour - 12}${if (reminderHour < 12) "AM" else "PM"}"
+                val reminderSummary = if (!reminderEnabled) "Off" else if (reminderMode == "random") "Random Waking" else if (reminderMode == "interval") "Every ${reminderIntervalHours}h" else "${if (reminderHour == 0) 12 else if (reminderHour <= 12) reminderHour else reminderHour - 12}${if (reminderHour < 12) "AM" else "PM"}"
                 ExpandableSettingsCard(
                     title = "Meditation Reminders",
                     icon = Icons.Default.NotificationsActive,
@@ -641,10 +641,10 @@ fun SettingsScreen(
                                     reminderPrefs.edit().putBoolean("daily_reminder_enabled", isChecked).apply()
 
                                     if (isChecked) {
-                                        if (reminderMode == "interval") {
-                                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
-                                        } else {
-                                            com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
+                                        when (reminderMode) {
+                                            "random" -> com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleRandomDailyReminder(context)
+                                            "interval" -> com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
+                                            else -> com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
                                         }
                                     } else {
                                         com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.cancelReminder(context)
@@ -659,7 +659,7 @@ fun SettingsScreen(
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 FilterChip(
                                     selected = reminderMode == "daily",
@@ -668,7 +668,22 @@ fun SettingsScreen(
                                         reminderPrefs.edit().putString("reminder_mode", "daily").apply()
                                         com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
                                     },
-                                    label = { Text("Daily Schedule", fontSize = 11.5.sp) },
+                                    label = { Text("Daily Fixed", fontSize = 11.sp) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = currentTheme.primary,
+                                        selectedLabelColor = ZenObsidian
+                                    )
+                                )
+
+                                FilterChip(
+                                    selected = reminderMode == "random",
+                                    onClick = {
+                                        reminderMode = "random"
+                                        reminderPrefs.edit().putString("reminder_mode", "random").apply()
+                                        com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleRandomDailyReminder(context)
+                                    },
+                                    label = { Text("Random", fontSize = 11.sp) },
                                     modifier = Modifier.weight(1f),
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = currentTheme.primary,
@@ -683,7 +698,7 @@ fun SettingsScreen(
                                         reminderPrefs.edit().putString("reminder_mode", "interval").apply()
                                         com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
                                     },
-                                    label = { Text("Periodic Interval", fontSize = 11.5.sp) },
+                                    label = { Text("Interval", fontSize = 11.sp) },
                                     modifier = Modifier.weight(1f),
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = currentTheme.primary,
@@ -694,7 +709,22 @@ fun SettingsScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            if (reminderMode == "daily") {
+                            if (reminderMode == "random") {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(currentTheme.primary.copy(alpha = 0.12f))
+                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = "A surprise mindfulness reminder is delivered once a day at a random time during active waking hours (8:00 AM – 9:00 PM).",
+                                        fontSize = 11.5.sp,
+                                        color = ZenTextSecondary,
+                                        lineHeight = 16.sp
+                                    )
+                                }
+                            } else if (reminderMode == "daily") {
                                 val hourPresets = listOf(6, 7, 8, 9, 12, 18, 20, 21, 22)
                                 FlowRow(
                                     modifier = Modifier.fillMaxWidth(),

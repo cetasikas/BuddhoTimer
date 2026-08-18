@@ -97,6 +97,56 @@ object MeditationReminderScheduler {
         }
     }
 
+    fun scheduleRandomDailyReminder(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+
+        val intent = Intent(context, MeditationReminderReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            REQUEST_CODE_REMINDER,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Random waking hour between 8 AM (8) and 9 PM (20) and random minute (0-59)
+        val randHour = (8..20).random()
+        val randMinute = (0..59).random()
+
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, randHour)
+            set(Calendar.MINUTE, randMinute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            }
+            Log.d(TAG, "Scheduled random waking-hour reminder for: ${calendar.time}")
+        } catch (e: SecurityException) {
+            alarmManager.set(
+                AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                pendingIntent
+            )
+            Log.w(TAG, "Exact alarm restricted, set inexact random reminder for: ${calendar.time}", e)
+        }
+    }
+
     fun cancelReminder(context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         val intent = Intent(context, MeditationReminderReceiver::class.java)
@@ -116,13 +166,19 @@ object MeditationReminderScheduler {
         if (!reminderEnabled) return
 
         val reminderMode = prefs.getString("reminder_mode", "daily") ?: "daily"
-        if (reminderMode == "interval") {
-            val intervalHours = prefs.getInt("reminder_interval_hours", 4)
-            scheduleIntervalReminder(context, intervalHours)
-        } else {
-            val hour = prefs.getInt("reminder_hour", 8)
-            val minute = prefs.getInt("reminder_minute", 0)
-            scheduleDailyReminder(context, hour, minute)
+        when (reminderMode) {
+            "random" -> {
+                scheduleRandomDailyReminder(context)
+            }
+            "interval" -> {
+                val intervalHours = prefs.getInt("reminder_interval_hours", 4)
+                scheduleIntervalReminder(context, intervalHours)
+            }
+            else -> {
+                val hour = prefs.getInt("reminder_hour", 8)
+                val minute = prefs.getInt("reminder_minute", 0)
+                scheduleDailyReminder(context, hour, minute)
+            }
         }
     }
 }
