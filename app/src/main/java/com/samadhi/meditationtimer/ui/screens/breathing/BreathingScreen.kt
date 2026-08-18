@@ -247,35 +247,115 @@ fun BreathingScreen(
                         expanded = isTopPatternDropdownOpen,
                         onDismissRequest = { isTopPatternDropdownOpen = false },
                         modifier = Modifier
-                            .background(ZenSurface.copy(alpha = 0.96f))
-                            .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                            .fillMaxWidth(0.88f)
+                            .background(ZenSurface.copy(alpha = 0.98f))
+                            .border(1.2.dp, currentTheme.primary.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+                            .padding(vertical = 4.dp)
                     ) {
-                        BreathingPattern.allPatterns.forEach { pattern ->
-                            val isSelected = selectedPattern.id == pattern.id
+                        data class TopPatternItem(
+                            val pattern: BreathingPattern,
+                            val tag: String,
+                            val phases: List<String>
+                        )
+
+                        val topPatterns = listOf(
+                            TopPatternItem(
+                                pattern = BreathingPattern.BOX_BREATHING,
+                                tag = "FOCUS & STRESS RESET",
+                                phases = listOf("4s In", "4s Hold", "4s Out", "4s Hold")
+                            ),
+                            TopPatternItem(
+                                pattern = BreathingPattern.RELAX_4_7_8,
+                                tag = "SLEEP & DEEP CALM",
+                                phases = listOf("4s In", "7s Hold", "8s Out")
+                            ),
+                            TopPatternItem(
+                                pattern = BreathingPattern.RESONANT_BREATH,
+                                tag = "HEART COHERENCE",
+                                phases = listOf("5s Inhale", "5s Exhale")
+                            ),
+                            TopPatternItem(
+                                pattern = BreathingPattern.TRANQUIL_3_3_3_3,
+                                tag = "BEGINNER FRIENDLY",
+                                phases = listOf("3s In", "3s Hold", "3s Out", "3s Hold")
+                            )
+                        )
+
+                        topPatterns.forEach { item ->
+                            val isSelected = selectedPattern.id == item.pattern.id
                             DropdownMenuItem(
                                 text = {
-                                    Column {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp),
+                                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = item.pattern.name,
+                                                fontSize = 13.5.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                                color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(4.dp))
+                                                    .background(if (isSelected) currentTheme.primary.copy(alpha = 0.25f) else ZenBorder.copy(alpha = 0.4f))
+                                                    .padding(horizontal = 5.dp, vertical = 1.5.dp)
+                                            ) {
+                                                Text(
+                                                    text = item.tag,
+                                                    fontSize = 8.5.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    letterSpacing = 0.6.sp,
+                                                    color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
+                                                )
+                                            }
+                                        }
                                         Text(
-                                            text = pattern.name,
-                                            fontSize = 12.5.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
-                                        )
-                                        Text(
-                                            text = pattern.subtitle,
-                                            fontSize = 10.5.sp,
+                                            text = item.pattern.subtitle,
+                                            fontSize = 11.sp,
                                             color = ZenTextSecondary
                                         )
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            item.phases.forEach { pStr ->
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(3.dp))
+                                                        .background(if (isSelected) currentTheme.primary.copy(alpha = 0.15f) else Color(0x18FFFFFF))
+                                                        .border(0.5.dp, if (isSelected) currentTheme.primaryLight.copy(alpha = 0.35f) else Color(0x28FFFFFF), RoundedCornerShape(3.dp))
+                                                        .padding(horizontal = 4.dp, vertical = 1.dp)
+                                                ) {
+                                                    Text(
+                                                        text = pStr,
+                                                        fontSize = 9.5.sp,
+                                                        color = if (isSelected) currentTheme.primaryLight else ZenTextMuted
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 },
                                 onClick = {
-                                    selectedPattern = pattern
+                                    selectedPattern = item.pattern
                                     currentPhase = BreathPhase.INHALE
-                                    phaseSecondsRemaining = pattern.inhaleSec
+                                    phaseSecondsRemaining = item.pattern.inhaleSec
                                     phaseProgress = 0f
-                                    prefs.edit().putString("breathing_pattern_id", pattern.id).apply()
+                                    prefs.edit().putString("breathing_pattern_id", item.pattern.id).apply()
                                     isTopPatternDropdownOpen = false
-                                }
+                                },
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) currentTheme.primary.copy(alpha = 0.12f) else Color.Transparent)
                             )
                         }
                     }

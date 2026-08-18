@@ -49,19 +49,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.6.0
-          name: "Buddho Timer v2.6.0"
+          tag_name: v2.7.0
+          name: "Buddho Timer v2.7.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.6.0
+            ## 🪷 Buddho Meditation Timer v2.7.0
             
-            - **🍃 Decluttered & Spacious Setup Screens**: Removed clutter with single-row essential presets, expansive tranquil padding, and clean typography for pure zen focus.
-            - **🎋 Authentic High-Definition Botanical Breathing Species**: Complete visual overhaul of breathwork animations:
-              - *Moonlit Bamboo*: Multi-leaf authentic bamboo branch sprigs with joint node stems and lanceolate foliage.
-              - *Golden Lotus*: Concentric sacred lotus flower petals blooming open with golden vein filigree.
-              - *Sakura Twilight*: 5-petal cherry blossom florets and notched sakura petals.
-            - **🔍 Crystal-Clear Breathwork Method Differentiator**: High-contrast method badges (`[ EQUAL 4-PHASE BOX ]`, `[ DEEP SLEEP & RELAX ]`, `[ HEART COHERENCE ]`, `[ GENTLE BEGINNER ]`) with explicit step-by-step cadence breakdowns.
-            - **💖 Moved Donate Button to Settings**: Placed the Support / Donate action in the top right of the Settings screen.
-            - **🧘 Pure Ambient Falling Leaves**: Background leaves fall in a peaceful, natural, serene vertical drift uncoupled from dragging.
+            - **🍃 Spacious Setup Screen Layouts**: Redesigned vertical hierarchy across Meditation and Box Breathing setup screens for a balanced, expansive, and luxurious zen feel.
+            - **🎋 Bespoke Theme-Specific Breathing Animations**:
+              - *Moonlit Bamboo*: Segmented living bamboo stalk that grows upward and unrolls leaves with each inhale, sways gently on hold, and settles calmly on exhale.
+              - *Golden Lotus*: Sacred blooming lotus flower seated on a floating lily pad with expanding water ripple rings.
+              - *Sakura Twilight*: 5-petal notched cherry blossom with glowing stamen core and sprig branch that blooms with twilight magenta-rose glow.
+            - **🔍 Redesigned Box Breathing Pattern Selector**: Distinct cards with category badges (`[FOCUS & STRESS RESET]`, `[DEEP SLEEP & RELAXATION]`, `[HEART COHERENCE]`, `[BEGINNER FRIENDLY]`) and color-coded visual phase timing chips (`[4s In] [4s Hold] [4s Out] [4s Hold]`).
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
