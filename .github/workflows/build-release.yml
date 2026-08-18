@@ -49,19 +49,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.25.0
-          name: "Buddho Timer v2.25.0"
+          tag_name: v2.25.1
+          name: "Buddho Timer v2.25.1"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.25.0
+            ## 🪷 Buddho Meditation Timer v2.25.1
             
-            - **🍂 Tactile Multi-Layer Leaf Stacking & Elevation Physics**:
-              - Leaves now dynamically stack and pile on top of each other at the bottom of the screen with organic heightmap elevation and mound slope contouring.
-              - Enlarged leaf particles by ~50% (28–38dp) with contact drop shadows, distinct stems/ribs, and crisp contours for clear depth separation as leaves touch and stack.
-              - Calibrated a steady, meditative leaf fall cadence (~25s descent) so visual progress accumulates noticeably throughout meditation sessions.
+            - **🍃 Pure Real-Time Gravity Stacking**:
+              - Ground leaves now appear strictly as airborne leaves physically reach the forest floor (zero premature ground spawns).
+              - Added real angle of repose physics: leaves roll and slide naturally into lower crevices when landing on elevated pile peaks.
+            - **✨ Dynamic Altitude-Based Transparency**:
+              - Ground-level resting leaves are rich and solid, while higher stacked leaves gradually transition into soft, translucent layers (`alpha ~ 0.28`), ensuring the pile never obstructs or distracts from the timer and meditation controls.
             - **🔑 Universal Permanent Signing Keystore**:
               - Permanent release keystore ensures all future updates install directly over existing versions.
-            - **🛡️ Bulletproof Stability & Box Breathing Polish**:
-              - Thread-safe particle system, AudioTrack leak prevention, distraction-free Box Breathing, and enlarged bottom session timers.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions.
           draft: false
           prerelease: false
