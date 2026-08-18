@@ -49,17 +49,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.19.0
-          name: "Buddho Timer v2.19.0"
+          tag_name: v2.20.0
+          name: "Buddho Timer v2.20.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.19.0
+            ## 🪷 Buddho Meditation Timer v2.20.0
             
-            - **🌸 Sacred Zen Botanical Mandala Leaf Engine**:
-              - Leaves float down and nest one by one into a symmetrical botanical mandala at the bottom center.
-              - 3 concentric rings (Foundation → Interlocking Mid → Inner Crown → Golden Core) unfold as your practice deepens.
-              - A soft luminous core jewel blossoms when the inner layers complete.
-              - Mandala persists on the Practice Overview and dissolves in a gentle whirlwind on exit.
-            - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
+            - **🍃 Scattered Forest Floor Leaf Effect**:
+              - Replaced complex mandala geometry with a simple, organic scattered forest floor.
+              - Leaves fall naturally and land wherever they touch down, gently fading in-place.
+              - The forest floor grows progressively richer and more luminous as session time elapses.
+              - Each resting leaf breathes with a subtle ambient sway.
+            - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions.
           draft: false
           prerelease: false
           files: |
