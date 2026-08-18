@@ -49,15 +49,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.22.0
-          name: "Buddho Timer v2.22.0"
+          tag_name: v2.23.0
+          name: "Buddho Timer v2.23.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.22.0
+            ## 🪷 Buddho Meditation Timer v2.23.0
             
-            - **🍃 Natural Leaf Landing — No Disappear/Reappear**:
-              - Leaves now stay exactly where they land. When a leaf settles it rocks gently into rest in-place and a fresh leaf spawns at the top, so you never see a leaf vanish and reappear elsewhere.
-            - **🌿 Overview Screen Matches Meditation End State**:
-              - The Practice Overview screen now shows the exact same scattered forest floor as the final state of your meditation session.
+            - **🍃 Seamless Background & App Switch Persistence**:
+              - Leaf stacking now dynamically synchronizes with elapsed meditation seconds upon resuming or switching apps, catching up and retaining the exact ground floor state.
+            - **🍂 Organic Aerodynamic Gliding Physics**:
+              - Replaced vertical plumb-line descent with wide, natural diagonal sweeps, aerodynamic banking tilts, and 3D tumbling flutter.
+            - **🧘 Box Breathing Overview Distinction**:
+              - Box Breathing overview screen now displays ambient floating particles without bottom leaf stacking.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions.
           draft: false
           prerelease: false

@@ -157,7 +157,8 @@ fun BreathingScreen(
             actualDurationSec = totalElapsedSec.coerceAtLeast(1),
             overrunSec = 0,
             startTimeEpochMs = now - (totalElapsedSec * 1000L),
-            completedTimeEpochMs = now
+            completedTimeEpochMs = now,
+            isBoxBreathing = true
         )
         onSessionCompleted(completedStatus)
     }

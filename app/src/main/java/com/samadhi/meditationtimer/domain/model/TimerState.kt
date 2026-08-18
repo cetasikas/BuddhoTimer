@@ -10,7 +10,8 @@ sealed class TimerStatus {
         val actualDurationSec: Int,
         val overrunSec: Int,
         val startTimeEpochMs: Long,
-        val completedTimeEpochMs: Long
+        val completedTimeEpochMs: Long,
+        val isBoxBreathing: Boolean = false
     ) : TimerStatus()
 }
 

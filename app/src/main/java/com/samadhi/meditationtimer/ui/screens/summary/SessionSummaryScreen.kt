@@ -94,14 +94,15 @@ fun SessionSummaryScreen(
         var isBlowingAway by remember { mutableStateOf(false) }
         var pendingExitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-        // Scattered forest floor accurately reflecting completed session duration
-        val accumulatedLeafCount = (completedStatus.actualDurationSec / 20).coerceIn(0, 85)
+        // Leaves Effect: Forest floor stacking for meditation sessions; ambient drifting leaves for Box Breathing
+        val isMeditationSession = !completedStatus.isBoxBreathing
+        val accumulatedLeafCount = if (isMeditationSession) (completedStatus.actualDurationSec / 20).coerceIn(0, 85) else 0
         FallingLeavesEffect(
-            leafCount = 14,
-            ambientAlpha = 0.35f,
-            pileUpAtBottom = true,
+            leafCount = if (isMeditationSession) 14 else 12,
+            ambientAlpha = if (isMeditationSession) 0.35f else 0.28f,
+            pileUpAtBottom = isMeditationSession,
             initialSettledLeavesCount = accumulatedLeafCount,
-            elapsedMeditationSeconds = completedStatus.actualDurationSec,
+            elapsedMeditationSeconds = if (isMeditationSession) completedStatus.actualDurationSec else 0,
             isBlowingAway = isBlowingAway,
             onBlowAwayComplete = {
                 pendingExitAction?.invoke()
