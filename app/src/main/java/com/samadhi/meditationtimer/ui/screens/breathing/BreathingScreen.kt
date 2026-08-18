@@ -423,15 +423,15 @@ fun BreathingScreen(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                // Large Minimalist Countdown, Phase Title & Instruction Inside the Zen Circle
+                // Large Minimalist Countdown & Phase Title Inside the Zen Circle
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(horizontal = 24.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp)
                 ) {
                     Text(
                         text = "$phaseSecondsRemaining",
-                        fontSize = 52.sp,
+                        fontSize = 68.sp,
                         fontWeight = FontWeight.Light,
                         color = Color.White,
                         letterSpacing = 1.sp
@@ -447,38 +447,50 @@ fun BreathingScreen(
                         },
                         label = "phaseTextFlow"
                     ) { phase ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = phase.displayName.uppercase(),
-                                fontSize = 15.sp,
-                                letterSpacing = 3.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = phaseColor,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = phase.instruction,
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = ZenTextSecondary,
-                                textAlign = TextAlign.Center,
-                                maxLines = 1
-                            )
-                        }
+                        Text(
+                            text = phase.displayName.uppercase(),
+                            fontSize = 20.sp,
+                            letterSpacing = 3.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = phaseColor,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
             }
 
-            // --- 3. SESSION PROGRESS TIMER ---
-            Text(
-                text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = ZenTextMuted
-            )
+            // --- 3. INSTRUCTION & SESSION PROGRESS TIMER (OUTSIDE CIRCLE) ---
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+            ) {
+                AnimatedContent(
+                    targetState = currentPhase,
+                    transitionSpec = {
+                        (fadeIn(tween(300)) + slideInVertically(tween(300)) { 6 })
+                            .togetherWith(fadeOut(tween(200)) + slideOutVertically(tween(200)) { -6 })
+                    },
+                    label = "phaseInstructionFlow"
+                ) { phase ->
+                    Text(
+                        text = phase.instruction,
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = ZenTextSecondary,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = ZenTextMuted
+                )
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 

@@ -44,14 +44,17 @@ private data class EnsoUnit(
 )
 
 /**
- * Ambient background floating mists/embers for tranquil visual depth.
+ * Ambient falling background leaves/petals in Box Breathing mode.
  */
-private data class AmbientDriftParticle(
+private data class AmbientFallingLeaf(
     val relX: Float,
     val relY: Float,
     val speedY: Float,
     val driftFreq: Float,
+    val driftAmp: Float,
     val scale: Float,
+    val initialRot: Float,
+    val rotSpeed: Float,
     val baseAlpha: Float
 )
 
@@ -86,10 +89,10 @@ fun ZenParticleBreathingCanvas(
             EnsoUnit(
                 index = i,
                 angleDeg = fraction * 360f,
-                radiusJitter = (rand.nextFloat() - 0.5f) * 0.07f,
-                angleJitter = (rand.nextFloat() - 0.5f) * 3.5f,
+                radiusJitter = (rand.nextFloat() - 0.5f) * 0.06f,
+                angleJitter = (rand.nextFloat() - 0.5f) * 3.0f,
                 sizeScale = strokeThickness * (0.85f + rand.nextFloat() * 0.35f),
-                rotationOffset = (rand.nextFloat() - 0.5f) * 20f,
+                rotationOffset = (rand.nextFloat() - 0.5f) * 18f,
                 driftAngle = (rand.nextFloat() * 360f),
                 driftSpeed = 0.6f + rand.nextFloat() * 0.8f,
                 colorVariant = rand.nextFloat()
@@ -97,17 +100,20 @@ fun ZenParticleBreathingCanvas(
         }
     }
 
-    // Precompute subtle ambient background dust/embers
-    val ambientMists = remember {
+    // Precompute 18 ambient falling background leaves/petals
+    val fallingLeaves = remember {
         val rand = Random(42)
         List(18) {
-            AmbientDriftParticle(
-                relX = 0.08f + rand.nextFloat() * 0.84f,
-                relY = 0.08f + rand.nextFloat() * 0.84f,
-                speedY = 0.015f + rand.nextFloat() * 0.020f,
-                driftFreq = 0.4f + rand.nextFloat() * 0.8f,
-                scale = 0.5f + rand.nextFloat() * 0.6f,
-                baseAlpha = 0.15f + rand.nextFloat() * 0.20f
+            AmbientFallingLeaf(
+                relX = 0.06f + rand.nextFloat() * 0.88f,
+                relY = rand.nextFloat(),
+                speedY = 0.016f + rand.nextFloat() * 0.022f,
+                driftFreq = 0.35f + rand.nextFloat() * 0.65f,
+                driftAmp = 0.04f + rand.nextFloat() * 0.05f,
+                scale = 0.45f + rand.nextFloat() * 0.40f,
+                initialRot = rand.nextFloat() * 360f,
+                rotSpeed = (rand.nextFloat() - 0.5f) * 45f,
+                baseAlpha = 0.16f + rand.nextFloat() * 0.16f
             )
         }
     }
@@ -117,12 +123,20 @@ fun ZenParticleBreathingCanvas(
         val height = size.height
         val minDim = minOf(width, height)
         val center = Offset(width / 2f, height / 2f)
-        val ensoBaseRadius = minDim * 0.38f // Enlarged for grand, spacious presence
+        val ensoBaseRadius = minDim * 0.43f // Enlarged to make full, magnificent use of screen space
 
-        // Draw ambient tranquil background mist
-        drawAmbientMists(ambientMists, minDim, animClockSec, zenTheme.primaryLight)
+        // 1. Draw ambient falling background leaves matching active theme
+        drawAmbientFallingLeaves(
+            fallingLeaves = fallingLeaves,
+            minDim = minDim,
+            animClockSec = animClockSec,
+            themeId = zenTheme.id,
+            primary = zenTheme.primary,
+            primaryLight = zenTheme.primaryLight,
+            primaryDark = zenTheme.primaryDark
+        )
 
-        // Draw the living Zen Ensō based on active theme
+        // 2. Draw the living Zen Ensō with top anchor leaf persisting on Hold Empty
         drawZenEnsoGarland(
             ensoUnits = ensoUnits,
             center = center,
@@ -136,118 +150,81 @@ fun ZenParticleBreathingCanvas(
             primaryLight = zenTheme.primaryLight,
             primaryDark = zenTheme.primaryDark
         )
-
-        // Draw solitary slowly spinning leaf/petal during HOLD_EMPTY (and transitions)
-        drawSolitaryHoldEmptyLeaf(
-            center = center,
-            minDim = minDim,
-            currentPhase = currentPhase,
-            phaseProgress = phaseProgress,
-            animClockSec = animClockSec,
-            themeId = zenTheme.id,
-            primary = zenTheme.primary,
-            primaryLight = zenTheme.primaryLight,
-            primaryDark = zenTheme.primaryDark
-        )
     }
 }
 
 // =========================================================================
-// SOLITARY SLOWLY SPINNING LEAF / PETAL DURING HOLD_EMPTY
+// AMBIENT FALLING BACKGROUND LEAVES / PETALS
 // =========================================================================
 
-private fun DrawScope.drawSolitaryHoldEmptyLeaf(
-    center: Offset,
+private fun DrawScope.drawAmbientFallingLeaves(
+    fallingLeaves: List<AmbientFallingLeaf>,
     minDim: Float,
-    currentPhase: BreathPhase,
-    phaseProgress: Float,
     animClockSec: Float,
     themeId: ZenThemeId,
     primary: Color,
     primaryLight: Color,
     primaryDark: Color
 ) {
-    // Determine visibility alpha for the solitary leaf
-    // Active during HOLD_EMPTY, fades in at end of EXHALE, fades out at start of INHALE
-    val solitaryAlpha = when (currentPhase) {
-        BreathPhase.HOLD_EMPTY -> 0.90f
-        BreathPhase.EXHALE -> if (phaseProgress > 0.65f) ((phaseProgress - 0.65f) / 0.35f) * 0.90f else 0.0f
-        BreathPhase.INHALE -> if (phaseProgress < 0.35f) (1.0f - (phaseProgress / 0.35f)) * 0.90f else 0.0f
-        BreathPhase.HOLD_FULL -> 0.0f
-    }
+    val boundW = size.width * 0.88f
+    val boundH = size.height * 0.88f
+    val startX = size.width * 0.06f
+    val startY = size.height * 0.06f
 
-    if (solitaryAlpha <= 0.02f) return
+    for (leaf in fallingLeaves) {
+        val yProg = (animClockSec * leaf.speedY + leaf.relY) % 1.0f
+        val posY = startY + yProg * boundH
+        val sway = sin(animClockSec * leaf.driftFreq + leaf.relX * 10f) * (minDim * leaf.driftAmp)
+        val posX = (startX + leaf.relX * boundW + sway).coerceIn(startX, startX + boundW)
+        val rot = leaf.initialRot + animClockSec * leaf.rotSpeed
+        val finalScale = (minDim / 380f) * leaf.scale
 
-    // Position: floating gently at center with a soothing harmonic bob
-    val bobY = sin(animClockSec * 1.8f) * (minDim * 0.012f)
-    val leafCenter = Offset(center.x, center.y + bobY)
+        val leafCenter = Offset(posX, posY)
 
-    // Smooth continuous fluid rotation
-    val spinRotation = animClockSec * 22f
-
-    // Scale
-    val scale = (minDim / 340f) * 1.15f
-
-    // Soft glowing ambient halo around the solitary leaf
-    val haloRadius = minDim * 0.10f
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                primaryLight.copy(alpha = 0.28f * solitaryAlpha),
-                primary.copy(alpha = 0.12f * solitaryAlpha),
-                Color.Transparent
-            ),
-            center = leafCenter,
-            radius = haloRadius
-        ),
-        radius = haloRadius,
-        center = leafCenter
-    )
-
-    // Render the signature solitary element
-    when (themeId) {
-        ZenThemeId.BAMBOO_TEAL -> {
-            drawEnsoBambooLeaf(
-                center = leafCenter,
-                scale = scale,
-                rotation = spinRotation,
-                alpha = solitaryAlpha,
-                colorVariant = 0.7f,
-                primary = primary,
-                primaryLight = primaryLight,
-                primaryDark = primaryDark
-            )
-        }
-        ZenThemeId.SACRED_LOTUS -> {
-            drawEnsoLotusPetal(
-                center = leafCenter,
-                scale = scale * 1.1f,
-                rotation = spinRotation,
-                alpha = solitaryAlpha,
-                colorVariant = 0.8f,
-                primary = primary,
-                primaryLight = primaryLight,
-                primaryDark = primaryDark
-            )
-        }
-        ZenThemeId.SAKURA_TWILIGHT -> {
-            drawEnsoSakuraPetal(
-                center = leafCenter,
-                scale = scale * 1.15f,
-                rotation = spinRotation,
-                alpha = solitaryAlpha,
-                colorVariant = 0.5f,
-                isFloret = true,
-                primary = primary,
-                primaryLight = primaryLight,
-                primaryDark = primaryDark
-            )
+        when (themeId) {
+            ZenThemeId.BAMBOO_TEAL -> {
+                drawEnsoBambooLeaf(
+                    center = leafCenter,
+                    scale = finalScale,
+                    rotation = rot,
+                    alpha = leaf.baseAlpha,
+                    colorVariant = 0.5f,
+                    primary = primary,
+                    primaryLight = primaryLight,
+                    primaryDark = primaryDark
+                )
+            }
+            ZenThemeId.SACRED_LOTUS -> {
+                drawEnsoLotusPetal(
+                    center = leafCenter,
+                    scale = finalScale,
+                    rotation = rot,
+                    alpha = leaf.baseAlpha,
+                    colorVariant = 0.5f,
+                    primary = primary,
+                    primaryLight = primaryLight,
+                    primaryDark = primaryDark
+                )
+            }
+            ZenThemeId.SAKURA_TWILIGHT -> {
+                drawEnsoSakuraPetal(
+                    center = leafCenter,
+                    scale = finalScale,
+                    rotation = rot,
+                    alpha = leaf.baseAlpha,
+                    colorVariant = 0.5f,
+                    isFloret = false,
+                    primary = primary,
+                    primaryLight = primaryLight,
+                    primaryDark = primaryDark
+                )
+            }
         }
     }
 }
 
 // =========================================================================
-// ZEN ENSŌ DRAWING & UNMAKING ENGINE
+// ZEN ENSŌ DRAWING & UNMAKING ENGINE (TOP LEAF PERSISTS ON HOLD EMPTY)
 // =========================================================================
 
 private fun DrawScope.drawZenEnsoGarland(
@@ -299,6 +276,7 @@ private fun DrawScope.drawZenEnsoGarland(
     // Render each unit along the Ensō ring
     for (unit in ensoUnits) {
         val unitFraction = unit.index.toFloat() / totalUnits.toFloat()
+        val isTopAnchorLeaf = (unit.index == 0) // The very first/last leaf at the top apex (-90°)
 
         var unitAlpha = 0.0f
         var unitScaleMult = 1.0f
@@ -308,42 +286,65 @@ private fun DrawScope.drawZenEnsoGarland(
 
         when (currentPhase) {
             BreathPhase.INHALE -> {
-                val appearanceStart = unitFraction * 0.88f
-                if (phaseProgress >= appearanceStart) {
-                    val unitProgress = ((phaseProgress - appearanceStart) / 0.12f).coerceIn(0.0f, 1.0f)
-                    unitAlpha = unitProgress
-                    unitScaleMult = 0.3f + 0.7f * unitProgress
-                    extraRotation = (1.0f - unitProgress) * 30f
+                if (isTopAnchorLeaf) {
+                    // Top anchor leaf is already present, gently radiating as the breath begins
+                    unitAlpha = 1.0f
+                    unitScaleMult = 1.0f + 0.04f * sin(animClockSec * 2.0f)
+                } else {
+                    // Sweep clockwise: unit appears when inhale progress reaches its fraction
+                    val appearanceStart = unitFraction * 0.88f
+                    if (phaseProgress >= appearanceStart) {
+                        val unitProgress = ((phaseProgress - appearanceStart) / 0.12f).coerceIn(0.0f, 1.0f)
+                        unitAlpha = unitProgress
+                        unitScaleMult = 0.3f + 0.7f * unitProgress
+                        extraRotation = (1.0f - unitProgress) * 30f
+                    }
                 }
             }
             BreathPhase.HOLD_FULL -> {
+                // Complete Ensō with soft harmonic sway
                 unitAlpha = 1.0f
                 unitScaleMult = 1.0f + 0.04f * sin(animClockSec * 2.0f + unit.index)
                 extraRotation = sin(animClockSec * 1.5f + unit.index) * 4f
             }
             BreathPhase.EXHALE -> {
-                val detachStart = (1.0f - unitFraction) * 0.75f
-                if (phaseProgress >= detachStart) {
-                    val dissolveProgress = ((phaseProgress - detachStart) / 0.25f).coerceIn(0.0f, 1.0f)
-                    unitAlpha = (1.0f - dissolveProgress)
-
-                    val driftRad = Math.toRadians(unit.driftAngle.toDouble() + animClockSec * 20.0).toFloat()
-                    val driftDist = minDim * 0.14f * dissolveProgress * unit.driftSpeed
-                    driftOffsetX = cos(driftRad) * driftDist
-                    driftOffsetY = sin(driftRad) * driftDist - (minDim * 0.03f * dissolveProgress)
-                    extraRotation = dissolveProgress * 45f * if (unit.index % 2 == 0) 1f else -1f
-                    unitScaleMult = (1.0f - dissolveProgress * 0.5f)
-                } else {
+                if (isTopAnchorLeaf) {
+                    // Top anchor leaf stays resting at the top apex
                     unitAlpha = 1.0f
+                    unitScaleMult = 1.0f + 0.03f * sin(animClockSec * 1.8f)
+                } else {
+                    // Other leaves (1..41) detach and dissolve in unmaking order
+                    val detachStart = (1.0f - unitFraction) * 0.75f
+                    if (phaseProgress >= detachStart) {
+                        val dissolveProgress = ((phaseProgress - detachStart) / 0.25f).coerceIn(0.0f, 1.0f)
+                        unitAlpha = (1.0f - dissolveProgress)
+
+                        val driftRad = Math.toRadians(unit.driftAngle.toDouble() + animClockSec * 20.0).toFloat()
+                        val driftDist = minDim * 0.14f * dissolveProgress * unit.driftSpeed
+                        driftOffsetX = cos(driftRad) * driftDist
+                        driftOffsetY = sin(driftRad) * driftDist - (minDim * 0.03f * dissolveProgress)
+                        extraRotation = dissolveProgress * 45f * if (unit.index % 2 == 0) 1f else -1f
+                        unitScaleMult = (1.0f - dissolveProgress * 0.5f)
+                    } else {
+                        unitAlpha = 1.0f
+                    }
                 }
             }
             BreathPhase.HOLD_EMPTY -> {
-                unitAlpha = 0.0f
+                if (isTopAnchorLeaf) {
+                    // Top anchor leaf persists during HOLD_EMPTY at the top of the circle
+                    unitAlpha = 0.95f
+                    unitScaleMult = 1.05f + 0.05f * sin(animClockSec * 2.2f)
+                    extraRotation = sin(animClockSec * 1.8f) * 6f
+                } else {
+                    unitAlpha = 0.0f
+                }
             }
         }
 
         if (unitAlpha <= 0.01f) continue
 
+        // Base Position along the Ensō ring (0° = Top at -90°)
         val baseAngleDeg = -90f + unit.angleDeg + unit.angleJitter + (sin(animClockSec * 1.2f + unit.index) * 2f)
         val angleRad = Math.toRadians(baseAngleDeg.toDouble()).toFloat()
 
@@ -352,8 +353,26 @@ private fun DrawScope.drawZenEnsoGarland(
         val posY = center.y + sin(angleRad) * r + driftOffsetY
         val unitCenter = Offset(posX, posY)
 
+        // Tangent rotation along the circle path
         val tangentRotation = baseAngleDeg + 90f + unit.rotationOffset + extraRotation
         val finalScale = (minDim / 360f) * unit.sizeScale * unitScaleMult
+
+        // If top anchor leaf during HOLD_EMPTY, add a gentle glowing aura around it
+        if (isTopAnchorLeaf && (currentPhase == BreathPhase.HOLD_EMPTY || (currentPhase == BreathPhase.EXHALE && phaseProgress > 0.8f))) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        primaryLight.copy(alpha = 0.35f * unitAlpha),
+                        primary.copy(alpha = 0.15f * unitAlpha),
+                        Color.Transparent
+                    ),
+                    center = unitCenter,
+                    radius = minDim * 0.08f
+                ),
+                radius = minDim * 0.08f,
+                center = unitCenter
+            )
+        }
 
         when (themeId) {
             ZenThemeId.BAMBOO_TEAL -> {
@@ -704,34 +723,5 @@ private fun DrawScope.drawEnsoSakuraPetal(
                 style = Stroke(width = 1.0f)
             )
         }
-    }
-}
-
-// =========================================================================
-// AMBIENT TRANQUIL MIST / EMBERS
-// =========================================================================
-
-private fun DrawScope.drawAmbientMists(
-    mists: List<AmbientDriftParticle>,
-    minDim: Float,
-    animClockSec: Float,
-    lightColor: Color
-) {
-    val boundW = size.width * 0.84f
-    val boundH = size.height * 0.84f
-    val startX = size.width * 0.08f
-    val startY = size.height * 0.08f
-
-    for (m in mists) {
-        val yProg = (animClockSec * m.speedY + m.relY) % 1.0f
-        val posY = startY + yProg * boundH
-        val sway = sin(animClockSec * m.driftFreq + m.relX * 8f) * (minDim * 0.04f)
-        val posX = (startX + m.relX * boundW + sway).coerceIn(startX, startX + boundW)
-
-        drawCircle(
-            color = lightColor.copy(alpha = m.baseAlpha * 0.7f),
-            radius = (minDim * 0.008f) * m.scale,
-            center = Offset(posX, posY)
-        )
     }
 }

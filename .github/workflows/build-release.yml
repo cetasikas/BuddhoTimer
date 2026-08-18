@@ -49,20 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.12.0
-          name: "Buddho Timer v2.12.0"
+          tag_name: v2.13.0
+          name: "Buddho Timer v2.13.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.12.0
+            ## 🪷 Buddho Meditation Timer v2.13.0
             
-            - **⭕ Enlarged Zen Ensō with Centered Countdown**:
-              - Enlarged the Zen Ensō circle to command the screen with peaceful majesty.
-              - The large countdown number, phase title (`INHALE`, `HOLD`, `EXHALE`), and instruction text are now positioned right in the open center of the Ensō ring.
-            - **🍃 Solitary Spinning Leaf on Hold-Empty**:
-              - When the circle dissolves during emptiness, a solitary signature botanical leaf/petal/floret remains in the center, spinning slowly, fluidly, and gracefully with a soft ambient glow.
-            - **🌸 Refined & Artistic Sakura Cherry Blossoms**:
-              - Layered translucent petals with delicate heart notches and glowing golden-pink stamen filaments.
-            - **📱 Discard Button & Overview Refinement**:
-              - Perfect padding and zero-scroll layout for post-session reflection.
+            - **🍃 Ambient Falling Leaves in Breathwork**: Theme-matched background leaves and petals gently drift and fall behind the Ensō circle.
+            - **⭕ Screen-Spanning Ensō Circle**: Expanded Ensō radius to make full use of screen real estate.
+            - **✨ Prominent Hero Typography**: Enlarged countdown seconds (68sp), bold phase titles (20sp), and larger session elapsed time (15sp).
+            - **📜 Clean Instruction Placement**: Positioned the breathing instructions outside the circle to avoid any cutoff.
+            - **🌿 Top Anchor Leaf on Hold-Empty**: The top apex leaf remains gracefully resting in place at the top of the circle during hold-empty, seamlessly launching each new breath.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
