@@ -96,7 +96,7 @@ fun SessionSummaryScreen(
 
         // Leaves Effect: Forest floor stacking for meditation sessions; ambient drifting leaves for Box Breathing
         val isMeditationSession = !completedStatus.isBoxBreathing
-        val accumulatedLeafCount = if (isMeditationSession) (completedStatus.actualDurationSec / 20).coerceIn(0, 85) else 0
+        val accumulatedLeafCount = if (isMeditationSession) (completedStatus.actualDurationSec / 8).coerceIn(0, 140) else 0
         FallingLeavesEffect(
             leafCount = if (isMeditationSession) 14 else 12,
             ambientAlpha = if (isMeditationSession) 0.35f else 0.28f,

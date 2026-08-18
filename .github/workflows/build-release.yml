@@ -49,22 +49,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.24.1
-          name: "Buddho Timer v2.24.1"
+          tag_name: v2.25.0
+          name: "Buddho Timer v2.25.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.24.1
+            ## 🪷 Buddho Meditation Timer v2.25.0
             
+            - **🍂 Tactile Multi-Layer Leaf Stacking & Elevation Physics**:
+              - Leaves now dynamically stack and pile on top of each other at the bottom of the screen with organic heightmap elevation and mound slope contouring.
+              - Enlarged leaf particles by ~50% (28–38dp) with contact drop shadows, distinct stems/ribs, and crisp contours for clear depth separation as leaves touch and stack.
+              - Calibrated a steady, meditative leaf fall cadence (~25s descent) so visual progress accumulates noticeably throughout meditation sessions.
             - **🔑 Universal Permanent Signing Keystore**:
-              - All release and debug APKs are now signed with a dedicated repository release keystore with full APK Signature Scheme v2/v3 support.
-              - Resolves Android signature conflict / "can't install" installation errors. *(Note: If updating from an earlier build, uninstall the previous version once, and all future updates will install seamlessly without uninstalling).*
-            - **🛡️ Bulletproof Stability & Crash Prevention**:
-              - Fixed `ConcurrentModificationException` during meditation and screen transitions by making particle animation state thread-safe and immune to concurrent iterations.
-              - Fixed native `AudioTrack` resource leak, ensuring chime audio tracks are cleanly closed after playback.
-            - **🌬️ Distraction-Free Box Breathing**:
-              - Removed ambient background drifting leaves in Box Breathing mode to keep focus entirely on the central living Ensō breathwork.
-              - Enlarged and enhanced visibility of bottom phase instructions and session progress timer for effortless glanceability.
-            - **📦 ProGuard Hardening**:
-              - Added explicit ProGuard keep rules for all local database DAOs and service handlers.
+              - Permanent release keystore ensures all future updates install directly over existing versions.
+            - **🛡️ Bulletproof Stability & Box Breathing Polish**:
+              - Thread-safe particle system, AudioTrack leak prevention, distraction-free Box Breathing, and enlarged bottom session timers.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions.
           draft: false
           prerelease: false
