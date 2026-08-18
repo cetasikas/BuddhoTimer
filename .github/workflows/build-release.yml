@@ -49,18 +49,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.8.0
-          name: "Buddho Timer v2.8.0"
+          tag_name: v2.9.0
+          name: "Buddho Timer v2.9.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.8.0
+            ## 🪷 Buddho Meditation Timer v2.9.0
             
-            - **📱 Zero-Scroll Setup Screen Fitting**: Proportions, slider heights, and paddings calibrated to fit perfectly on standard mobile viewports without vertical scrolling.
-            - **✨ Clean & Distinct Pattern Selection**: Decluttered dropdown menu with clean 2-line title/summary layout, high-contrast active item glow, and check indicator.
-            - **🎋 Revamped Theme Botanical Animations**:
-              - *Moonlit Bamboo*: Anchored bamboo stalk with living branch shoots and lanceolate leaves that sprout and unfurl on inhale.
-              - *Sacred Lotus*: Asian art composition featuring broad emerald lotus pads and rising slender stems with multi-tiered blooming lotus flowers and buds.
-              - *Sakura Twilight*: Flowering cherry blossom bough extending shoots and blooming 5-petal notched florets with stamen glow.
-              - *Screen-Bounded Petals*: Drifting ambient leaves and petals gracefully contained within screen boundaries.
+            - **🫧 Calm-Inspired Radiant Breathing Bubble**: Smooth, hypnotic multi-layered luminous breathing orb with diffused ambient aura, ethereal pulse rings, and glassmorphic reflection.
+            - **🎋 Bespoke Theme Botanical Particle Fields**:
+              - *Moonlit Bamboo*: Jade & emerald glowing bamboo leaves with spine details fanning outward along the expanding bubble perimeter.
+              - *Sacred Lotus*: Concentric golden & coral lotus mandala tiers blooming wide with the breath bubble.
+              - *Sakura Twilight*: Swirling 5-petal cherry blossom florets and notched sakura petals expanding with radiant stamen core.
+              - *Screen-Bounded Ambient Particles*: Floating leaves and petals gracefully drifting within screen boundaries.
+            - **📱 Zero-Scroll Setup Screen Fitting**: Clean, unconstrained single-screen layout with decluttered pattern dropdown.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false
