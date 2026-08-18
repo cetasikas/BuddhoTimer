@@ -410,7 +410,7 @@ fun BreathingScreen(
                 }
             }
 
-            // --- 2. CENTRAL LIVING BLOOMING LEAF VISUALIZER ---
+            // --- 2. CENTRAL LIVING ZEN ENSŌ VISUALIZER WITH INNER INSTRUCTIONS ---
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -422,69 +422,65 @@ fun BreathingScreen(
                     phaseProgress = phaseProgress,
                     modifier = Modifier.fillMaxSize()
                 )
-            }
 
-            // --- 3. MINIMAL PHASE & COUNTDOWN INSTRUCTIONS ---
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Large Minimalist Countdown
-                Text(
-                    text = "$phaseSecondsRemaining",
-                    fontSize = 50.sp,
-                    fontWeight = FontWeight.Light,
-                    color = Color.White,
-                    letterSpacing = 1.sp
-                )
+                // Large Minimalist Countdown, Phase Title & Instruction Inside the Zen Circle
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                ) {
+                    Text(
+                        text = "$phaseSecondsRemaining",
+                        fontSize = 52.sp,
+                        fontWeight = FontWeight.Light,
+                        color = Color.White,
+                        letterSpacing = 1.sp
+                    )
 
-                Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
 
-                AnimatedContent(
-                    targetState = currentPhase,
-                    transitionSpec = {
-                        (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
-                            .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
-                    },
-                    label = "phaseTextFlow"
-                ) { phase ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = phase.displayName.uppercase(),
-                            fontSize = 17.sp,
-                            letterSpacing = 3.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = phaseColor,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(3.dp))
-                        Text(
-                            text = phase.instruction,
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = ZenTextSecondary,
-                            textAlign = TextAlign.Center
-                        )
+                    AnimatedContent(
+                        targetState = currentPhase,
+                        transitionSpec = {
+                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
+                                .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
+                        },
+                        label = "phaseTextFlow"
+                    ) { phase ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = phase.displayName.uppercase(),
+                                fontSize = 15.sp,
+                                letterSpacing = 3.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = phaseColor,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = phase.instruction,
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = ZenTextSecondary,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Time Elapsed vs Target
-                Text(
-                    text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = ZenTextMuted
-                )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            // --- 3. SESSION PROGRESS TIMER ---
+            Text(
+                text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = ZenTextMuted
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             // --- 4. MINIMAL CONTROL BAR ---
             Row(

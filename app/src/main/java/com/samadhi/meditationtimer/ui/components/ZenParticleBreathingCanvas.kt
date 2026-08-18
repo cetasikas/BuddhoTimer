@@ -82,14 +82,14 @@ fun ZenParticleBreathingCanvas(
         List(count) { i ->
             val fraction = i.toFloat() / count.toFloat()
             // Ensō brushstroke variation: thicker and wider in middle of stroke, elegant at endpoints
-            val strokeThickness = 0.85f + 0.35f * sin(fraction * Math.PI.toFloat())
+            val strokeThickness = 0.88f + 0.32f * sin(fraction * Math.PI.toFloat())
             EnsoUnit(
                 index = i,
                 angleDeg = fraction * 360f,
-                radiusJitter = (rand.nextFloat() - 0.5f) * 0.08f,
-                angleJitter = (rand.nextFloat() - 0.5f) * 4f,
-                sizeScale = strokeThickness * (0.80f + rand.nextFloat() * 0.40f),
-                rotationOffset = (rand.nextFloat() - 0.5f) * 24f,
+                radiusJitter = (rand.nextFloat() - 0.5f) * 0.07f,
+                angleJitter = (rand.nextFloat() - 0.5f) * 3.5f,
+                sizeScale = strokeThickness * (0.85f + rand.nextFloat() * 0.35f),
+                rotationOffset = (rand.nextFloat() - 0.5f) * 20f,
                 driftAngle = (rand.nextFloat() * 360f),
                 driftSpeed = 0.6f + rand.nextFloat() * 0.8f,
                 colorVariant = rand.nextFloat()
@@ -102,8 +102,8 @@ fun ZenParticleBreathingCanvas(
         val rand = Random(42)
         List(18) {
             AmbientDriftParticle(
-                relX = 0.10f + rand.nextFloat() * 0.80f,
-                relY = 0.10f + rand.nextFloat() * 0.80f,
+                relX = 0.08f + rand.nextFloat() * 0.84f,
+                relY = 0.08f + rand.nextFloat() * 0.84f,
                 speedY = 0.015f + rand.nextFloat() * 0.020f,
                 driftFreq = 0.4f + rand.nextFloat() * 0.8f,
                 scale = 0.5f + rand.nextFloat() * 0.6f,
@@ -117,7 +117,7 @@ fun ZenParticleBreathingCanvas(
         val height = size.height
         val minDim = minOf(width, height)
         val center = Offset(width / 2f, height / 2f)
-        val ensoBaseRadius = minDim * 0.33f
+        val ensoBaseRadius = minDim * 0.38f // Enlarged for grand, spacious presence
 
         // Draw ambient tranquil background mist
         drawAmbientMists(ambientMists, minDim, animClockSec, zenTheme.primaryLight)
@@ -136,6 +136,113 @@ fun ZenParticleBreathingCanvas(
             primaryLight = zenTheme.primaryLight,
             primaryDark = zenTheme.primaryDark
         )
+
+        // Draw solitary slowly spinning leaf/petal during HOLD_EMPTY (and transitions)
+        drawSolitaryHoldEmptyLeaf(
+            center = center,
+            minDim = minDim,
+            currentPhase = currentPhase,
+            phaseProgress = phaseProgress,
+            animClockSec = animClockSec,
+            themeId = zenTheme.id,
+            primary = zenTheme.primary,
+            primaryLight = zenTheme.primaryLight,
+            primaryDark = zenTheme.primaryDark
+        )
+    }
+}
+
+// =========================================================================
+// SOLITARY SLOWLY SPINNING LEAF / PETAL DURING HOLD_EMPTY
+// =========================================================================
+
+private fun DrawScope.drawSolitaryHoldEmptyLeaf(
+    center: Offset,
+    minDim: Float,
+    currentPhase: BreathPhase,
+    phaseProgress: Float,
+    animClockSec: Float,
+    themeId: ZenThemeId,
+    primary: Color,
+    primaryLight: Color,
+    primaryDark: Color
+) {
+    // Determine visibility alpha for the solitary leaf
+    // Active during HOLD_EMPTY, fades in at end of EXHALE, fades out at start of INHALE
+    val solitaryAlpha = when (currentPhase) {
+        BreathPhase.HOLD_EMPTY -> 0.90f
+        BreathPhase.EXHALE -> if (phaseProgress > 0.65f) ((phaseProgress - 0.65f) / 0.35f) * 0.90f else 0.0f
+        BreathPhase.INHALE -> if (phaseProgress < 0.35f) (1.0f - (phaseProgress / 0.35f)) * 0.90f else 0.0f
+        BreathPhase.HOLD_FULL -> 0.0f
+    }
+
+    if (solitaryAlpha <= 0.02f) return
+
+    // Position: floating gently at center with a soothing harmonic bob
+    val bobY = sin(animClockSec * 1.8f) * (minDim * 0.012f)
+    val leafCenter = Offset(center.x, center.y + bobY)
+
+    // Smooth continuous fluid rotation
+    val spinRotation = animClockSec * 22f
+
+    // Scale
+    val scale = (minDim / 340f) * 1.15f
+
+    // Soft glowing ambient halo around the solitary leaf
+    val haloRadius = minDim * 0.10f
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(
+                primaryLight.copy(alpha = 0.28f * solitaryAlpha),
+                primary.copy(alpha = 0.12f * solitaryAlpha),
+                Color.Transparent
+            ),
+            center = leafCenter,
+            radius = haloRadius
+        ),
+        radius = haloRadius,
+        center = leafCenter
+    )
+
+    // Render the signature solitary element
+    when (themeId) {
+        ZenThemeId.BAMBOO_TEAL -> {
+            drawEnsoBambooLeaf(
+                center = leafCenter,
+                scale = scale,
+                rotation = spinRotation,
+                alpha = solitaryAlpha,
+                colorVariant = 0.7f,
+                primary = primary,
+                primaryLight = primaryLight,
+                primaryDark = primaryDark
+            )
+        }
+        ZenThemeId.SACRED_LOTUS -> {
+            drawEnsoLotusPetal(
+                center = leafCenter,
+                scale = scale * 1.1f,
+                rotation = spinRotation,
+                alpha = solitaryAlpha,
+                colorVariant = 0.8f,
+                primary = primary,
+                primaryLight = primaryLight,
+                primaryDark = primaryDark
+            )
+        }
+        ZenThemeId.SAKURA_TWILIGHT -> {
+            drawEnsoSakuraPetal(
+                center = leafCenter,
+                scale = scale * 1.15f,
+                rotation = spinRotation,
+                alpha = solitaryAlpha,
+                colorVariant = 0.5f,
+                isFloret = true,
+                primary = primary,
+                primaryLight = primaryLight,
+                primaryDark = primaryDark
+            )
+        }
     }
 }
 
@@ -158,11 +265,6 @@ private fun DrawScope.drawZenEnsoGarland(
 ) {
     val totalUnits = ensoUnits.size
 
-    // Calculate how much of the Ensō is formed / active (0.0 to 1.0)
-    // Inhale: 0.0 ➔ 1.0 (Clockwise sweep making the circle)
-    // Hold Full: 1.0 (Complete glowing circle)
-    // Exhale: 1.0 ➔ 0.0 (Progressive unmaking / dissolving inward)
-    // Hold Empty: 0.0 (Pure peaceful void)
     val ensoFormFactor = when (currentPhase) {
         BreathPhase.INHALE -> phaseProgress
         BreathPhase.HOLD_FULL -> 1.0f
@@ -172,18 +274,18 @@ private fun DrawScope.drawZenEnsoGarland(
 
     // Central Core Aura when Ensō is holding or blooming
     if (ensoFormFactor > 0.05f) {
-        val coreGlowRadius = baseRadius * (0.85f * ensoFormFactor)
+        val coreGlowRadius = baseRadius * (0.90f * ensoFormFactor)
         val glowAlpha = when (currentPhase) {
-            BreathPhase.INHALE -> 0.15f * phaseProgress
-            BreathPhase.HOLD_FULL -> 0.22f + 0.06f * sin(animClockSec * 2.5f)
-            BreathPhase.EXHALE -> 0.15f * (1.0f - phaseProgress)
+            BreathPhase.INHALE -> 0.14f * phaseProgress
+            BreathPhase.HOLD_FULL -> 0.20f + 0.05f * sin(animClockSec * 2.5f)
+            BreathPhase.EXHALE -> 0.14f * (1.0f - phaseProgress)
             BreathPhase.HOLD_EMPTY -> 0.0f
         }
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
                     primaryLight.copy(alpha = glowAlpha),
-                    primary.copy(alpha = glowAlpha * 0.5f),
+                    primary.copy(alpha = glowAlpha * 0.45f),
                     Color.Transparent
                 ),
                 center = center,
@@ -198,7 +300,6 @@ private fun DrawScope.drawZenEnsoGarland(
     for (unit in ensoUnits) {
         val unitFraction = unit.index.toFloat() / totalUnits.toFloat()
 
-        // Determine this unit's presence and animation state
         var unitAlpha = 0.0f
         var unitScaleMult = 1.0f
         var driftOffsetX = 0.0f
@@ -207,35 +308,29 @@ private fun DrawScope.drawZenEnsoGarland(
 
         when (currentPhase) {
             BreathPhase.INHALE -> {
-                // Sweep clockwise: unit appears when inhale progress reaches its fraction
-                val appearanceStart = unitFraction * 0.88f // finishes drawing near 90% of inhale
+                val appearanceStart = unitFraction * 0.88f
                 if (phaseProgress >= appearanceStart) {
                     val unitProgress = ((phaseProgress - appearanceStart) / 0.12f).coerceIn(0.0f, 1.0f)
-                    // Organic spring bloom
                     unitAlpha = unitProgress
                     unitScaleMult = 0.3f + 0.7f * unitProgress
                     extraRotation = (1.0f - unitProgress) * 30f
                 }
             }
             BreathPhase.HOLD_FULL -> {
-                // Complete Ensō with soft harmonic sway
                 unitAlpha = 1.0f
                 unitScaleMult = 1.0f + 0.04f * sin(animClockSec * 2.0f + unit.index)
                 extraRotation = sin(animClockSec * 1.5f + unit.index) * 4f
             }
             BreathPhase.EXHALE -> {
-                // Unmaking / Dissolving the circle:
-                // Units detach in order or dissolve gently inward
                 val detachStart = (1.0f - unitFraction) * 0.75f
                 if (phaseProgress >= detachStart) {
                     val dissolveProgress = ((phaseProgress - detachStart) / 0.25f).coerceIn(0.0f, 1.0f)
                     unitAlpha = (1.0f - dissolveProgress)
 
-                    // Drift gently inward toward center with natural swirl
                     val driftRad = Math.toRadians(unit.driftAngle.toDouble() + animClockSec * 20.0).toFloat()
                     val driftDist = minDim * 0.14f * dissolveProgress * unit.driftSpeed
                     driftOffsetX = cos(driftRad) * driftDist
-                    driftOffsetY = sin(driftRad) * driftDist - (minDim * 0.03f * dissolveProgress) // subtle upward wind
+                    driftOffsetY = sin(driftRad) * driftDist - (minDim * 0.03f * dissolveProgress)
                     extraRotation = dissolveProgress * 45f * if (unit.index % 2 == 0) 1f else -1f
                     unitScaleMult = (1.0f - dissolveProgress * 0.5f)
                 } else {
@@ -243,14 +338,12 @@ private fun DrawScope.drawZenEnsoGarland(
                 }
             }
             BreathPhase.HOLD_EMPTY -> {
-                // Pure stillness
                 unitAlpha = 0.0f
             }
         }
 
         if (unitAlpha <= 0.01f) continue
 
-        // Base Position along the Ensō ring (0° = Top at -90°)
         val baseAngleDeg = -90f + unit.angleDeg + unit.angleJitter + (sin(animClockSec * 1.2f + unit.index) * 2f)
         val angleRad = Math.toRadians(baseAngleDeg.toDouble()).toFloat()
 
@@ -259,11 +352,9 @@ private fun DrawScope.drawZenEnsoGarland(
         val posY = center.y + sin(angleRad) * r + driftOffsetY
         val unitCenter = Offset(posX, posY)
 
-        // Tangent rotation along the circle path
         val tangentRotation = baseAngleDeg + 90f + unit.rotationOffset + extraRotation
         val finalScale = (minDim / 360f) * unit.sizeScale * unitScaleMult
 
-        // Render theme-specific artistic botanical unit
         when (themeId) {
             ZenThemeId.BAMBOO_TEAL -> {
                 drawEnsoBambooLeaf(
@@ -296,7 +387,7 @@ private fun DrawScope.drawZenEnsoGarland(
                     rotation = tangentRotation,
                     alpha = unitAlpha,
                     colorVariant = unit.colorVariant,
-                    isFloret = (unit.index % 6 == 0),
+                    isFloret = (unit.index % 5 == 0),
                     primary = primary,
                     primaryLight = primaryLight,
                     primaryDark = primaryDark
@@ -313,7 +404,6 @@ private fun DrawScope.drawZenEnsoGarland(
         val tipY = center.y + sin(sweepRad) * baseRadius
         val tipOffset = Offset(tipX, tipY)
 
-        // Radiant brushstroke tip glow
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
@@ -332,7 +422,7 @@ private fun DrawScope.drawZenEnsoGarland(
 }
 
 // =========================================================================
-// 1. MOONLIT BAMBOO ENSŌ LEAF (ARTISTIC CALLIGRAPHIC JADE LEAF)
+// 1. MOONLIT BAMBOO ENSŌ LEAF
 // =========================================================================
 
 private fun DrawScope.drawEnsoBambooLeaf(
@@ -367,7 +457,6 @@ private fun DrawScope.drawEnsoBambooLeaf(
         val leafGreen = if (colorVariant > 0.5f) primary else primaryDark
         val glowRim = primaryLight
 
-        // Body Gradient
         drawPath(
             path = path,
             brush = Brush.verticalGradient(
@@ -381,7 +470,6 @@ private fun DrawScope.drawEnsoBambooLeaf(
             )
         )
 
-        // Midrib Central Spine Line
         drawLine(
             color = glowRim.copy(alpha = 0.80f * alpha),
             start = Offset(center.x, center.y - len * 0.40f),
@@ -390,7 +478,6 @@ private fun DrawScope.drawEnsoBambooLeaf(
             cap = StrokeCap.Round
         )
 
-        // Soft Outer Rim Glow
         drawPath(
             path = path,
             color = glowRim.copy(alpha = 0.65f * alpha),
@@ -400,7 +487,7 @@ private fun DrawScope.drawEnsoBambooLeaf(
 }
 
 // =========================================================================
-// 2. SACRED LOTUS ENSŌ PETAL (WARM GOLDEN & CORAL SACRED GARLAND)
+// 2. SACRED LOTUS ENSŌ PETAL
 // =========================================================================
 
 private fun DrawScope.drawEnsoLotusPetal(
@@ -447,7 +534,6 @@ private fun DrawScope.drawEnsoLotusPetal(
             )
         )
 
-        // Center spine reflection
         drawLine(
             color = Color.White.copy(alpha = 0.75f * alpha),
             start = Offset(center.x, center.y - len * 0.45f),
@@ -455,7 +541,6 @@ private fun DrawScope.drawEnsoLotusPetal(
             strokeWidth = 1.0f
         )
 
-        // Golden rim
         drawPath(
             path = path,
             color = primaryLight.copy(alpha = 0.80f * alpha),
@@ -465,7 +550,7 @@ private fun DrawScope.drawEnsoLotusPetal(
 }
 
 // =========================================================================
-// 3. SAKURA TWILIGHT ENSŌ PETAL & FLORET (HEART-NOTCHED SAKURA WREATH)
+// 3. SAKURA TWILIGHT ENSŌ PETAL & REFINED ARTISTIC FLORET
 // =========================================================================
 
 private fun DrawScope.drawEnsoSakuraPetal(
@@ -480,57 +565,102 @@ private fun DrawScope.drawEnsoSakuraPetal(
     primaryDark: Color
 ) {
     if (isFloret) {
-        // Draw a 5-petal cherry floret ornament on key positions along the wreath
+        // Refined, artistic 5-petal cherry blossom with layered translucent petals & glowing stamens
         rotate(degrees = rotation, pivot = center) {
-            val floretScale = scale * 0.75f
+            val floretScale = scale * 0.85f
+
+            // Layer 1: 5 Main Petals with delicate heart notches
             for (p in 0 until 5) {
                 rotate(degrees = p * 72f, pivot = center) {
-                    val pLen = floretScale * 20f
-                    val pWid = floretScale * 10f
+                    val pLen = floretScale * 22f
+                    val pWid = floretScale * 11.5f
                     val pNotch = pLen * 0.16f
 
                     val path = Path().apply {
                         moveTo(center.x, center.y)
                         cubicTo(
-                            center.x - pWid, center.y - pLen * 0.35f,
-                            center.x - pWid * 0.8f, center.y - pLen,
-                            center.x - pWid * 0.4f, center.y - pLen
+                            center.x - pWid * 1.1f, center.y - pLen * 0.35f,
+                            center.x - pWid * 0.9f, center.y - pLen,
+                            center.x - pWid * 0.45f, center.y - pLen
                         )
                         quadraticTo(
                             center.x, center.y - pLen + pNotch,
-                            center.x + pWid * 0.4f, center.y - pLen
+                            center.x + pWid * 0.45f, center.y - pLen
                         )
                         cubicTo(
-                            center.x + pWid * 0.8f, center.y - pLen,
-                            center.x + pWid, center.y - pLen * 0.35f,
+                            center.x + pWid * 0.9f, center.y - pLen,
+                            center.x + pWid * 1.1f, center.y - pLen * 0.35f,
                             center.x, center.y
                         )
                         close()
                     }
 
+                    // Petal Gradient: Translucent blush white tip to vibrant magenta base
                     drawPath(
                         path = path,
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                primaryLight.copy(alpha = 0.95f * alpha),
-                                primary.copy(alpha = 0.90f * alpha),
-                                primaryDark.copy(alpha = 0.80f * alpha)
+                                Color(0xFFFFF0F5).copy(alpha = 0.95f * alpha),
+                                primaryLight.copy(alpha = 0.92f * alpha),
+                                primary.copy(alpha = 0.88f * alpha),
+                                primaryDark.copy(alpha = 0.82f * alpha)
                             ),
                             startY = center.y - pLen,
                             endY = center.y
                         )
                     )
+                    // Delicate petal rim stroke
+                    drawPath(
+                        path = path,
+                        color = primaryLight.copy(alpha = 0.70f * alpha),
+                        style = Stroke(width = 1.0f)
+                    )
                 }
             }
-            // Core Stamen Glow
+
+            // Layer 2: Delicate Stamen Filaments with Glowing Golden-Pink Pollen Anthers
+            val stamenCount = 8
+            for (s in 0 until stamenCount) {
+                val sAngle = s * (360f / stamenCount) + 18f
+                val sRad = Math.toRadians(sAngle.toDouble()).toFloat()
+                val sLen = floretScale * 10f
+                val sx = center.x + cos(sRad) * sLen
+                val sy = center.y + sin(sRad) * sLen
+
+                // Filament
+                drawLine(
+                    color = primaryLight.copy(alpha = 0.85f * alpha),
+                    start = center,
+                    end = Offset(sx, sy),
+                    strokeWidth = 1.0f,
+                    cap = StrokeCap.Round
+                )
+                // Golden Pollen Anther
+                drawCircle(
+                    color = Color(0xFFFFE4B5).copy(alpha = 0.95f * alpha),
+                    radius = floretScale * 1.5f,
+                    center = Offset(sx, sy)
+                )
+            }
+
+            // Layer 3: Central Crimson Pistil Core
             drawCircle(
-                color = Color(0xFFFFD1DC).copy(alpha = 0.90f * alpha),
-                radius = floretScale * 4f,
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFE91E63).copy(alpha = 0.95f * alpha),
+                        Color(0xFFAD1457).copy(alpha = 0.85f * alpha),
+                        primaryDark.copy(alpha = 0.60f * alpha),
+                        Color.Transparent
+                    ),
+                    center = center,
+                    radius = floretScale * 4.5f
+                ),
+                radius = floretScale * 4.5f,
                 center = center
             )
         }
     } else {
-        // Individual Notched Sakura Petal
+        // Individual Notched Sakura Petal with heart notch
         rotate(degrees = rotation, pivot = center) {
             val len = scale * 34f
             val wid = scale * 15f
@@ -559,9 +689,10 @@ private fun DrawScope.drawEnsoSakuraPetal(
                 path = path,
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        primaryLight.copy(alpha = 0.95f * alpha),
-                        primary.copy(alpha = 0.90f * alpha),
-                        primaryDark.copy(alpha = 0.82f * alpha)
+                        Color(0xFFFFF0F5).copy(alpha = 0.95f * alpha),
+                        primaryLight.copy(alpha = 0.90f * alpha),
+                        primary.copy(alpha = 0.85f * alpha),
+                        primaryDark.copy(alpha = 0.80f * alpha)
                     ),
                     startY = center.y - len * 0.55f,
                     endY = center.y + len * 0.45f
