@@ -39,7 +39,8 @@ private data class AmbientBotanicalParticle(
     val baseScale: Float,
     val initialRotation: Float,
     val rotSpeed: Float,
-    val alphaBase: Float
+    val alphaBase: Float,
+    val orbitOffset: Float
 )
 
 @Composable
@@ -65,16 +66,17 @@ fun ZenParticleBreathingCanvas(
     // Precompute bounded ambient botanical particles
     val ambientParticles = remember {
         val rand = Random(42)
-        List(24) {
+        List(26) {
             AmbientBotanicalParticle(
                 relX = 0.12f + rand.nextFloat() * 0.76f,
                 relY = 0.10f + rand.nextFloat() * 0.80f,
                 speedY = 0.012f + rand.nextFloat() * 0.022f,
                 driftSpeedX = 0.35f + rand.nextFloat() * 0.75f,
-                baseScale = 0.60f + rand.nextFloat() * 0.60f,
+                baseScale = 0.60f + rand.nextFloat() * 0.55f,
                 initialRotation = rand.nextFloat() * 360f,
                 rotSpeed = (rand.nextFloat() - 0.5f) * 35f,
-                alphaBase = 0.30f + rand.nextFloat() * 0.40f
+                alphaBase = 0.30f + rand.nextFloat() * 0.40f,
+                orbitOffset = rand.nextFloat() * 360f
             )
         }
     }
@@ -91,9 +93,9 @@ fun ZenParticleBreathingCanvas(
 
     // Hold subtle living pulse
     val holdPulse = if (currentPhase == BreathPhase.HOLD_FULL) {
-        sin(animClockSec * 2.8f) * 0.025f
+        sin(animClockSec * 2.8f) * 0.022f
     } else if (currentPhase == BreathPhase.HOLD_EMPTY) {
-        sin(animClockSec * 1.5f) * 0.012f
+        sin(animClockSec * 1.5f) * 0.010f
     } else {
         0.0f
     }
@@ -106,19 +108,21 @@ fun ZenParticleBreathingCanvas(
         val minDim = minOf(width, height)
         val center = Offset(width / 2f, height / 2f)
 
-        // Calm-inspired base & max radii
-        val minRadius = minDim * 0.18f
-        val maxRadius = minDim * 0.38f
+        val minRadius = minDim * 0.16f
+        val maxRadius = minDim * 0.34f
         val currentRadius = minRadius + (maxRadius - minRadius) * finalGrowth
+        val trackRadius = minDim * 0.40f
 
         when (zenTheme.id) {
             ZenThemeId.BAMBOO_TEAL -> {
-                drawCalmBambooBreathing(
+                drawFluidBambooBreathing(
                     center = center,
                     minDim = minDim,
                     radius = currentRadius,
+                    trackRadius = trackRadius,
                     growthFactor = finalGrowth,
                     currentPhase = currentPhase,
+                    phaseProgress = phaseProgress,
                     animClockSec = animClockSec,
                     primaryColor = zenTheme.primary,
                     primaryLight = zenTheme.primaryLight,
@@ -127,12 +131,14 @@ fun ZenParticleBreathingCanvas(
                 )
             }
             ZenThemeId.SACRED_LOTUS -> {
-                drawCalmLotusBreathing(
+                drawFluidLotusBreathing(
                     center = center,
                     minDim = minDim,
                     radius = currentRadius,
+                    trackRadius = trackRadius,
                     growthFactor = finalGrowth,
                     currentPhase = currentPhase,
+                    phaseProgress = phaseProgress,
                     animClockSec = animClockSec,
                     primaryColor = zenTheme.primary,
                     primaryLight = zenTheme.primaryLight,
@@ -141,12 +147,14 @@ fun ZenParticleBreathingCanvas(
                 )
             }
             ZenThemeId.SAKURA_TWILIGHT -> {
-                drawCalmSakuraBreathing(
+                drawFluidSakuraBreathing(
                     center = center,
                     minDim = minDim,
                     radius = currentRadius,
+                    trackRadius = trackRadius,
                     growthFactor = finalGrowth,
                     currentPhase = currentPhase,
+                    phaseProgress = phaseProgress,
                     animClockSec = animClockSec,
                     primaryColor = zenTheme.primary,
                     primaryLight = zenTheme.primaryLight,
@@ -159,22 +167,24 @@ fun ZenParticleBreathingCanvas(
 }
 
 // =========================================================================
-// 1. MOONLIT BAMBOO: CALM BREATHE BUBBLE + GLOWING BAMBOO LEAF MANDALA
+// 1. MOONLIT BAMBOO: FLUID LIVING BUBBLE + CALM NOTCH BEAD + JADE LEAF SWIRL
 // =========================================================================
 
-private fun DrawScope.drawCalmBambooBreathing(
+private fun DrawScope.drawFluidBambooBreathing(
     center: Offset,
     minDim: Float,
     radius: Float,
+    trackRadius: Float,
     growthFactor: Float,
     currentPhase: BreathPhase,
+    phaseProgress: Float,
     animClockSec: Float,
     primaryColor: Color,
     primaryLight: Color,
     primaryDark: Color,
     ambientParticles: List<AmbientBotanicalParticle>
 ) {
-    // 1. Ambient Floating Jade Bamboo Leaves (Strictly bounded to canvas)
+    // 1. Ambient Floating & Drifting Bamboo Leaves
     drawAmbientBotanicals(
         particles = ambientParticles,
         minDim = minDim,
@@ -192,7 +202,7 @@ private fun DrawScope.drawCalmBambooBreathing(
         )
     }
 
-    // 2. Multi-Layered Calm Breathe Bubble Glow
+    // 2. Multi-Layered Luminous Core Breathing Bubble (No static track line)
     drawCalmBubbleLayers(
         center = center,
         radius = radius,
@@ -203,23 +213,23 @@ private fun DrawScope.drawCalmBambooBreathing(
         primaryDark = primaryDark
     )
 
-    // 3. Radial Glowing Bamboo Leaf Ring Attached to Bubble Perimeter
-    val leafCount = 8
-    val rotOffset = animClockSec * 4f // Slow tranquil rotation
+    // 3. Fluid Organic Bamboo Leaves Swirling with the Breath
+    val leafCount = 7
     for (i in 0 until leafCount) {
-        val angleDeg = (i * (360f / leafCount)) + rotOffset
-        val angleRad = Math.toRadians(angleDeg.toDouble()).toFloat()
+        val baseAngle = (i * (360f / leafCount))
+        val dynamicAngle = baseAngle + animClockSec * 3.5f + sin(animClockSec * 1.5f + i) * 12f
+        val rad = Math.toRadians(dynamicAngle.toDouble()).toFloat()
 
-        // Position directly along expanding bubble perimeter
-        val leafAnchorX = center.x + cos(angleRad) * (radius * 0.96f)
-        val leafAnchorY = center.y + sin(angleRad) * (radius * 0.96f)
+        // Dynamic fluid radius that breathes and sways organically
+        val r = radius * (0.85f + 0.25f * growthFactor) + sin(animClockSec * 2f + i * 2f) * (minDim * 0.015f)
+        val leafX = center.x + cos(rad) * r
+        val leafY = center.y + sin(rad) * r
 
-        // Leaves fan radially outward with breath growth
-        val leafRot = angleDeg + 90f + sin(animClockSec * 1.5f + i) * 6f
-        val leafScale = (minDim / 350f) * (0.60f + 0.40f * growthFactor)
+        val leafRot = dynamicAngle + 70f + sin(animClockSec * 1.8f + i) * 15f
+        val leafScale = (minDim / 360f) * (0.55f + 0.35f * growthFactor)
 
         drawSingleBambooLeaf(
-            center = Offset(leafAnchorX, leafAnchorY),
+            center = Offset(leafX, leafY),
             scale = leafScale,
             rotation = leafRot,
             fillColor = primaryDark,
@@ -227,37 +237,36 @@ private fun DrawScope.drawCalmBambooBreathing(
         )
     }
 
-    // 4. Central Bamboo Joint Node Emblem
-    val nodeWidth = radius * 0.32f
-    val nodeHeight = nodeWidth * 0.30f
-    drawOval(
-        brush = Brush.radialGradient(
-            colors = listOf(primaryLight.copy(alpha = 0.85f), primaryColor.copy(alpha = 0.30f), Color.Transparent),
-            center = center,
-            radius = nodeWidth * 0.6f
-        ),
-        topLeft = Offset(center.x - nodeWidth / 2f, center.y - nodeHeight / 2f),
-        size = Size(nodeWidth, nodeHeight)
+    // 4. Calm Milestone Notches & Traveling Half-Circle Indicator Bead
+    drawCalmPhaseNotchesAndBead(
+        center = center,
+        trackRadius = trackRadius,
+        currentPhase = currentPhase,
+        phaseProgress = phaseProgress,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
     )
 }
 
 // =========================================================================
-// 2. SACRED LOTUS: CALM BREATHE BUBBLE + RADIANT LOTUS PETAL MANDALA
+// 2. SACRED LOTUS: FLUID LIVING BUBBLE + CALM NOTCH BEAD + GOLDEN PETAL MANDALA
 // =========================================================================
 
-private fun DrawScope.drawCalmLotusBreathing(
+private fun DrawScope.drawFluidLotusBreathing(
     center: Offset,
     minDim: Float,
     radius: Float,
+    trackRadius: Float,
     growthFactor: Float,
     currentPhase: BreathPhase,
+    phaseProgress: Float,
     animClockSec: Float,
     primaryColor: Color,
     primaryLight: Color,
     primaryDark: Color,
     ambientParticles: List<AmbientBotanicalParticle>
 ) {
-    // 1. Ambient Floating Golden Lotus Petals
+    // 1. Ambient Floating Lotus Petals
     drawAmbientBotanicals(
         particles = ambientParticles,
         minDim = minDim,
@@ -275,7 +284,7 @@ private fun DrawScope.drawCalmLotusBreathing(
         )
     }
 
-    // 2. Multi-Layered Calm Breathe Bubble Glow
+    // 2. Multi-Layered Luminous Core Breathing Bubble
     drawCalmBubbleLayers(
         center = center,
         radius = radius,
@@ -286,79 +295,52 @@ private fun DrawScope.drawCalmLotusBreathing(
         primaryDark = primaryDark
     )
 
-    // 3. Concentric Lotus Mandala Blossom Tiers Seated on Bubble
+    // 3. Fluid Organic Lotus Petal Blossom Swirl
     val petalCount = 8
-    val rotOffset = animClockSec * 3f
-
-    // Outer Tier Petals (Unfurl wide on inhale)
     for (i in 0 until petalCount) {
-        val angleDeg = (i * (360f / petalCount)) + rotOffset
-        val angleRad = Math.toRadians(angleDeg.toDouble()).toFloat()
+        val baseAngle = (i * (360f / petalCount))
+        val dynamicAngle = baseAngle + animClockSec * 2.5f + sin(animClockSec * 1.2f + i) * 8f
+        val rad = Math.toRadians(dynamicAngle.toDouble()).toFloat()
 
-        val anchorX = center.x + cos(angleRad) * (radius * 0.90f)
-        val anchorY = center.y + sin(angleRad) * (radius * 0.90f)
+        val r = radius * (0.80f + 0.28f * growthFactor)
+        val anchorX = center.x + cos(rad) * r
+        val anchorY = center.y + sin(rad) * r
 
-        val petalRot = angleDeg - 90f + sin(animClockSec * 1.2f + i) * 4f
-        val petalScale = (minDim / 340f) * (0.65f + 0.35f * growthFactor)
+        val petalRot = dynamicAngle - 90f + sin(animClockSec * 1.4f + i) * 10f
+        val petalScale = (minDim / 350f) * (0.60f + 0.35f * growthFactor)
 
         drawSingleLotusPetal(
             tip = Offset(anchorX, anchorY),
             scale = petalScale,
             rotation = petalRot,
-            petalColor = primaryDark,
+            petalColor = if (i % 2 == 0) primaryDark else primaryColor,
             rimColor = primaryLight
         )
     }
 
-    // Inner Tier Golden Petals (Offset by 22.5 deg)
-    for (i in 0 until petalCount) {
-        val angleDeg = (i * (360f / petalCount)) + rotOffset + 22.5f
-        val angleRad = Math.toRadians(angleDeg.toDouble()).toFloat()
-
-        val anchorX = center.x + cos(angleRad) * (radius * 0.72f)
-        val anchorY = center.y + sin(angleRad) * (radius * 0.72f)
-
-        val petalRot = angleDeg - 90f + sin(animClockSec * 1.2f + i + 2) * 3f
-        val petalScale = (minDim / 360f) * (0.55f + 0.30f * growthFactor)
-
-        drawSingleLotusPetal(
-            tip = Offset(anchorX, anchorY),
-            scale = petalScale,
-            rotation = petalRot,
-            petalColor = primaryColor,
-            rimColor = primaryLight
-        )
-    }
-
-    // 4. Central Golden Stamen Pod
-    val podRadius = radius * 0.16f * (0.75f + 0.25f * growthFactor)
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(primaryLight, primaryColor, primaryDark),
-            center = center,
-            radius = podRadius
-        ),
-        radius = podRadius,
-        center = center
-    )
-    drawCircle(
-        color = primaryLight.copy(alpha = 0.90f),
-        radius = podRadius,
+    // 4. Calm Milestone Notches & Traveling Half-Circle Indicator Bead
+    drawCalmPhaseNotchesAndBead(
         center = center,
-        style = Stroke(width = 1.4f)
+        trackRadius = trackRadius,
+        currentPhase = currentPhase,
+        phaseProgress = phaseProgress,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
     )
 }
 
 // =========================================================================
-// 3. SAKURA TWILIGHT: CALM BREATHE BUBBLE + SWIRLING CHERRY BLOSSOM FLORETS
+// 3. SAKURA TWILIGHT: FLUID LIVING BUBBLE + CALM NOTCH BEAD + CHERRY PETAL VORTEX
 // =========================================================================
 
-private fun DrawScope.drawCalmSakuraBreathing(
+private fun DrawScope.drawFluidSakuraBreathing(
     center: Offset,
     minDim: Float,
     radius: Float,
+    trackRadius: Float,
     growthFactor: Float,
     currentPhase: BreathPhase,
+    phaseProgress: Float,
     animClockSec: Float,
     primaryColor: Color,
     primaryLight: Color,
@@ -383,7 +365,7 @@ private fun DrawScope.drawCalmSakuraBreathing(
         )
     }
 
-    // 2. Multi-Layered Calm Breathe Bubble Glow
+    // 2. Multi-Layered Luminous Core Breathing Bubble
     drawCalmBubbleLayers(
         center = center,
         radius = radius,
@@ -394,21 +376,21 @@ private fun DrawScope.drawCalmSakuraBreathing(
         primaryDark = primaryDark
     )
 
-    // 3. Radial 5-Petal Cherry Blossom Florets Around Perimeter
-    val floretCount = 6
-    val rotOffset = animClockSec * 3.5f
-
+    // 3. Fluid Organic Cherry Blossom Florets & Petals Swirling in Vortex
+    val floretCount = 5
     for (i in 0 until floretCount) {
-        val angleDeg = (i * (360f / floretCount)) + rotOffset
-        val angleRad = Math.toRadians(angleDeg.toDouble()).toFloat()
+        val baseAngle = (i * (360f / floretCount))
+        val dynamicAngle = baseAngle + animClockSec * 3.0f + sin(animClockSec * 1.5f + i) * 10f
+        val rad = Math.toRadians(dynamicAngle.toDouble()).toFloat()
 
-        val floretX = center.x + cos(angleRad) * (radius * 0.92f)
-        val floretY = center.y + sin(angleRad) * (radius * 0.92f)
+        val r = radius * (0.88f + 0.22f * growthFactor)
+        val fx = center.x + cos(rad) * r
+        val fy = center.y + sin(rad) * r
 
-        val floretScale = (minDim / 360f) * (0.50f + 0.50f * growthFactor)
+        val floretScale = (minDim / 370f) * (0.50f + 0.45f * growthFactor)
 
         drawSakura5PetalFlower(
-            origin = Offset(floretX, floretY),
+            origin = Offset(fx, fy),
             scale = floretScale,
             bloomFactor = growthFactor,
             animClockSec = animClockSec + i,
@@ -418,27 +400,117 @@ private fun DrawScope.drawCalmSakuraBreathing(
         )
     }
 
-    // 4. Central Twilight Sakura Pistil Emblem
-    val centerScale = (minDim / 380f) * (0.65f + 0.35f * growthFactor)
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(Color(0xFFFF80AB), primaryColor, primaryDark.copy(alpha = 0.4f)),
-            center = center,
-            radius = centerScale * 14f
-        ),
-        radius = centerScale * 14f,
-        center = center
-    )
-    drawCircle(
-        color = primaryLight.copy(alpha = 0.90f),
-        radius = centerScale * 14f,
+    // 4. Calm Milestone Notches & Traveling Half-Circle Indicator Bead
+    drawCalmPhaseNotchesAndBead(
         center = center,
-        style = Stroke(width = 1.3f)
+        trackRadius = trackRadius,
+        currentPhase = currentPhase,
+        phaseProgress = phaseProgress,
+        primaryLight = primaryLight,
+        primaryDark = primaryDark
     )
 }
 
 // =========================================================================
-// SHARED CALM BREATHE BUBBLE MULTI-LAYERED GLOW RENDERER
+// CALM MILESTONE NOTCHES & TRAVELING HALF-CIRCLE INDICATOR BEAD
+// =========================================================================
+
+private fun DrawScope.drawCalmPhaseNotchesAndBead(
+    center: Offset,
+    trackRadius: Float,
+    currentPhase: BreathPhase,
+    phaseProgress: Float,
+    primaryLight: Color,
+    primaryDark: Color
+) {
+    // 4 Phase Stop Angles (degrees, Top=-90, Right=0, Bottom=90, Left=180)
+    // Inhale: -90° ➔ 0° (Top to Right)
+    // Hold Full: 0° ➔ 90° (Right to Bottom)
+    // Exhale: 90° ➔ 180° (Bottom to Left)
+    // Hold Empty: 180° ➔ 270° (-90°) (Left to Top)
+    val notchAngles = listOf(-90f, 0f, 90f, 180f)
+
+    // 1. Draw Phase Milestone Notches (Capsule radial marks)
+    val notchLen = 14f
+    val notchWidth = 3.5f
+    for (notchAngle in notchAngles) {
+        val nRad = Math.toRadians(notchAngle.toDouble()).toFloat()
+        val cosA = cos(nRad)
+        val sinA = sin(nRad)
+
+        val innerX = center.x + cosA * (trackRadius - notchLen / 2f)
+        val innerY = center.y + sinA * (trackRadius - notchLen / 2f)
+        val outerX = center.x + cosA * (trackRadius + notchLen / 2f)
+        val outerY = center.y + sinA * (trackRadius + notchLen / 2f)
+
+        // Radial Notch Tick Mark
+        drawLine(
+            color = primaryLight.copy(alpha = 0.85f),
+            start = Offset(innerX, innerY),
+            end = Offset(outerX, outerY),
+            strokeWidth = notchWidth,
+            cap = StrokeCap.Round
+        )
+    }
+
+    // 2. Calculate Continuous Moving Angle for the Traveling Bead
+    val (phaseStartAngle, phaseSweep) = when (currentPhase) {
+        BreathPhase.INHALE -> Pair(-90f, 90f)
+        BreathPhase.HOLD_FULL -> Pair(0f, 90f)
+        BreathPhase.EXHALE -> Pair(90f, 90f)
+        BreathPhase.HOLD_EMPTY -> Pair(180f, 90f)
+    }
+    val currentAngleDeg = phaseStartAngle + (phaseSweep * phaseProgress)
+    val currentAngleRad = Math.toRadians(currentAngleDeg.toDouble()).toFloat()
+
+    val beadCenterX = center.x + cos(currentAngleRad) * trackRadius
+    val beadCenterY = center.y + sin(currentAngleRad) * trackRadius
+    val beadCenter = Offset(beadCenterX, beadCenterY)
+
+    // 3. Draw Traveling Half-Circle Capsule Bead (Matches Calm Reference!)
+    // The flat side faces center, curved dome faces outward
+    rotate(degrees = currentAngleDeg + 90f, pivot = beadCenter) {
+        val beadW = 18f
+        val beadH = 10f
+
+        val halfCirclePath = Path().apply {
+            moveTo(beadCenter.x - beadW / 2f, beadCenter.y) // Left corner of flat base
+            lineTo(beadCenter.x + beadW / 2f, beadCenter.y) // Right corner of flat base
+            // Curved dome arching upward
+            cubicTo(
+                beadCenter.x + beadW / 2f, beadCenter.y - beadH * 1.3f,
+                beadCenter.x - beadW / 2f, beadCenter.y - beadH * 1.3f,
+                beadCenter.x - beadW / 2f, beadCenter.y
+            )
+            close()
+        }
+
+        // Luminous Bead Glow Aura
+        drawCircle(
+            color = primaryLight.copy(alpha = 0.40f),
+            radius = 16f,
+            center = beadCenter
+        )
+        // Bead Fill (Pure radiant light)
+        drawPath(
+            path = halfCirclePath,
+            brush = Brush.verticalGradient(
+                colors = listOf(Color.White, primaryLight, primaryDark),
+                startY = beadCenter.y - beadH,
+                endY = beadCenter.y
+            )
+        )
+        // Bead Border
+        drawPath(
+            path = halfCirclePath,
+            color = Color.White,
+            style = Stroke(width = 1.2f)
+        )
+    }
+}
+
+// =========================================================================
+// SHARED CALM BREATHE BUBBLE MULTI-LAYERED GLOW RENDERER (NO STATIC LINE)
 // =========================================================================
 
 private fun DrawScope.drawCalmBubbleLayers(
@@ -451,13 +523,13 @@ private fun DrawScope.drawCalmBubbleLayers(
     primaryDark: Color
 ) {
     // 1. Outermost Ambient Atmosphere Aura (Diffused soothing light)
-    val auraRadius = radius * 1.55f
+    val auraRadius = radius * 1.50f
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
-                primaryLight.copy(alpha = 0.22f + 0.12f * growthFactor),
-                primaryColor.copy(alpha = 0.12f + 0.08f * growthFactor),
-                primaryDark.copy(alpha = 0.04f),
+                primaryLight.copy(alpha = 0.20f + 0.12f * growthFactor),
+                primaryColor.copy(alpha = 0.10f + 0.08f * growthFactor),
+                primaryDark.copy(alpha = 0.03f),
                 Color.Transparent
             ),
             center = center,
@@ -467,28 +539,7 @@ private fun DrawScope.drawCalmBubbleLayers(
         center = center
     )
 
-    // 2. Concentric Ethereal Pulse Rings (Soundwave / Breath wave ripples)
-    val pulse1 = ((animClockSec * 0.4f) % 1.0f)
-    val pulseRadius1 = radius + (auraRadius - radius) * pulse1
-    val pulseAlpha1 = (1.0f - pulse1) * 0.35f * (0.5f + 0.5f * growthFactor)
-    drawCircle(
-        color = primaryLight.copy(alpha = pulseAlpha1),
-        radius = pulseRadius1,
-        center = center,
-        style = Stroke(width = 1.5f)
-    )
-
-    val pulse2 = ((animClockSec * 0.4f + 0.5f) % 1.0f)
-    val pulseRadius2 = radius + (auraRadius - radius) * pulse2
-    val pulseAlpha2 = (1.0f - pulse2) * 0.25f * (0.5f + 0.5f * growthFactor)
-    drawCircle(
-        color = primaryLight.copy(alpha = pulseAlpha2),
-        radius = pulseRadius2,
-        center = center,
-        style = Stroke(width = 1.2f)
-    )
-
-    // 3. Main Luminous Core Bubble (Smooth radial gradient sphere)
+    // 2. Main Luminous Core Bubble (Smooth radial gradient sphere)
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
@@ -504,7 +555,7 @@ private fun DrawScope.drawCalmBubbleLayers(
         center = center
     )
 
-    // 4. Bubble Rim Luminous Edge
+    // 3. Bubble Rim Luminous Edge
     drawCircle(
         brush = Brush.sweepGradient(
             colors = listOf(
@@ -518,10 +569,10 @@ private fun DrawScope.drawCalmBubbleLayers(
         ),
         radius = radius,
         center = center,
-        style = Stroke(width = 2.2f)
+        style = Stroke(width = 2.0f)
     )
 
-    // 5. Specular Gloss Reflection Arch (Upper hemisphere highlight for glassmorphism)
+    // 4. Specular Gloss Reflection Arch (Upper hemisphere highlight for glassmorphism)
     val highlightRadius = radius * 0.70f
     val highlightCenter = Offset(center.x, center.y - radius * 0.25f)
     drawCircle(
@@ -555,11 +606,11 @@ private fun DrawScope.drawSingleBambooLeaf(
         val wid = scale * 8.5f
 
         val path = Path().apply {
-            moveTo(center.x, center.y) // Stalk attachment
+            moveTo(center.x, center.y)
             cubicTo(
                 center.x - wid * 0.8f, center.y + len * 0.35f,
                 center.x - wid, center.y + len * 0.75f,
-                center.x, center.y + len // Leaf tip
+                center.x, center.y + len
             )
             cubicTo(
                 center.x + wid, center.y + len * 0.75f,

@@ -107,311 +107,308 @@ fun SessionSummaryScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 18.dp, vertical = 10.dp)
                 .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Icon & Header
-        Icon(
-            imageVector = Icons.Default.SelfImprovement,
-            contentDescription = null,
-            tint = currentTheme.primaryLight,
-            modifier = Modifier.size(42.dp)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Practice Complete",
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-            color = ZenTextPrimary
-        )
-        Text(
-            text = "May the peace of this session carry throughout your day",
-            style = MaterialTheme.typography.bodyMedium,
-            color = ZenTextSecondary
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Stats Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.80f)),
-            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-            shape = RoundedCornerShape(16.dp)
-        ) {
+            // Icon & Header
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = 2.dp)
             ) {
-                // Actual Time
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = NotificationHelper.formatSeconds(completedStatus.actualDurationSec),
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = currentTheme.primaryLight
-                    )
-                    Text(
-                        text = "Total Practice",
-                        fontSize = 12.sp,
-                        color = ZenTextSecondary
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(36.dp)
-                        .background(ZenBorder)
+                Icon(
+                    imageVector = Icons.Default.SelfImprovement,
+                    contentDescription = null,
+                    tint = currentTheme.primaryLight,
+                    modifier = Modifier.size(24.dp)
                 )
-
-                // Overrun or Target
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (completedStatus.overrunSec > 0) {
-                        Text(
-                            text = "+${NotificationHelper.formatSeconds(completedStatus.overrunSec)}",
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = currentTheme.primaryLight
-                        )
-                        Text(
-                            text = "Extended Time",
-                            fontSize = 12.sp,
-                            color = currentTheme.primary
-                        )
-                    } else {
-                        Text(
-                            text = if (completedStatus.targetDurationSec > 0) "${completedStatus.targetDurationSec / 60}m" else "Open",
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ZenTextPrimary
-                        )
-                        Text(
-                            text = "Target Duration",
-                            fontSize = 12.sp,
-                            color = ZenTextSecondary
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Buddhist Wisdom Reflection Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .clickable {
-                    val quotes = com.samadhi.meditationtimer.data.wisdom.MeditationGuides.wisdomQuotes
-                    currentWisdomQuote = quotes.random()
-                },
-            colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.65f)),
-            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.35f))),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(18.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "🪷",
-                            fontSize = 14.sp
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "WORDS OF WISDOM",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.5.sp,
-                            color = currentTheme.primaryLight
-                        )
-                    }
-
-                    Text(
-                        text = "Tap to shuffle",
-                        fontSize = 11.sp,
-                        color = ZenTextMuted
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "“${currentWisdomQuote.quote}”",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 13.5.sp,
-                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                        lineHeight = 20.sp
+                    text = "Practice Complete",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp
                     ),
                     color = ZenTextPrimary
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Text(
-                        text = "— ${currentWisdomQuote.author} (${currentWisdomQuote.sourceOrTradition})",
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = currentTheme.primaryLight.copy(alpha = 0.9f)
-                    )
-                }
             }
-        }
+            Text(
+                text = "May the peace of this session carry throughout your day",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
+                color = ZenTextSecondary
+            )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Mood / Depth Rating Selector
-        Text(
-            text = "STATE OF MIND & CLARITY",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
-            color = currentTheme.primaryLight,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        MoodSelector(
-            selectedMood = selectedMood,
-            onMoodSelected = { selectedMood = it },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Journal & Meditation Reflection Notes
-        Text(
-            text = "MEDITATION REFLECTION",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
-            color = currentTheme.primaryLight,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.80f)),
-            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Markdown formatting toolbar
-                MarkdownToolbar(
-                    textFieldValue = notesValue,
-                    onValueChange = { notesValue = it }
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                BasicTextField(
-                    value = notesValue,
-                    onValueChange = { notesValue = it },
+            // Stats Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.80f)),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(110.dp),
-                    textStyle = TextStyle(
-                        color = ZenTextPrimary,
-                        fontSize = 14.sp,
-                        lineHeight = 20.sp
-                    ),
-                    cursorBrush = SolidColor(currentTheme.primaryLight),
-                    decorationBox = { innerTextField ->
-                        Box {
-                            if (notesValue.text.isEmpty()) {
-                                Text(
-                                    text = "Record insights, stillness, challenges, or mental state...",
-                                    color = ZenTextMuted,
-                                    fontSize = 14.sp
-                                )
-                            }
-                            innerTextField()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Actual Time
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = NotificationHelper.formatSeconds(completedStatus.actualDurationSec),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = currentTheme.primaryLight
+                        )
+                        Text(
+                            text = "Total Practice",
+                            fontSize = 11.sp,
+                            color = ZenTextSecondary
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(28.dp)
+                            .background(ZenBorder)
+                    )
+
+                    // Overrun or Target
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (completedStatus.overrunSec > 0) {
+                            Text(
+                                text = "+${NotificationHelper.formatSeconds(completedStatus.overrunSec)}",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = currentTheme.primaryLight
+                            )
+                            Text(
+                                text = "Extended Time",
+                                fontSize = 11.sp,
+                                color = currentTheme.primary
+                            )
+                        } else {
+                            Text(
+                                text = if (completedStatus.targetDurationSec > 0) "${completedStatus.targetDurationSec / 60}m" else "Open",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = ZenTextPrimary
+                            )
+                            Text(
+                                text = "Target Duration",
+                                fontSize = 11.sp,
+                                color = ZenTextSecondary
+                            )
                         }
                     }
+                }
+            }
+
+            // Buddhist Wisdom Reflection Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable {
+                        val quotes = com.samadhi.meditationtimer.data.wisdom.MeditationGuides.wisdomQuotes
+                        currentWisdomQuote = quotes.random()
+                    },
+                colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.65f)),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.35f))),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "🪷", fontSize = 12.sp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "WORDS OF WISDOM",
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                color = currentTheme.primaryLight
+                            )
+                        }
+
+                        Text(
+                            text = "Tap to shuffle",
+                            fontSize = 9.5.sp,
+                            color = ZenTextMuted
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "“${currentWisdomQuote.quote}”",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 12.sp,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                            lineHeight = 16.sp
+                        ),
+                        color = ZenTextPrimary
+                    )
+
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Text(
+                            text = "— ${currentWisdomQuote.author} (${currentWisdomQuote.sourceOrTradition})",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = currentTheme.primaryLight.copy(alpha = 0.9f)
+                        )
+                    }
+                }
+            }
+
+            // Mood / Depth Rating Selector
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "STATE OF MIND & CLARITY",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    color = currentTheme.primaryLight
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                MoodSelector(
+                    selectedMood = selectedMood,
+                    onMoodSelected = { selectedMood = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(28.dp))
-
-        // Actions: Save Reflection & Discard
-        Button(
-            onClick = {
-                if (!isBlowingAway) {
-                    val session = MeditationSession(
-                        startTimeEpochMs = completedStatus.startTimeEpochMs,
-                        completedTimeEpochMs = completedStatus.completedTimeEpochMs,
-                        targetDurationSec = completedStatus.targetDurationSec,
-                        actualDurationSec = completedStatus.actualDurationSec,
-                        overrunSec = completedStatus.overrunSec,
-                        rating = selectedMood,
-                        notesMarkdown = notesValue.text,
-                        completedSuccessfully = true
-                    )
-                    pendingExitAction = { onSaveSession(session) }
-                    isBlowingAway = true
-                }
-            },
-            enabled = !isBlowingAway,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = currentTheme.primary,
-                contentColor = Color(0xFF041014)
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Save Reflection",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+            // Journal & Meditation Reflection Notes
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "MEDITATION REFLECTION",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    color = currentTheme.primaryLight
                 )
-            )
-        }
+                Spacer(modifier = Modifier.height(4.dp))
 
-        Spacer(modifier = Modifier.height(10.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.80f)),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                        MarkdownToolbar(
+                            textFieldValue = notesValue,
+                            onValueChange = { notesValue = it }
+                        )
 
-        OutlinedButton(
-            onClick = {
-                if (!isBlowingAway) {
-                    pendingExitAction = { onDiscard() }
-                    isBlowingAway = true
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        BasicTextField(
+                            value = notesValue,
+                            onValueChange = { notesValue = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            textStyle = TextStyle(
+                                color = ZenTextPrimary,
+                                fontSize = 12.5.sp,
+                                lineHeight = 17.sp
+                            ),
+                            cursorBrush = SolidColor(currentTheme.primaryLight),
+                            decorationBox = { innerTextField ->
+                                Box {
+                                    if (notesValue.text.isEmpty()) {
+                                        Text(
+                                            text = "Record insights, stillness, challenges, or mental state...",
+                                            color = ZenTextMuted,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            }
+                        )
+                    }
                 }
-            },
-            enabled = !isBlowingAway,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
-            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenBorder))
-        ) {
-            Text(text = "Discard", fontSize = 14.sp)
-        }
+            }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            // Actions: Save Reflection & Discard
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Button(
+                    onClick = {
+                        if (!isBlowingAway) {
+                            val session = MeditationSession(
+                                startTimeEpochMs = completedStatus.startTimeEpochMs,
+                                completedTimeEpochMs = completedStatus.completedTimeEpochMs,
+                                targetDurationSec = completedStatus.targetDurationSec,
+                                actualDurationSec = completedStatus.actualDurationSec,
+                                overrunSec = completedStatus.overrunSec,
+                                rating = selectedMood,
+                                notesMarkdown = notesValue.text,
+                                completedSuccessfully = true
+                            )
+                            pendingExitAction = { onSaveSession(session) }
+                            isBlowingAway = true
+                        }
+                    },
+                    enabled = !isBlowingAway,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = currentTheme.primary,
+                        contentColor = Color(0xFF041014)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Save Reflection",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        if (!isBlowingAway) {
+                            pendingExitAction = { onDiscard() }
+                            isBlowingAway = true
+                        }
+                    },
+                    enabled = !isBlowingAway,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(38.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenBorder))
+                ) {
+                    Text(text = "Discard", fontSize = 12.5.sp)
+                }
+            }
         }
     }
 }

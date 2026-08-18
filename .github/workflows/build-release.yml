@@ -49,18 +49,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.9.0
-          name: "Buddho Timer v2.9.0"
+          tag_name: v2.10.0
+          name: "Buddho Timer v2.10.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.9.0
+            ## 🪷 Buddho Meditation Timer v2.10.0
             
-            - **🫧 Calm-Inspired Radiant Breathing Bubble**: Smooth, hypnotic multi-layered luminous breathing orb with diffused ambient aura, ethereal pulse rings, and glassmorphic reflection.
-            - **🎋 Bespoke Theme Botanical Particle Fields**:
-              - *Moonlit Bamboo*: Jade & emerald glowing bamboo leaves with spine details fanning outward along the expanding bubble perimeter.
-              - *Sacred Lotus*: Concentric golden & coral lotus mandala tiers blooming wide with the breath bubble.
-              - *Sakura Twilight*: Swirling 5-petal cherry blossom florets and notched sakura petals expanding with radiant stamen core.
-              - *Screen-Bounded Ambient Particles*: Floating leaves and petals gracefully drifting within screen boundaries.
-            - **📱 Zero-Scroll Setup Screen Fitting**: Clean, unconstrained single-screen layout with decluttered pattern dropdown.
+            - **✨ Dynamic Calm Milestone Notches & Traveling Half-Circle Bead**: Smooth orbital indicator with capsule notches marking the stopping points for inhalation, hold, and exhalation without static circle lines.
+            - **🌿 Fluid Organic Botanical Fields**: Dynamic, flowing bamboo leaves, golden lotus petals, and cherry blossom florets that breathe with natural organic motion.
+            - **🌑 True Immersive System Blackout**: Tap-to-blackout now completely hides the Android notification status bar and navigation buttons during meditation and breathwork.
+            - **📏 Single-Screen Overview & Uniform Chips**: Perfect viewport fitting for the post-session completion reflection screen and uniform sizing for timing chips.
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions, built for pure stillness.
           draft: false
           prerelease: false

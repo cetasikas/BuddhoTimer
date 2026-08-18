@@ -102,6 +102,9 @@ fun BreathingScreen(
     }
     var isTopPatternDropdownOpen by remember { mutableStateOf(false) }
 
+    val tapToBlackout = remember { prefs.getBoolean("tap_blackout", true) }
+    var isScreenBlackedOut by remember { mutableStateOf(false) }
+
     // Keep Screen Awake based on user preference
     androidx.compose.runtime.DisposableEffect(keepScreenAwake) {
         val activity = context.findActivity()
@@ -112,6 +115,28 @@ fun BreathingScreen(
         }
         onDispose {
             activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
+    // Completely Hide/Show System Bars (Status Bar & Navigation Buttons) on Screen Blackout
+    androidx.compose.runtime.DisposableEffect(isScreenBlackedOut) {
+        val activity = context.findActivity()
+        val window = activity?.window
+        if (window != null) {
+            val insetsController = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+            if (isScreenBlackedOut) {
+                insetsController.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                insetsController.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            } else {
+                insetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            }
+        }
+        onDispose {
+            val window = activity?.window
+            if (window != null) {
+                val insetsController = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+                insetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            }
         }
     }
 
@@ -160,7 +185,10 @@ fun BreathingScreen(
 
                 if (elapsedInPhaseMs >= totalPhaseMs) {
                     val nextPhase = getNextPhase(currentPhase, selectedPattern)
-                    if (nextPhase == BreathPhase.INHALE) {
+                    if (currentPhase == BreathPhase.EXHALE && (nextPhase == BreathPhase.INHALE || (patternId == "box" && currentPhase == BreathPhase.HOLD_EMPTY))) {
+                        completedCycles++
+                    }
+                    if (currentPhase == BreathPhase.HOLD_EMPTY && nextPhase == BreathPhase.INHALE) {
                         completedCycles++
                     }
                     currentPhase = nextPhase
@@ -173,9 +201,8 @@ fun BreathingScreen(
         }
     }
 
-    // Elapsed total time ticker
+    // Secondary 1-second cadence ticker for total elapsed time
     LaunchedEffect(isRunning) {
-        if (!isRunning) return@LaunchedEffect
         while (isActive && isRunning) {
             delay(1000L)
             totalElapsedSec++
@@ -191,29 +218,49 @@ fun BreathingScreen(
         BreathPhase.INHALE -> currentTheme.primary
         BreathPhase.HOLD_FULL -> currentTheme.primaryLight
         BreathPhase.EXHALE -> currentTheme.overrunColor
-        BreathPhase.HOLD_EMPTY -> ZenAmber
+        BreathPhase.HOLD_EMPTY -> com.samadhi.meditationtimer.ui.theme.ZenAmber
     }
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(ZenObsidian)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // --- 1. MINIMAL IMMERSIVE TOP BAR ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null
             ) {
-                // Interactive Pattern Selector Dropdown Pill
-                Box {
+                if (tapToBlackout) {
+                    isScreenBlackedOut = !isScreenBlackedOut
+                }
+            }
+    ) {
+        if (isScreenBlackedOut) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 14.sp,
+                    color = currentTheme.primaryLight.copy(alpha = 0.25f)
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // --- 1. MINIMAL IMMERSIVE TOP BAR ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Interactive Pattern Selector Dropdown Pill
+                    Box {
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
@@ -509,6 +556,7 @@ fun BreathingScreen(
             }
         }
     }
+}
 }
 
 private fun getPhaseDuration(phase: BreathPhase, pattern: BreathingPattern): Int {

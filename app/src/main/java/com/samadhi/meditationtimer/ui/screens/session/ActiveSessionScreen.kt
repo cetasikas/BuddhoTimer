@@ -108,6 +108,28 @@ fun ActiveSessionScreen(
         }
     }
 
+    // Completely Hide/Show System Bars (Status Bar & Navigation Buttons) on Screen Blackout
+    androidx.compose.runtime.DisposableEffect(isScreenBlackedOut) {
+        val activity = context.findActivity()
+        val window = activity?.window
+        if (window != null) {
+            val insetsController = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+            if (isScreenBlackedOut) {
+                insetsController.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                insetsController.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            } else {
+                insetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            }
+        }
+        onDispose {
+            val window = activity?.window
+            if (window != null) {
+                val insetsController = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+                insetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            }
+        }
+    }
+
     LaunchedEffect(timerStatus) {
         if (timerStatus is TimerStatus.Completed) {
             onSessionCompleted()

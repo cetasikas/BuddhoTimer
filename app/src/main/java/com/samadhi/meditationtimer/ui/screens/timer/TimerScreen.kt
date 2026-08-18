@@ -721,13 +721,15 @@ private fun PhaseChip(label: String, color: Color) {
             .clip(RoundedCornerShape(6.dp))
             .background(color.copy(alpha = 0.16f))
             .border(0.8.dp, color.copy(alpha = 0.45f), RoundedCornerShape(6.dp))
-            .padding(horizontal = 7.dp, vertical = 3.dp)
+            .padding(horizontal = 6.dp, vertical = 2.5.dp)
     ) {
         Text(
             text = label,
-            fontSize = 11.sp,
+            fontSize = 10.5.sp,
             fontWeight = FontWeight.SemiBold,
-            color = color
+            color = color,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }
