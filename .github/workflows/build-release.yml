@@ -49,17 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.26.0
-          name: "Buddho Timer v2.26.0"
+          tag_name: v2.26.1
+          name: "Buddho Timer v2.26.1"
           body: |
-            ## 🍃 Buddho Meditation Timer v2.26.0
+            ## 🍃 Buddho Meditation Timer v2.26.1
 
-            ### Falling Leaves Overhaul
-            - **Smaller, more natural leaves**: Reduced leaf size from 28–38dp → 14–22dp for a realistic forest-floor feel
-            - **Timer-aware stacking**: Leaves now pile up *around* the circular timer (not into it) using live `onGloballyPositioned` measurement — works on all screen sizes/densities automatically
-            - **Curved exclusion boundary**: The stacking floor follows the timer's arc so leaves settle on the outer rim and build outward naturally
-            - **App minimize persistence**: Resuming the app no longer causes a leaf position jump — dt is capped and reset correctly on each resume
-            - **Summary screen consistency**: Pre-seeded leaf pile on the session summary screen respects the same stacking physics
+            ### Falling Leaves Polish
+            - **Consistent leaf colour**: Resting leaves now use the exact same ambient opacity as falling ones — no more jarring brightness jump when a leaf touches down
+            - **Proper stacking**: Leaves now physically land *on top of* each other using the correct leaf-height step (0.035 normalised vs the old 0.013), so the pile looks real instead of leaves floating/merging inside each other
+            - **Spreads across the full bottom**: Tighter support radius (one leaf-width) means only leaves directly below count as support, preventing leaves from appearing suspended in mid-air
+            - **Slower, more meditative accumulation**: Initial leaves are spread 2.2× higher above the screen so the first landing wave takes ~80 s instead of 30 s
 
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions.
           draft: false

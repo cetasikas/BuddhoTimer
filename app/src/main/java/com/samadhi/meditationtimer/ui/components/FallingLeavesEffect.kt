@@ -281,7 +281,6 @@ fun FallingLeavesEffect(
         val renderLeaves = leaves.toList()
 
         val baseFloorY = 0.948f
-        val topStackY = 0.70f
 
         renderLeaves.forEach { leaf ->
             val px = leaf.currentX * w
@@ -295,19 +294,11 @@ fun FallingLeavesEffect(
 
             val blowRot = if (blowAwayProgress > 0f) blowAwayProgress * 340f else 0f
 
-            // Altitude-based transparency: ground leaves are rich & solid;
-            // higher stacked leaves become progressively more translucent so they never obstruct app UI
-            val heightFraction = if (leaf.isResting || leaf.isSettling) {
-                ((baseFloorY - leaf.y) / (baseFloorY - topStackY)).coerceIn(0f, 1f)
-            } else {
-                0f
-            }
-            val heightTransparencyMultiplier = (1.0f - heightFraction * 0.70f).coerceIn(0.28f, 1.0f)
-
+            // All leaves use the same ambient alpha so resting leaves look identical
+            // to falling ones — no jarring brightness pop when a leaf touches down.
             val alpha = when {
-                blowAwayProgress > 0f -> (if (leaf.isResting) leaf.restAlpha else leaf.baseAlpha * ambientAlpha) * (1f - blowAwayProgress)
-                leaf.isResting || leaf.isSettling -> leaf.restAlpha * heightTransparencyMultiplier
-                else -> (leaf.baseAlpha * ambientAlpha).coerceIn(0.12f, 0.95f)
+                blowAwayProgress > 0f -> (leaf.baseAlpha * ambientAlpha) * (1f - blowAwayProgress)
+                else -> (leaf.baseAlpha * ambientAlpha).coerceIn(0.10f, 0.92f)
             }
 
             if (alpha < 0.01f) return@forEach
@@ -385,23 +376,25 @@ private fun calculateGravityStack(
     }
 
     // --- Lateral gravity: roll leaf into adjacent crevice if on a peak ---
-    val checkRadius = 0.07f
+    // Narrow check radius ≈ one leaf width so we only look at immediate neighbours.
+    val checkRadius = 0.050f
     val centerLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - x) < checkRadius }
-    val leftLeaves   = restingLeaves.filter { kotlin.math.abs(it.currentX - (x - 0.06f)) < checkRadius }
-    val rightLeaves  = restingLeaves.filter { kotlin.math.abs(it.currentX - (x + 0.06f)) < checkRadius }
+    val leftLeaves   = restingLeaves.filter { kotlin.math.abs(it.currentX - (x - checkRadius)) < checkRadius }
+    val rightLeaves  = restingLeaves.filter { kotlin.math.abs(it.currentX - (x + checkRadius)) < checkRadius }
 
     var settleX = x
     if (centerLeaves.size > leftLeaves.size + 1 && centerLeaves.size >= rightLeaves.size) {
-        settleX = (x - 0.042f).coerceIn(0.06f, 0.94f)
+        settleX = (x - 0.050f).coerceIn(0.06f, 0.94f)
     } else if (centerLeaves.size > rightLeaves.size + 1) {
-        settleX = (x + 0.042f).coerceIn(0.06f, 0.94f)
+        settleX = (x + 0.050f).coerceIn(0.06f, 0.94f)
     }
 
-    // --- Stack altitude: sit on top of supporting leaves at settleX ---
-    val supportLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - settleX) < 0.085f }
-    val highestUnderneath = supportLeaves.minOfOrNull { it.y } ?: timerFloorY
-    // Each additional leaf lifts the stack by a small amount
-    val stackLift = (supportLeaves.size * 0.016f).coerceAtMost(0.26f)
+    // --- Stack altitude: sit on top of the leaf directly below ---
+    // Tight radius (≈ leaf width) so only leaves physically underneath count as support;
+    // this prevents leaves at other X positions from making a leaf appear "suspended".
+    val supportLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - settleX) < 0.048f }
+    val surfaceY = supportLeaves.minOfOrNull { it.y } ?: localFloor
+    // Step of 0.035 ≈ one drawn leaf height in normalised screen coords.
     // Never stack above the timer avoidance floor at this X position
     val localFloor = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
         val dx2 = settleX - timerCenterXRatio
@@ -415,7 +408,7 @@ private fun calculateGravityStack(
     } else {
         baseFloorY
     }
-    val settleY = (highestUnderneath - 0.013f).coerceIn(0.55f, localFloor)
+    val settleY = (surfaceY - 0.035f).coerceIn(0.38f, localFloor)
 
     // --- Slope tilt: rotate leaf to lie along mound gradient ---
     val leftCount  = restingLeaves.count { it.currentX in (settleX - 0.14f)..<settleX }
@@ -537,7 +530,7 @@ private fun createSingleFallingLeaf(palette: List<Color>, spawnAbove: Boolean = 
         rotSpeed = (Random.nextFloat() - 0.5f) * 14f,
         size = Random.nextFloat() * 8f + 14f,   // 14..22 dp — small, natural
         baseAlpha = a,
-        restAlpha = (a * 1.15f).coerceIn(0.75f, 0.96f),
+        restAlpha = a,   // same opacity as when airborne — no brightness pop on landing
         color = palette.random()
     )
 }
@@ -546,7 +539,9 @@ private fun generateFallingLeaves(count: Int, palette: List<Color>, pileUpAtBott
     return List(count) { i ->
         val x = Random.nextFloat() * 0.84f + 0.08f
         val initialY = if (pileUpAtBottom) {
-            0.15f - (i.toFloat() / count.toFloat()) * 1.30f
+            // Spread all initial leaves well above screen so they land gradually
+            // over ~80 s rather than all within the first 30 s.
+            -(i.toFloat() / count.toFloat()) * 2.20f - 0.08f
         } else {
             (i.toFloat() / count.toFloat()) * 1.1f - 0.1f
         }
@@ -566,7 +561,7 @@ private fun generateFallingLeaves(count: Int, palette: List<Color>, pileUpAtBott
             rotSpeed = (Random.nextFloat() - 0.5f) * 14f,
             size = Random.nextFloat() * 8f + 14f,   // 14..22 dp — small, natural
             baseAlpha = a,
-            restAlpha = (a * 1.15f).coerceIn(0.80f, 0.96f),
+            restAlpha = a,   // same opacity as when airborne — no brightness pop on landing
             color = palette.random()
         )
     }
