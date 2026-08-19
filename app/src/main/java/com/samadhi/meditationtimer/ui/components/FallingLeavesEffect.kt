@@ -184,7 +184,7 @@ fun FallingLeavesEffect(
                             return@forEach
                         }
 
-                        // Soft edge repulsion
+                        // Soft edge repulsion (avoids hard boundary bouncing)
                         if (leaf.xBase < 0.12f) {
                             leaf.driftVx += 0.008f * dt
                         } else if (leaf.xBase > 0.88f) {
@@ -225,26 +225,27 @@ fun FallingLeavesEffect(
                                 if (restingCount < maxRestingLeaves) {
                                     leaf.isSettling = true
                                     leaf.settleProgress = 0f
-                                    leaf.settleDuration = Random.nextFloat() * 0.25f + 0.35f
+                                    leaf.settleDuration = Random.nextFloat() * 0.20f + 0.35f
                                     leaf.settleStartRot = leaf.rotation
                                     leaf.xBase = settleX
                                     leaf.currentX = settleX
                                     leaf.y = settleY
 
+                                    // Gentle horizontal orientation with organic crisscrossing
                                     val normDeg = ((leaf.rotation % 360f) + 360f) % 360f
                                     val baseTarget = if (normDeg in 0f..180f) 90f else 270f
                                     var delta = baseTarget - normDeg
                                     if (delta > 180f) delta -= 360f
                                     if (delta < -180f) delta += 360f
 
-                                    val organicAngleJitter = (Random.nextFloat() - 0.5f) * 48f
+                                    val organicAngleJitter = (Random.nextFloat() - 0.5f) * 36f
                                     leaf.settleTargetRot = leaf.rotation + delta + slopeTilt + organicAngleJitter
 
                                     leaf.speedY = 0f
                                     leaf.driftVx = 0f
                                 } else {
                                     leaf.y = -(Random.nextFloat() * 0.20f + 0.06f)
-                                    leaf.xBase = Random.nextFloat() * 0.72f + 0.14f
+                                    leaf.xBase = Random.nextFloat() * 0.84f + 0.08f
                                     leaf.currentX = leaf.xBase
                                     leaf.driftVx = (Random.nextFloat() - 0.5f) * 0.015f
                                 }
@@ -272,6 +273,7 @@ fun FallingLeavesEffect(
 
         val breathingWave = (sin(t * 1.3f) * 0.5f + 0.5f)
 
+        // Draw ground layer first, then newer stacked leaves, then falling leaves
         val renderLeaves = leaves.toList().sortedWith(
             compareBy<Leaf> { !it.isResting && !it.isSettling }
                 .thenByDescending { it.y }
@@ -289,10 +291,10 @@ fun FallingLeavesEffect(
 
             val blowRot = if (blowAwayProgress > 0f) blowAwayProgress * 340f else 0f
 
+            // Matched ambient alpha: resting and falling leaves share the identical subdued tone
             val alpha = when {
                 blowAwayProgress > 0f -> (leaf.baseAlpha * ambientAlpha) * (1f - blowAwayProgress)
-                leaf.isResting -> (0.88f * ambientAlpha + 0.12f).coerceIn(0.75f, 0.95f)
-                else -> (leaf.baseAlpha * ambientAlpha).coerceIn(0.30f, 0.85f)
+                else -> (leaf.baseAlpha * ambientAlpha).coerceIn(0.12f, 0.85f)
             }
 
             if (alpha < 0.01f) return@forEach
@@ -330,7 +332,7 @@ private fun calculateGravityStack(
     timerCenterYRatio: Float = -1f,
     timerRadiusRatio: Float = 0f
 ): Triple<Float, Float, Float> {
-    val landingX = x.coerceIn(0.06f, 0.94f)
+    var landingX = x.coerceIn(0.08f, 0.92f)
 
     val topCeilingY = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
         val dx = landingX - timerCenterXRatio
@@ -341,29 +343,42 @@ private fun calculateGravityStack(
         } else 0.70f
     } else 0.70f
 
-    val leafSpanX = 0.048f
-    val leafLiftY = 0.0095f
+    val leafSpanX = 0.055f
+    val liftPerLeaf = 0.0035f
 
-    var highestUnderneathY = baseFloorY
-    for (other in restingLeaves) {
-        val dx = kotlin.math.abs(landingX - other.currentX)
-        if (dx < leafSpanX) {
-            val influence = 1.0f - (dx / leafSpanX)
-            val leafTop = other.y - (leafLiftY * influence)
-            if (leafTop < highestUnderneathY) {
-                highestUnderneathY = leafTop
+    fun getSurfaceHeightAt(testX: Float): Float {
+        var highestY = baseFloorY
+        for (other in restingLeaves) {
+            val dx = kotlin.math.abs(testX - other.currentX)
+            if (dx < leafSpanX) {
+                val influence = 1.0f - (dx / leafSpanX)
+                val leafTop = other.y - (liftPerLeaf * influence)
+                if (leafTop < highestY) {
+                    highestY = leafTop
+                }
             }
         }
+        return highestY
     }
 
-    val naturalUnevenness = (Random.nextFloat() * 0.003f - 0.0015f)
-    val settleY = (highestUnderneathY + naturalUnevenness).coerceIn(topCeilingY, baseFloorY)
+    val curY = getSurfaceHeightAt(landingX)
+    val leftY = getSurfaceHeightAt((landingX - 0.035f).coerceIn(0.08f, 0.92f))
+    val rightY = getSurfaceHeightAt((landingX + 0.035f).coerceIn(0.08f, 0.92f))
 
-    val leftLeaves = restingLeaves.count { it.currentX in (landingX - 0.06f)..<landingX }
-    val rightLeaves = restingLeaves.count { it.currentX in (landingX + 0.001f)..(landingX + 0.06f) }
-    val slopeTilt = ((leftLeaves - rightLeaves) * 4.0f).coerceIn(-20f, 20f)
+    // Angle of repose: roll into valleys before stacking on peaks
+    if (leftY > curY + 0.0015f && leftY >= rightY) {
+        landingX = (landingX - 0.024f).coerceIn(0.08f, 0.92f)
+    } else if (rightY > curY + 0.0015f) {
+        landingX = (landingX + 0.024f).coerceIn(0.08f, 0.92f)
+    }
 
-    return Triple(landingX, settleY, slopeTilt)
+    val finalSettleY = (getSurfaceHeightAt(landingX) + (Random.nextFloat() * 0.0015f - 0.0007f))
+        .coerceIn(topCeilingY, baseFloorY)
+
+    val slope = (getSurfaceHeightAt(landingX - 0.025f) - getSurfaceHeightAt(landingX + 0.025f)) / 0.050f
+    val slopeTilt = (slope * 45f).coerceIn(-18f, 18f)
+
+    return Triple(landingX, finalSettleY, slopeTilt)
 }
 
 private fun DrawScope.drawIndividualParticle(
@@ -380,26 +395,6 @@ private fun DrawScope.drawIndividualParticle(
     breathingGlowFactor: Float,
     isResting: Boolean
 ) {
-    if (isResting) {
-        val shadowOffset = Offset(center.x, center.y + size * 0.12f)
-        rotate(degrees = rotation, pivot = shadowOffset) {
-            scale(scaleX = scaleX * 1.05f, scaleY = 1.0f, pivot = shadowOffset) {
-                shapePath.reset()
-                val halfW = size * 0.44f
-                val halfH = size * 0.94f
-                shapePath.moveTo(shadowOffset.x, shadowOffset.y - halfH)
-                shapePath.cubicTo(shadowOffset.x + halfW * 1.08f, shadowOffset.y - halfH * 0.32f, shadowOffset.x + halfW * 0.88f, shadowOffset.y + halfH * 0.38f, shadowOffset.x, shadowOffset.y + halfH)
-                shapePath.cubicTo(shadowOffset.x - halfW * 0.88f, shadowOffset.y + halfH * 0.38f, shadowOffset.x - halfW * 1.08f, shadowOffset.y - halfH * 0.32f, shadowOffset.x, shadowOffset.y - halfH)
-                shapePath.close()
-
-                drawPath(
-                    path = shapePath,
-                    color = Color.Black.copy(alpha = 0.35f)
-                )
-            }
-        }
-    }
-
     rotate(degrees = rotation, pivot = center) {
         scale(scaleX = scaleX, scaleY = 1.0f, pivot = center) {
             shapePath.reset()
@@ -452,21 +447,21 @@ private fun DrawScope.drawIndividualParticle(
 
             drawPath(
                 path = detailPath,
-                color = Color(0xFF041014).copy(alpha = (0.35f * color.alpha).coerceIn(0.10f, 0.45f)),
-                style = Stroke(width = 1.2f)
+                color = Color(0xFF041014).copy(alpha = (0.28f * color.alpha).coerceIn(0.06f, 0.35f)),
+                style = Stroke(width = 1.0f)
             )
 
             drawPath(
                 path = shapePath,
-                color = Color(0xFF000000).copy(alpha = if (isResting) 0.30f else 0.15f),
-                style = Stroke(width = 0.9f)
+                color = Color.Black.copy(alpha = (0.15f * color.alpha).coerceIn(0.04f, 0.20f)),
+                style = Stroke(width = 0.7f)
             )
         }
     }
 }
 
 private fun createSingleFallingLeaf(palette: List<Color>, spawnAbove: Boolean = true): Leaf {
-    val x = Random.nextFloat() * 0.72f + 0.14f
+    val x = Random.nextFloat() * 0.84f + 0.08f
     val initialY = if (spawnAbove) -(Random.nextFloat() * 0.18f + 0.05f) else Random.nextFloat() * 0.90f
     val a = Random.nextFloat() * 0.20f + 0.65f
     return Leaf(
@@ -491,7 +486,7 @@ private fun createSingleFallingLeaf(palette: List<Color>, spawnAbove: Boolean = 
 
 private fun generateFallingLeaves(count: Int, palette: List<Color>, pileUpAtBottom: Boolean): List<Leaf> {
     return List(count) { i ->
-        val x = Random.nextFloat() * 0.72f + 0.14f
+        val x = Random.nextFloat() * 0.84f + 0.08f
         val initialY = if (pileUpAtBottom) {
             -(i.toFloat() / count.toFloat()) * 2.20f - 0.08f
         } else {
@@ -532,7 +527,7 @@ private fun generatePreRestingLeaves(
     val allResting = existingResting.toMutableList()
 
     for (i in 0 until count) {
-        val x = rng.nextFloat() * 0.72f + 0.14f
+        val x = rng.nextFloat() * 0.84f + 0.08f
         val (settleX, stackedY, slopeTilt) = calculateGravityStack(
             x = x,
             restingLeaves = allResting,
