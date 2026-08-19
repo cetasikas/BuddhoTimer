@@ -49,18 +49,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.26.4
-          name: "Buddho Timer v2.26.4"
+          tag_name: ${{ github.ref_name }}
+          name: "Buddho Timer ${{ github.ref_name }}"
           body: |
-            ## 🍃 Buddho Meditation Timer v2.26.4
+            ## 🍃 Buddho Meditation Timer ${{ github.ref_name }}
 
-            ### UI Polish
-            - **Reminder chips no longer cramp**: Mode selector (Daily Fixed / Random / Interval) uses FlowRow — chips flow naturally and text is never truncated
-            - **Background Execution button fixed**: "Disable" text no longer gets clipped — button uses wrap-content height with proper padding
-            - **Tutorial card button compact**: Open button in Settings → Tutorial row is a tight 34dp height, not oversized
-            - **Setup wizard refreshed**: Cleaner, more concise copy across all 3 steps — what the app is, what the features do, why the permissions matter
-            - **Meditation guides clearer**: All 6 practice guides rewritten with shorter, punchier, more actionable steps — easier to read on a phone screen
-
+            ### Release Notes
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions.
           draft: false
           prerelease: false
