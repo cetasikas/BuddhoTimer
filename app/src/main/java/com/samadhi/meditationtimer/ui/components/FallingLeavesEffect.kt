@@ -227,15 +227,20 @@ fun FallingLeavesEffect(
                                 if (restingCount < maxRestingLeaves) {
                                     leaf.isSettling = true
                                     leaf.settleProgress = 0f
-                                    leaf.settleDuration = Random.nextFloat() * 0.25f + 0.45f
+                                    leaf.settleDuration = Random.nextFloat() * 0.20f + 0.35f
                                     leaf.settleStartRot = leaf.rotation
                                     leaf.xBase = settleX
                                     leaf.currentX = settleX
                                     leaf.y = settleY
 
-                                    val currentRotNorm = ((leaf.rotation % 180f) + 180f) % 180f
-                                    val naturalRestAngle = if (currentRotNorm > 90f) 180f else 0f
-                                    leaf.settleTargetRot = leaf.rotation + (naturalRestAngle - currentRotNorm) * 0.6f + slopeTilt
+                                    // Align rotation to lie flat horizontally (90° or 270°) + natural slope tilt
+                                    val normDeg = ((leaf.rotation % 360f) + 360f) % 360f
+                                    val targetBase = if (normDeg in 0f..180f) 90f else 270f
+                                    var delta = targetBase - normDeg
+                                    if (delta > 180f) delta -= 360f
+                                    if (delta < -180f) delta += 360f
+
+                                    leaf.settleTargetRot = leaf.rotation + delta + slopeTilt + (Random.nextFloat() * 16f - 8f)
 
                                     leaf.speedY = 0f
                                     leaf.driftVx = 0f
@@ -340,10 +345,9 @@ private fun calculateGravityStack(
     timerCenterYRatio: Float = -1f,
     timerRadiusRatio: Float = 0f
 ): Triple<Float, Float, Float> {
-    // 1. Keep the leaf's organic landing X (no column snapping)
-    var landingX = x.coerceIn(0.05f, 0.95f)
+    var landingX = x.coerceIn(0.06f, 0.94f)
 
-    // 2. Timer arc ceiling calculation
+    // Timer avoidance ceiling (highest point leaves can stack up to)
     val topCeilingY = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
         val dx = landingX - timerCenterXRatio
         val outerRadius = timerRadiusRatio + 0.04f
@@ -357,32 +361,36 @@ private fun calculateGravityStack(
         0.65f
     }
 
-    // 3. Find nearby resting leaves within physical overlap distance (~3.5% screen width)
-    val overlapRadius = 0.038f
-    val nearbyLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - landingX) < overlapRadius }
+    // Physical overlap threshold (half-width of a flat horizontal leaf)
+    val leafHalfSpan = 0.032f
+    val nearbyLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - landingX) < leafHalfSpan }
 
     val settleY: Float
     val slopeTilt: Float
 
     if (nearbyLeaves.isEmpty()) {
-        // First leaf in this area lands directly on the base floor with slight natural unevenness
-        settleY = baseFloorY + (Random.nextFloat() * 0.006f - 0.003f)
-        slopeTilt = (Random.nextFloat() - 0.5f) * 16f
+        // First layer rests directly on the floor with subtle ground unevenness
+        settleY = baseFloorY + (Random.nextFloat() * 0.002f - 0.001f)
+        slopeTilt = (Random.nextFloat() - 0.5f) * 10f
     } else {
-        // Find the topmost leaf it will touch
+        // Find topmost leaf in this contact zone
         val highestUnderneath = nearbyLeaves.minByOrNull { it.y }!!
-        
-        // Small organic slide down the slope if hitting off-center
         val dx = landingX - highestUnderneath.currentX
-        landingX = (landingX + dx * 0.25f).coerceIn(0.04f, 0.96f)
 
-        // Stack height: thin profile for bamboo/lotus leaves (~0.008 to 0.015 normalized height)
-        val stackThickness = Random.nextFloat() * 0.007f + 0.009f
-        settleY = (highestUnderneath.y - stackThickness).coerceIn(topCeilingY, baseFloorY)
+        // Gentle lateral slide into valleys between leaves
+        landingX = (landingX + dx * 0.15f).coerceIn(0.05f, 0.95f)
 
-        // Lean slightly according to where it landed relative to the leaf below
-        val contactTilt = (dx / overlapRadius) * 20f
-        slopeTilt = (contactTilt + (Random.nextFloat() - 0.5f) * 14f).coerceIn(-35f, 35f)
+        // Height offset scales with how dead-center the landing is:
+        // Dead-center (|dx| ≈ 0) = full thickness (~0.004f)
+        // Edge landing (|dx| ≈ span) = nests tightly into the gap (~0.0015f)
+        val overlapFactor = (1.0f - (kotlin.math.abs(dx) / leafHalfSpan).coerceIn(0f, 0.85f))
+        val compactThickness = (Random.nextFloat() * 0.002f + 0.003f) * overlapFactor
+
+        settleY = (highestUnderneath.y - compactThickness).coerceIn(topCeilingY, baseFloorY)
+
+        // Lean slightly according to contact position
+        val contactTilt = (dx / leafHalfSpan) * 12f
+        slopeTilt = (contactTilt + (Random.nextFloat() - 0.5f) * 12f).coerceIn(-24f, 24f)
     }
 
     return Triple(landingX, settleY, slopeTilt)
