@@ -103,6 +103,33 @@ fun FallingLeavesEffect(
         }
     }
 
+    val maxRestingLeaves = 160
+
+    // Sync resting leaves with elapsed meditation time across screen-off, backgrounding, and rotation
+    LaunchedEffect(elapsedMeditationSeconds, pileUpAtBottom) {
+        if (pileUpAtBottom && elapsedMeditationSeconds > 0) {
+            val secondsPerLeaf = 7
+            val targetRestingCount = (elapsedMeditationSeconds / secondsPerLeaf)
+                .coerceAtMost(maxRestingLeaves)
+                .coerceAtLeast(initialSettledLeavesCount)
+
+            val currentResting = leaves.filter { it.isResting }
+            val missingCount = targetRestingCount - currentResting.size
+
+            if (missingCount > 0) {
+                val newResting = generatePreRestingLeaves(
+                    count = missingCount,
+                    palette = currentTheme.particlePalette,
+                    existingResting = currentResting,
+                    timerCenterXRatio = timerCenterXRatio,
+                    timerCenterYRatio = timerCenterYRatio,
+                    timerRadiusRatio = timerRadiusRatio
+                )
+                leaves.addAll(newResting)
+            }
+        }
+    }
+
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {
             leaves.toList().filter { !it.isResting }.forEach { it.rotSpeed = (Random.nextFloat() * 16f - 8f) }
@@ -135,8 +162,6 @@ fun FallingLeavesEffect(
         ),
         label = "animClockVal"
     )
-
-    val maxRestingLeaves = 160
 
     LaunchedEffect(currentTheme.id, pileUpAtBottom) {
         var lastTimeNanos = 0L
@@ -184,7 +209,7 @@ fun FallingLeavesEffect(
                             return@forEach
                         }
 
-                        // Soft edge repulsion (avoids hard boundary bouncing)
+                        // Soft edge repulsion
                         if (leaf.xBase < 0.12f) {
                             leaf.driftVx += 0.008f * dt
                         } else if (leaf.xBase > 0.88f) {
@@ -231,7 +256,6 @@ fun FallingLeavesEffect(
                                     leaf.currentX = settleX
                                     leaf.y = settleY
 
-                                    // Gentle horizontal orientation with organic crisscrossing
                                     val normDeg = ((leaf.rotation % 360f) + 360f) % 360f
                                     val baseTarget = if (normDeg in 0f..180f) 90f else 270f
                                     var delta = baseTarget - normDeg
@@ -273,7 +297,6 @@ fun FallingLeavesEffect(
 
         val breathingWave = (sin(t * 1.3f) * 0.5f + 0.5f)
 
-        // Draw ground layer first, then newer stacked leaves, then falling leaves
         val renderLeaves = leaves.toList().sortedWith(
             compareBy<Leaf> { !it.isResting && !it.isSettling }
                 .thenByDescending { it.y }
@@ -535,15 +558,15 @@ private fun generatePreRestingLeaves(
             timerCenterYRatio = timerCenterYRatio,
             timerRadiusRatio = timerRadiusRatio
         )
-        val baseAngle = if (i % 2 == 0) 90f else 270f
-        val a = rng.nextFloat() * 0.20f + 0.78f
+        val baseAngle = if (rng.nextBoolean()) 90f else 270f
+        val a = rng.nextFloat() * 0.20f + 0.65f
         val leaf = Leaf(
             xBase = settleX,
             currentX = settleX,
             y = stackedY,
             speedY = 0f,
             driftVx = 0f,
-            swayFreq = rng.nextFloat() * 0.45f + 0.35f,
+            swayFreq = rng.nextFloat() * 0.25f + 0.35f,
             swayAmp = 0f,
             swayPhase = rng.nextFloat() * 6.28f,
             tumbleFreq = 0f,
@@ -553,7 +576,7 @@ private fun generatePreRestingLeaves(
             size = rng.nextFloat() * 6f + 16f,
             baseAlpha = a,
             restAlpha = a,
-            color = palette[i % palette.size],
+            color = palette.random(rng),
             isResting = true,
             restSwayPhase = rng.nextFloat() * 6.28f
         )
