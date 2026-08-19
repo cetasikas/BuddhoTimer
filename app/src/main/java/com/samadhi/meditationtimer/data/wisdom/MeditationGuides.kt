@@ -18,13 +18,13 @@ object MeditationGuides {
             topicNumber = 1,
             iconName = "start",
             title = "Start Here: Ajahn Brahm's Method",
-            subtitle = "The 4 foundational stages from letting go of the world to joyful stillness",
-            quote = "“Meditation is the way of letting go. In meditation you let go of the complex world outside in order to reach the powerful peace within.” — Ajahn Brahm",
+            subtitle = "4 stages from letting go of the world to deep stillness",
+            quote = "“Meditation is the way of letting go. Let go of the complex world outside to reach the powerful peace within.” — Ajahn Brahm",
             practicalSteps = listOf(
-                "Stage 1: Present Moment Awareness — Put down the heavy luggage of past and future. Give yourself permission to be completely useless for this hour—nowhere to go, no problems to solve.",
-                "Stage 2: Silent Present Moment Awareness — Turn down the inner narrator. Stop commentary and opinions. Experience the vivid beauty of the 'here and now' in total silence.",
-                "Stage 3: Silent Present Moment Awareness of the Breath — Gently invite the breath into silent awareness. Do not control or force the breath; allow the body to breathe itself as you enjoy its natural rhythm.",
-                "Stage 4: Full Sustained Attention on the Breath — Delight in following the whole breath from beginning, to middle, to the quiet turning point at the end, resting in deep stillness."
+                "Let go of past and future. Give yourself full permission to be here with nothing to do, nowhere to go.",
+                "Quiet the inner narrator. Stop commentary. Simply experience this moment in silence.",
+                "Gently notice the breath. Don't control it — let the body breathe itself while you enjoy the rhythm.",
+                "Follow each full breath: the beginning, middle, and quiet pause at the end. Rest in that stillness."
             )
         ),
         TopicCardData(
@@ -32,13 +32,13 @@ object MeditationGuides {
             topicNumber = 2,
             iconName = "breath",
             title = "Mindfulness of Breathing (Ānāpānasati)",
-            subtitle = "Knowing the natural flow without controlling or forcing",
+            subtitle = "Natural breath awareness without control or force",
             quote = "“Breathing in, I calm body and mind. Breathing out, I smile.” — Thich Nhat Hanh",
             practicalSteps = listOf(
-                "Allow the body to breathe itself. Do not force the breath to be long, short, deep, or shallow.",
-                "Feel the gentle touch of air at the nostrils or upper lip as it naturally enters and leaves.",
-                "Stay with the whole breath from beginning, to middle, to the quiet turning point.",
-                "As continuity develops, the breath becomes delightfully soft, peaceful, and luminous."
+                "Let the body breathe itself. Don't force the breath to be any particular way.",
+                "Feel the gentle touch of air at the nostrils or upper lip — just that sensation.",
+                "Follow the whole breath: in, middle, the soft turning point, and out.",
+                "As you stay with it, the breath naturally grows softer, quieter, and more peaceful."
             )
         ),
         TopicCardData(
@@ -46,13 +46,13 @@ object MeditationGuides {
             topicNumber = 3,
             iconName = "buddho",
             title = "The 'Buddho' Syllable Anchor",
-            subtitle = "Quiet inner thoughts with the traditional forest meditation anchor",
+            subtitle = "Settle a busy mind with this traditional forest anchor",
             quote = "“Let 'Buddho' become your refuge until the mind becomes steady like a deep mountain lake.” — Luang Pu Mun",
             practicalSteps = listOf(
-                "As the breath naturally enters, mentally whisper: 'Bud' (Awake).",
-                "As the breath naturally leaves, mentally whisper: 'Dho' (Knowing & Letting Go).",
-                "Sync the mental sound smoothly with the natural movement of the breath.",
-                "When concentration settles deeply, the syllable will naturally fall silent—rest in the wordless peace."
+                "As the breath enters, mentally whisper 'Bud' (Awake).",
+                "As the breath leaves, mentally whisper 'Dho' (Knowing & releasing).",
+                "Keep the mental sound relaxed and in step with the natural breath rhythm.",
+                "When concentration deepens, the syllable fades on its own — rest in the wordless peace."
             )
         ),
         TopicCardData(
@@ -60,13 +60,13 @@ object MeditationGuides {
             topicNumber = 4,
             iconName = "walking",
             title = "Walking Meditation",
-            subtitle = "Mindfulness in motion: peace in every single step",
+            subtitle = "Mindfulness in motion — peace in every step",
             quote = "“Walk as if you are kissing the Earth with your feet.” — Thich Nhat Hanh",
             practicalSteps = listOf(
-                "Find a quiet path of 15–25 paces. Stand upright and feel your feet making contact with the earth.",
-                "Walk slowly and naturally. Coordinate your breath: 'In' with one step, 'Out' with the next.",
-                "Feel the lifting, moving, and placing of each foot with relaxed awareness.",
-                "When you reach the end of the path, pause, take a breath, turn gently, and begin again."
+                "Find a quiet path of 15–25 paces. Stand still and feel your feet on the ground.",
+                "Walk slowly. Breathe in with one step, breathe out with the next.",
+                "Notice the lifting, moving, and placing of each foot with soft, relaxed attention.",
+                "At the end of the path, pause, take a breath, turn gently, and begin again."
             )
         ),
         TopicCardData(
@@ -74,13 +74,13 @@ object MeditationGuides {
             topicNumber = 5,
             iconName = "restlessness",
             title = "Calming Restlessness & Sleepiness",
-            subtitle = "Friendly, compassionate ways to handle wanderings and fatigue",
+            subtitle = "Friendly ways to work with common obstacles",
             quote = "“The sky is never stained by the clouds passing through.” — Yongey Mingyur Rinpoche",
             practicalSteps = listOf(
-                "When the mind wanders, never get angry. The moment you notice wandering is pure mindfulness.",
-                "Give yourself a gentle inner smile and warmly invite attention back home to the breath.",
-                "If feeling sleepy: sit up straight, take 3 deep mindful breaths, or open your eyes slightly.",
-                "Treat thoughts like weather—let them come, let them be, let them go without engaging."
+                "Mind wandered? That's okay — the moment you notice is mindfulness itself. No self-criticism.",
+                "Give yourself a gentle inner smile and return attention softly to the breath.",
+                "Feeling sleepy? Sit up straight, take 3 full mindful breaths, or open your eyes slightly.",
+                "Treat thoughts like clouds: let them appear, let them be, let them pass without engagement."
             )
         ),
         TopicCardData(
@@ -88,13 +88,13 @@ object MeditationGuides {
             topicNumber = 6,
             iconName = "metta",
             title = "Mettā (Loving-Kindness Meditation)",
-            subtitle = "Cultivating warmth, goodwill, and gentle self-compassion",
-            quote = "“If you let go a little, you will have a little peace. If you let go completely, you will know complete peace.” — Ajahn Chah",
+            subtitle = "Cultivate warmth and goodwill from the inside out",
+            quote = "“If you let go completely, you will know complete peace.” — Ajahn Chah",
             practicalSteps = listOf(
-                "Place a hand over your heart or rest gently in your center. Wish yourself genuine peace and safety.",
+                "Rest one hand over your heart. Wish yourself genuine peace — mean it.",
                 "Silently repeat: 'May I be peaceful. May I be safe. May I be free from suffering.'",
-                "Extend this warm feeling outward to loved ones, neutral people, and all living beings everywhere.",
-                "End your meditation resting in the gentle glow of goodwill and shared humanity."
+                "Let the feeling expand outward — to someone you love, then to all beings everywhere.",
+                "Close your sit resting in the warmth of that shared goodwill."
             )
         )
     )

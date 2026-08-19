@@ -94,30 +94,30 @@ private data class TutorialStep(
 private val tutorialSteps = listOf(
     TutorialStep(
         title = "Welcome to Buddho Timer",
-        subtitle = "A 100% private, offline haven for stillness",
-        description = "Designed for deep mindful awareness with zero tracking, zero ads, and total distraction-free simplicity.",
+        subtitle = "100% offline · Zero ads · Zero tracking",
+        description = "A distraction-free meditation timer rooted in Buddhist tradition. No accounts, no cloud — just you and your practice.",
         icon = Icons.Default.Spa,
         features = listOf(
-            FeatureHighlight(Icons.Default.SelfImprovement, "Minimalist Meditation Timer", "Flexible sits with Continuous Timing & breath pacing ring"),
-            FeatureHighlight(Icons.Default.Air, "Living Box Breathing", "Organic theme leaf breathwork with calming visual guidance"),
-            FeatureHighlight(Icons.Default.AutoAwesome, "Daily Buddhist Wisdom", "Curated teachings from prominent Buddhist masters")
+            FeatureHighlight(Icons.Default.SelfImprovement, "Flexible Timer", "Set any duration · continuous timing · prep countdown"),
+            FeatureHighlight(Icons.Default.Air, "Box Breathing & Buddho", "Visual breath pacing with the classic forest-tradition anchor"),
+            FeatureHighlight(Icons.Default.AutoAwesome, "Buddhist Wisdom Library", "Teachings from Ajahn Brahm, Thich Nhat Hanh & more")
         )
     ),
     TutorialStep(
-        title = "Practice & Focus Essentials",
-        subtitle = "Tailored for tranquility and battery preservation",
-        description = "Powerful mindfulness tools built right into your daily practice flow.",
+        title = "Built for Deep Practice",
+        subtitle = "Tools that stay out of your way",
+        description = "Every feature serves your sit — nothing more.",
         icon = Icons.Default.Tune,
         features = listOf(
-            FeatureHighlight(Icons.Default.DarkMode, "AMOLED Tap-to-Blackout", "Tap anywhere during sits for pure black stealth stillness"),
-            FeatureHighlight(Icons.Default.MusicNote, "Mindfulness Interval Bell", "Periodic Tibetan chimes & milestone track notch beads"),
-            FeatureHighlight(Icons.Default.NotificationsActive, "Meditation Reminders", "Gentle daily or interval reminder notifications outside the app")
+            FeatureHighlight(Icons.Default.DarkMode, "Tap-to-Blackout", "Tap the screen during a sit to go pure AMOLED black"),
+            FeatureHighlight(Icons.Default.MusicNote, "Interval Bell", "Periodic Tibetan bowl chime to anchor wandering attention"),
+            FeatureHighlight(Icons.Default.NotificationsActive, "Daily Reminders", "Optional gentle nudge at a fixed time, random hour, or interval")
         )
     ),
     TutorialStep(
-        title = "Uninterrupted Practice",
-        subtitle = "Ensure background stability on Android",
-        description = "For seamless long sits, we recommend allowing Do Not Disturb (to silence calls during sits) and exempting battery optimization so Android never stops your timer.",
+        title = "Two Quick Permissions",
+        subtitle = "Recommended for uninterrupted long sits",
+        description = "Neither is required, but both help:\n\n• Do Not Disturb — silences calls & notifications during your sit\n• Battery Optimization — prevents Android from stopping your timer after 15–20 minutes",
         icon = Icons.Default.DoNotDisturb,
         isPermissionStep = true
     )

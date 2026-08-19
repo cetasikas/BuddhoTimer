@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -657,9 +658,11 @@ fun SettingsScreen(
                         if (reminderEnabled) {
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            Row(
+                            // Mode selector — use FlowRow so chips wrap instead of squishing
+                            androidx.compose.foundation.layout.FlowRow(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 FilterChip(
                                     selected = reminderMode == "daily",
@@ -668,8 +671,7 @@ fun SettingsScreen(
                                         reminderPrefs.edit().putString("reminder_mode", "daily").apply()
                                         com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleDailyReminder(context, reminderHour, 0)
                                     },
-                                    label = { Text("Daily Fixed", fontSize = 11.sp) },
-                                    modifier = Modifier.weight(1f),
+                                    label = { Text("Daily Fixed", fontSize = 12.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = currentTheme.primary,
                                         selectedLabelColor = ZenObsidian
@@ -683,8 +685,7 @@ fun SettingsScreen(
                                         reminderPrefs.edit().putString("reminder_mode", "random").apply()
                                         com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleRandomDailyReminder(context)
                                     },
-                                    label = { Text("Random", fontSize = 11.sp) },
-                                    modifier = Modifier.weight(1f),
+                                    label = { Text("Random", fontSize = 12.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = currentTheme.primary,
                                         selectedLabelColor = ZenObsidian
@@ -698,8 +699,7 @@ fun SettingsScreen(
                                         reminderPrefs.edit().putString("reminder_mode", "interval").apply()
                                         com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleIntervalReminder(context, reminderIntervalHours)
                                     },
-                                    label = { Text("Interval", fontSize = 11.sp) },
-                                    modifier = Modifier.weight(1f),
+                                    label = { Text("Interval", fontSize = 12.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = currentTheme.primary,
                                         selectedLabelColor = ZenObsidian
@@ -876,8 +876,9 @@ fun SettingsScreen(
                             } else {
                                 OutlinedButton(
                                     onClick = { context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }) },
-                                    modifier = Modifier.height(30.dp),
+                                    modifier = Modifier.wrapContentSize(),
                                     shape = RoundedCornerShape(15.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                     border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
                                 ) {
                                     Text("Disable", fontSize = 11.5.sp, color = currentTheme.primaryLight)
@@ -974,8 +975,10 @@ fun SettingsScreen(
 
                         FilledTonalButton(
                             onClick = onShowTutorial,
+                            modifier = Modifier.height(34.dp),
                             colors = ButtonDefaults.filledTonalButtonColors(containerColor = currentTheme.primary, contentColor = ZenObsidian),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
                         ) {
                             Text("Open", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
                         }
