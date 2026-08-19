@@ -353,55 +353,48 @@ private fun calculateGravityStack(
     timerRadiusRatio: Float = 0f
 ): Triple<Float, Float, Float> {
 
-    // -----------------------------------------------------------------------
-    // Column-snap stacking: snap the landing X to the nearest fixed column so
-    // leaves form clean, non-overlapping vertical stacks across the bottom.
-    // -----------------------------------------------------------------------
     val colWidth  = 0.056f
     val leftEdge  = 0.06f
     val rightEdge = 0.94f
-    val numCols   = ((rightEdge - leftEdge) / colWidth).toInt()   // ≈ 15 columns
+    val numCols   = ((rightEdge - leftEdge) / colWidth).toInt()
     val colIndex  = ((x - leftEdge) / colWidth + 0.5f).toInt().coerceIn(0, numCols - 1)
     val jitter    = (Random.nextFloat() - 0.5f) * 0.008f
     val snappedX  = (leftEdge + colIndex * colWidth + colWidth * 0.5f + jitter)
         .coerceIn(leftEdge, rightEdge)
 
-    // --- Timer arc ceiling ---
-    // arcCeiling is the MINIMUM allowable Y for this column (the highest point
-    // a resting leaf may occupy). Leaves must not stack ABOVE (smaller y than)
-    // the bottom arc of the timer circle.
-    // Outside the timer radius: arcCeiling = baseFloorY (no restriction).
-    val arcCeiling = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
+    // Minimum Y coordinate leaves can stack up to (top boundary)
+    val topCeilingY = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
         val dx = snappedX - timerCenterXRatio
         val outerRadius = timerRadiusRatio + 0.04f
         if (kotlin.math.abs(dx) < outerRadius) {
             val arcY = timerCenterYRatio + sqrt((outerRadius * outerRadius - dx * dx).coerceAtLeast(0f))
             arcY.coerceIn(timerCenterYRatio + timerRadiusRatio, baseFloorY)
         } else {
-            baseFloorY
+            0.65f // Ceiling when outside timer zone
         }
     } else {
-        baseFloorY
+        0.65f // Max stack height limit (stops stacking above 65% screen height)
     }
 
-    // Stacks ALWAYS begin from the physical screen floor (baseFloorY).
-    // arcCeiling acts only as an upper safety stop — in practice with ≤16 leaves
-    // and ~15 columns, no column will ever fill up to the timer arc.
-    val colLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - snappedX) < colWidth * 0.6f }
-    val surfaceY  = colLeaves.minOfOrNull { it.y } ?: baseFloorY   // fallback = screen bottom
+    // Find existing resting leaves in this column zone
+    val colLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - snappedX) < colWidth * 0.85f }
+    val highestLeafY = colLeaves.minOfOrNull { it.y }
 
-    // Step up one drawn leaf height.
-    // coerceIn: arcCeiling is MIN (can't go above the arc), baseFloorY is MAX (screen floor).
-    val settleY = (surfaceY - 0.040f).coerceIn(arcCeiling, baseFloorY)
+    // First leaf lands on base floor; subsequent leaves stack on top with natural height variation
+    val leafThickness = Random.nextFloat() * 0.006f + 0.014f 
+    val settleY = if (highestLeafY == null) {
+        baseFloorY
+    } else {
+        (highestLeafY - leafThickness).coerceIn(topCeilingY, baseFloorY)
+    }
 
-    // --- Slope tilt: natural lean based on neighbouring column heights ---
-    val leftCount  = restingLeaves.count { it.currentX in (snappedX - 0.15f)..<snappedX }
-    val rightCount = restingLeaves.count { it.currentX in (snappedX + 0.001f)..(snappedX + 0.15f) }
-    val slopeTilt  = ((leftCount - rightCount) * 4.5f).coerceIn(-30f, 30f)
+    // Natural tilt based on surrounding column density
+    val leftCount  = restingLeaves.count { it.currentX in (snappedX - 0.12f)..<snappedX }
+    val rightCount = restingLeaves.count { it.currentX in (snappedX + 0.001f)..(snappedX + 0.12f) }
+    val slopeTilt  = ((leftCount - rightCount) * 5.0f).coerceIn(-25f, 25f)
 
     return Triple(snappedX, settleY, slopeTilt)
 }
-
 // =========================================================================
 // PARTICLE DRAWING WITH 3D FLUTTER SCALE & CONTACT SHADOW
 // =========================================================================
