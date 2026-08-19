@@ -49,18 +49,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.25.1
-          name: "Buddho Timer v2.25.1"
+          tag_name: v2.26.0
+          name: "Buddho Timer v2.26.0"
           body: |
-            ## 🪷 Buddho Meditation Timer v2.25.1
-            
-            - **🍃 Pure Real-Time Gravity Stacking**:
-              - Ground leaves now appear strictly as airborne leaves physically reach the forest floor (zero premature ground spawns).
-              - Added real angle of repose physics: leaves roll and slide naturally into lower crevices when landing on elevated pile peaks.
-            - **✨ Dynamic Altitude-Based Transparency**:
-              - Ground-level resting leaves are rich and solid, while higher stacked leaves gradually transition into soft, translucent layers (`alpha ~ 0.28`), ensuring the pile never obstructs or distracts from the timer and meditation controls.
-            - **🔑 Universal Permanent Signing Keystore**:
-              - Permanent release keystore ensures all future updates install directly over existing versions.
+            ## 🍃 Buddho Meditation Timer v2.26.0
+
+            ### Falling Leaves Overhaul
+            - **Smaller, more natural leaves**: Reduced leaf size from 28–38dp → 14–22dp for a realistic forest-floor feel
+            - **Timer-aware stacking**: Leaves now pile up *around* the circular timer (not into it) using live `onGloballyPositioned` measurement — works on all screen sizes/densities automatically
+            - **Curved exclusion boundary**: The stacking floor follows the timer's arc so leaves settle on the outer rim and build outward naturally
+            - **App minimize persistence**: Resuming the app no longer causes a leaf position jump — dt is capped and reset correctly on each resume
+            - **Summary screen consistency**: Pre-seeded leaf pile on the session summary screen respects the same stacking physics
+
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions.
           draft: false
           prerelease: false

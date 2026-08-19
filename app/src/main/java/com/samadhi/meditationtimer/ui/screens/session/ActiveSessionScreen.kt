@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -95,6 +98,14 @@ fun ActiveSessionScreen(
     var leavesBurstTrigger by remember { mutableIntStateOf(0) }
     val context = androidx.compose.ui.platform.LocalContext.current
 
+    // Timer position measured via onGloballyPositioned — used to keep leaves out of the timer circle
+    var timerCenterXRatio by remember { mutableFloatStateOf(0.5f) }
+    var timerCenterYRatio by remember { mutableFloatStateOf(-1f) }   // negative = not yet measured
+    var timerRadiusRatio by remember { mutableFloatStateOf(0f) }
+    // Root Box size captured for ratio calculation
+    var rootWidthPx by remember { mutableFloatStateOf(1f) }
+    var rootHeightPx by remember { mutableFloatStateOf(1f) }
+
     // Keep Screen Awake based on user setting
     androidx.compose.runtime.DisposableEffect(config.keepScreenAwake) {
         val activity = context.findActivity()
@@ -163,6 +174,10 @@ fun ActiveSessionScreen(
 
     Box(
         modifier = modifier
+            .onGloballyPositioned { coords ->
+                rootWidthPx  = coords.size.width.toFloat().coerceAtLeast(1f)
+                rootHeightPx = coords.size.height.toFloat().coerceAtLeast(1f)
+            }
             .fillMaxSize()
             .background(Color.Black)
             .clickable(
@@ -185,7 +200,10 @@ fun ActiveSessionScreen(
                 isBlowingAway = isBlowingAway,
                 onBlowAwayComplete = {
                     pendingExitAction?.invoke()
-                }
+                },
+                timerCenterXRatio = timerCenterXRatio,
+                timerCenterYRatio = timerCenterYRatio,
+                timerRadiusRatio = timerRadiusRatio
             )
         }
 
@@ -340,6 +358,23 @@ fun ActiveSessionScreen(
                             Spacer(modifier = Modifier.height(36.dp))
 
                         // Circular Progress Display with Breath Pacing Aura & Interval Notches
+                        // Wrapped in a measurement Box so FallingLeavesEffect knows the timer's
+                        // exact screen position and can route leaves around it.
+                        Box(
+                            modifier = Modifier.onGloballyPositioned { coords ->
+                                val pos = coords.positionInRoot()
+                                val w   = coords.size.width.toFloat()
+                                val h   = coords.size.height.toFloat()
+                                val cx  = pos.x + w / 2f
+                                val cy  = pos.y + h / 2f
+                                if (rootWidthPx > 1f && rootHeightPx > 1f) {
+                                    timerCenterXRatio = (cx / rootWidthPx).coerceIn(0.1f, 0.9f)
+                                    timerCenterYRatio = (cy / rootHeightPx).coerceIn(0.1f, 0.9f)
+                                    // Use the smaller of width/height as the circle's diameter
+                                    timerRadiusRatio  = (minOf(w, h) / 2f / rootHeightPx).coerceIn(0.05f, 0.45f)
+                                }
+                            }
+                        ) {
                         CircularTimerProgress(
                             progress = progress,
                             isOverrun = isOverrun,
@@ -394,6 +429,7 @@ fun ActiveSessionScreen(
                                 }
                             }
                         }
+                        } // end measurement Box
 
                         Spacer(modifier = Modifier.height(48.dp))
 

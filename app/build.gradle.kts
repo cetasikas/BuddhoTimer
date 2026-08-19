@@ -14,8 +14,8 @@ android {
         applicationId = "com.samadhi.meditationtimer"
         minSdk = 26
         targetSdk = 34
-        versionCode = 59
-        versionName = "2.25.1"
+        versionCode = 60
+        versionName = "2.26.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
