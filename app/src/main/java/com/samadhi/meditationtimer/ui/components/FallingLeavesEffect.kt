@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ParticleType
 import kotlin.math.cos
+import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -85,14 +87,26 @@ fun FallingLeavesEffect(
     timerRadiusRatio: Float = 0f
 ) {
     val currentTheme = LocalZenTheme.current
+    val maxRestingLeaves = 160
+    val secondsPerLeaf = 8
+
+    // Calculate baseline resting count (survives rotation / recomposition)
+    val startingRestingCount = remember(currentTheme.id, pileUpAtBottom) {
+        if (pileUpAtBottom) {
+            val fromElapsed = elapsedMeditationSeconds / secondsPerLeaf
+            maxOf(fromElapsed, initialSettledLeavesCount).coerceAtMost(maxRestingLeaves)
+        } else {
+            0
+        }
+    }
 
     val leaves = remember(currentTheme.id, pileUpAtBottom) {
         mutableStateListOf<Leaf>().apply {
-            if (pileUpAtBottom && initialSettledLeavesCount > 0) {
+            if (pileUpAtBottom && startingRestingCount > 0) {
                 addAll(
                     generatePreRestingLeaves(
-                        initialSettledLeavesCount,
-                        currentTheme.particlePalette,
+                        count = startingRestingCount,
+                        palette = currentTheme.particlePalette,
                         timerCenterXRatio = timerCenterXRatio,
                         timerCenterYRatio = timerCenterYRatio,
                         timerRadiusRatio = timerRadiusRatio
@@ -103,22 +117,17 @@ fun FallingLeavesEffect(
         }
     }
 
-    val maxRestingLeaves = 160
-
-    // Sync resting leaves with elapsed meditation time across screen-off, backgrounding, and rotation
-    LaunchedEffect(elapsedMeditationSeconds, pileUpAtBottom) {
-        if (pileUpAtBottom && elapsedMeditationSeconds > 0) {
-            val secondsPerLeaf = 7
-            val targetRestingCount = (elapsedMeditationSeconds / secondsPerLeaf)
-                .coerceAtMost(maxRestingLeaves)
-                .coerceAtLeast(initialSettledLeavesCount)
-
+    // Only catch up if there's a big background gap (> 12s) to avoid popping leaves during live view
+    var lastObservedSec by remember { mutableIntStateOf(elapsedMeditationSeconds) }
+    LaunchedEffect(elapsedMeditationSeconds) {
+        val gap = elapsedMeditationSeconds - lastObservedSec
+        if (pileUpAtBottom && gap >= 12) {
+            val targetCount = (elapsedMeditationSeconds / secondsPerLeaf).coerceAtMost(maxRestingLeaves)
             val currentResting = leaves.filter { it.isResting }
-            val missingCount = targetRestingCount - currentResting.size
-
-            if (missingCount > 0) {
+            val missing = targetCount - currentResting.size
+            if (missing > 0) {
                 val newResting = generatePreRestingLeaves(
-                    count = missingCount,
+                    count = missing,
                     palette = currentTheme.particlePalette,
                     existingResting = currentResting,
                     timerCenterXRatio = timerCenterXRatio,
@@ -128,6 +137,7 @@ fun FallingLeavesEffect(
                 leaves.addAll(newResting)
             }
         }
+        lastObservedSec = elapsedMeditationSeconds
     }
 
     LaunchedEffect(triggerBurst) {
@@ -295,6 +305,10 @@ fun FallingLeavesEffect(
         val h = size.height
         if (w <= 0f || h <= 0f) return@Canvas
 
+        // Use smallest dimension to ensure consistent particle scale across portrait and landscape
+        val baseDimension = min(w, h)
+        val particleScale = (baseDimension / 390f).coerceIn(0.80f, 1.30f)
+
         val breathingWave = (sin(t * 1.3f) * 0.5f + 0.5f)
 
         val renderLeaves = leaves.toList().sortedWith(
@@ -314,7 +328,6 @@ fun FallingLeavesEffect(
 
             val blowRot = if (blowAwayProgress > 0f) blowAwayProgress * 340f else 0f
 
-            // Matched ambient alpha: resting and falling leaves share the identical subdued tone
             val alpha = when {
                 blowAwayProgress > 0f -> (leaf.baseAlpha * ambientAlpha) * (1f - blowAwayProgress)
                 else -> (leaf.baseAlpha * ambientAlpha).coerceIn(0.12f, 0.85f)
@@ -333,7 +346,7 @@ fun FallingLeavesEffect(
                 shapePath = shapePath,
                 detailPath = detailPath,
                 center = Offset(px + blowOffset.x, py + blowOffset.y),
-                size = leaf.size * (w / 390f).coerceIn(0.85f, 1.25f),
+                size = leaf.size * particleScale,
                 scaleX = tumbleScaleX,
                 rotation = leaf.rotation + blowRot,
                 color = leaf.color.copy(alpha = alpha.coerceIn(0f, 1f)),
@@ -388,7 +401,6 @@ private fun calculateGravityStack(
     val leftY = getSurfaceHeightAt((landingX - 0.035f).coerceIn(0.08f, 0.92f))
     val rightY = getSurfaceHeightAt((landingX + 0.035f).coerceIn(0.08f, 0.92f))
 
-    // Angle of repose: roll into valleys before stacking on peaks
     if (leftY > curY + 0.0015f && leftY >= rightY) {
         landingX = (landingX - 0.024f).coerceIn(0.08f, 0.92f)
     } else if (rightY > curY + 0.0015f) {
