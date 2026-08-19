@@ -273,9 +273,12 @@ fun FallingLeavesEffect(
         if (w <= 0f || h <= 0f) return@Canvas
 
         val breathingWave = (sin(t * 1.3f) * 0.5f + 0.5f)
-        val renderLeaves = leaves.toList()
-
-        val baseFloorY = 0.948f
+        
+        // Sort: airborne leaves draw naturally, resting leaves draw from base floor upward
+        val renderLeaves = leaves.sortedWith(
+            compareBy<Leaf> { !it.isResting && !it.isSettling }
+                .thenByDescending { it.y }
+        )
 
         renderLeaves.forEach { leaf ->
             val px = leaf.currentX * w
@@ -289,16 +292,15 @@ fun FallingLeavesEffect(
 
             val blowRot = if (blowAwayProgress > 0f) blowAwayProgress * 340f else 0f
 
-            // All leaves use the same ambient alpha so resting leaves look identical
-            // to falling ones — no jarring brightness pop when a leaf touches down.
+            // Subdued, matte alpha for resting leaves to prevent glowing light accumulation
             val alpha = when {
                 blowAwayProgress > 0f -> (leaf.baseAlpha * ambientAlpha) * (1f - blowAwayProgress)
-                else -> (leaf.baseAlpha * ambientAlpha).coerceIn(0.10f, 0.92f)
+                leaf.isResting -> (ambientAlpha * 0.72f).coerceIn(0.20f, 0.45f)
+                else -> (leaf.baseAlpha * ambientAlpha).coerceIn(0.25f, 0.85f)
             }
 
             if (alpha < 0.01f) return@forEach
 
-            // Realistic 3D tumbling flutter width modulation while airborne
             val tumbleScaleX = if (!leaf.isResting && !leaf.isSettling) {
                 val wave = cos(t * leaf.tumbleFreq + leaf.tumblePhase)
                 (wave * 0.45f + 0.55f).coerceIn(0.20f, 1.0f)
@@ -310,7 +312,6 @@ fun FallingLeavesEffect(
                 shapePath = shapePath,
                 detailPath = detailPath,
                 center = Offset(px + blowOffset.x, py + blowOffset.y),
-                // Scale leaf size to screen density: base size is in normalised dp-like units
                 size = leaf.size * (w / 390f).coerceIn(0.80f, 1.20f),
                 scaleX = tumbleScaleX,
                 rotation = leaf.rotation + blowRot,
@@ -347,7 +348,7 @@ private fun calculateGravityStack(
 ): Triple<Float, Float, Float> {
     var landingX = x.coerceIn(0.06f, 0.94f)
 
-    // Timer avoidance ceiling (highest point leaves can stack up to)
+    // Upper limit for stack height
     val topCeilingY = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
         val dx = landingX - timerCenterXRatio
         val outerRadius = timerRadiusRatio + 0.04f
@@ -355,42 +356,45 @@ private fun calculateGravityStack(
             val arcY = timerCenterYRatio + sqrt((outerRadius * outerRadius - dx * dx).coerceAtLeast(0f))
             arcY.coerceIn(timerCenterYRatio + timerRadiusRatio, baseFloorY)
         } else {
-            0.65f
+            0.70f
         }
     } else {
-        0.65f
+        0.70f
     }
 
-    // Physical overlap threshold (half-width of a flat horizontal leaf)
-    val leafHalfSpan = 0.032f
-    val nearbyLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - landingX) < leafHalfSpan }
+    // Detection width for leaf body (half-span ≈ 0.042)
+    val bodyRadius = 0.042f
+    val nearbyLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - landingX) < bodyRadius }
 
     val settleY: Float
     val slopeTilt: Float
 
     if (nearbyLeaves.isEmpty()) {
-        // First layer rests directly on the floor with subtle ground unevenness
         settleY = baseFloorY + (Random.nextFloat() * 0.002f - 0.001f)
         slopeTilt = (Random.nextFloat() - 0.5f) * 10f
     } else {
-        // Find topmost leaf in this contact zone
         val highestUnderneath = nearbyLeaves.minByOrNull { it.y }!!
         val dx = landingX - highestUnderneath.currentX
 
-        // Gentle lateral slide into valleys between leaves
-        landingX = (landingX + dx * 0.15f).coerceIn(0.05f, 0.95f)
+        // If landing dead-center on a leaf ridge (|dx| < 0.018), roll off to the side into a valley
+        if (kotlin.math.abs(dx) < 0.018f) {
+            val rollDirection = if (dx == 0f) (if (Random.nextBoolean()) 1f else -1f) else kotlin.math.sign(dx)
+            landingX = (landingX + rollDirection * (0.022f + Random.nextFloat() * 0.010f)).coerceIn(0.05f, 0.95f)
+        } else {
+            // Natural slide down slope
+            landingX = (landingX + dx * 0.35f).coerceIn(0.05f, 0.95f)
+        }
 
-        // Height offset scales with how dead-center the landing is:
-        // Dead-center (|dx| ≈ 0) = full thickness (~0.004f)
-        // Edge landing (|dx| ≈ span) = nests tightly into the gap (~0.0015f)
-        val overlapFactor = (1.0f - (kotlin.math.abs(dx) / leafHalfSpan).coerceIn(0f, 0.85f))
-        val compactThickness = (Random.nextFloat() * 0.002f + 0.003f) * overlapFactor
+        // Re-evaluate contact point after roll-off
+        val finalDx = landingX - highestUnderneath.currentX
+        val overlapRatio = (1f - (kotlin.math.abs(finalDx) / bodyRadius)).coerceIn(0f, 1f)
 
-        settleY = (highestUnderneath.y - compactThickness).coerceIn(topCeilingY, baseFloorY)
+        // Clear, crisp step height (0.006f to 0.010f) so leaves sit on top without clipping into each other
+        val physicalLift = 0.0065f + 0.0035f * overlapRatio
+        settleY = (highestUnderneath.y - physicalLift).coerceIn(topCeilingY, baseFloorY)
 
-        // Lean slightly according to contact position
-        val contactTilt = (dx / leafHalfSpan) * 12f
-        slopeTilt = (contactTilt + (Random.nextFloat() - 0.5f) * 12f).coerceIn(-24f, 24f)
+        val contactTilt = (finalDx / bodyRadius) * 16f
+        slopeTilt = (contactTilt + (Random.nextFloat() - 0.5f) * 12f).coerceIn(-22f, 22f)
     }
 
     return Triple(landingX, settleY, slopeTilt)
