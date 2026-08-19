@@ -157,7 +157,9 @@ fun FallingLeavesEffect(
 
                     val toAdd = mutableListOf<Leaf>()
                     val snapshot = leaves.toList()
-                    val restingSnapshot = snapshot.filter { it.isResting }
+                    // Include settling leaves so two leaves arriving in the same frame
+                    // don't both compute the same settleY and land on top of each other.
+                    val restingSnapshot = snapshot.filter { it.isResting || it.isSettling }
 
                     snapshot.forEach { leaf ->
                         if (leaf.isResting) {
@@ -351,17 +353,27 @@ private fun calculateGravityStack(
     timerRadiusRatio: Float = 0f
 ): Triple<Float, Float, Float> {
 
-    // --- Timer-aware curved floor ---
-    // The effective floor at position x rises to follow the bottom arc of the
-    // timer circle so leaves settle on its outer rim, not on top of it.
-    val timerFloorY: Float = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
-        val dx = x - timerCenterXRatio
-        val absDx = kotlin.math.abs(dx)
-        // Add a small lateral gap (1.5× leaf width in normalised units) so
-        // leaves don't render right on the progress ring edge.
+    // -----------------------------------------------------------------------
+    // Column-snap stacking: snap the landing X to the nearest fixed column so
+    // leaves form clean, non-overlapping vertical stacks across the bottom.
+    // Adjacent columns are ≈ 1 leaf-width + gap apart so they never visually
+    // overlap even when both are occupied.
+    // -----------------------------------------------------------------------
+    val colWidth  = 0.056f          // ≈ one leaf width + a natural gap
+    val leftEdge  = 0.06f
+    val rightEdge = 0.94f
+    val numCols   = ((rightEdge - leftEdge) / colWidth).toInt()   // ≈ 15 columns
+    val colIndex  = ((x - leftEdge) / colWidth + 0.5f).toInt().coerceIn(0, numCols - 1)
+    // Tiny random jitter so the grid doesn't look mechanical
+    val jitter    = (Random.nextFloat() - 0.5f) * 0.008f
+    val snappedX  = (leftEdge + colIndex * colWidth + colWidth * 0.5f + jitter)
+        .coerceIn(leftEdge, rightEdge)
+
+    // --- Timer-aware curved floor for this column ---
+    val localFloor = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
+        val dx = snappedX - timerCenterXRatio
         val outerRadius = timerRadiusRatio + 0.04f
-        if (absDx < outerRadius) {
-            // Point on the bottom arc of the (slightly enlarged) circle
+        if (kotlin.math.abs(dx) < outerRadius) {
             val arcY = timerCenterYRatio + sqrt((outerRadius * outerRadius - dx * dx).coerceAtLeast(0f))
             arcY.coerceIn(timerCenterYRatio + timerRadiusRatio, baseFloorY)
         } else {
@@ -372,52 +384,23 @@ private fun calculateGravityStack(
     }
 
     if (restingLeaves.isEmpty()) {
-        return Triple(x, timerFloorY, 0f)
+        return Triple(snappedX, localFloor, 0f)
     }
 
-    // --- Lateral gravity: roll leaf into adjacent crevice if on a peak ---
-    // Narrow check radius ≈ one leaf width so we only look at immediate neighbours.
-    val checkRadius = 0.050f
-    val centerLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - x) < checkRadius }
-    val leftLeaves   = restingLeaves.filter { kotlin.math.abs(it.currentX - (x - checkRadius)) < checkRadius }
-    val rightLeaves  = restingLeaves.filter { kotlin.math.abs(it.currentX - (x + checkRadius)) < checkRadius }
+    // --- Find the current top of this column's stack ---
+    // Use colWidth*0.6 so the search reliably catches the snapped leaves
+    // (which carry a small jitter) without pulling in adjacent columns.
+    val colLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - snappedX) < colWidth * 0.6f }
+    val surfaceY  = colLeaves.minOfOrNull { it.y } ?: localFloor
+    // 0.040f ≈ one drawn leaf height in normalised coords — no overlap between layers.
+    val settleY   = (surfaceY - 0.040f).coerceIn(0.35f, localFloor)
 
-    var settleX = x
-    if (centerLeaves.size > leftLeaves.size + 1 && centerLeaves.size >= rightLeaves.size) {
-        settleX = (x - 0.050f).coerceIn(0.06f, 0.94f)
-    } else if (centerLeaves.size > rightLeaves.size + 1) {
-        settleX = (x + 0.050f).coerceIn(0.06f, 0.94f)
-    }
-
-    // --- Stack altitude: sit on top of the leaf directly below ---
-    // Compute the timer-aware local floor first so it can be used as the fallback
-    // surface when no leaves are directly underneath.
-    val localFloor = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
-        val dx2 = settleX - timerCenterXRatio
-        val outerRadius2 = timerRadiusRatio + 0.04f
-        if (kotlin.math.abs(dx2) < outerRadius2) {
-            val arcY2 = timerCenterYRatio + sqrt((outerRadius2 * outerRadius2 - dx2 * dx2).coerceAtLeast(0f))
-            arcY2.coerceIn(timerCenterYRatio + timerRadiusRatio, baseFloorY)
-        } else {
-            baseFloorY
-        }
-    } else {
-        baseFloorY
-    }
-    // Tight radius (≈ leaf width) so only leaves physically underneath count as support;
-    // this prevents leaves at other X positions from making a leaf appear "suspended".
-    val supportLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - settleX) < 0.048f }
-    val surfaceY = supportLeaves.minOfOrNull { it.y } ?: localFloor
-    // Step of 0.035 ≈ one drawn leaf height in normalised screen coords.
-    val settleY = (surfaceY - 0.035f).coerceIn(0.38f, localFloor)
-
-
-    // --- Slope tilt: rotate leaf to lie along mound gradient ---
-    val leftCount  = restingLeaves.count { it.currentX in (settleX - 0.14f)..<settleX }
-    val rightCount = restingLeaves.count { it.currentX in (settleX + 0.001f)..(settleX + 0.14f) }
+    // --- Slope tilt: natural lean based on neighbouring column heights ---
+    val leftCount  = restingLeaves.count { it.currentX in (snappedX - 0.15f)..<snappedX }
+    val rightCount = restingLeaves.count { it.currentX in (snappedX + 0.001f)..(snappedX + 0.15f) }
     val slopeTilt  = ((leftCount - rightCount) * 4.5f).coerceIn(-30f, 30f)
 
-    return Triple(settleX, settleY, slopeTilt)
+    return Triple(snappedX, settleY, slopeTilt)
 }
 
 // =========================================================================
