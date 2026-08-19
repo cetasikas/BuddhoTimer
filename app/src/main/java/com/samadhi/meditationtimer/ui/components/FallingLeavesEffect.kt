@@ -213,15 +213,6 @@ fun FallingLeavesEffect(
                         leaf.rotation += (leaf.rotSpeed * dt) + (aerodynamicBank * 0.05f)
 
                         // Wrap when leaving bottom in non-pile mode
-                        if (!pileUpAtBottom && leaf.y > 1.08f) {
-                            leaf.y = -(Random.nextFloat() * 0.16f + 0.05f)
-                            leaf.xBase = Random.nextFloat() * 0.84f + 0.08f
-                            leaf.currentX = leaf.xBase
-                            leaf.driftVx = (Random.nextFloat() - 0.5f) * 0.035f
-                            return@forEach
-                        }
-
-                        // Pile mode: real gravity stacking with timer-aware curved floor
                         if (pileUpAtBottom) {
                             val (settleX, settleY, slopeTilt) = calculateGravityStack(
                                 x = leaf.currentX,
@@ -230,25 +221,22 @@ fun FallingLeavesEffect(
                                 timerCenterYRatio = timerCenterYRatio,
                                 timerRadiusRatio = timerRadiusRatio
                             )
-                            if (leaf.y >= (settleY - 0.016f)) {
+
+                            if (leaf.y >= (settleY - 0.010f)) {
                                 val restingCount = restingSnapshot.size
                                 if (restingCount < maxRestingLeaves) {
                                     leaf.isSettling = true
                                     leaf.settleProgress = 0f
-                                    leaf.settleDuration = Random.nextFloat() * 0.35f + 0.60f
+                                    leaf.settleDuration = Random.nextFloat() * 0.25f + 0.45f
                                     leaf.settleStartRot = leaf.rotation
                                     leaf.xBase = settleX
                                     leaf.currentX = settleX
                                     leaf.y = settleY
 
-                                    val normDeg = ((leaf.rotation % 360f) + 360f) % 360f
-                                    val distTo90 = kotlin.math.abs(normDeg - 90f).let { if (it > 180f) 360f - it else it }
-                                    val distTo270 = kotlin.math.abs(normDeg - 270f).let { if (it > 180f) 360f - it else it }
-                                    val targetNorm = if (distTo90 <= distTo270) 90f else 270f
-                                    var delta = targetNorm - normDeg
-                                    if (delta > 180f) delta -= 360f
-                                    if (delta < -180f) delta += 360f
-                                    leaf.settleTargetRot = leaf.rotation + delta + slopeTilt + (Random.nextFloat() * 20f - 10f)
+                                    val currentRotNorm = ((leaf.rotation % 180f) + 180f) % 180f
+                                    val naturalRestAngle = if (currentRotNorm > 90f) 180f else 0f
+                                    leaf.settleTargetRot = leaf.rotation + (naturalRestAngle - currentRotNorm) * 0.6f + slopeTilt
+
                                     leaf.speedY = 0f
                                     leaf.driftVx = 0f
                                 } else {
@@ -352,48 +340,52 @@ private fun calculateGravityStack(
     timerCenterYRatio: Float = -1f,
     timerRadiusRatio: Float = 0f
 ): Triple<Float, Float, Float> {
+    // 1. Keep the leaf's organic landing X (no column snapping)
+    var landingX = x.coerceIn(0.05f, 0.95f)
 
-    val colWidth  = 0.056f
-    val leftEdge  = 0.06f
-    val rightEdge = 0.94f
-    val numCols   = ((rightEdge - leftEdge) / colWidth).toInt()
-    val colIndex  = ((x - leftEdge) / colWidth + 0.5f).toInt().coerceIn(0, numCols - 1)
-    val jitter    = (Random.nextFloat() - 0.5f) * 0.008f
-    val snappedX  = (leftEdge + colIndex * colWidth + colWidth * 0.5f + jitter)
-        .coerceIn(leftEdge, rightEdge)
-
-    // Minimum Y coordinate leaves can stack up to (top boundary)
+    // 2. Timer arc ceiling calculation
     val topCeilingY = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
-        val dx = snappedX - timerCenterXRatio
+        val dx = landingX - timerCenterXRatio
         val outerRadius = timerRadiusRatio + 0.04f
         if (kotlin.math.abs(dx) < outerRadius) {
             val arcY = timerCenterYRatio + sqrt((outerRadius * outerRadius - dx * dx).coerceAtLeast(0f))
             arcY.coerceIn(timerCenterYRatio + timerRadiusRatio, baseFloorY)
         } else {
-            0.65f // Ceiling when outside timer zone
+            0.65f
         }
     } else {
-        0.65f // Max stack height limit (stops stacking above 65% screen height)
+        0.65f
     }
 
-    // Find existing resting leaves in this column zone
-    val colLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - snappedX) < colWidth * 0.85f }
-    val highestLeafY = colLeaves.minOfOrNull { it.y }
+    // 3. Find nearby resting leaves within physical overlap distance (~3.5% screen width)
+    val overlapRadius = 0.038f
+    val nearbyLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - landingX) < overlapRadius }
 
-    // First leaf lands on base floor; subsequent leaves stack on top with natural height variation
-    val leafThickness = Random.nextFloat() * 0.006f + 0.014f 
-    val settleY = if (highestLeafY == null) {
-        baseFloorY
+    val settleY: Float
+    val slopeTilt: Float
+
+    if (nearbyLeaves.isEmpty()) {
+        // First leaf in this area lands directly on the base floor with slight natural unevenness
+        settleY = baseFloorY + (Random.nextFloat() * 0.006f - 0.003f)
+        slopeTilt = (Random.nextFloat() - 0.5f) * 16f
     } else {
-        (highestLeafY - leafThickness).coerceIn(topCeilingY, baseFloorY)
+        // Find the topmost leaf it will touch
+        val highestUnderneath = nearbyLeaves.minByOrNull { it.y }!!
+        
+        // Small organic slide down the slope if hitting off-center
+        val dx = landingX - highestUnderneath.currentX
+        landingX = (landingX + dx * 0.25f).coerceIn(0.04f, 0.96f)
+
+        // Stack height: thin profile for bamboo/lotus leaves (~0.008 to 0.015 normalized height)
+        val stackThickness = Random.nextFloat() * 0.007f + 0.009f
+        settleY = (highestUnderneath.y - stackThickness).coerceIn(topCeilingY, baseFloorY)
+
+        // Lean slightly according to where it landed relative to the leaf below
+        val contactTilt = (dx / overlapRadius) * 20f
+        slopeTilt = (contactTilt + (Random.nextFloat() - 0.5f) * 14f).coerceIn(-35f, 35f)
     }
 
-    // Natural tilt based on surrounding column density
-    val leftCount  = restingLeaves.count { it.currentX in (snappedX - 0.12f)..<snappedX }
-    val rightCount = restingLeaves.count { it.currentX in (snappedX + 0.001f)..(snappedX + 0.12f) }
-    val slopeTilt  = ((leftCount - rightCount) * 5.0f).coerceIn(-25f, 25f)
-
-    return Triple(snappedX, settleY, slopeTilt)
+    return Triple(landingX, settleY, slopeTilt)
 }
 // =========================================================================
 // PARTICLE DRAWING WITH 3D FLUTTER SCALE & CONTACT SHADOW
