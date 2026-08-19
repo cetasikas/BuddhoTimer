@@ -196,23 +196,29 @@ fun FallingLeavesEffect(
                             return@forEach
                         }
 
-                        // --- Dynamic Gliding & Floating Flight Physics ---
-                        leaf.xBase = (leaf.xBase + leaf.driftVx * dt).coerceIn(0.04f, 0.96f)
-                        if (leaf.xBase <= 0.05f || leaf.xBase >= 0.95f) {
-                            leaf.driftVx = -leaf.driftVx
+                        // --- Soft Zen Gliding Flight Physics ---
+                        // Soft steering away from screen edges instead of hard bouncing
+                        if (leaf.xBase < 0.12f) {
+                            leaf.driftVx += 0.008f * dt
+                        } else if (leaf.xBase > 0.88f) {
+                            leaf.driftVx -= 0.008f * dt
                         }
+                        leaf.driftVx = leaf.driftVx.coerceIn(-0.018f, 0.018f)
+                        leaf.xBase = (leaf.xBase + leaf.driftVx * dt).coerceIn(0.06f, 0.94f)
 
                         val lateralSway = sin(totalElapsedSec * leaf.swayFreq + leaf.swayPhase) * leaf.swayAmp
-                        leaf.currentX = (leaf.xBase + lateralSway).coerceIn(0.02f, 0.98f)
+                        leaf.currentX = (leaf.xBase + lateralSway).coerceIn(0.04f, 0.96f)
 
-                        val floatFactor = (1.0f - 0.22f * kotlin.math.abs(sin(totalElapsedSec * leaf.swayFreq + leaf.swayPhase)))
+                        // Gentle slow descent
+                        val floatFactor = (1.0f - 0.18f * kotlin.math.abs(sin(totalElapsedSec * leaf.swayFreq + leaf.swayPhase)))
                         leaf.y += leaf.speedY * floatFactor * dt
 
-                        val lateralVelocity = (cos(totalElapsedSec * leaf.swayFreq + leaf.swayPhase) * leaf.swayAmp * leaf.swayFreq) + leaf.driftVx
-                        val aerodynamicBank = lateralVelocity * 340f
-                        leaf.rotation += (leaf.rotSpeed * dt) + (aerodynamicBank * 0.05f)
+                        // Subtle, peaceful rotational drift
+                        val lateralVelocity = cos(totalElapsedSec * leaf.swayFreq + leaf.swayPhase) * leaf.swayAmp * leaf.swayFreq + leaf.driftVx
+                        val aerodynamicBank = lateralVelocity * 80f
+                        leaf.rotation += (leaf.rotSpeed * dt) + (aerodynamicBank * 0.02f)
 
-                        // Wrap when leaving bottom in non-pile mode
+                        // Pile mode settling
                         if (pileUpAtBottom) {
                             val (settleX, settleY, slopeTilt) = calculateGravityStack(
                                 x = leaf.currentX,
@@ -222,7 +228,7 @@ fun FallingLeavesEffect(
                                 timerRadiusRatio = timerRadiusRatio
                             )
 
-                            if (leaf.y >= (settleY - 0.010f)) {
+                            if (leaf.y >= (settleY - 0.006f)) {
                                 val restingCount = restingSnapshot.size
                                 if (restingCount < maxRestingLeaves) {
                                     leaf.isSettling = true
@@ -233,22 +239,21 @@ fun FallingLeavesEffect(
                                     leaf.currentX = settleX
                                     leaf.y = settleY
 
-                                    // Align rotation to lie flat horizontally (90° or 270°) + natural slope tilt
+                                    // Flat horizontal resting orientation (90° or 270°)
                                     val normDeg = ((leaf.rotation % 360f) + 360f) % 360f
                                     val targetBase = if (normDeg in 0f..180f) 90f else 270f
                                     var delta = targetBase - normDeg
                                     if (delta > 180f) delta -= 360f
                                     if (delta < -180f) delta += 360f
 
-                                    leaf.settleTargetRot = leaf.rotation + delta + slopeTilt + (Random.nextFloat() * 16f - 8f)
-
+                                    leaf.settleTargetRot = leaf.rotation + delta + slopeTilt + (Random.nextFloat() * 10f - 5f)
                                     leaf.speedY = 0f
                                     leaf.driftVx = 0f
                                 } else {
                                     leaf.y = -(Random.nextFloat() * 0.20f + 0.06f)
-                                    leaf.xBase = Random.nextFloat() * 0.84f + 0.08f
+                                    leaf.xBase = Random.nextFloat() * 0.72f + 0.14f
                                     leaf.currentX = leaf.xBase
-                                    leaf.driftVx = (Random.nextFloat() - 0.5f) * 0.035f
+                                    leaf.driftVx = (Random.nextFloat() - 0.5f) * 0.015f
                                 }
                             }
                         }
@@ -346,58 +351,61 @@ private fun calculateGravityStack(
     timerCenterYRatio: Float = -1f,
     timerRadiusRatio: Float = 0f
 ): Triple<Float, Float, Float> {
-    var landingX = x.coerceIn(0.06f, 0.94f)
+    val leafRadiusX = 0.026f // half-width of resting leaf span
+    val leafThicknessY = 0.0055f // exact visual contact height
 
-    // Upper limit for stack height
+    // Function to calculate exact physical contact height at any test X
+    fun computeSurfaceY(testPtX: Float): Float {
+        var topContactY = baseFloorY
+        for (leaf in restingLeaves) {
+            val dx = kotlin.math.abs(testPtX - leaf.currentX)
+            val combinedSpan = leafRadiusX * 2.0f
+            if (dx < combinedSpan) {
+                val ratio = dx / combinedSpan
+                val contactHeight = leafThicknessY * kotlin.math.sqrt((1.0f - ratio * ratio).coerceAtLeast(0f))
+                val supportedY = leaf.y - contactHeight
+                if (supportedY < topContactY) {
+                    topContactY = supportedY
+                }
+            }
+        }
+        return topContactY
+    }
+
+    // Timer arc ceiling
     val topCeilingY = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
-        val dx = landingX - timerCenterXRatio
+        val dx = x - timerCenterXRatio
         val outerRadius = timerRadiusRatio + 0.04f
         if (kotlin.math.abs(dx) < outerRadius) {
             val arcY = timerCenterYRatio + sqrt((outerRadius * outerRadius - dx * dx).coerceAtLeast(0f))
             arcY.coerceIn(timerCenterYRatio + timerRadiusRatio, baseFloorY)
-        } else {
-            0.70f
-        }
-    } else {
-        0.70f
+        } else 0.70f
+    } else 0.70f
+
+    // Valley search: test center, slightly left, and slightly right to find lowest trough
+    val xCenter = x.coerceIn(0.08f, 0.92f)
+    val xLeft = (xCenter - 0.016f).coerceIn(0.08f, 0.92f)
+    val xRight = (xCenter + 0.016f).coerceIn(0.08f, 0.92f)
+
+    val yCenter = computeSurfaceY(xCenter)
+    val yLeft = computeSurfaceY(xLeft)
+    val yRight = computeSurfaceY(xRight)
+
+    // Settle into lowest gap (largest Y value is closer to the ground)
+    val (bestX, rawY) = when {
+        yLeft > yCenter + 0.001f && yLeft >= yRight -> Pair(xLeft, yLeft)
+        yRight > yCenter + 0.001f -> Pair(xRight, yRight)
+        else -> Pair(xCenter, yCenter)
     }
 
-    // Detection width for leaf body (half-span ≈ 0.042)
-    val bodyRadius = 0.042f
-    val nearbyLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - landingX) < bodyRadius }
+    val finalSettleY = rawY.coerceIn(topCeilingY, baseFloorY)
 
-    val settleY: Float
-    val slopeTilt: Float
+    // Calculate natural resting tilt from local slope
+    val leftHeight = computeSurfaceY(bestX - 0.020f)
+    val rightHeight = computeSurfaceY(bestX + 0.020f)
+    val slopeTilt = ((leftHeight - rightHeight) / 0.040f * 65f).coerceIn(-24f, 24f)
 
-    if (nearbyLeaves.isEmpty()) {
-        settleY = baseFloorY + (Random.nextFloat() * 0.002f - 0.001f)
-        slopeTilt = (Random.nextFloat() - 0.5f) * 10f
-    } else {
-        val highestUnderneath = nearbyLeaves.minByOrNull { it.y }!!
-        val dx = landingX - highestUnderneath.currentX
-
-        // If landing dead-center on a leaf ridge (|dx| < 0.018), roll off to the side into a valley
-        if (kotlin.math.abs(dx) < 0.018f) {
-            val rollDirection = if (dx == 0f) (if (Random.nextBoolean()) 1f else -1f) else kotlin.math.sign(dx)
-            landingX = (landingX + rollDirection * (0.022f + Random.nextFloat() * 0.010f)).coerceIn(0.05f, 0.95f)
-        } else {
-            // Natural slide down slope
-            landingX = (landingX + dx * 0.35f).coerceIn(0.05f, 0.95f)
-        }
-
-        // Re-evaluate contact point after roll-off
-        val finalDx = landingX - highestUnderneath.currentX
-        val overlapRatio = (1f - (kotlin.math.abs(finalDx) / bodyRadius)).coerceIn(0f, 1f)
-
-        // Clear, crisp step height (0.006f to 0.010f) so leaves sit on top without clipping into each other
-        val physicalLift = 0.0065f + 0.0035f * overlapRatio
-        settleY = (highestUnderneath.y - physicalLift).coerceIn(topCeilingY, baseFloorY)
-
-        val contactTilt = (finalDx / bodyRadius) * 16f
-        slopeTilt = (contactTilt + (Random.nextFloat() - 0.5f) * 12f).coerceIn(-22f, 22f)
-    }
-
-    return Triple(landingX, settleY, slopeTilt)
+    return Triple(bestX, finalSettleY, slopeTilt)
 }
 // =========================================================================
 // PARTICLE DRAWING WITH 3D FLUTTER SCALE & CONTACT SHADOW
@@ -493,25 +501,25 @@ private fun DrawScope.drawIndividualParticle(
 // =========================================================================
 
 private fun createSingleFallingLeaf(palette: List<Color>, spawnAbove: Boolean = true): Leaf {
-    val x = Random.nextFloat() * 0.84f + 0.08f
-    val initialY = if (spawnAbove) -(Random.nextFloat() * 0.22f + 0.06f) else Random.nextFloat() * 0.90f
-    val a = Random.nextFloat() * 0.25f + 0.65f
+    val x = Random.nextFloat() * 0.72f + 0.14f // Keep away from edges
+    val initialY = if (spawnAbove) -(Random.nextFloat() * 0.18f + 0.05f) else Random.nextFloat() * 0.90f
+    val a = Random.nextFloat() * 0.20f + 0.65f
     return Leaf(
         xBase = x,
         currentX = x,
         y = initialY,
-        speedY = Random.nextFloat() * 0.015f + 0.024f,
-        driftVx = (Random.nextFloat() - 0.5f) * 0.035f,
-        swayFreq = Random.nextFloat() * 0.40f + 0.45f,
-        swayAmp = Random.nextFloat() * 0.07f + 0.07f,
+        speedY = Random.nextFloat() * 0.008f + 0.011f, // Slower, peaceful descent
+        driftVx = (Random.nextFloat() - 0.5f) * 0.015f,
+        swayFreq = Random.nextFloat() * 0.25f + 0.35f, // Gentle breathing cadence
+        swayAmp = Random.nextFloat() * 0.025f + 0.030f, // Narrower sway amplitude
         swayPhase = Random.nextFloat() * 6.28f,
-        tumbleFreq = Random.nextFloat() * 0.80f + 0.60f,
+        tumbleFreq = Random.nextFloat() * 0.45f + 0.40f,
         tumblePhase = Random.nextFloat() * 6.28f,
         rotation = Random.nextFloat() * 360f,
-        rotSpeed = (Random.nextFloat() - 0.5f) * 14f,
-        size = Random.nextFloat() * 8f + 14f,   // 14..22 dp — small, natural
+        rotSpeed = (Random.nextFloat() - 0.5f) * 4.0f, // Subtle rotation
+        size = Random.nextFloat() * 6f + 14f,
         baseAlpha = a,
-        restAlpha = a,   // same opacity as when airborne — no brightness pop on landing
+        restAlpha = a,
         color = palette.random()
     )
 }
