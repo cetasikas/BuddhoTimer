@@ -233,20 +233,24 @@ fun FallingLeavesEffect(
                                 if (restingCount < maxRestingLeaves) {
                                     leaf.isSettling = true
                                     leaf.settleProgress = 0f
-                                    leaf.settleDuration = Random.nextFloat() * 0.20f + 0.35f
+                                    leaf.settleDuration = Random.nextFloat() * 0.25f + 0.35f
                                     leaf.settleStartRot = leaf.rotation
                                     leaf.xBase = settleX
                                     leaf.currentX = settleX
                                     leaf.y = settleY
 
-                                    // Flat horizontal resting orientation (90° or 270°)
+                                    // Natural rotational variation: leaves lay generally horizontal
+                                    // but crisscross organically between 65°–115° or 245°–295°
                                     val normDeg = ((leaf.rotation % 360f) + 360f) % 360f
-                                    val targetBase = if (normDeg in 0f..180f) 90f else 270f
-                                    var delta = targetBase - normDeg
+                                    val baseTarget = if (normDeg in 0f..180f) 90f else 270f
+                                    var delta = baseTarget - normDeg
                                     if (delta > 180f) delta -= 360f
                                     if (delta < -180f) delta += 360f
 
-                                    leaf.settleTargetRot = leaf.rotation + delta + slopeTilt + (Random.nextFloat() * 10f - 5f)
+                                    // Generous organic angular spread (+/- 24°) to break the fish-scale look
+                                    val organicAngleJitter = (Random.nextFloat() - 0.5f) * 48f
+                                    leaf.settleTargetRot = leaf.rotation + delta + slopeTilt + organicAngleJitter
+
                                     leaf.speedY = 0f
                                     leaf.driftVx = 0f
                                 } else {
@@ -351,30 +355,11 @@ private fun calculateGravityStack(
     timerCenterYRatio: Float = -1f,
     timerRadiusRatio: Float = 0f
 ): Triple<Float, Float, Float> {
-    val leafRadiusX = 0.026f // half-width of resting leaf span
-    val leafThicknessY = 0.0055f // exact visual contact height
-
-    // Function to calculate exact physical contact height at any test X
-    fun computeSurfaceY(testPtX: Float): Float {
-        var topContactY = baseFloorY
-        for (leaf in restingLeaves) {
-            val dx = kotlin.math.abs(testPtX - leaf.currentX)
-            val combinedSpan = leafRadiusX * 2.0f
-            if (dx < combinedSpan) {
-                val ratio = dx / combinedSpan
-                val contactHeight = leafThicknessY * kotlin.math.sqrt((1.0f - ratio * ratio).coerceAtLeast(0f))
-                val supportedY = leaf.y - contactHeight
-                if (supportedY < topContactY) {
-                    topContactY = supportedY
-                }
-            }
-        }
-        return topContactY
-    }
+    val landingX = x.coerceIn(0.06f, 0.94f)
 
     // Timer arc ceiling
     val topCeilingY = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
-        val dx = x - timerCenterXRatio
+        val dx = landingX - timerCenterXRatio
         val outerRadius = timerRadiusRatio + 0.04f
         if (kotlin.math.abs(dx) < outerRadius) {
             val arcY = timerCenterYRatio + sqrt((outerRadius * outerRadius - dx * dx).coerceAtLeast(0f))
@@ -382,30 +367,36 @@ private fun calculateGravityStack(
         } else 0.70f
     } else 0.70f
 
-    // Valley search: test center, slightly left, and slightly right to find lowest trough
-    val xCenter = x.coerceIn(0.08f, 0.92f)
-    val xLeft = (xCenter - 0.016f).coerceIn(0.08f, 0.92f)
-    val xRight = (xCenter + 0.016f).coerceIn(0.08f, 0.92f)
+    // Physical span of an overlapping leaf
+    val leafSpanX = 0.045f
+    val leafLiftY = 0.0075f
 
-    val yCenter = computeSurfaceY(xCenter)
-    val yLeft = computeSurfaceY(xLeft)
-    val yRight = computeSurfaceY(xRight)
+    // Find highest contact surface at landingX
+    var highestUnderneathY = baseFloorY
+    var contactCount = 0
 
-    // Settle into lowest gap (largest Y value is closer to the ground)
-    val (bestX, rawY) = when {
-        yLeft > yCenter + 0.001f && yLeft >= yRight -> Pair(xLeft, yLeft)
-        yRight > yCenter + 0.001f -> Pair(xRight, yRight)
-        else -> Pair(xCenter, yCenter)
+    for (other in restingLeaves) {
+        val dx = kotlin.math.abs(landingX - other.currentX)
+        if (dx < leafSpanX) {
+            val influence = 1.0f - (dx / leafSpanX)
+            val leafTop = other.y - (leafLiftY * influence)
+            if (leafTop < highestUnderneathY) {
+                highestUnderneathY = leafTop
+            }
+            contactCount++
+        }
     }
 
-    val finalSettleY = rawY.coerceIn(topCeilingY, baseFloorY)
+    // Micro-jitter to prevent mechanical repeating patterns
+    val naturalUnevenness = (Random.nextFloat() * 0.003f - 0.0015f)
+    val settleY = (highestUnderneathY + naturalUnevenness).coerceIn(topCeilingY, baseFloorY)
 
-    // Calculate natural resting tilt from local slope
-    val leftHeight = computeSurfaceY(bestX - 0.020f)
-    val rightHeight = computeSurfaceY(bestX + 0.020f)
-    val slopeTilt = ((leftHeight - rightHeight) / 0.040f * 65f).coerceIn(-24f, 24f)
+    // Slope tilt based on local height variance
+    val leftLeaves = restingLeaves.count { it.currentX in (landingX - 0.06f)..<landingX }
+    val rightLeaves = restingLeaves.count { it.currentX in (landingX + 0.001f)..(landingX + 0.06f) }
+    val slopeTilt = ((leftLeaves - rightLeaves) * 4.0f).coerceIn(-20f, 20f)
 
-    return Triple(bestX, finalSettleY, slopeTilt)
+    return Triple(landingX, settleY, slopeTilt)
 }
 // =========================================================================
 // PARTICLE DRAWING WITH 3D FLUTTER SCALE & CONTACT SHADOW
