@@ -356,21 +356,22 @@ private fun calculateGravityStack(
     // -----------------------------------------------------------------------
     // Column-snap stacking: snap the landing X to the nearest fixed column so
     // leaves form clean, non-overlapping vertical stacks across the bottom.
-    // Adjacent columns are ≈ 1 leaf-width + gap apart so they never visually
-    // overlap even when both are occupied.
     // -----------------------------------------------------------------------
-    val colWidth  = 0.056f          // ≈ one leaf width + a natural gap
+    val colWidth  = 0.056f
     val leftEdge  = 0.06f
     val rightEdge = 0.94f
     val numCols   = ((rightEdge - leftEdge) / colWidth).toInt()   // ≈ 15 columns
     val colIndex  = ((x - leftEdge) / colWidth + 0.5f).toInt().coerceIn(0, numCols - 1)
-    // Tiny random jitter so the grid doesn't look mechanical
     val jitter    = (Random.nextFloat() - 0.5f) * 0.008f
     val snappedX  = (leftEdge + colIndex * colWidth + colWidth * 0.5f + jitter)
         .coerceIn(leftEdge, rightEdge)
 
-    // --- Timer-aware curved floor for this column ---
-    val localFloor = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
+    // --- Timer arc ceiling ---
+    // arcCeiling is the MINIMUM allowable Y for this column (the highest point
+    // a resting leaf may occupy). Leaves must not stack ABOVE (smaller y than)
+    // the bottom arc of the timer circle.
+    // Outside the timer radius: arcCeiling = baseFloorY (no restriction).
+    val arcCeiling = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
         val dx = snappedX - timerCenterXRatio
         val outerRadius = timerRadiusRatio + 0.04f
         if (kotlin.math.abs(dx) < outerRadius) {
@@ -383,17 +384,15 @@ private fun calculateGravityStack(
         baseFloorY
     }
 
-    if (restingLeaves.isEmpty()) {
-        return Triple(snappedX, localFloor, 0f)
-    }
-
-    // --- Find the current top of this column's stack ---
-    // Use colWidth*0.6 so the search reliably catches the snapped leaves
-    // (which carry a small jitter) without pulling in adjacent columns.
+    // Stacks ALWAYS begin from the physical screen floor (baseFloorY).
+    // arcCeiling acts only as an upper safety stop — in practice with ≤16 leaves
+    // and ~15 columns, no column will ever fill up to the timer arc.
     val colLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - snappedX) < colWidth * 0.6f }
-    val surfaceY  = colLeaves.minOfOrNull { it.y } ?: localFloor
-    // 0.040f ≈ one drawn leaf height in normalised coords — no overlap between layers.
-    val settleY   = (surfaceY - 0.040f).coerceIn(0.35f, localFloor)
+    val surfaceY  = colLeaves.minOfOrNull { it.y } ?: baseFloorY   // fallback = screen bottom
+
+    // Step up one drawn leaf height.
+    // coerceIn: arcCeiling is MIN (can't go above the arc), baseFloorY is MAX (screen floor).
+    val settleY = (surfaceY - 0.040f).coerceIn(arcCeiling, baseFloorY)
 
     // --- Slope tilt: natural lean based on neighbouring column heights ---
     val leftCount  = restingLeaves.count { it.currentX in (snappedX - 0.15f)..<snappedX }
