@@ -282,8 +282,8 @@ fun FallingLeavesEffect(
         if (w <= 0f || h <= 0f) return@Canvas
 
         val breathingWave = (sin(t * 1.3f) * 0.5f + 0.5f)
-        
-        // Sort: airborne leaves draw naturally, resting leaves draw from base floor upward
+
+        // Draw lowest resting leaves first, newly stacked leaves on top, falling leaves last
         val renderLeaves = leaves.sortedWith(
             compareBy<Leaf> { !it.isResting && !it.isSettling }
                 .thenByDescending { it.y }
@@ -301,11 +301,11 @@ fun FallingLeavesEffect(
 
             val blowRot = if (blowAwayProgress > 0f) blowAwayProgress * 340f else 0f
 
-            // Subdued, matte alpha for resting leaves to prevent glowing light accumulation
+            // Resting leaves are solid/opaque (0.85f - 0.92f) so they occlude layers below
             val alpha = when {
                 blowAwayProgress > 0f -> (leaf.baseAlpha * ambientAlpha) * (1f - blowAwayProgress)
-                leaf.isResting -> (ambientAlpha * 0.72f).coerceIn(0.20f, 0.45f)
-                else -> (leaf.baseAlpha * ambientAlpha).coerceIn(0.25f, 0.85f)
+                leaf.isResting -> (0.88f * ambientAlpha + 0.12f).coerceIn(0.75f, 0.95f)
+                else -> (leaf.baseAlpha * ambientAlpha).coerceIn(0.30f, 0.85f)
             }
 
             if (alpha < 0.01f) return@forEach
@@ -321,7 +321,7 @@ fun FallingLeavesEffect(
                 shapePath = shapePath,
                 detailPath = detailPath,
                 center = Offset(px + blowOffset.x, py + blowOffset.y),
-                size = leaf.size * (w / 390f).coerceIn(0.80f, 1.20f),
+                size = leaf.size * (w / 390f).coerceIn(0.85f, 1.25f),
                 scaleX = tumbleScaleX,
                 rotation = leaf.rotation + blowRot,
                 color = leaf.color.copy(alpha = alpha.coerceIn(0f, 1f)),
@@ -368,8 +368,8 @@ private fun calculateGravityStack(
     } else 0.70f
 
     // Physical span of an overlapping leaf
-    val leafSpanX = 0.045f
-    val leafLiftY = 0.0075f
+    val leafSpanX = 0.048f
+    val leafLiftY = 0.0095f
 
     // Find highest contact surface at landingX
     var highestUnderneathY = baseFloorY
@@ -416,6 +416,28 @@ private fun DrawScope.drawIndividualParticle(
     breathingGlowFactor: Float,
     isResting: Boolean
 ) {
+    // 1. Draw offset contact shadow underneath resting leaves
+    if (isResting) {
+        val shadowOffset = Offset(center.x, center.y + size * 0.12f)
+        rotate(degrees = rotation, pivot = shadowOffset) {
+            scale(scaleX = scaleX * 1.05f, scaleY = 1.0f, pivot = shadowOffset) {
+                shapePath.reset()
+                val halfW = size * 0.44f
+                val halfH = size * 0.94f
+                shapePath.moveTo(shadowOffset.x, shadowOffset.y - halfH)
+                shapePath.cubicTo(shadowOffset.x + halfW * 1.08f, shadowOffset.y - halfH * 0.32f, shadowOffset.x + halfW * 0.88f, shadowOffset.y + halfH * 0.38f, shadowOffset.x, shadowOffset.y + halfH)
+                shapePath.cubicTo(shadowOffset.x - halfW * 0.88f, shadowOffset.y + halfH * 0.38f, shadowOffset.x - halfW * 1.08f, shadowOffset.y - halfH * 0.32f, shadowOffset.x, shadowOffset.y - halfH)
+                shapePath.close()
+
+                drawPath(
+                    path = shapePath,
+                    color = Color.Black.copy(alpha = 0.35f)
+                )
+            }
+        }
+    }
+
+    // 2. Draw leaf body
     rotate(degrees = rotation, pivot = center) {
         scale(scaleX = scaleX, scaleY = 1.0f, pivot = center) {
             shapePath.reset()
@@ -459,29 +481,26 @@ private fun DrawScope.drawIndividualParticle(
                 }
             }
 
-            if (isResting) {
-                // Subtle ambient contact shadow for realistic physical stacking depth
-                drawPath(
-                    path = shapePath,
-                    color = Color.Black.copy(alpha = (0.28f * color.alpha).coerceIn(0.08f, 0.32f))
-                )
-            }
-
             if (isGlowing) {
                 val haloAlpha = (0.16f + 0.18f * breathingGlowFactor).coerceIn(0.10f, 0.38f)
                 drawPath(path = shapePath, color = glowColor.copy(alpha = haloAlpha), style = Stroke(width = 3.5f))
             }
+
+            // Opaque leaf fill
             drawPath(path = shapePath, color = color)
+
+            // Vein detail
             drawPath(
                 path = detailPath,
-                color = Color(0xFF041014).copy(alpha = (0.30f * color.alpha).coerceIn(0.08f, 0.40f)),
+                color = Color(0xFF041014).copy(alpha = (0.35f * color.alpha).coerceIn(0.10f, 0.45f)),
                 style = Stroke(width = 1.2f)
             )
-            // Subtle crisp edge contour
+
+            // Outer contour outline to cleanly separate touching leaves
             drawPath(
                 path = shapePath,
-                color = Color.Black.copy(alpha = (0.18f * color.alpha).coerceIn(0.05f, 0.24f)),
-                style = Stroke(width = 0.8f)
+                color = Color(0xFF000000).copy(alpha = if (isResting) 0.30f else 0.15f),
+                style = Stroke(width = 0.9f)
             )
         }
     }
@@ -508,6 +527,7 @@ private fun createSingleFallingLeaf(palette: List<Color>, spawnAbove: Boolean = 
         tumblePhase = Random.nextFloat() * 6.28f,
         rotation = Random.nextFloat() * 360f,
         rotSpeed = (Random.nextFloat() - 0.5f) * 4.0f, // Subtle rotation
+        size = Random.nextFloat() * 6f + 16f,
         size = Random.nextFloat() * 6f + 14f,
         baseAlpha = a,
         restAlpha = a,
@@ -539,7 +559,7 @@ private fun generateFallingLeaves(count: Int, palette: List<Color>, pileUpAtBott
             tumblePhase = Random.nextFloat() * 6.28f,
             rotation = Random.nextFloat() * 360f,
             rotSpeed = (Random.nextFloat() - 0.5f) * 14f,
-            size = Random.nextFloat() * 8f + 14f,   // 14..22 dp — small, natural
+            size = Random.nextFloat() * 6f + 16f,   // 14..22 dp — small, natural
             baseAlpha = a,
             restAlpha = a,   // same opacity as when airborne — no brightness pop on landing
             color = palette.random()
