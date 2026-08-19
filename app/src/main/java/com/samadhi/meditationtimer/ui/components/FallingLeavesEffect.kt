@@ -390,12 +390,8 @@ private fun calculateGravityStack(
     }
 
     // --- Stack altitude: sit on top of the leaf directly below ---
-    // Tight radius (≈ leaf width) so only leaves physically underneath count as support;
-    // this prevents leaves at other X positions from making a leaf appear "suspended".
-    val supportLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - settleX) < 0.048f }
-    val surfaceY = supportLeaves.minOfOrNull { it.y } ?: localFloor
-    // Step of 0.035 ≈ one drawn leaf height in normalised screen coords.
-    // Never stack above the timer avoidance floor at this X position
+    // Compute the timer-aware local floor first so it can be used as the fallback
+    // surface when no leaves are directly underneath.
     val localFloor = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
         val dx2 = settleX - timerCenterXRatio
         val outerRadius2 = timerRadiusRatio + 0.04f
@@ -408,7 +404,13 @@ private fun calculateGravityStack(
     } else {
         baseFloorY
     }
+    // Tight radius (≈ leaf width) so only leaves physically underneath count as support;
+    // this prevents leaves at other X positions from making a leaf appear "suspended".
+    val supportLeaves = restingLeaves.filter { kotlin.math.abs(it.currentX - settleX) < 0.048f }
+    val surfaceY = supportLeaves.minOfOrNull { it.y } ?: localFloor
+    // Step of 0.035 ≈ one drawn leaf height in normalised screen coords.
     val settleY = (surfaceY - 0.035f).coerceIn(0.38f, localFloor)
+
 
     // --- Slope tilt: rotate leaf to lie along mound gradient ---
     val leftCount  = restingLeaves.count { it.currentX in (settleX - 0.14f)..<settleX }
