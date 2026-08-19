@@ -49,16 +49,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v2.26.1
-          name: "Buddho Timer v2.26.1"
+          tag_name: v2.26.3
+          name: "Buddho Timer v2.26.3"
           body: |
-            ## 🍃 Buddho Meditation Timer v2.26.1
+            ## 🍃 Buddho Meditation Timer v2.26.3
 
-            ### Falling Leaves Polish
-            - **Consistent leaf colour**: Resting leaves now use the exact same ambient opacity as falling ones — no more jarring brightness jump when a leaf touches down
-            - **Proper stacking**: Leaves now physically land *on top of* each other using the correct leaf-height step (0.035 normalised vs the old 0.013), so the pile looks real instead of leaves floating/merging inside each other
-            - **Spreads across the full bottom**: Tighter support radius (one leaf-width) means only leaves directly below count as support, preventing leaves from appearing suspended in mid-air
-            - **Slower, more meditative accumulation**: Initial leaves are spread 2.2× higher above the screen so the first landing wave takes ~80 s instead of 30 s
+            ### Leaf Stacking — Overlap & Brightness Fix
+            - **No more leaves sitting inside each other**: Leaves snap to ~15 fixed columns across the screen. Two leaves landing simultaneously can never compute the same resting position.
+            - **Clean vertical stacks**: Each column builds upward with a proper leaf-height step — no horizontal overlap between adjacent columns, no vertical merging within a column.
+            - **No brightness hotspots**: Eliminating positional overlap removes alpha accumulation that was causing bright patches in the pile.
+            - **Same-frame collision fix**: Settling leaves are included in the position snapshot so concurrent arrivals don't stack on the same spot.
 
             - **100% Offline & Private**: Zero tracking, zero ads, zero internet permissions.
           draft: false
