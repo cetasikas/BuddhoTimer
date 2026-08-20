@@ -6,13 +6,13 @@ import com.samadhi.meditationtimer.R
 
 enum class ParticleType {
     BAMBOO_LEAF,
-    LOTUS_PETAL,
+    BODHI_LEAF,
     SAKURA_PETAL
 }
 
 enum class ZenThemeId(val id: String, val title: String, val subtitle: String) {
     BAMBOO_TEAL("bamboo_teal", "Moonlit Bamboo", "Original serene teal & bamboo leaves"),
-    SACRED_LOTUS("sacred_lotus", "Golden Lotus", "Warm temple gold & floating amber petals"),
+    GOLDEN_BODHI("golden_bodhi", "Golden Bodhi", "Warm temple gold & floating sacred bodhi leaves"),
     SAKURA_TWILIGHT("sakura_twilight", "Sakura Twilight", "Midnight cherry blossom & drifting petals")
 }
 
@@ -49,16 +49,16 @@ val BambooTealTheme = ZenTheme(
     )
 )
 
-val SacredLotusTheme = ZenTheme(
-    id = ZenThemeId.SACRED_LOTUS,
-    title = "Golden Lotus",
+val GoldenBodhiTheme = ZenTheme(
+    id = ZenThemeId.GOLDEN_BODHI,
+    title = "Golden Bodhi",
     backgroundDrawableRes = R.drawable.bg_zen_lotus,
     primary = Color(0xFFD4AF37),
     primaryLight = Color(0xFFFFE082),
     primaryDark = Color(0xFF8D6E1C),
     primaryGlow = Color(0x35D4AF37),
     overrunColor = Color(0xFF60A5FA),
-    particleType = ParticleType.LOTUS_PETAL,
+    particleType = ParticleType.BODHI_LEAF,
     particlePalette = listOf(
         Color(0xFFFFE082),
         Color(0xFFFFD54F),
@@ -68,6 +68,8 @@ val SacredLotusTheme = ZenTheme(
         Color(0xFFC8A261)
     )
 )
+
+val SacredLotusTheme = GoldenBodhiTheme
 
 val SakuraTwilightTheme = ZenTheme(
     id = ZenThemeId.SAKURA_TWILIGHT,
@@ -89,12 +91,12 @@ val SakuraTwilightTheme = ZenTheme(
     )
 )
 
-val LocalZenTheme = compositionLocalOf { BambooTealTheme }
+val LocalZenTheme = compositionLocalOf { GoldenBodhiTheme }
 
 fun getZenThemeById(id: String?): ZenTheme {
     return when (id) {
-        ZenThemeId.SACRED_LOTUS.id -> SacredLotusTheme
+        ZenThemeId.BAMBOO_TEAL.id -> BambooTealTheme
         ZenThemeId.SAKURA_TWILIGHT.id -> SakuraTwilightTheme
-        else -> BambooTealTheme
+        else -> GoldenBodhiTheme
     }
 }

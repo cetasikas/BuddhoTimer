@@ -612,22 +612,31 @@ private fun DrawScope.drawIndividualParticle(
                         detailPath.lineTo(fx - halfW * 0.55f, fy - halfH * 0.12f)
                     }
                 }
-                ParticleType.LOTUS_PETAL -> {
-                    shapePath.moveTo(center.x, center.y - halfH * 0.95f)
-                    shapePath.cubicTo(center.x + halfW * 1.38f + asym, center.y - halfH * 0.40f, center.x + halfW * 1.28f + asym, center.y + halfH * 0.45f, center.x, center.y + halfH)
-                    shapePath.cubicTo(center.x - halfW * 1.28f + asym, center.y + halfH * 0.45f, center.x - halfW * 1.38f + asym, center.y - halfH * 0.40f, center.x, center.y - halfH * 0.95f)
+                ParticleType.BODHI_LEAF -> {
+                    // Bodhi Leaf geometry (heart-shaped body with elegant extended drip tip)
+                    shapePath.moveTo(center.x, center.y - halfH * 1.05f) // Extended tip
+                    shapePath.cubicTo(
+                        center.x + halfW * 1.35f + asym, center.y - halfH * 0.35f,
+                        center.x + halfW * 1.15f + asym, center.y + halfH * 0.45f,
+                        center.x, center.y + halfH * 0.90f // Heart base
+                    )
+                    shapePath.cubicTo(
+                        center.x - halfW * 1.15f + asym, center.y + halfH * 0.45f,
+                        center.x - halfW * 1.35f + asym, center.y - halfH * 0.35f,
+                        center.x, center.y - halfH * 1.05f
+                    )
                     shapePath.close()
 
-                    detailPath.moveTo(center.x, center.y - halfH * 0.85f)
-                    detailPath.quadraticTo(center.x + halfW * 0.20f + asym * 0.4f, center.y, center.x, center.y + halfH * 0.85f)
-                    val branches = 2
+                    detailPath.moveTo(center.x, center.y - halfH * 0.95f)
+                    detailPath.quadraticTo(center.x + asym * 0.3f, center.y, center.x, center.y + halfH * 0.85f)
+                    val branches = 3
                     for (i in 1..branches) {
-                        val fy = center.y - halfH * 0.5f + (halfH * 1.0f) * (i / (branches + 1f))
+                        val fy = center.y - halfH * 0.6f + (halfH * 1.2f) * (i / (branches + 1f))
                         val fx = center.x + asym * 0.3f * (i / (branches + 1f))
                         detailPath.moveTo(fx, fy)
-                        detailPath.lineTo(fx + halfW * 0.45f, fy - halfH * 0.08f)
+                        detailPath.lineTo(fx + halfW * 0.50f, fy - halfH * 0.10f)
                         detailPath.moveTo(fx, fy)
-                        detailPath.lineTo(fx - halfW * 0.45f, fy - halfH * 0.08f)
+                        detailPath.lineTo(fx - halfW * 0.50f, fy - halfH * 0.10f)
                     }
                 }
                 ParticleType.SAKURA_PETAL -> {

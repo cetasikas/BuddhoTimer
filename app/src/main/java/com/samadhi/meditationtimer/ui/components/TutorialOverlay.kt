@@ -57,8 +57,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.samadhi.meditationtimer.ui.theme.BambooTealTheme
+import com.samadhi.meditationtimer.ui.theme.GoldenBodhiTheme
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
-import com.samadhi.meditationtimer.ui.theme.SacredLotusTheme
 import com.samadhi.meditationtimer.ui.theme.SakuraTwilightTheme
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenSurface

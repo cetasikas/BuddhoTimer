@@ -5,4 +5,5 @@
     <color name="zen_surface">#FF161B22</color>
     <color name="zen_accent">#FFE5A93B</color>
     <color name="zen_secondary">#FF58A6FF</color>
+    <color name="ic_launcher_background">#FF000000</color>
 </resources>

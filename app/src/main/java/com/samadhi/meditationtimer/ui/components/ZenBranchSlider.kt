@@ -224,17 +224,17 @@ fun ZenBranchSlider(
                         thumbX, centerY - 6f
                     )
                 }
-                ParticleType.LOTUS_PETAL -> {
-                    // Lotus Bud
+                ParticleType.BODHI_LEAF -> {
+                    // Bodhi Leaf with distinctive tapered tip
                     thumbPath.moveTo(thumbX, centerY - 6f)
                     thumbPath.cubicTo(
-                        thumbX + 11f, centerY - 16f,
-                        thumbX + 10f, centerY - 25f,
-                        thumbX, centerY - 31f
+                        thumbX + 12f, centerY - 14f,
+                        thumbX + 11f, centerY - 23f,
+                        thumbX, centerY - 32f
                     )
                     thumbPath.cubicTo(
-                        thumbX - 10f, centerY - 25f,
-                        thumbX - 11f, centerY - 16f,
+                        thumbX - 11f, centerY - 23f,
+                        thumbX - 12f, centerY - 14f,
                         thumbX, centerY - 6f
                     )
                 }

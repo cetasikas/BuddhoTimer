@@ -63,7 +63,7 @@ fun MainAppScaffold() {
 
     val prefs = remember { context.getSharedPreferences("buddho_prefs", Context.MODE_PRIVATE) }
     var selectedThemeId by remember {
-        mutableStateOf(prefs.getString("selected_theme_id", ZenThemeId.BAMBOO_TEAL.id) ?: ZenThemeId.BAMBOO_TEAL.id)
+        mutableStateOf(prefs.getString("selected_theme_id", ZenThemeId.GOLDEN_BODHI.id) ?: ZenThemeId.GOLDEN_BODHI.id)
     }
     var showTutorialOverlay by remember {
         mutableStateOf(!prefs.getBoolean("has_seen_tutorial_v1", false))

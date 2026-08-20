@@ -273,8 +273,8 @@ private fun DrawScope.drawZenEnsoGarland(
                     primaryDark = primaryDark
                 )
             }
-            ZenThemeId.SACRED_LOTUS -> {
-                drawEnsoLotusPetal(
+            ZenThemeId.GOLDEN_BODHI -> {
+                drawEnsoBodhiLeaf(
                     center = unitCenter,
                     scale = finalScale,
                     rotation = tangentRotation,
@@ -392,10 +392,10 @@ private fun DrawScope.drawEnsoBambooLeaf(
 }
 
 // =========================================================================
-// 2. SACRED LOTUS ENSŌ PETAL
+// 2. GOLDEN BODHI ENSŌ LEAF
 // =========================================================================
 
-private fun DrawScope.drawEnsoLotusPetal(
+private fun DrawScope.drawEnsoBodhiLeaf(
     center: Offset,
     scale: Float,
     rotation: Float,
@@ -407,19 +407,19 @@ private fun DrawScope.drawEnsoLotusPetal(
 ) {
     rotate(degrees = rotation, pivot = center) {
         val len = scale * 40f
-        val wid = scale * 16f
+        val wid = scale * 15f
 
         val path = Path().apply {
-            moveTo(center.x, center.y - len * 0.50f)
+            moveTo(center.x, center.y - len * 0.52f) // Tapered tip
             cubicTo(
-                center.x - wid * 1.0f, center.y - len * 0.10f,
-                center.x - wid * 0.7f, center.y + len * 0.45f,
-                center.x, center.y + len * 0.50f
+                center.x - wid * 1.15f, center.y - len * 0.20f,
+                center.x - wid * 0.85f, center.y + len * 0.35f,
+                center.x, center.y + len * 0.48f // Heart base
             )
             cubicTo(
-                center.x + wid * 0.7f, center.y + len * 0.45f,
-                center.x + wid * 1.0f, center.y - len * 0.10f,
-                center.x, center.y - len * 0.50f
+                center.x + wid * 0.85f, center.y + len * 0.35f,
+                center.x + wid * 1.15f, center.y - len * 0.20f,
+                center.x, center.y - len * 0.52f
             )
             close()
         }
@@ -430,26 +430,46 @@ private fun DrawScope.drawEnsoLotusPetal(
             path = path,
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    Color(0xFFFFF8E7).copy(alpha = 0.95f * alpha),
-                    primaryLight.copy(alpha = 0.90f * alpha),
-                    baseColor.copy(alpha = 0.85f * alpha)
+                    primaryLight.copy(alpha = 0.95f * alpha),
+                    baseColor.copy(alpha = 0.88f * alpha),
+                    Color(0xFF5D4010).copy(alpha = 0.85f * alpha)
                 ),
-                startY = center.y - len * 0.50f,
-                endY = center.y + len * 0.50f
+                startY = center.y - len * 0.52f,
+                endY = center.y + len * 0.48f
             )
         )
 
+        // Bodhi leaf central stem & lateral filament veins
         drawLine(
-            color = Color.White.copy(alpha = 0.75f * alpha),
-            start = Offset(center.x, center.y - len * 0.45f),
-            end = Offset(center.x, center.y + len * 0.40f),
-            strokeWidth = 1.0f
+            color = primaryLight.copy(alpha = 0.85f * alpha),
+            start = Offset(center.x, center.y - len * 0.48f),
+            end = Offset(center.x, center.y + len * 0.45f),
+            strokeWidth = 1.2f,
+            cap = StrokeCap.Round
         )
+
+        // Delicate radiating lateral veins
+        for (i in 1..3) {
+            val vy = center.y - len * 0.35f + (len * 0.65f) * (i / 4f)
+            val vLen = wid * (0.65f - (i * 0.08f))
+            drawLine(
+                color = primaryLight.copy(alpha = 0.50f * alpha),
+                start = Offset(center.x, vy),
+                end = Offset(center.x + vLen, vy - len * 0.08f),
+                strokeWidth = 0.8f
+            )
+            drawLine(
+                color = primaryLight.copy(alpha = 0.50f * alpha),
+                start = Offset(center.x, vy),
+                end = Offset(center.x - vLen, vy - len * 0.08f),
+                strokeWidth = 0.8f
+            )
+        }
 
         drawPath(
             path = path,
-            color = primaryLight.copy(alpha = 0.80f * alpha),
-            style = Stroke(width = 1.1f)
+            color = primaryLight.copy(alpha = 0.70f * alpha),
+            style = Stroke(width = 1.0f)
         )
     }
 }
