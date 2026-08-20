@@ -133,6 +133,11 @@ private class GroundHeightMap(
     }
 }
 
+private fun smoothProgress(x: Float): Float {
+    val c = x.coerceIn(0f, 1f)
+    return c * c * (3f - 2f * c)
+}
+
 @Composable
 fun FallingLeavesEffect(
     modifier: Modifier = Modifier,
@@ -234,39 +239,42 @@ fun FallingLeavesEffect(
     }
 
     LaunchedEffect(sessionProgressRatio, pileUpAtBottom) {
-        if (pileUpAtBottom) {
-            val eased = sessionProgressRatio.coerceIn(0f, 1f).pow(0.6f)
-            val target = (eased * maxRestingLeaves).toInt()
-            val missing = target - restingLeaves.size
-            if (missing > 0) {
-                val rng = Random(System.currentTimeMillis())
-                repeat(missing) {
-                    val dropX = rng.nextFloat() * 0.84f + 0.08f
-                    val (x, y, slopeTilt) = groundMap.depositLeaf(dropX)
-                    val baseRot = if (rng.nextBoolean()) 90f else 270f
-                    restingLeaves.add(
-                        LeafParticle(
-                            x = x,
-                            y = y,
-                            originX = x,
-                            fallSpeed = 0f,
-                            swayAmplitude = 0f,
-                            swayFrequency = 0f,
-                            swayPhase = 0f,
-                            tumbleFrequency = 0f,
-                            tumblePhase = 0f,
-                            rotation = baseRot + slopeTilt + (rng.nextFloat() * 28f - 14f),
-                            rotationSpeed = 0f,
-                            size = rng.nextFloat() * 5f + 16f,
-                            alpha = rng.nextFloat() * 0.15f + 0.70f,
-                            color = currentTheme.particlePalette.random(rng),
-                            isResting = true,
-                            restSwayPhase = rng.nextFloat() * 6.28f,
-                            spawnElapsedSec = 1.2f
-                        )
-                    )
-                }
-            }
+        if (!pileUpAtBottom) return@LaunchedEffect
+        val target = (smoothProgress(sessionProgressRatio) * maxRestingLeaves).toInt()
+        val missing = target - restingLeaves.size
+        if (missing <= 0) return@LaunchedEffect
+
+        // A big gap only happens on first load or resuming after being away —
+        // catch up instantly there. Otherwise this fires ~once a second as
+        // progress ticks, so cap it to a slow trickle rather than a burst.
+        val toAdd = if (missing > 6) missing else 1
+
+        val rng = Random(System.currentTimeMillis())
+        repeat(toAdd) {
+            val dropX = rng.nextFloat() * 0.84f + 0.08f
+            val (x, y, slopeTilt) = groundMap.depositLeaf(dropX)
+            val baseRot = if (rng.nextBoolean()) 90f else 270f
+            restingLeaves.add(
+                LeafParticle(
+                    x = x,
+                    y = y,
+                    originX = x,
+                    fallSpeed = 0f,
+                    swayAmplitude = 0f,
+                    swayFrequency = 0f,
+                    swayPhase = 0f,
+                    tumbleFrequency = 0f,
+                    tumblePhase = 0f,
+                    rotation = baseRot + slopeTilt + (rng.nextFloat() * 28f - 14f),
+                    rotationSpeed = 0f,
+                    size = rng.nextFloat() * 5f + 16f,
+                    alpha = rng.nextFloat() * 0.15f + 0.70f,
+                    color = currentTheme.particlePalette.random(rng),
+                    isResting = true,
+                    restSwayPhase = rng.nextFloat() * 6.28f,
+                    spawnElapsedSec = 1.2f
+                )
+            )
         }
     }
 
@@ -315,8 +323,7 @@ fun FallingLeavesEffect(
 
                     val macroWind = sin(totalElapsedSec / 38.0f) * 0.012f + sin(totalElapsedSec / 19.0f) * 0.004f
 
-                    val easedProgress = sessionProgressRatio.coerceIn(0f, 1f).pow(0.6f)
-                    val expectedRestingCount = (easedProgress * maxRestingLeaves).toInt()
+                    val expectedRestingCount = (smoothProgress(sessionProgressRatio) * maxRestingLeaves).toInt()
 
                     fallingLeaves.forEach { leaf ->
                         leaf.spawnElapsedSec += dt
