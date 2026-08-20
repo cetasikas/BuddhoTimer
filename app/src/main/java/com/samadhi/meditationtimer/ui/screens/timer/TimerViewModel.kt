@@ -67,7 +67,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             targetDurationMinutes = prefs.getInt("target_duration_min", 15),
             prepTimeSeconds = prefs.getInt("prep_time_sec", 5),
             soundBellResName = prefs.getString("sound_bell_res", SoundHelper.SOUND_TIBETAN_BOWL) ?: SoundHelper.SOUND_TIBETAN_BOWL,
-            isAutoDndEnabled = prefs.getBoolean("auto_dnd", true),
+            isAutoDndEnabled = prefs.getBoolean("auto_dnd", false),
             isOpenEnded = prefs.getBoolean("open_ended", false),
             isOverrunEnabled = prefs.getBoolean("overrun_enabled", true),
             showLeavesDuringMeditation = prefs.getBoolean("show_leaves", true),

@@ -561,7 +561,7 @@ fun SettingsScreen(
                 }
 
                 // 4. DISPLAY & SCREEN TIMEOUT
-                val displaySummary = if (config.tapToBlackoutEnabled) "Blackout Enabled" else if (config.keepScreenAwake) "Keep Awake" else "Standard"
+                val displaySummary = if (config.tapToBlackoutEnabled) "Blackout" else if (config.keepScreenAwake) "Awake" else "Standard"
                 ExpandableSettingsCard(
                     title = "Display & Screen Timeout",
                     icon = Icons.Default.DarkMode,
@@ -569,15 +569,15 @@ fun SettingsScreen(
                     isExpanded = expandedDisplay,
                     onToggle = { expandedDisplay = !expandedDisplay }
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                                 Text("Tap to Blackout Screen", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("Tap during sits to turn display pure AMOLED black, tap again to wake", fontSize = 11.sp, color = ZenTextSecondary)
+                                Text("Tap during sits for AMOLED black", fontSize = 11.sp, color = ZenTextSecondary)
                             }
                             Switch(
                                 checked = config.tapToBlackoutEnabled,
@@ -591,9 +591,9 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                                 Text("Keep Screen Awake", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("Prevent your screen from sleeping automatically during active sessions", fontSize = 11.sp, color = ZenTextSecondary)
+                                Text("Prevent sleep during active sessions", fontSize = 11.sp, color = ZenTextSecondary)
                             }
                             Switch(
                                 checked = config.keepScreenAwake,
@@ -946,41 +946,28 @@ fun SettingsScreen(
                         .clip(RoundedCornerShape(16.dp))
                         .clickable { onShowTutorial() },
                     colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.82f)),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.35f))),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(currentTheme.primary.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = currentTheme.primaryLight, modifier = Modifier.size(18.dp))
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text("Show Tutorial Tour", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("3-step feature & atmosphere walkthrough", fontSize = 11.sp, color = ZenTextSecondary)
-                            }
-                        }
-
-                        FilledTonalButton(
-                            onClick = onShowTutorial,
-                            modifier = Modifier.height(34.dp),
-                            colors = ButtonDefaults.filledTonalButtonColors(containerColor = currentTheme.primary, contentColor = ZenObsidian),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(currentTheme.primary.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text("Open", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = currentTheme.primaryLight, modifier = Modifier.size(18.dp))
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text("Show Tutorial Tour", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                            Text("3-step feature & atmosphere walkthrough", fontSize = 11.sp, color = ZenTextSecondary)
                         }
                     }
                 }

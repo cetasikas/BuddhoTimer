@@ -69,6 +69,8 @@ private class LeafParticle(
     var settleStartY: Float = 0f,
     var targetSettleX: Float = 0f,
     var targetSettleY: Float = 0f,
+    var shapeAsymmetry: Float = 0f,
+    var shapeStretch: Float = 1f,
     var isResting: Boolean = false,
     var restSwayPhase: Float = 0f,
     var spawnElapsedSec: Float = 1.2f
@@ -142,6 +144,12 @@ private fun smoothProgress(x: Float): Float {
     return c * c * (3f - 2f * c)
 }
 
+private fun weightedLeafColor(palette: List<Color>, rng: Random): Color {
+    if (palette.isEmpty()) return Color.Gray
+    return if (rng.nextFloat() < 0.65f) palette[0]
+    else palette[(1 + rng.nextInt((palette.size - 1).coerceAtLeast(1))).coerceAtMost(palette.size - 1)]
+}
+
 @Composable
 fun FallingLeavesEffect(
     modifier: Modifier = Modifier,
@@ -189,9 +197,11 @@ fun FallingLeavesEffect(
                             tumblePhase = 0f,
                             rotation = baseRot + slopeTilt + (rng.nextFloat() * 28f - 14f),
                             rotationSpeed = 0f,
-                            size = rng.nextFloat() * 5f + 16f,
+                            size = rng.nextFloat().pow(1.8f) * 14f + 12f,
                             alpha = rng.nextFloat() * 0.15f + 0.70f,
-                            color = currentTheme.particlePalette.random(rng),
+                            color = weightedLeafColor(currentTheme.particlePalette, rng),
+                            shapeAsymmetry = (rng.nextFloat() - 0.5f) * 2f,
+                            shapeStretch = 0.85f + rng.nextFloat() * 0.30f,
                             isResting = true,
                             restSwayPhase = rng.nextFloat() * 6.28f,
                             spawnElapsedSec = 1.2f
@@ -230,10 +240,12 @@ fun FallingLeavesEffect(
                         tumblePhase = rng.nextFloat() * 6.28f,
                         rotation = rng.nextFloat() * 360f,
                         rotationSpeed = (rng.nextFloat() - 0.5f) * 0.7f,
-                        size = (rng.nextFloat() * 5f + 16f) * depth.scaleMultiplier * (if (isHero) 1.35f else 1f),
+                        size = (rng.nextFloat().pow(1.8f) * 14f + 12f) * depth.scaleMultiplier * (if (isHero) 1.35f else 1f),
                         alpha = (rng.nextFloat() * 0.15f + 0.70f) * depth.alphaMultiplier * (if (isHero) 1.2f else 1f),
-                        color = currentTheme.particlePalette.random(rng),
+                        color = weightedLeafColor(currentTheme.particlePalette, rng),
                         depth = depth,
+                        shapeAsymmetry = (rng.nextFloat() - 0.5f) * 2f,
+                        shapeStretch = 0.85f + rng.nextFloat() * 0.30f,
                         isResting = false,
                         spawnElapsedSec = 1.2f
                     )
@@ -271,9 +283,11 @@ fun FallingLeavesEffect(
                     tumblePhase = 0f,
                     rotation = baseRot + slopeTilt + (rng.nextFloat() * 28f - 14f),
                     rotationSpeed = 0f,
-                    size = rng.nextFloat() * 5f + 16f,
+                    size = rng.nextFloat().pow(1.8f) * 14f + 12f,
                     alpha = rng.nextFloat() * 0.15f + 0.70f,
-                    color = currentTheme.particlePalette.random(rng),
+                    color = weightedLeafColor(currentTheme.particlePalette, rng),
+                    shapeAsymmetry = (rng.nextFloat() - 0.5f) * 2f,
+                    shapeStretch = 0.85f + rng.nextFloat() * 0.30f,
                     isResting = true,
                     restSwayPhase = rng.nextFloat() * 6.28f,
                     spawnElapsedSec = 1.2f
@@ -387,6 +401,8 @@ fun FallingLeavesEffect(
                                         settleStartY = floorContactY,
                                         targetSettleX = settledX,
                                         targetSettleY = settledY,
+                                        shapeAsymmetry = leaf.shapeAsymmetry,
+                                        shapeStretch = leaf.shapeStretch,
                                         isResting = false,
                                         restSwayPhase = Random.nextFloat() * 6.28f,
                                         spawnElapsedSec = 1.2f
@@ -516,7 +532,9 @@ fun FallingLeavesEffect(
                 particleType = currentTheme.particleType,
                 isGlowing = isGlowing && !leaf.isResting && !leaf.isSettling,
                 breathingGlowFactor = breathingWave,
-                isResting = leaf.isResting || leaf.isSettling
+                isResting = leaf.isResting || leaf.isSettling,
+                shapeAsymmetry = leaf.shapeAsymmetry,
+                shapeStretch = leaf.shapeStretch
             )
         }
     }
@@ -534,48 +552,76 @@ private fun DrawScope.drawIndividualParticle(
     particleType: ParticleType,
     isGlowing: Boolean,
     breathingGlowFactor: Float,
-    isResting: Boolean
+    isResting: Boolean,
+    shapeAsymmetry: Float = 0f,
+    shapeStretch: Float = 1f
 ) {
     rotate(degrees = rotation, pivot = center) {
         scale(scaleX = scaleX, scaleY = 1.0f, pivot = center) {
             shapePath.reset()
             detailPath.reset()
 
-            val halfW = size * 0.44f
-            val halfH = size * 0.94f
+            val halfW = size * 0.44f * shapeStretch
+            val halfH = size * 0.94f / shapeStretch
+            val asym = halfW * 0.16f * shapeAsymmetry
 
             when (particleType) {
                 ParticleType.BAMBOO_LEAF -> {
                     shapePath.moveTo(center.x, center.y - halfH)
-                    shapePath.cubicTo(center.x + halfW * 1.08f, center.y - halfH * 0.32f, center.x + halfW * 0.88f, center.y + halfH * 0.38f, center.x, center.y + halfH)
-                    shapePath.cubicTo(center.x - halfW * 0.88f, center.y + halfH * 0.38f, center.x - halfW * 1.08f, center.y - halfH * 0.32f, center.x, center.y - halfH)
+                    shapePath.cubicTo(center.x + halfW * 1.08f + asym, center.y - halfH * 0.32f, center.x + halfW * 0.88f + asym, center.y + halfH * 0.38f, center.x, center.y + halfH)
+                    shapePath.cubicTo(center.x - halfW * 0.88f + asym, center.y + halfH * 0.38f, center.x - halfW * 1.08f + asym, center.y - halfH * 0.32f, center.x, center.y - halfH)
                     shapePath.close()
+
                     detailPath.moveTo(center.x, center.y - halfH * 0.85f)
-                    detailPath.lineTo(center.x, center.y + halfH * 0.88f)
-                    val stepY = halfH * 0.38f
-                    detailPath.moveTo(center.x, center.y - stepY * 0.6f)
-                    detailPath.quadraticTo(center.x + halfW * 0.5f, center.y - stepY * 0.85f, center.x + halfW * 0.65f, center.y - stepY * 0.7f)
-                    detailPath.moveTo(center.x, center.y - stepY * 0.6f)
-                    detailPath.quadraticTo(center.x - halfW * 0.5f, center.y - stepY * 0.85f, center.x - halfW * 0.65f, center.y - stepY * 0.7f)
+                    detailPath.quadraticTo(center.x + asym * 0.4f, center.y, center.x, center.y + halfH * 0.88f)
+                    val branches = 3
+                    for (i in 1..branches) {
+                        val fy = center.y - halfH * 0.7f + (halfH * 1.4f) * (i / (branches + 1f))
+                        val fx = center.x + asym * 0.4f * (i / (branches + 1f))
+                        detailPath.moveTo(fx, fy)
+                        detailPath.lineTo(fx + halfW * 0.55f, fy - halfH * 0.12f)
+                        detailPath.moveTo(fx, fy)
+                        detailPath.lineTo(fx - halfW * 0.55f, fy - halfH * 0.12f)
+                    }
                 }
                 ParticleType.LOTUS_PETAL -> {
                     shapePath.moveTo(center.x, center.y - halfH * 0.95f)
-                    shapePath.cubicTo(center.x + halfW * 1.38f, center.y - halfH * 0.40f, center.x + halfW * 1.28f, center.y + halfH * 0.45f, center.x, center.y + halfH)
-                    shapePath.cubicTo(center.x - halfW * 1.28f, center.y + halfH * 0.45f, center.x - halfW * 1.38f, center.y - halfH * 0.40f, center.x, center.y - halfH * 0.95f)
+                    shapePath.cubicTo(center.x + halfW * 1.38f + asym, center.y - halfH * 0.40f, center.x + halfW * 1.28f + asym, center.y + halfH * 0.45f, center.x, center.y + halfH)
+                    shapePath.cubicTo(center.x - halfW * 1.28f + asym, center.y + halfH * 0.45f, center.x - halfW * 1.38f + asym, center.y - halfH * 0.40f, center.x, center.y - halfH * 0.95f)
                     shapePath.close()
+
                     detailPath.moveTo(center.x, center.y - halfH * 0.85f)
-                    detailPath.quadraticTo(center.x + halfW * 0.20f, center.y, center.x, center.y + halfH * 0.85f)
+                    detailPath.quadraticTo(center.x + halfW * 0.20f + asym * 0.4f, center.y, center.x, center.y + halfH * 0.85f)
+                    val branches = 2
+                    for (i in 1..branches) {
+                        val fy = center.y - halfH * 0.5f + (halfH * 1.0f) * (i / (branches + 1f))
+                        val fx = center.x + asym * 0.3f * (i / (branches + 1f))
+                        detailPath.moveTo(fx, fy)
+                        detailPath.lineTo(fx + halfW * 0.45f, fy - halfH * 0.08f)
+                        detailPath.moveTo(fx, fy)
+                        detailPath.lineTo(fx - halfW * 0.45f, fy - halfH * 0.08f)
+                    }
                 }
                 ParticleType.SAKURA_PETAL -> {
                     val topY = center.y - halfH * 0.95f
                     val cleft = halfH * 0.08f
                     shapePath.moveTo(center.x, center.y + halfH * 0.90f)
-                    shapePath.cubicTo(center.x - halfW * 0.98f, center.y + halfH * 0.25f, center.x - halfW * 1.08f, center.y - halfH * 0.55f, center.x - halfW * 0.35f, topY)
-                    shapePath.quadraticTo(center.x, topY + cleft, center.x + halfW * 0.35f, topY)
-                    shapePath.cubicTo(center.x + halfW * 1.08f, center.y - halfH * 0.55f, center.x + halfW * 0.98f, center.y + halfH * 0.25f, center.x, center.y + halfH * 0.90f)
+                    shapePath.cubicTo(center.x - halfW * 0.98f + asym, center.y + halfH * 0.25f, center.x - halfW * 1.08f + asym, center.y - halfH * 0.55f, center.x - halfW * 0.35f + asym, topY)
+                    shapePath.quadraticTo(center.x, topY + cleft, center.x + halfW * 0.35f + asym, topY)
+                    shapePath.cubicTo(center.x + halfW * 1.08f + asym, center.y - halfH * 0.55f, center.x + halfW * 0.98f + asym, center.y + halfH * 0.25f, center.x, center.y + halfH * 0.90f)
                     shapePath.close()
+
                     detailPath.moveTo(center.x, topY + cleft * 1.5f)
                     detailPath.lineTo(center.x, center.y + halfH * 0.75f)
+                    val branches = 2
+                    for (i in 1..branches) {
+                        val fy = center.y - halfH * 0.4f + (halfH * 0.9f) * (i / (branches + 1f))
+                        val fx = center.x + asym * 0.3f * (i / (branches + 1f))
+                        detailPath.moveTo(fx, fy)
+                        detailPath.lineTo(fx + halfW * 0.40f, fy - halfH * 0.06f)
+                        detailPath.moveTo(fx, fy)
+                        detailPath.lineTo(fx - halfW * 0.40f, fy - halfH * 0.06f)
+                    }
                 }
             }
 
@@ -590,10 +636,12 @@ private fun DrawScope.drawIndividualParticle(
 
             drawPath(path = shapePath, color = color)
 
+            val veinAlpha = if (isResting) (0.42f * color.alpha).coerceIn(0.15f, 0.5f)
+                            else (0.22f * color.alpha).coerceIn(0.05f, 0.28f)
             drawPath(
                 path = detailPath,
-                color = Color(0xFF041014).copy(alpha = (0.28f * color.alpha).coerceIn(0.06f, 0.35f)),
-                style = Stroke(width = 1.0f)
+                color = Color(0xFF041014).copy(alpha = veinAlpha),
+                style = Stroke(width = if (isResting) 1.3f else 1.0f)
             )
 
             drawPath(

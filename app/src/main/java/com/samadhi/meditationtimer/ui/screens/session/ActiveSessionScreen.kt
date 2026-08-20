@@ -223,12 +223,15 @@ fun ActiveSessionScreen(
                 )
             }
         } else {
-            Box(
+            androidx.compose.foundation.layout.BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
+                val isLandscape = maxWidth > maxHeight
+                val timerSize = if (isLandscape) (maxHeight * 0.70f).coerceIn(160.dp, 250.dp) else 300.dp
+
                 // Top Navigation Controls (Clean Minimal Cancel Action)
                 Row(
                     modifier = Modifier
@@ -253,7 +256,7 @@ fun ActiveSessionScreen(
                         },
                         enabled = !isBlowingAway,
                         modifier = Modifier
-                            .size(44.dp)
+                            .size(if (isLandscape) 36.dp else 44.dp)
                             .clip(CircleShape)
                             .background(ZenSurface)
                     ) {
@@ -261,7 +264,7 @@ fun ActiveSessionScreen(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Cancel Practice",
                             tint = ZenTextSecondary,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(if (isLandscape) 16.dp else 20.dp)
                         )
                     }
                 }
@@ -287,11 +290,11 @@ fun ActiveSessionScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(28.dp))
+                            Spacer(modifier = Modifier.height(if (isLandscape) 12.dp else 28.dp))
 
                             Box(
                                 modifier = Modifier
-                                    .size(160.dp)
+                                    .size(if (isLandscape) 110.dp else 160.dp)
                                     .clip(CircleShape)
                                     .background(ZenSurface.copy(alpha = 0.65f))
                                     .border(2.dp, currentTheme.primaryLight.copy(alpha = 0.6f), CircleShape),
@@ -299,13 +302,13 @@ fun ActiveSessionScreen(
                             ) {
                                 Text(
                                     text = "${status.remainingSeconds}",
-                                    fontSize = 72.sp,
+                                    fontSize = if (isLandscape) 48.sp else 72.sp,
                                     fontWeight = FontWeight.ExtraLight,
                                     color = currentTheme.primaryLight
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(20.dp))
+                            Spacer(modifier = Modifier.height(if (isLandscape) 10.dp else 20.dp))
 
                             Text(
                                 text = "Settle into your posture & breathe gently",
@@ -326,177 +329,332 @@ fun ActiveSessionScreen(
                             (totalTarget - remainingSec).toFloat() / totalTarget.toFloat()
                         } else 1.0f
 
-                        // Standard Rich Interactive Session View
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            // Header Badge
-                            Box(
+                        if (isLandscape) {
+                            // Landscape layout: Timer on left, Header badge + Actions on right
+                            Row(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(
-                                        if (isOverrun) currentTheme.overrunColor.copy(alpha = 0.15f)
-                                        else currentTheme.primary.copy(alpha = 0.18f)
-                                    )
-                                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                                    .fillMaxSize()
+                                    .padding(top = 16.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = when {
-                                        isPaused -> "PAUSED"
-                                        isOverrun -> "EXTENDED TIME"
-                                        config.isOpenEnded -> "OPEN PRACTICE"
-                                        else -> "MEDITATING"
-                                    },
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 2.sp,
-                                    color = if (isOverrun) currentTheme.overrunColor else currentTheme.primaryLight
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(36.dp))
-
-                        // Circular Progress Display with Breath Pacing Aura & Interval Notches
-                        // Wrapped in a measurement Box so FallingLeavesEffect knows the timer's
-                        // exact screen position and can route leaves around it.
-                        Box(
-                            modifier = Modifier.onGloballyPositioned { coords ->
-                                val pos = coords.positionInRoot()
-                                val w   = coords.size.width.toFloat()
-                                val h   = coords.size.height.toFloat()
-                                val cx  = pos.x + w / 2f
-                                val cy  = pos.y + h / 2f
-                                if (rootWidthPx > 1f && rootHeightPx > 1f) {
-                                    timerCenterXRatio = (cx / rootWidthPx).coerceIn(0.1f, 0.9f)
-                                    timerCenterYRatio = (cy / rootHeightPx).coerceIn(0.1f, 0.9f)
-                                    // Use the smaller of width/height as the circle's diameter
-                                    timerRadiusRatio  = (minOf(w, h) / 2f / rootHeightPx).coerceIn(0.05f, 0.45f)
-                                }
-                            }
-                        ) {
-                        CircularTimerProgress(
-                            progress = progress,
-                            isOverrun = isOverrun,
-                            isPaused = isPaused,
-                            size = 300.dp,
-                            strokeWidth = 10.dp,
-                            intervalMinutes = config.mindfulnessIntervalMinutes,
-                            totalDurationMinutes = config.targetDurationMinutes
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                if (isOverrun) {
-                                    val overrunTime = elapsedSec - totalTarget
-                                    Text(
-                                        text = "+${NotificationHelper.formatSeconds(overrunTime)}",
-                                        fontSize = 52.sp,
-                                        fontWeight = FontWeight.Light,
-                                        color = currentTheme.overrunColor
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "Total: ${NotificationHelper.formatSeconds(elapsedSec)}",
-                                        fontSize = 14.sp,
-                                        color = ZenTextSecondary
-                                    )
-                                } else if (config.isOpenEnded) {
-                                    Text(
-                                        text = NotificationHelper.formatSeconds(elapsedSec),
-                                        fontSize = 62.sp,
-                                        fontWeight = FontWeight.Light,
-                                        color = ZenTextPrimary
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "Elapsed Time",
-                                        fontSize = 13.sp,
-                                        color = ZenTextSecondary
-                                    )
-                                } else {
-                                    Text(
-                                        text = NotificationHelper.formatSeconds(remainingSec),
-                                        fontSize = 64.sp,
-                                        fontWeight = FontWeight.Light,
-                                        letterSpacing = (-1).sp,
-                                        color = ZenTextPrimary
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSec)}",
-                                        fontSize = 13.sp,
-                                        color = ZenTextSecondary
-                                    )
-                                }
-                            }
-                        }
-                        } // end measurement Box
-
-                        Spacer(modifier = Modifier.height(48.dp))
-
-                        // Action Controls
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(20.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Pause / Resume Button
-                            IconButton(
-                                onClick = {
-                                    leavesBurstTrigger++
-                                    if (isPaused) viewModel.resumeSession() else viewModel.pauseSession()
-                                },
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(CircleShape)
-                                    .background(ZenSurface)
-                            ) {
-                                Icon(
-                                    imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                                    contentDescription = if (isPaused) "Resume" else "Pause",
-                                    tint = currentTheme.primaryLight,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-
-                            // Complete / Finish Button (Preserves leaf pile for the overview screen)
-                            Button(
-                                onClick = { viewModel.finishSession() },
-                                modifier = Modifier
-                                    .height(56.dp)
-                                    .clip(RoundedCornerShape(28.dp)),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary,
-                                    contentColor = ZenObsidian
-                                )
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                Box(
+                                    modifier = Modifier.onGloballyPositioned { coords ->
+                                        val pos = coords.positionInRoot()
+                                        val w   = coords.size.width.toFloat()
+                                        val h   = coords.size.height.toFloat()
+                                        val cx  = pos.x + w / 2f
+                                        val cy  = pos.y + h / 2f
+                                        if (rootWidthPx > 1f && rootHeightPx > 1f) {
+                                            timerCenterXRatio = (cx / rootWidthPx).coerceIn(0.1f, 0.9f)
+                                            timerCenterYRatio = (cy / rootHeightPx).coerceIn(0.1f, 0.9f)
+                                            timerRadiusRatio  = (minOf(w, h) / 2f / rootHeightPx).coerceIn(0.05f, 0.45f)
+                                        }
+                                    }
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    CircularTimerProgress(
+                                        progress = progress,
+                                        isOverrun = isOverrun,
+                                        isPaused = isPaused,
+                                        size = timerSize,
+                                        strokeWidth = 8.dp,
+                                        intervalMinutes = config.mindfulnessIntervalMinutes,
+                                        totalDurationMinutes = config.targetDurationMinutes
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            if (isOverrun) {
+                                                val overrunTime = elapsedSec - totalTarget
+                                                Text(
+                                                    text = "+${NotificationHelper.formatSeconds(overrunTime)}",
+                                                    fontSize = 38.sp,
+                                                    fontWeight = FontWeight.Light,
+                                                    color = currentTheme.overrunColor
+                                                )
+                                                Text(
+                                                    text = "Total: ${NotificationHelper.formatSeconds(elapsedSec)}",
+                                                    fontSize = 12.sp,
+                                                    color = ZenTextSecondary
+                                                )
+                                            } else if (config.isOpenEnded) {
+                                                Text(
+                                                    text = NotificationHelper.formatSeconds(elapsedSec),
+                                                    fontSize = 44.sp,
+                                                    fontWeight = FontWeight.Light,
+                                                    color = ZenTextPrimary
+                                                )
+                                                Text(
+                                                    text = "Elapsed Time",
+                                                    fontSize = 11.5.sp,
+                                                    color = ZenTextSecondary
+                                                )
+                                            } else {
+                                                Text(
+                                                    text = NotificationHelper.formatSeconds(remainingSec),
+                                                    fontSize = 46.sp,
+                                                    fontWeight = FontWeight.Light,
+                                                    letterSpacing = (-1).sp,
+                                                    color = ZenTextPrimary
+                                                )
+                                                Text(
+                                                    text = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSec)}",
+                                                    fontSize = 11.5.sp,
+                                                    color = ZenTextSecondary
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(32.dp))
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(
+                                                if (isOverrun) currentTheme.overrunColor.copy(alpha = 0.15f)
+                                                else currentTheme.primary.copy(alpha = 0.18f)
+                                            )
+                                            .padding(horizontal = 14.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = when {
+                                                isPaused -> "PAUSED"
+                                                isOverrun -> "EXTENDED TIME"
+                                                config.isOpenEnded -> "OPEN PRACTICE"
+                                                else -> "MEDITATING"
+                                            },
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 1.5.sp,
+                                            color = if (isOverrun) currentTheme.overrunColor else currentTheme.primaryLight
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(20.dp))
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                leavesBurstTrigger++
+                                                if (isPaused) viewModel.resumeSession() else viewModel.pauseSession()
+                                            },
+                                            modifier = Modifier
+                                                .size(52.dp)
+                                                .clip(CircleShape)
+                                                .background(ZenSurface)
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                                                contentDescription = if (isPaused) "Resume" else "Pause",
+                                                tint = currentTheme.primaryLight,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+
+                                        Button(
+                                            onClick = { viewModel.finishSession() },
+                                            modifier = Modifier
+                                                .height(48.dp)
+                                                .clip(RoundedCornerShape(24.dp)),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary,
+                                                contentColor = ZenObsidian
+                                            )
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.padding(horizontal = 12.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = "Complete",
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 14.5.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            // Portrait Rich Interactive Session View
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                // Header Badge
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(
+                                            if (isOverrun) currentTheme.overrunColor.copy(alpha = 0.15f)
+                                            else currentTheme.primary.copy(alpha = 0.18f)
+                                        )
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                                ) {
                                     Text(
-                                        text = "Complete",
+                                        text = when {
+                                            isPaused -> "PAUSED"
+                                            isOverrun -> "EXTENDED TIME"
+                                            config.isOpenEnded -> "OPEN PRACTICE"
+                                            else -> "MEDITATING"
+                                        },
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp
+                                        letterSpacing = 2.sp,
+                                        color = if (isOverrun) currentTheme.overrunColor else currentTheme.primaryLight
                                     )
+                                }
+
+                                Spacer(modifier = Modifier.height(36.dp))
+
+                                // Circular Progress Display
+                                Box(
+                                    modifier = Modifier.onGloballyPositioned { coords ->
+                                        val pos = coords.positionInRoot()
+                                        val w   = coords.size.width.toFloat()
+                                        val h   = coords.size.height.toFloat()
+                                        val cx  = pos.x + w / 2f
+                                        val cy  = pos.y + h / 2f
+                                        if (rootWidthPx > 1f && rootHeightPx > 1f) {
+                                            timerCenterXRatio = (cx / rootWidthPx).coerceIn(0.1f, 0.9f)
+                                            timerCenterYRatio = (cy / rootHeightPx).coerceIn(0.1f, 0.9f)
+                                            timerRadiusRatio  = (minOf(w, h) / 2f / rootHeightPx).coerceIn(0.05f, 0.45f)
+                                        }
+                                    }
+                                ) {
+                                    CircularTimerProgress(
+                                        progress = progress,
+                                        isOverrun = isOverrun,
+                                        isPaused = isPaused,
+                                        size = 300.dp,
+                                        strokeWidth = 10.dp,
+                                        intervalMinutes = config.mindfulnessIntervalMinutes,
+                                        totalDurationMinutes = config.targetDurationMinutes
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            if (isOverrun) {
+                                                val overrunTime = elapsedSec - totalTarget
+                                                Text(
+                                                    text = "+${NotificationHelper.formatSeconds(overrunTime)}",
+                                                    fontSize = 52.sp,
+                                                    fontWeight = FontWeight.Light,
+                                                    color = currentTheme.overrunColor
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "Total: ${NotificationHelper.formatSeconds(elapsedSec)}",
+                                                    fontSize = 14.sp,
+                                                    color = ZenTextSecondary
+                                                )
+                                            } else if (config.isOpenEnded) {
+                                                Text(
+                                                    text = NotificationHelper.formatSeconds(elapsedSec),
+                                                    fontSize = 62.sp,
+                                                    fontWeight = FontWeight.Light,
+                                                    color = ZenTextPrimary
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "Elapsed Time",
+                                                    fontSize = 13.sp,
+                                                    color = ZenTextSecondary
+                                                )
+                                            } else {
+                                                Text(
+                                                    text = NotificationHelper.formatSeconds(remainingSec),
+                                                    fontSize = 64.sp,
+                                                    fontWeight = FontWeight.Light,
+                                                    letterSpacing = (-1).sp,
+                                                    color = ZenTextPrimary
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSec)}",
+                                                    fontSize = 13.sp,
+                                                    color = ZenTextSecondary
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(48.dp))
+
+                                // Action Controls
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            leavesBurstTrigger++
+                                            if (isPaused) viewModel.resumeSession() else viewModel.pauseSession()
+                                        },
+                                        modifier = Modifier
+                                            .size(64.dp)
+                                            .clip(CircleShape)
+                                            .background(ZenSurface)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                                            contentDescription = if (isPaused) "Resume" else "Pause",
+                                            tint = currentTheme.primaryLight,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+
+                                    Button(
+                                        onClick = { viewModel.finishSession() },
+                                        modifier = Modifier
+                                            .height(56.dp)
+                                            .clip(RoundedCornerShape(28.dp)),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary,
+                                            contentColor = ZenObsidian
+                                        )
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = "Complete",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 16.sp
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                else -> {
-                    // Fallback / Loading
-                    Text(text = "Initializing…", color = ZenTextMuted)
+                    else -> {
+                        Text(text = "Initializing…", color = ZenTextMuted)
+                    }
                 }
             }
         }
     }
-}
 }
 
 private fun android.content.Context.findActivity(): android.app.Activity? {

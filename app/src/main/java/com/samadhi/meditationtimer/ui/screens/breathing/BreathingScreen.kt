@@ -103,7 +103,21 @@ fun BreathingScreen(
     var isTopPatternDropdownOpen by remember { mutableStateOf(false) }
 
     val tapToBlackout = remember { prefs.getBoolean("tap_blackout", true) }
+    val isAutoDnd = remember { prefs.getBoolean("auto_dnd", false) }
     var isScreenBlackedOut by remember { mutableStateOf(false) }
+
+    // Optional Do Not Disturb during breathwork session
+    androidx.compose.runtime.DisposableEffect(isAutoDnd) {
+        val dndManager = com.samadhi.meditationtimer.service.DndManager(context)
+        if (isAutoDnd && dndManager.isDndAccessGranted) {
+            dndManager.enableDnd()
+        }
+        onDispose {
+            if (isAutoDnd && dndManager.isDndAccessGranted) {
+                dndManager.restoreDnd()
+            }
+        }
+    }
 
     // Keep Screen Awake based on user preference
     androidx.compose.runtime.DisposableEffect(keepScreenAwake) {
@@ -247,326 +261,576 @@ fun BreathingScreen(
                 )
             }
         } else {
-            Column(
+            androidx.compose.foundation.layout.BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
-                // --- 1. MINIMAL IMMERSIVE TOP BAR ---
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // Interactive Pattern Selector Dropdown Pill
-                    Box {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(ZenSurface.copy(alpha = 0.85f))
-                            .border(1.dp, currentTheme.primary.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
-                            .clickable { isTopPatternDropdownOpen = true }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = selectedPattern.name,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = currentTheme.primaryLight
-                        )
-                        Text(
-                            text = " • Cycle $completedCycles",
-                            fontSize = 12.sp,
-                            color = ZenTextSecondary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Switch Pattern",
-                            tint = currentTheme.primaryLight,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                val isLandscape = maxWidth > maxHeight
 
-                    DropdownMenu(
-                        expanded = isTopPatternDropdownOpen,
-                        onDismissRequest = { isTopPatternDropdownOpen = false },
-                        modifier = Modifier
-                            .fillMaxWidth(0.90f)
-                            .background(ZenSurface.copy(alpha = 0.98f))
-                            .border(1.2.dp, currentTheme.primary.copy(alpha = 0.50f), RoundedCornerShape(16.dp))
-                            .padding(vertical = 4.dp)
-                    ) {
-                        data class TopPatternMenuItem(
-                            val pattern: BreathingPattern,
-                            val summary: String
-                        )
-
-                        val topPatterns = listOf(
-                            TopPatternMenuItem(
-                                pattern = BreathingPattern.BOX_BREATHING,
-                                summary = "Focus & Stress Reset • 4s In • 4s Hold • 4s Out • 4s Hold"
-                            ),
-                            TopPatternMenuItem(
-                                pattern = BreathingPattern.RELAX_4_7_8,
-                                summary = "Deep Sleep & Relaxation • 4s In • 7s Hold • 8s Out"
-                            ),
-                            TopPatternMenuItem(
-                                pattern = BreathingPattern.RESONANT_BREATH,
-                                summary = "Heart Coherence • 5s Inhale • 5s Exhale"
-                            ),
-                            TopPatternMenuItem(
-                                pattern = BreathingPattern.TRANQUIL_3_3_3_3,
-                                summary = "Beginner Friendly • 3s In • 3s Hold • 3s Out • 3s Hold"
-                            )
-                        )
-
-                        topPatterns.forEach { item ->
-                            val isSelected = selectedPattern.id == item.pattern.id
-                            DropdownMenuItem(
-                                text = {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .padding(vertical = 2.dp)
-                                        ) {
-                                            Text(
-                                                text = item.pattern.name,
-                                                fontSize = 14.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
-                                            )
-                                            Spacer(modifier = Modifier.height(2.dp))
-                                            Text(
-                                                text = item.summary,
-                                                fontSize = 11.5.sp,
-                                                color = if (isSelected) currentTheme.primaryLight.copy(alpha = 0.85f) else ZenTextSecondary
-                                            )
-                                        }
-
-                                        if (isSelected) {
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(24.dp)
-                                                    .clip(CircleShape)
-                                                    .background(currentTheme.primary.copy(alpha = 0.35f)),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.PlayArrow,
-                                                    contentDescription = "Active Pattern",
-                                                    tint = currentTheme.primaryLight,
-                                                    modifier = Modifier.size(14.dp)
-                                                )
-                                            }
-                                        }
-                                    }
-                                },
-                                onClick = {
-                                    selectedPattern = item.pattern
-                                    currentPhase = BreathPhase.INHALE
-                                    phaseSecondsRemaining = item.pattern.inhaleSec
-                                    phaseProgress = 0f
-                                    prefs.edit().putString("breathing_pattern_id", item.pattern.id).apply()
-                                    isTopPatternDropdownOpen = false
-                                },
-                                modifier = Modifier
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(if (isSelected) currentTheme.primary.copy(alpha = 0.20f) else Color.Transparent)
-                                    .border(
-                                        if (isSelected) 1.2.dp else 0.dp,
-                                        if (isSelected) currentTheme.primaryLight.copy(alpha = 0.70f) else Color.Transparent,
-                                        RoundedCornerShape(10.dp)
+                if (isLandscape) {
+                    // Landscape Layout: Header top, Ensō on Left, Progress & Controls on Right
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Top Bar
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // Pattern Selector Dropdown Pill
+                            Box {
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(ZenSurface.copy(alpha = 0.85f))
+                                        .border(1.dp, currentTheme.primary.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+                                        .clickable { isTopPatternDropdownOpen = true }
+                                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = selectedPattern.name,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = currentTheme.primaryLight
                                     )
-                            )
+                                    Text(
+                                        text = " • Cycle $completedCycles",
+                                        fontSize = 12.sp,
+                                        color = ZenTextSecondary
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "Switch Pattern",
+                                        tint = currentTheme.primaryLight,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+
+                                DropdownMenu(
+                                    expanded = isTopPatternDropdownOpen,
+                                    onDismissRequest = { isTopPatternDropdownOpen = false },
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.60f)
+                                        .background(ZenSurface.copy(alpha = 0.98f))
+                                        .border(1.2.dp, currentTheme.primary.copy(alpha = 0.50f), RoundedCornerShape(16.dp))
+                                        .padding(vertical = 4.dp)
+                                ) {
+                                    data class TopPatternMenuItem(
+                                        val pattern: BreathingPattern,
+                                        val summary: String
+                                    )
+
+                                    val topPatterns = listOf(
+                                        TopPatternMenuItem(BreathingPattern.BOX_BREATHING, "Focus & Stress Reset • 4s In • 4s Hold • 4s Out • 4s Hold"),
+                                        TopPatternMenuItem(BreathingPattern.RELAX_4_7_8, "Deep Sleep & Relaxation • 4s In • 7s Hold • 8s Out"),
+                                        TopPatternMenuItem(BreathingPattern.RESONANT_BREATH, "Heart Coherence • 5s Inhale • 5s Exhale"),
+                                        TopPatternMenuItem(BreathingPattern.TRANQUIL_3_3_3_3, "Beginner Friendly • 3s In • 3s Hold • 3s Out • 3s Hold")
+                                    )
+
+                                    topPatterns.forEach { item ->
+                                        val isSelected = selectedPattern.id == item.pattern.id
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
+                                                        Text(
+                                                            text = item.pattern.name,
+                                                            fontSize = 13.5.sp,
+                                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                            color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
+                                                        )
+                                                        Text(
+                                                            text = item.summary,
+                                                            fontSize = 11.sp,
+                                                            color = if (isSelected) currentTheme.primaryLight.copy(alpha = 0.85f) else ZenTextSecondary
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            onClick = {
+                                                selectedPattern = item.pattern
+                                                currentPhase = BreathPhase.INHALE
+                                                phaseSecondsRemaining = item.pattern.inhaleSec
+                                                phaseProgress = 0f
+                                                prefs.edit().putString("breathing_pattern_id", item.pattern.id).apply()
+                                                isTopPatternDropdownOpen = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Close / Cancel Button
+                            IconButton(
+                                onClick = onClose,
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(ZenSurface.copy(alpha = 0.75f))
+                                    .border(1.dp, ZenBorder, CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Exit Breathwork",
+                                    tint = ZenTextSecondary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+
+                        // Main Content: Left Ensō / Right Controls
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier.weight(1f).fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ZenParticleBreathingCanvas(
+                                    currentPhase = currentPhase,
+                                    phaseProgress = phaseProgress,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "$phaseSecondsRemaining",
+                                        fontSize = 52.sp,
+                                        fontWeight = FontWeight.Light,
+                                        color = Color.White,
+                                        letterSpacing = 1.sp
+                                    )
+                                    AnimatedContent(
+                                        targetState = currentPhase,
+                                        label = "phaseTextFlow"
+                                    ) { phase ->
+                                        Text(
+                                            text = phase.displayName.uppercase(),
+                                            fontSize = 16.sp,
+                                            letterSpacing = 2.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = phaseColor,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+
+                            Column(
+                                modifier = Modifier.weight(0.9f).padding(start = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                AnimatedContent(
+                                    targetState = currentPhase,
+                                    label = "phaseInstructionFlow"
+                                ) { phase ->
+                                    Text(
+                                        text = phase.instruction,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = ZenTextPrimary.copy(alpha = 0.90f),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Text(
+                                    text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ZenTextPrimary.copy(alpha = 0.85f),
+                                    letterSpacing = 0.5.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            totalElapsedSec = 0
+                                            completedCycles = 0
+                                            currentPhase = BreathPhase.INHALE
+                                            phaseSecondsRemaining = selectedPattern.inhaleSec
+                                            phaseProgress = 0f
+                                        },
+                                        modifier = Modifier
+                                            .size(42.dp)
+                                            .clip(CircleShape)
+                                            .background(ZenSurface.copy(alpha = 0.75f))
+                                            .border(1.dp, ZenBorder, CircleShape)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Refresh,
+                                            contentDescription = "Restart",
+                                            tint = ZenTextSecondary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+
+                                    Button(
+                                        onClick = { isRunning = !isRunning },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(42.dp),
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
+                                            contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
+                                        )
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = if (isRunning) "Pause" else "Resume",
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (isRunning) "Pause" else "Resume",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.5.sp
+                                        )
+                                    }
+
+                                    Button(
+                                        onClick = { finishSession() },
+                                        modifier = Modifier.height(42.dp),
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = ZenSurface.copy(alpha = 0.85f),
+                                            contentColor = currentTheme.primaryLight
+                                        ),
+                                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
+                                    ) {
+                                        Text("Finish", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
+                            }
                         }
                     }
-                }
+                } else {
+                    // Portrait Layout
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 4.dp, vertical = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // --- 1. MINIMAL IMMERSIVE TOP BAR ---
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // Interactive Pattern Selector Dropdown Pill
+                            Box {
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(ZenSurface.copy(alpha = 0.85f))
+                                        .border(1.dp, currentTheme.primary.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+                                        .clickable { isTopPatternDropdownOpen = true }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = selectedPattern.name,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = currentTheme.primaryLight
+                                    )
+                                    Text(
+                                        text = " • Cycle $completedCycles",
+                                        fontSize = 12.sp,
+                                        color = ZenTextSecondary
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "Switch Pattern",
+                                        tint = currentTheme.primaryLight,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
 
-                // Close / Cancel Button
-                IconButton(
-                    onClick = onClose,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(ZenSurface.copy(alpha = 0.75f))
-                        .border(1.dp, ZenBorder, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Exit Breathwork",
-                        tint = ZenTextSecondary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
+                                DropdownMenu(
+                                    expanded = isTopPatternDropdownOpen,
+                                    onDismissRequest = { isTopPatternDropdownOpen = false },
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.90f)
+                                        .background(ZenSurface.copy(alpha = 0.98f))
+                                        .border(1.2.dp, currentTheme.primary.copy(alpha = 0.50f), RoundedCornerShape(16.dp))
+                                        .padding(vertical = 4.dp)
+                                ) {
+                                    data class TopPatternMenuItem(
+                                        val pattern: BreathingPattern,
+                                        val summary: String
+                                    )
 
-            // --- 2. CENTRAL LIVING ZEN ENSŌ VISUALIZER WITH INNER INSTRUCTIONS ---
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                ZenParticleBreathingCanvas(
-                    currentPhase = currentPhase,
-                    phaseProgress = phaseProgress,
-                    modifier = Modifier.fillMaxSize()
-                )
+                                    val topPatterns = listOf(
+                                        TopPatternMenuItem(BreathingPattern.BOX_BREATHING, "Focus & Stress Reset • 4s In • 4s Hold • 4s Out • 4s Hold"),
+                                        TopPatternMenuItem(BreathingPattern.RELAX_4_7_8, "Deep Sleep & Relaxation • 4s In • 7s Hold • 8s Out"),
+                                        TopPatternMenuItem(BreathingPattern.RESONANT_BREATH, "Heart Coherence • 5s Inhale • 5s Exhale"),
+                                        TopPatternMenuItem(BreathingPattern.TRANQUIL_3_3_3_3, "Beginner Friendly • 3s In • 3s Hold • 3s Out • 3s Hold")
+                                    )
 
-                // Large Minimalist Countdown & Phase Title Inside the Zen Circle
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(horizontal = 20.dp)
-                ) {
-                    Text(
-                        text = "$phaseSecondsRemaining",
-                        fontSize = 68.sp,
-                        fontWeight = FontWeight.Light,
-                        color = Color.White,
-                        letterSpacing = 1.sp
-                    )
+                                    topPatterns.forEach { item ->
+                                        val isSelected = selectedPattern.id == item.pattern.id
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
+                                                        Text(
+                                                            text = item.pattern.name,
+                                                            fontSize = 14.sp,
+                                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                            color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
+                                                        )
+                                                        Spacer(modifier = Modifier.height(2.dp))
+                                                        Text(
+                                                            text = item.summary,
+                                                            fontSize = 11.5.sp,
+                                                            color = if (isSelected) currentTheme.primaryLight.copy(alpha = 0.85f) else ZenTextSecondary
+                                                        )
+                                                    }
 
-                    Spacer(modifier = Modifier.height(2.dp))
+                                                    if (isSelected) {
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(24.dp)
+                                                                .clip(CircleShape)
+                                                                .background(currentTheme.primary.copy(alpha = 0.35f)),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.PlayArrow,
+                                                                contentDescription = "Active Pattern",
+                                                                tint = currentTheme.primaryLight,
+                                                                modifier = Modifier.size(14.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            onClick = {
+                                                selectedPattern = item.pattern
+                                                currentPhase = BreathPhase.INHALE
+                                                phaseSecondsRemaining = item.pattern.inhaleSec
+                                                phaseProgress = 0f
+                                                prefs.edit().putString("breathing_pattern_id", item.pattern.id).apply()
+                                                isTopPatternDropdownOpen = false
+                                            },
+                                            modifier = Modifier
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(if (isSelected) currentTheme.primary.copy(alpha = 0.20f) else Color.Transparent)
+                                                .border(
+                                                    if (isSelected) 1.2.dp else 0.dp,
+                                                    if (isSelected) currentTheme.primaryLight.copy(alpha = 0.70f) else Color.Transparent,
+                                                    RoundedCornerShape(10.dp)
+                                                )
+                                        )
+                                    }
+                                }
+                            }
 
-                    AnimatedContent(
-                        targetState = currentPhase,
-                        transitionSpec = {
-                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
-                                .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
-                        },
-                        label = "phaseTextFlow"
-                    ) { phase ->
-                        Text(
-                            text = phase.displayName.uppercase(),
-                            fontSize = 20.sp,
-                            letterSpacing = 3.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = phaseColor,
-                            textAlign = TextAlign.Center
-                        )
+                            // Close / Cancel Button
+                            IconButton(
+                                onClick = onClose,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(ZenSurface.copy(alpha = 0.75f))
+                                    .border(1.dp, ZenBorder, CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Exit Breathwork",
+                                    tint = ZenTextSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        // --- 2. CENTRAL LIVING ZEN ENSŌ VISUALIZER ---
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ZenParticleBreathingCanvas(
+                                currentPhase = currentPhase,
+                                phaseProgress = phaseProgress,
+                                modifier = Modifier.fillMaxSize()
+                            )
+
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(horizontal = 20.dp)
+                            ) {
+                                Text(
+                                    text = "$phaseSecondsRemaining",
+                                    fontSize = 68.sp,
+                                    fontWeight = FontWeight.Light,
+                                    color = Color.White,
+                                    letterSpacing = 1.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(2.dp))
+
+                                AnimatedContent(
+                                    targetState = currentPhase,
+                                    transitionSpec = {
+                                        (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
+                                            .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
+                                    },
+                                    label = "phaseTextFlow"
+                                ) { phase ->
+                                    Text(
+                                        text = phase.displayName.uppercase(),
+                                        fontSize = 20.sp,
+                                        letterSpacing = 3.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = phaseColor,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+
+                        // --- 3. INSTRUCTION & SESSION PROGRESS TIMER ---
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                        ) {
+                            AnimatedContent(
+                                targetState = currentPhase,
+                                transitionSpec = {
+                                    (fadeIn(tween(300)) + slideInVertically(tween(300)) { 6 })
+                                        .togetherWith(fadeOut(tween(200)) + slideOutVertically(tween(200)) { -6 })
+                                },
+                                label = "phaseInstructionFlow"
+                            ) { phase ->
+                                Text(
+                                    text = phase.instruction,
+                                    fontSize = 15.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = ZenTextPrimary.copy(alpha = 0.90f),
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 2
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
+                                fontSize = 17.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ZenTextPrimary.copy(alpha = 0.80f),
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // --- 4. MINIMAL CONTROL BAR ---
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Reset Button
+                            IconButton(
+                                onClick = {
+                                    totalElapsedSec = 0
+                                    completedCycles = 0
+                                    currentPhase = BreathPhase.INHALE
+                                    phaseSecondsRemaining = selectedPattern.inhaleSec
+                                    phaseProgress = 0f
+                                },
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(ZenSurface.copy(alpha = 0.75f))
+                                    .border(1.dp, ZenBorder, CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Restart",
+                                    tint = ZenTextSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            // Pause / Resume Button
+                            Button(
+                                onClick = { isRunning = !isRunning },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
+                                    contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                    contentDescription = if (isRunning) "Pause" else "Resume",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isRunning) "Pause" else "Resume",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.5.sp
+                                )
+                            }
+
+                            // Finish Button
+                            Button(
+                                onClick = { finishSession() },
+                                modifier = Modifier.height(48.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = ZenSurface.copy(alpha = 0.85f),
+                                    contentColor = currentTheme.primaryLight
+                                ),
+                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
+                            ) {
+                                Text("Finish", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
                     }
-                }
-            }
-
-            // --- 3. INSTRUCTION & SESSION PROGRESS TIMER (OUTSIDE CIRCLE) ---
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-            ) {
-                AnimatedContent(
-                    targetState = currentPhase,
-                    transitionSpec = {
-                        (fadeIn(tween(300)) + slideInVertically(tween(300)) { 6 })
-                            .togetherWith(fadeOut(tween(200)) + slideOutVertically(tween(200)) { -6 })
-                    },
-                    label = "phaseInstructionFlow"
-                ) { phase ->
-                    Text(
-                        text = phase.instruction,
-                        fontSize = 15.5.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = ZenTextPrimary.copy(alpha = 0.90f),
-                        textAlign = TextAlign.Center,
-                        maxLines = 2
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                    fontSize = 17.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = ZenTextPrimary.copy(alpha = 0.80f),
-                    letterSpacing = 0.5.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // --- 4. MINIMAL CONTROL BAR ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Reset Button
-                IconButton(
-                    onClick = {
-                        totalElapsedSec = 0
-                        completedCycles = 0
-                        currentPhase = BreathPhase.INHALE
-                        phaseSecondsRemaining = selectedPattern.inhaleSec
-                        phaseProgress = 0f
-                    },
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(ZenSurface.copy(alpha = 0.75f))
-                        .border(1.dp, ZenBorder, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Restart",
-                        tint = ZenTextSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                // Pause / Resume Button
-                Button(
-                    onClick = { isRunning = !isRunning },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
-                        contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
-                    )
-                ) {
-                    Icon(
-                        imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isRunning) "Pause" else "Resume",
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (isRunning) "Pause" else "Resume",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.5.sp
-                    )
-                }
-
-                // Finish Button (Navigates to Session Summary Reflection)
-                Button(
-                    onClick = { finishSession() },
-                    modifier = Modifier.height(48.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ZenSurface.copy(alpha = 0.85f),
-                        contentColor = currentTheme.primaryLight
-                    ),
-                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
-                ) {
-                    Text("Finish", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
     }
-}
 }
 
 private fun getPhaseDuration(phase: BreathPhase, pattern: BreathingPattern): Int {

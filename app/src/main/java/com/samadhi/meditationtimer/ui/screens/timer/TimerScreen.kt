@@ -246,46 +246,95 @@ fun TimerScreen(
                             }
                         }
 
-                        // Continue Past Target Time Toggle
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(ZenSurface.copy(alpha = 0.75f))
-                                .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
-                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                        // Meditation Options (DND & Continue Past Target Time)
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                            // Do Not Disturb Toggle (Off by default)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(ZenSurface.copy(alpha = 0.75f))
+                                    .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "Continue Past Target Time",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontSize = 13.5.sp,
-                                            fontWeight = FontWeight.SemiBold
-                                        ),
-                                        color = ZenTextPrimary
-                                    )
-                                    Text(
-                                        text = "Keep counting up after target time is reached",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                                        color = ZenTextSecondary
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Do Not Disturb",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontSize = 13.5.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            ),
+                                            color = ZenTextPrimary
+                                        )
+                                        Text(
+                                            text = "Mute incoming notifications & calls during sit",
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                            color = ZenTextSecondary
+                                        )
+                                    }
+                                    Switch(
+                                        checked = config.isAutoDndEnabled,
+                                        onCheckedChange = {
+                                            viewModel.toggleAutoDnd(it)
+                                            leafBurstTrigger++
+                                        },
+                                        colors = SwitchDefaults.colors(
+                                            checkedThumbColor = currentTheme.primary,
+                                            checkedTrackColor = currentTheme.primary.copy(alpha = 0.35f)
+                                        )
                                     )
                                 }
-                                Switch(
-                                    checked = config.isOverrunEnabled,
-                                    onCheckedChange = {
-                                        viewModel.toggleOverrun(it)
-                                        leafBurstTrigger++
-                                    },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = currentTheme.primary,
-                                        checkedTrackColor = currentTheme.primary.copy(alpha = 0.35f)
+                            }
+
+                            // Continue Past Target Time Toggle
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(ZenSurface.copy(alpha = 0.75f))
+                                    .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Continue Past Target Time",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontSize = 13.5.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            ),
+                                            color = ZenTextPrimary
+                                        )
+                                        Text(
+                                            text = "Keep counting up after target time is reached",
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                            color = ZenTextSecondary
+                                        )
+                                    }
+                                    Switch(
+                                        checked = config.isOverrunEnabled,
+                                        onCheckedChange = {
+                                            viewModel.toggleOverrun(it)
+                                            leafBurstTrigger++
+                                        },
+                                        colors = SwitchDefaults.colors(
+                                            checkedThumbColor = currentTheme.primary,
+                                            checkedTrackColor = currentTheme.primary.copy(alpha = 0.35f)
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
                     }
@@ -572,6 +621,49 @@ fun TimerScreen(
                                 }
                             }
                         }
+
+                        // Do Not Disturb Toggle for Breathwork (Off by default)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(ZenSurface.copy(alpha = 0.75f))
+                                .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Do Not Disturb",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        ),
+                                        color = ZenTextPrimary
+                                    )
+                                    Text(
+                                        text = "Mute incoming notifications & calls during breathwork",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                        color = ZenTextSecondary
+                                    )
+                                }
+                                Switch(
+                                    checked = config.isAutoDndEnabled,
+                                    onCheckedChange = {
+                                        viewModel.toggleAutoDnd(it)
+                                        leafBurstTrigger++
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = currentTheme.primary,
+                                        checkedTrackColor = currentTheme.primary.copy(alpha = 0.35f)
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -580,8 +672,8 @@ fun TimerScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                    .padding(top = 10.dp, bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Practice Mode Toggle
