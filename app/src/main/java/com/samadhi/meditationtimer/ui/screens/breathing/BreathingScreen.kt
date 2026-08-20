@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -103,12 +104,12 @@ fun BreathingScreen(
     var isTopPatternDropdownOpen by remember { mutableStateOf(false) }
 
     val tapToBlackout = remember { prefs.getBoolean("tap_blackout", true) }
-    val isAutoDnd = remember { prefs.getBoolean("auto_dnd", false) }
+    val dndManager = remember { com.samadhi.meditationtimer.service.DndManager(context) }
+    var isAutoDnd by remember { mutableStateOf(prefs.getBoolean("auto_dnd", false)) }
     var isScreenBlackedOut by remember { mutableStateOf(false) }
 
     // Optional Do Not Disturb during breathwork session
     androidx.compose.runtime.DisposableEffect(isAutoDnd) {
-        val dndManager = com.samadhi.meditationtimer.service.DndManager(context)
         if (isAutoDnd && dndManager.isDndAccessGranted) {
             dndManager.enableDnd()
         }
@@ -366,21 +367,75 @@ fun BreathingScreen(
                                 }
                             }
 
-                            // Close / Cancel Button
-                            IconButton(
-                                onClick = onClose,
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(ZenSurface.copy(alpha = 0.75f))
-                                    .border(1.dp, ZenBorder, CircleShape)
+                            // Right side buttons: DND toggle & Close button
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Exit Breathwork",
-                                    tint = ZenTextSecondary,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                // Small DND Toggle Pill
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(
+                                            if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.20f)
+                                            else ZenSurface.copy(alpha = 0.75f)
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight.copy(alpha = 0.5f) else ZenBorder,
+                                            RoundedCornerShape(16.dp)
+                                        )
+                                        .clickable {
+                                            if (dndManager.isDndAccessGranted) {
+                                                val next = !isAutoDnd
+                                                isAutoDnd = next
+                                                prefs.edit().putBoolean("auto_dnd", next).apply()
+                                                if (next) dndManager.enableDnd() else dndManager.restoreDnd()
+                                            } else {
+                                                context.startActivity(
+                                                    dndManager.requestDndPermissionIntent().apply {
+                                                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                                    }
+                                                )
+                                            }
+                                        }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = androidx.compose.material.icons.Icons.Default.DoNotDisturb,
+                                            contentDescription = "DND Status",
+                                            tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Text(
+                                            text = if (isAutoDnd && dndManager.isDndAccessGranted) "DND" else "DND Off",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextSecondary
+                                        )
+                                    }
+                                }
+
+                                // Close / Cancel Button
+                                IconButton(
+                                    onClick = onClose,
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(CircleShape)
+                                        .background(ZenSurface.copy(alpha = 0.75f))
+                                        .border(1.dp, ZenBorder, CircleShape)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Exit Breathwork",
+                                        tint = ZenTextSecondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -656,21 +711,75 @@ fun BreathingScreen(
                                 }
                             }
 
-                            // Close / Cancel Button
-                            IconButton(
-                                onClick = onClose,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(ZenSurface.copy(alpha = 0.75f))
-                                    .border(1.dp, ZenBorder, CircleShape)
+                            // Right side buttons: DND toggle & Close button
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Exit Breathwork",
-                                    tint = ZenTextSecondary,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                // Small DND Toggle Pill
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(
+                                            if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.20f)
+                                            else ZenSurface.copy(alpha = 0.75f)
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight.copy(alpha = 0.5f) else ZenBorder,
+                                            RoundedCornerShape(16.dp)
+                                        )
+                                        .clickable {
+                                            if (dndManager.isDndAccessGranted) {
+                                                val next = !isAutoDnd
+                                                isAutoDnd = next
+                                                prefs.edit().putBoolean("auto_dnd", next).apply()
+                                                if (next) dndManager.enableDnd() else dndManager.restoreDnd()
+                                            } else {
+                                                context.startActivity(
+                                                    dndManager.requestDndPermissionIntent().apply {
+                                                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                                    }
+                                                )
+                                            }
+                                        }
+                                        .padding(horizontal = 9.dp, vertical = 5.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = androidx.compose.material.icons.Icons.Default.DoNotDisturb,
+                                            contentDescription = "DND Status",
+                                            tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Text(
+                                            text = if (isAutoDnd && dndManager.isDndAccessGranted) "DND" else "DND Off",
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextSecondary
+                                        )
+                                    }
+                                }
+
+                                // Close / Cancel Button
+                                IconButton(
+                                    onClick = onClose,
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(ZenSurface.copy(alpha = 0.75f))
+                                        .border(1.dp, ZenBorder, CircleShape)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Exit Breathwork",
+                                        tint = ZenTextSecondary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         }
 

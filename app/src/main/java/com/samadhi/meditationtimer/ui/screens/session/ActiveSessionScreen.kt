@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Pause
@@ -232,14 +233,70 @@ fun ActiveSessionScreen(
                 val isLandscape = maxWidth > maxHeight
                 val timerSize = if (isLandscape) (maxHeight * 0.70f).coerceIn(160.dp, 250.dp) else 300.dp
 
-                // Top Navigation Controls (Clean Minimal Cancel Action)
+                // Top Navigation Controls (DND Toggle on Left, Cancel Action on Right)
+                val dndManager = remember { com.samadhi.meditationtimer.service.DndManager(context) }
+                var isDndActive by remember { mutableStateOf(config.isAutoDndEnabled && dndManager.isDndAccessGranted) }
+
                 Row(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Small DND Toggle Pill
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                if (isDndActive) currentTheme.primary.copy(alpha = 0.20f)
+                                else ZenSurface.copy(alpha = 0.70f)
+                            )
+                            .border(
+                                1.dp,
+                                if (isDndActive) currentTheme.primaryLight.copy(alpha = 0.5f) else ZenBorder,
+                                RoundedCornerShape(16.dp)
+                            )
+                            .clickable {
+                                if (dndManager.isDndAccessGranted) {
+                                    if (isDndActive) {
+                                        dndManager.restoreDnd()
+                                        isDndActive = false
+                                        viewModel.toggleAutoDnd(false)
+                                    } else {
+                                        dndManager.enableDnd()
+                                        isDndActive = true
+                                        viewModel.toggleAutoDnd(true)
+                                    }
+                                } else {
+                                    context.startActivity(
+                                        dndManager.requestDndPermissionIntent().apply {
+                                            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                        }
+                                    )
+                                }
+                            }
+                            .padding(horizontal = 10.dp, vertical = if (isLandscape) 4.dp else 6.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.DoNotDisturb,
+                                contentDescription = "DND Status",
+                                tint = if (isDndActive) currentTheme.primaryLight else ZenTextMuted,
+                                modifier = Modifier.size(if (isLandscape) 13.dp else 15.dp)
+                            )
+                            Text(
+                                text = if (isDndActive) "DND On" else "DND Off",
+                                fontSize = if (isLandscape) 11.sp else 11.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (isDndActive) currentTheme.primaryLight else ZenTextSecondary
+                            )
+                        }
+                    }
+
                     IconButton(
                         onClick = {
                             if (!isBlowingAway) {

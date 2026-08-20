@@ -258,14 +258,14 @@ fun TimerScreen(
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(ZenSurface.copy(alpha = 0.75f))
                                     .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
-                                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                                    .padding(horizontal = 14.dp, vertical = 10.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                                         Text(
                                             text = "Do Not Disturb",
                                             style = MaterialTheme.typography.titleMedium.copy(
@@ -301,14 +301,14 @@ fun TimerScreen(
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(ZenSurface.copy(alpha = 0.75f))
                                     .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
-                                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                                    .padding(horizontal = 14.dp, vertical = 10.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                                         Text(
                                             text = "Continue Past Target Time",
                                             style = MaterialTheme.typography.titleMedium.copy(
@@ -629,14 +629,14 @@ fun TimerScreen(
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(ZenSurface.copy(alpha = 0.75f))
                                 .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
-                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                                     Text(
                                         text = "Do Not Disturb",
                                         style = MaterialTheme.typography.titleMedium.copy(
