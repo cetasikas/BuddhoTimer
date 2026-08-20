@@ -61,6 +61,7 @@ import com.samadhi.meditationtimer.ui.theme.GoldenBodhiTheme
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.SakuraTwilightTheme
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
+import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
@@ -320,13 +321,17 @@ fun TutorialOverlay(
                         modifier = Modifier.weight(1f).height(38.dp),
                         shape = RoundedCornerShape(19.dp),
                         contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = ZenSurface,
+                            contentColor = currentTheme.primaryLight
+                        ),
                         border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
                     ) {
                         Text(
                             text = "Grant DND",
                             fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = currentTheme.primaryLight,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -343,13 +348,17 @@ fun TutorialOverlay(
                         modifier = Modifier.weight(1f).height(38.dp),
                         shape = RoundedCornerShape(19.dp),
                         contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = ZenSurface,
+                            contentColor = currentTheme.primaryLight
+                        ),
                         border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
                     ) {
                         Text(
                             text = "Battery Settings",
                             fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = currentTheme.primaryLight,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -381,18 +390,20 @@ fun TutorialOverlay(
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = currentTheme.primary,
-                        contentColor = Color(0xFF041014)
+                        contentColor = ZenObsidian
                     )
                 ) {
                     Text(
                         text = if (isLastStep) "Begin Practice" else "Next",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp
+                        fontSize = 13.sp,
+                        color = ZenObsidian
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Icon(
                         imageVector = if (isLastStep) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
+                        tint = ZenObsidian,
                         modifier = Modifier.size(16.dp)
                     )
                 }
