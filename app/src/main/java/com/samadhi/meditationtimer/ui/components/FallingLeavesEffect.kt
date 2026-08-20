@@ -65,6 +65,10 @@ private class LeafParticle(
     var isSettling: Boolean = false,
     var settleTimer: Float = 0f,
     var targetSettleRotation: Float = 0f,
+    var settleStartX: Float = 0f,
+    var settleStartY: Float = 0f,
+    var targetSettleX: Float = 0f,
+    var targetSettleY: Float = 0f,
     var isResting: Boolean = false,
     var restSwayPhase: Float = 0f,
     var spawnElapsedSec: Float = 1.2f
@@ -361,8 +365,8 @@ fun FallingLeavesEffect(
 
                                 restingLeaves.add(
                                     LeafParticle(
-                                        x = settledX,
-                                        y = settledY,
+                                        x = leaf.x,
+                                        y = floorContactY,
                                         originX = settledX,
                                         fallSpeed = 0f,
                                         swayAmplitude = 0f,
@@ -379,6 +383,10 @@ fun FallingLeavesEffect(
                                         isSettling = true,
                                         settleTimer = 0f,
                                         targetSettleRotation = finalAngle,
+                                        settleStartX = leaf.x,
+                                        settleStartY = floorContactY,
+                                        targetSettleX = settledX,
+                                        targetSettleY = settledY,
                                         isResting = false,
                                         restSwayPhase = Random.nextFloat() * 6.28f,
                                         spawnElapsedSec = 1.2f
@@ -407,13 +415,25 @@ fun FallingLeavesEffect(
                             val lerped = leaf.rotation + (leaf.targetSettleRotation - leaf.rotation) * t
                             leaf.rotation = lerped + flutter * decay
 
+                            // Roll from the exact touchdown spot to the assigned bin slot
+                            leaf.x = leaf.settleStartX + (leaf.targetSettleX - leaf.settleStartX) * t
+                            leaf.y = leaf.settleStartY + (leaf.targetSettleY - leaf.settleStartY) * t
+
                             if (t >= 1.0f) {
                                 leaf.isSettling = false
                                 leaf.isResting = true
                                 leaf.rotation = leaf.targetSettleRotation
+                                leaf.x = leaf.targetSettleX
+                                leaf.y = leaf.targetSettleY
                             }
                         } else if (leaf.isResting) {
-                            leaf.rotation += dt * 0.22f * sin(totalElapsedSec * 0.45f + leaf.restSwayPhase)
+                            leaf.settleTimer += dt
+                            val idleFade = (1f - (leaf.settleTimer / 90f)).coerceIn(0f, 1f)
+                            if (idleFade > 0f) {
+                                // Synced with the 8-second meditative breath cycle (4s in, 4s out -> 2*PI / 8s ≈ 0.785 rad/s)
+                                val breathSyncWave = sin(totalElapsedSec * 0.785f + leaf.restSwayPhase)
+                                leaf.rotation += dt * 0.22f * idleFade * breathSyncWave
+                            }
                         }
                     }
                 }
