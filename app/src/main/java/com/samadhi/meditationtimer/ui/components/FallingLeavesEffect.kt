@@ -71,6 +71,8 @@ private class LeafParticle(
     var targetSettleY: Float = 0f,
     var shapeAsymmetry: Float = 0f,
     var shapeStretch: Float = 1f,
+    var isVanishing: Boolean = false,
+    var vanishTimer: Float = 0f,
     var isResting: Boolean = false,
     var restSwayPhase: Float = 0f,
     var spawnElapsedSec: Float = 1.2f
@@ -366,12 +368,21 @@ fun FallingLeavesEffect(
                         val gustPeriod = 18f + (leaf.swayPhase % 7f)
                         val gustMultiplier = 0.7f + 0.3f * (sin(totalElapsedSec * (6.283f / gustPeriod) + leaf.swayPhase) * 0.5f + 0.5f)
 
-                        leaf.y += leaf.fallSpeed * gustMultiplier * aerodynamicDrag * dt
+                        if (!leaf.isVanishing) {
+                            leaf.y += leaf.fallSpeed * gustMultiplier * aerodynamicDrag * dt
+                        }
 
                         val floorContactY = groundMap.sampleFloor(leaf.x)
 
-                        if (pileUpAtBottom && leaf.depth.canAccumulate && leaf.y >= floorContactY) {
-                            if (restingLeaves.size < expectedRestingCount && restingLeaves.size < maxRestingLeaves) {
+                        if (!leaf.isVanishing && pileUpAtBottom && leaf.depth.canAccumulate && leaf.y >= floorContactY) {
+                            val behindSchedule = restingLeaves.size < expectedRestingCount
+                            // Even when "ahead of schedule" (common early in a session, since the
+                            // smoothstep target sits at 0 for a while), still let leaves settle
+                            // sometimes — just less eagerly. Otherwise nothing lands until the
+                            // curve catches up.
+                            val settleChance = if (behindSchedule) 1.0f else 0.35f
+
+                            if (restingLeaves.size < maxRestingLeaves && Random.nextFloat() < settleChance) {
                                 val (settledX, settledY, slopeTilt) = groundMap.depositLeaf(leaf.x)
                                 val normDeg = ((leaf.rotation % 360f) + 360f) % 360f
                                 val baseTarget = if (normDeg in 0f..180f) 90f else 270f
@@ -403,17 +414,33 @@ fun FallingLeavesEffect(
                                         targetSettleY = settledY,
                                         shapeAsymmetry = leaf.shapeAsymmetry,
                                         shapeStretch = leaf.shapeStretch,
+                                        isVanishing = false,
+                                        vanishTimer = 0f,
                                         isResting = false,
                                         restSwayPhase = Random.nextFloat() * 6.28f,
                                         spawnElapsedSec = 1.2f
                                     )
                                 )
+                                leaf.y = -(Random.nextFloat() * 0.18f + 0.08f)
+                                leaf.originX = Random.nextFloat() * 0.84f + 0.08f
+                                leaf.x = leaf.originX
+                                leaf.rotation = Random.nextFloat() * 360f
+                                leaf.spawnElapsedSec = 0f
+                            } else {
+                                // Didn't settle this time — fade out in place rather than teleporting
+                                leaf.isVanishing = true
+                                leaf.vanishTimer = 0f
                             }
-                            leaf.y = -(Random.nextFloat() * 0.18f + 0.08f)
-                            leaf.originX = Random.nextFloat() * 0.84f + 0.08f
-                            leaf.x = leaf.originX
-                            leaf.rotation = Random.nextFloat() * 360f
-                            leaf.spawnElapsedSec = 0f
+                        } else if (leaf.isVanishing) {
+                            leaf.vanishTimer += dt
+                            if (leaf.vanishTimer >= 0.4f) {
+                                leaf.isVanishing = false
+                                leaf.y = -(Random.nextFloat() * 0.18f + 0.08f)
+                                leaf.originX = Random.nextFloat() * 0.84f + 0.08f
+                                leaf.x = leaf.originX
+                                leaf.rotation = Random.nextFloat() * 360f
+                                leaf.spawnElapsedSec = 0f
+                            }
                         } else if (leaf.y > 1.08f) {
                             leaf.y = -(Random.nextFloat() * 0.18f + 0.08f)
                             leaf.originX = Random.nextFloat() * 0.84f + 0.08f
@@ -502,10 +529,11 @@ fun FallingLeavesEffect(
                 ((leaf.y + 0.08f) / 0.14f).coerceIn(0f, 1f) * spawnFade
             } else 1.0f
 
+            val vanishFade = if (leaf.isVanishing) (1f - (leaf.vanishTimer / 0.4f)).coerceIn(0f, 1f) else 1f
             val baseTargetAlpha = leaf.alpha * ambientAlpha * topFade
             val alpha = when {
                 blowAwayProgress > 0f -> baseTargetAlpha * (1f - blowAwayProgress)
-                else -> baseTargetAlpha.coerceIn(0f, 0.85f)
+                else -> (baseTargetAlpha * vanishFade).coerceIn(0f, 0.85f)
             }
 
             if (alpha < 0.01f) return@forEach
