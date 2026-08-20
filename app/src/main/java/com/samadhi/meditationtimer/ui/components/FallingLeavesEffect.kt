@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,7 +37,6 @@ private class LeafParticle(
     var x: Float,
     var y: Float,
     var originX: Float,
-    var startY: Float,
     var fallSpeed: Float,
     var swayAmplitude: Float,
     var swayFrequency: Float,
@@ -52,9 +52,9 @@ private class LeafParticle(
     var restSwayPhase: Float = 0f
 )
 
-private const val HEIGHTMAP_BINS = 28
+private const val HEIGHTMAP_BINS = 22
 private const val FLOOR_Y = 0.948f
-private const val LIFT_PER_LEAF = 0.0032f
+private const val LIFT_PER_LEAF = 0.0070f
 
 private class GroundHeightMap(
     private val timerRadiusRatio: Float,
@@ -62,39 +62,41 @@ private class GroundHeightMap(
     private val timerCenterXRatio: Float
 ) {
     val bins = FloatArray(HEIGHTMAP_BINS) { FLOOR_Y }
+    val binCounts = IntArray(HEIGHTMAP_BINS) { 0 }
 
     fun sampleFloor(normalizedX: Float): Float {
-        val binIdx = ((normalizedX - 0.06f) / 0.88f * HEIGHTMAP_BINS)
+        val binIdx = ((normalizedX - 0.08f) / 0.84f * HEIGHTMAP_BINS)
             .toInt()
             .coerceIn(0, HEIGHTMAP_BINS - 1)
         return bins[binIdx]
     }
 
     fun depositLeaf(landingX: Float): Triple<Float, Float, Float> {
-        var binIdx = ((landingX - 0.06f) / 0.88f * HEIGHTMAP_BINS)
+        var binIdx = ((landingX - 0.08f) / 0.84f * HEIGHTMAP_BINS)
             .toInt()
             .coerceIn(0, HEIGHTMAP_BINS - 1)
 
-        // Angle of repose: roll into lower adjacent trough if current bin is a peak
-        val currentH = bins[binIdx]
-        val leftH = if (binIdx > 0) bins[binIdx - 1] else FLOOR_Y
-        val rightH = if (binIdx < HEIGHTMAP_BINS - 1) bins[binIdx + 1] else FLOOR_Y
+        // Find least crowded adjacent slot to prevent stacking on top of identical spots
+        val leftIdx = (binIdx - 1).coerceAtLeast(0)
+        val rightIdx = (binIdx + 1).coerceAtMost(HEIGHTMAP_BINS - 1)
 
-        if (leftH > currentH + 0.0018f && leftH >= rightH && binIdx > 0) {
-            binIdx--
-        } else if (rightH > currentH + 0.0018f && binIdx < HEIGHTMAP_BINS - 1) {
-            binIdx++
+        if (binCounts[leftIdx] < binCounts[binIdx] && binCounts[leftIdx] <= binCounts[rightIdx]) {
+            binIdx = leftIdx
+        } else if (binCounts[rightIdx] < binCounts[binIdx]) {
+            binIdx = rightIdx
         }
 
-        val settledX = 0.06f + (binIdx + 0.5f) * (0.88f / HEIGHTMAP_BINS) + (Random.nextFloat() * 0.016f - 0.008f)
+        binCounts[binIdx]++
+
+        val binWidth = 0.84f / HEIGHTMAP_BINS
+        val settledX = 0.08f + (binIdx + 0.5f) * binWidth + (Random.nextFloat() * (binWidth * 0.5f) - binWidth * 0.25f)
         val settledY = bins[binIdx]
 
-        // Smooth elevation Gaussian stamp across adjacent bins
+        // Lift current bin and distribute support
         bins[binIdx] -= LIFT_PER_LEAF
-        if (binIdx > 0) bins[binIdx - 1] -= LIFT_PER_LEAF * 0.45f
-        if (binIdx < HEIGHTMAP_BINS - 1) bins[binIdx + 1] -= LIFT_PER_LEAF * 0.45f
+        if (binIdx > 0) bins[binIdx - 1] -= LIFT_PER_LEAF * 0.35f
+        if (binIdx < HEIGHTMAP_BINS - 1) bins[binIdx + 1] -= LIFT_PER_LEAF * 0.35f
 
-        // Respect timer bounding ceiling
         val topCeilingY = if (timerRadiusRatio > 0f && timerCenterYRatio >= 0f) {
             val dx = settledX - timerCenterXRatio
             val outerRadius = timerRadiusRatio + 0.04f
@@ -106,8 +108,10 @@ private class GroundHeightMap(
 
         bins[binIdx] = bins[binIdx].coerceAtLeast(topCeilingY)
 
-        val slope = ((leftH - rightH) / (0.88f / HEIGHTMAP_BINS * 2f)) * 18f
-        val slopeTilt = slope.coerceIn(-20f, 20f)
+        val leftH = if (binIdx > 0) bins[binIdx - 1] else FLOOR_Y
+        val rightH = if (binIdx < HEIGHTMAP_BINS - 1) bins[binIdx + 1] else FLOOR_Y
+        val slope = ((leftH - rightH) / (binWidth * 2f)) * 14f
+        val slopeTilt = slope.coerceIn(-18f, 18f)
 
         return Triple(settledX, settledY.coerceIn(topCeilingY, FLOOR_Y), slopeTilt)
     }
@@ -141,11 +145,10 @@ fun FallingLeavesEffect(
 
     val restingLeaves = remember(currentTheme.id, pileUpAtBottom) {
         mutableStateListOf<LeafParticle>().apply {
-            if (pileUpAtBottom) {
-                val targetCount = maxOf(elapsedMeditationSeconds / secondsPerLeaf, initialSettledLeavesCount)
-                    .coerceAtMost(maxRestingLeaves)
+            if (pileUpAtBottom && initialSettledLeavesCount > 0) {
+                val count = initialSettledLeavesCount.coerceAtMost(maxRestingLeaves)
                 val rng = Random(1337)
-                for (i in 0 until targetCount) {
+                for (i in 0 until count) {
                     val dropX = rng.nextFloat() * 0.84f + 0.08f
                     val (x, y, slopeTilt) = groundMap.depositLeaf(dropX)
                     val baseRot = if (rng.nextBoolean()) 90f else 270f
@@ -154,14 +157,13 @@ fun FallingLeavesEffect(
                             x = x,
                             y = y,
                             originX = x,
-                            startY = y,
                             fallSpeed = 0f,
                             swayAmplitude = 0f,
                             swayFrequency = 0f,
                             swayPhase = 0f,
                             tumbleFrequency = 0f,
                             tumblePhase = 0f,
-                            rotation = baseRot + slopeTilt + (rng.nextFloat() * 36f - 18f),
+                            rotation = baseRot + slopeTilt + (rng.nextFloat() * 32f - 16f),
                             rotationSpeed = 0f,
                             size = rng.nextFloat() * 6f + 16f,
                             alpha = rng.nextFloat() * 0.20f + 0.65f,
@@ -180,25 +182,21 @@ fun FallingLeavesEffect(
             val rng = Random(42)
             for (i in 0 until leafCount) {
                 val ox = rng.nextFloat() * 0.84f + 0.08f
-                val startY = if (pileUpAtBottom) {
-                    -(i.toFloat() / leafCount.toFloat()) * 1.8f - 0.08f
-                } else {
-                    (i.toFloat() / leafCount.toFloat()) * 1.1f - 0.1f
-                }
+                // Stagger airborne leaves naturally across the entire screen height
+                val startY = (i.toFloat() / leafCount.toFloat()) * 1.15f - 0.15f
                 add(
                     LeafParticle(
                         x = ox,
                         y = startY,
                         originX = ox,
-                        startY = startY,
-                        fallSpeed = rng.nextFloat() * 0.008f + 0.011f,
+                        fallSpeed = rng.nextFloat() * 0.016f + 0.038f, // Smooth 12-16 second descent
                         swayAmplitude = rng.nextFloat() * 0.025f + 0.030f,
                         swayFrequency = rng.nextFloat() * 0.25f + 0.35f,
                         swayPhase = rng.nextFloat() * 6.28f,
                         tumbleFrequency = rng.nextFloat() * 0.45f + 0.40f,
                         tumblePhase = rng.nextFloat() * 6.28f,
                         rotation = rng.nextFloat() * 360f,
-                        rotationSpeed = (rng.nextFloat() - 0.5f) * 4.0f,
+                        rotationSpeed = (rng.nextFloat() - 0.5f) * 6.0f,
                         size = rng.nextFloat() * 6f + 16f,
                         alpha = rng.nextFloat() * 0.20f + 0.65f,
                         color = currentTheme.particlePalette.random(rng),
@@ -209,9 +207,11 @@ fun FallingLeavesEffect(
         }
     }
 
-    // Synchronize pile if app resumes from background after a long gap (>12s)
+    // Only catch up if returning after a long background suspension (> 16s)
+    var lastObservedSec by remember { mutableIntStateOf(elapsedMeditationSeconds) }
     LaunchedEffect(elapsedMeditationSeconds) {
-        if (pileUpAtBottom && elapsedMeditationSeconds > 0) {
+        val gap = elapsedMeditationSeconds - lastObservedSec
+        if (pileUpAtBottom && gap >= 16) {
             val targetCount = (elapsedMeditationSeconds / secondsPerLeaf).coerceAtMost(maxRestingLeaves)
             val missing = targetCount - restingLeaves.size
             if (missing > 0) {
@@ -225,14 +225,13 @@ fun FallingLeavesEffect(
                             x = x,
                             y = y,
                             originX = x,
-                            startY = y,
                             fallSpeed = 0f,
                             swayAmplitude = 0f,
                             swayFrequency = 0f,
                             swayPhase = 0f,
                             tumbleFrequency = 0f,
                             tumblePhase = 0f,
-                            rotation = baseRot + slopeTilt + (rng.nextFloat() * 36f - 18f),
+                            rotation = baseRot + slopeTilt + (rng.nextFloat() * 32f - 16f),
                             rotationSpeed = 0f,
                             size = rng.nextFloat() * 6f + 16f,
                             alpha = rng.nextFloat() * 0.20f + 0.65f,
@@ -243,6 +242,13 @@ fun FallingLeavesEffect(
                     )
                 }
             }
+        }
+        lastObservedSec = elapsedMeditationSeconds
+    }
+
+    LaunchedEffect(triggerBurst) {
+        if (triggerBurst > 0) {
+            fallingLeaves.forEach { it.rotationSpeed = (Random.nextFloat() * 16f - 8f) }
         }
     }
 
@@ -283,7 +289,6 @@ fun FallingLeavesEffect(
                     val dt = ((nowNanos - lastTimeNanos) / 1_000_000_000f).coerceIn(0.001f, 0.050f)
                     totalElapsedSec += dt
 
-                    // Animate airborne leaves with continuous parametric flight
                     fallingLeaves.forEach { leaf ->
                         leaf.y += leaf.fallSpeed * dt
                         val lateralSway = sin(totalElapsedSec * leaf.swayFrequency + leaf.swayPhase) * leaf.swayAmplitude
@@ -304,7 +309,6 @@ fun FallingLeavesEffect(
                                         x = settledX,
                                         y = settledY,
                                         originX = settledX,
-                                        startY = settledY,
                                         fallSpeed = 0f,
                                         swayAmplitude = 0f,
                                         swayFrequency = 0f,
@@ -321,8 +325,8 @@ fun FallingLeavesEffect(
                                     )
                                 )
                             }
-                            // Respawn airborne leaf high above viewport
-                            leaf.y = -(Random.nextFloat() * 0.22f + 0.08f)
+                            // Respawn at the top
+                            leaf.y = -(Random.nextFloat() * 0.20f + 0.06f)
                             leaf.originX = Random.nextFloat() * 0.84f + 0.08f
                             leaf.x = leaf.originX
                             leaf.rotation = Random.nextFloat() * 360f
@@ -333,9 +337,8 @@ fun FallingLeavesEffect(
                         }
                     }
 
-                    // Gentle breathing oscillation for grounded leaves
                     restingLeaves.forEach { leaf ->
-                        leaf.rotation += dt * 0.30f * sin(totalElapsedSec * 0.5f + leaf.restSwayPhase)
+                        leaf.rotation += dt * 0.25f * sin(totalElapsedSec * 0.45f + leaf.restSwayPhase)
                     }
                 }
                 lastTimeNanos = nowNanos
@@ -356,7 +359,7 @@ fun FallingLeavesEffect(
         val particleScale = (baseDimension / 390f).coerceIn(0.80f, 1.30f)
         val breathingWave = (sin(t * 1.3f) * 0.5f + 0.5f)
 
-        // Draw ground pile first (base layers to top layers), then airborne leaves
+        // Draw ground pile first, then airborne leaves on top
         val drawList = buildList {
             addAll(restingLeaves)
             addAll(fallingLeaves)
@@ -397,7 +400,8 @@ fun FallingLeavesEffect(
                 glowColor = currentTheme.primaryLight,
                 particleType = currentTheme.particleType,
                 isGlowing = isGlowing && !leaf.isResting,
-                breathingGlowFactor = breathingWave
+                breathingGlowFactor = breathingWave,
+                isResting = leaf.isResting
             )
         }
     }
@@ -414,7 +418,8 @@ private fun DrawScope.drawIndividualParticle(
     glowColor: Color,
     particleType: ParticleType,
     isGlowing: Boolean,
-    breathingGlowFactor: Float
+    breathingGlowFactor: Float,
+    isResting: Boolean
 ) {
     rotate(degrees = rotation, pivot = center) {
         scale(scaleX = scaleX, scaleY = 1.0f, pivot = center) {
@@ -459,23 +464,31 @@ private fun DrawScope.drawIndividualParticle(
                 }
             }
 
+            // Opaque dark underlay for resting leaves: prevents additive alpha brightening when overlapping
+            if (isResting) {
+                drawPath(path = shapePath, color = Color(0xFF070B0E))
+            }
+
             if (isGlowing) {
                 val haloAlpha = (0.16f + 0.18f * breathingGlowFactor).coerceIn(0.10f, 0.38f)
                 drawPath(path = shapePath, color = glowColor.copy(alpha = haloAlpha), style = Stroke(width = 3.5f))
             }
 
+            // Draw leaf body
             drawPath(path = shapePath, color = color)
 
+            // Subtle vein detail
             drawPath(
                 path = detailPath,
                 color = Color(0xFF041014).copy(alpha = (0.28f * color.alpha).coerceIn(0.06f, 0.35f)),
                 style = Stroke(width = 1.0f)
             )
 
+            // Outer perimeter contour for crisp visual separation
             drawPath(
                 path = shapePath,
-                color = Color.Black.copy(alpha = (0.15f * color.alpha).coerceIn(0.04f, 0.20f)),
-                style = Stroke(width = 0.7f)
+                color = Color.Black.copy(alpha = (0.22f * color.alpha).coerceIn(0.06f, 0.30f)),
+                style = Stroke(width = 0.8f)
             )
         }
     }
