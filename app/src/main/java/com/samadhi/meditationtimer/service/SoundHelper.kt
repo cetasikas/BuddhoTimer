@@ -30,10 +30,10 @@ class SoundHelper(private val context: Context) {
     }
 
     /**
-     * Plays the selected chime profile (Tibetan Singing Bowl, Zen Bell, Ting-Sha, or Silent Haptic)
+     * Plays the selected chime profile (Plum Village Bells, Deep Singing Bowl, Zen Tone, Mindful Chime, or Silent Haptic)
      */
     fun playChime(
-        soundType: String = SOUND_TIBETAN_BOWL,
+        soundType: String = SOUND_PV_BELL_MEDIUM,
         scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
     ) {
         triggerGentleVibration()
@@ -44,10 +44,18 @@ class SoundHelper(private val context: Context) {
         }
 
         val rawResId = when (soundType) {
-            SOUND_ZEN_BELL -> com.samadhi.meditationtimer.R.raw.zen_temple_bell
-            SOUND_TINGSHA -> com.samadhi.meditationtimer.R.raw.tingsha_chime
-            SOUND_MOKTAK -> com.samadhi.meditationtimer.R.raw.woodblock_moktak
-            else -> com.samadhi.meditationtimer.R.raw.tibetan_singing_bowl
+            SOUND_PV_BELL_BIG -> com.samadhi.meditationtimer.R.raw.pv_bell_big
+            SOUND_PV_BELL_MEDIUM -> com.samadhi.meditationtimer.R.raw.pv_bell_medium
+            SOUND_PV_BELL_SMALL -> com.samadhi.meditationtimer.R.raw.pv_bell_small
+            SOUND_SINGING_BOWL -> com.samadhi.meditationtimer.R.raw.singing_bowl
+            SOUND_ZEN_TONE -> com.samadhi.meditationtimer.R.raw.zen_tone
+            SOUND_CHIME -> com.samadhi.meditationtimer.R.raw.chime
+            // Aliases for backwards compatibility
+            "tibetan_singing_bowl" -> com.samadhi.meditationtimer.R.raw.pv_bell_medium
+            "zen_temple_bell" -> com.samadhi.meditationtimer.R.raw.pv_bell_big
+            "tingsha_chime" -> com.samadhi.meditationtimer.R.raw.pv_bell_small
+            "woodblock_moktak" -> com.samadhi.meditationtimer.R.raw.zen_tone
+            else -> com.samadhi.meditationtimer.R.raw.pv_bell_medium
         }
 
         playRawSound(rawResId, soundType, scope)
@@ -350,17 +358,27 @@ class SoundHelper(private val context: Context) {
     companion object {
         private const val TAG = "SoundHelper"
 
-        const val SOUND_TIBETAN_BOWL = "tibetan_singing_bowl"
-        const val SOUND_ZEN_BELL = "zen_temple_bell"
-        const val SOUND_TINGSHA = "tingsha_chime"
-        const val SOUND_MOKTAK = "woodblock_moktak"
+        const val SOUND_PV_BELL_MEDIUM = "pv_bell_medium"
+        const val SOUND_PV_BELL_BIG = "pv_bell_big"
+        const val SOUND_PV_BELL_SMALL = "pv_bell_small"
+        const val SOUND_SINGING_BOWL = "singing_bowl"
+        const val SOUND_ZEN_TONE = "zen_tone"
+        const val SOUND_CHIME = "chime"
         const val SOUND_SILENT_HAPTIC = "silent_haptic"
 
+        // Legacy aliases
+        const val SOUND_TIBETAN_BOWL = SOUND_PV_BELL_MEDIUM
+        const val SOUND_ZEN_BELL = SOUND_PV_BELL_BIG
+        const val SOUND_TINGSHA = SOUND_PV_BELL_SMALL
+        const val SOUND_MOKTAK = SOUND_ZEN_TONE
+
         val soundOptions = listOf(
-            SoundOption(SOUND_TIBETAN_BOWL, "Tibetan Singing Bowl", "Warm, deep harmonic resonance"),
-            SoundOption(SOUND_ZEN_BELL, "Zen Bronze Bell", "Pure temple bell strike and sustain"),
-            SoundOption(SOUND_TINGSHA, "Ting-Sha Cymbals", "Bright, clear celestial chime"),
-            SoundOption(SOUND_MOKTAK, "Temple Woodblock", "Organic wooden meditation knock"),
+            SoundOption(SOUND_PV_BELL_MEDIUM, "Mindfulness Bell", "Plum Village Mindfulness Bell (27s)"),
+            SoundOption(SOUND_PV_BELL_BIG, "Great Temple Bell", "Plum Village Great Bell with awakening pre-strike (29s)"),
+            SoundOption(SOUND_PV_BELL_SMALL, "Activity Bell", "Plum Village Small Bell of Awakening (16s)"),
+            SoundOption(SOUND_SINGING_BOWL, "Deep Singing Bowl", "Resonant Tibetan singing bowl (50s)"),
+            SoundOption(SOUND_ZEN_TONE, "Zen Tone", "Short gentle meditation tone (2s)"),
+            SoundOption(SOUND_CHIME, "Mindful Chime", "Quick soothing acoustic chime (1.6s)"),
             SoundOption(SOUND_SILENT_HAPTIC, "Silent Retreat (Haptic Only)", "Gentle soothing vibration without audio")
         )
     }
