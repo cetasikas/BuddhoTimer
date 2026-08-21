@@ -43,6 +43,41 @@ class SoundHelper(private val context: Context) {
             return
         }
 
+        val rawResId = when (soundType) {
+            SOUND_ZEN_BELL -> com.samadhi.meditationtimer.R.raw.zen_temple_bell
+            SOUND_TINGSHA -> com.samadhi.meditationtimer.R.raw.tingsha_chime
+            SOUND_MOKTAK -> com.samadhi.meditationtimer.R.raw.woodblock_moktak
+            else -> com.samadhi.meditationtimer.R.raw.tibetan_singing_bowl
+        }
+
+        playRawSound(rawResId, soundType, scope)
+    }
+
+    private fun playRawSound(rawResId: Int, soundType: String, scope: CoroutineScope) {
+        try {
+            val mediaPlayer = android.media.MediaPlayer.create(context, rawResId)
+            if (mediaPlayer != null) {
+                mediaPlayer.setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                mediaPlayer.setOnCompletionListener { mp ->
+                    try {
+                        mp.release()
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Error releasing MediaPlayer", e)
+                    }
+                }
+                mediaPlayer.start()
+                return
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "MediaPlayer failed for raw res $rawResId, falling back to synthesis", e)
+        }
+
+        // Fallback to synthesis if raw media failed
         scope.launch(Dispatchers.IO) {
             try {
                 when (soundType) {
