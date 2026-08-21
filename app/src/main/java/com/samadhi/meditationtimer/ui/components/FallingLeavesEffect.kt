@@ -155,6 +155,7 @@ private fun weightedLeafColor(palette: List<Color>, rng: Random): Color {
 @Composable
 fun FallingLeavesEffect(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     leafCount: Int = 18,
     triggerBurst: Int = 0,
     dragVelocity: Float = 0f,
@@ -170,6 +171,8 @@ fun FallingLeavesEffect(
     timerCenterYRatio: Float = -1f,
     timerRadiusRatio: Float = 0f
 ) {
+    if (!enabled) return
+
     val currentTheme = LocalZenTheme.current
     val maxRestingLeaves = 160
 

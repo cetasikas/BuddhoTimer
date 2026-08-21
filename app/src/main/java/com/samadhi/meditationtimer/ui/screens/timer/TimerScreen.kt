@@ -72,6 +72,7 @@ import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
+import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
@@ -112,6 +113,7 @@ fun TimerScreen(
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
         // 1. Subtle, Dynamic Whole-Screen Swirling Falling Leaves
         FallingLeavesEffect(
+            enabled = config.showLeavesDuringMeditation,
             leafCount = 26,
             triggerBurst = leafBurstTrigger,
             dragVelocity = sliderDragVelocity,
@@ -152,7 +154,7 @@ fun TimerScreen(
                         color = ZenTextPrimary
                     )
                     Text(
-                        text = if (config.isBoxBreathingMode) "Living Breathwork • Pranayama" else "Mindful Stillness • Samadhi",
+                        text = if (config.isBoxBreathingMode) "Mindful Breathwork • Box Breathing" else "Mindful Stillness • Samadhi",
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                         color = currentTheme.primaryLight
                     )
@@ -286,8 +288,12 @@ fun TimerScreen(
                                             leafBurstTrigger++
                                         },
                                         colors = SwitchDefaults.colors(
-                                            checkedThumbColor = currentTheme.primary,
-                                            checkedTrackColor = currentTheme.primary.copy(alpha = 0.35f)
+                                            checkedThumbColor = ZenObsidian,
+                                            checkedTrackColor = currentTheme.primaryLight,
+                                            checkedBorderColor = currentTheme.primary,
+                                            uncheckedThumbColor = Color(0xFFCBD5E1),
+                                            uncheckedTrackColor = Color(0xFF1E293B),
+                                            uncheckedBorderColor = Color(0xFF475569)
                                         )
                                     )
                                 }
@@ -329,8 +335,12 @@ fun TimerScreen(
                                             leafBurstTrigger++
                                         },
                                         colors = SwitchDefaults.colors(
-                                            checkedThumbColor = currentTheme.primary,
-                                            checkedTrackColor = currentTheme.primary.copy(alpha = 0.35f)
+                                            checkedThumbColor = ZenObsidian,
+                                            checkedTrackColor = currentTheme.primaryLight,
+                                            checkedBorderColor = currentTheme.primary,
+                                            uncheckedThumbColor = Color(0xFFCBD5E1),
+                                            uncheckedTrackColor = Color(0xFF1E293B),
+                                            uncheckedBorderColor = Color(0xFF475569)
                                         )
                                     )
                                 }
@@ -657,8 +667,12 @@ fun TimerScreen(
                                         leafBurstTrigger++
                                     },
                                     colors = SwitchDefaults.colors(
-                                        checkedThumbColor = currentTheme.primary,
-                                        checkedTrackColor = currentTheme.primary.copy(alpha = 0.35f)
+                                        checkedThumbColor = ZenObsidian,
+                                        checkedTrackColor = currentTheme.primaryLight,
+                                        checkedBorderColor = currentTheme.primary,
+                                        uncheckedThumbColor = Color(0xFFCBD5E1),
+                                        uncheckedTrackColor = Color(0xFF1E293B),
+                                        uncheckedBorderColor = Color(0xFF475569)
                                     )
                                 )
                             }
@@ -688,8 +702,8 @@ fun TimerScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(if (!config.isBoxBreathingMode) currentTheme.primary.copy(alpha = 0.25f) else Color.Transparent)
-                            .border(1.dp, if (!config.isBoxBreathingMode) currentTheme.primaryLight.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(16.dp))
+                            .background(if (!config.isBoxBreathingMode) currentTheme.primary.copy(alpha = 0.28f) else ZenSurfaceVariant.copy(alpha = 0.45f))
+                            .border(1.dp, if (!config.isBoxBreathingMode) currentTheme.primaryLight.copy(alpha = 0.7f) else ZenBorder.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
                             .clickable {
                                 if (config.isBoxBreathingMode) {
                                     viewModel.toggleBoxBreathingMode(false)
@@ -721,8 +735,8 @@ fun TimerScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(if (config.isBoxBreathingMode) currentTheme.primary.copy(alpha = 0.25f) else Color.Transparent)
-                            .border(1.dp, if (config.isBoxBreathingMode) currentTheme.primaryLight.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(16.dp))
+                            .background(if (config.isBoxBreathingMode) currentTheme.primary.copy(alpha = 0.28f) else ZenSurfaceVariant.copy(alpha = 0.45f))
+                            .border(1.dp, if (config.isBoxBreathingMode) currentTheme.primaryLight.copy(alpha = 0.7f) else ZenBorder.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
                             .clickable {
                                 if (!config.isBoxBreathingMode) {
                                     viewModel.toggleBoxBreathingMode(true)

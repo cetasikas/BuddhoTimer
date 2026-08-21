@@ -262,9 +262,18 @@ fun SettingsScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? -> uri?.let { viewModel.importJsonBackup(it) } }
 
-    DisposableEffect(Unit) {
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                timerViewModel.refreshPermissions()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
         timerViewModel.refreshPermissions()
-        onDispose { }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     LaunchedEffect(statusMessage) {
@@ -275,7 +284,11 @@ fun SettingsScreen(
     }
 
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
-        FallingLeavesEffect(leafCount = 14, ambientAlpha = 0.30f)
+        FallingLeavesEffect(
+            enabled = config.showLeavesDuringMeditation,
+            leafCount = 14,
+            ambientAlpha = 0.30f
+        )
 
         Column(
             modifier = Modifier
@@ -576,13 +589,43 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                Text("Falling Zen Leaves", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text("Floating bamboo leaves & bodhi petals on screens", fontSize = 11.sp, color = ZenTextSecondary)
+                            }
+                            Switch(
+                                checked = config.showLeavesDuringMeditation,
+                                onCheckedChange = { timerViewModel.toggleShowLeavesDuringMeditation(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ZenObsidian,
+                                    checkedTrackColor = currentTheme.primaryLight,
+                                    checkedBorderColor = currentTheme.primary,
+                                    uncheckedThumbColor = Color(0xFFCBD5E1),
+                                    uncheckedTrackColor = Color(0xFF1E293B),
+                                    uncheckedBorderColor = Color(0xFF475569)
+                                )
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                                 Text("Tap to Blackout Screen", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
                                 Text("Tap during sits for AMOLED black", fontSize = 11.sp, color = ZenTextSecondary)
                             }
                             Switch(
                                 checked = config.tapToBlackoutEnabled,
                                 onCheckedChange = { timerViewModel.toggleTapToBlackout(it) },
-                                colors = SwitchDefaults.colors(checkedThumbColor = ZenObsidian, checkedTrackColor = currentTheme.primary)
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ZenObsidian,
+                                    checkedTrackColor = currentTheme.primaryLight,
+                                    checkedBorderColor = currentTheme.primary,
+                                    uncheckedThumbColor = Color(0xFFCBD5E1),
+                                    uncheckedTrackColor = Color(0xFF1E293B),
+                                    uncheckedBorderColor = Color(0xFF475569)
+                                )
                             )
                         }
 
@@ -598,7 +641,14 @@ fun SettingsScreen(
                             Switch(
                                 checked = config.keepScreenAwake,
                                 onCheckedChange = { timerViewModel.toggleKeepScreenAwake(it) },
-                                colors = SwitchDefaults.colors(checkedThumbColor = ZenObsidian, checkedTrackColor = currentTheme.primary)
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ZenObsidian,
+                                    checkedTrackColor = currentTheme.primaryLight,
+                                    checkedBorderColor = currentTheme.primary,
+                                    uncheckedThumbColor = Color(0xFFCBD5E1),
+                                    uncheckedTrackColor = Color(0xFF1E293B),
+                                    uncheckedBorderColor = Color(0xFF475569)
+                                )
                             )
                         }
                     }
@@ -651,7 +701,14 @@ fun SettingsScreen(
                                         com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.cancelReminder(context)
                                     }
                                 },
-                                colors = SwitchDefaults.colors(checkedThumbColor = ZenObsidian, checkedTrackColor = currentTheme.primary)
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ZenObsidian,
+                                    checkedTrackColor = currentTheme.primaryLight,
+                                    checkedBorderColor = currentTheme.primary,
+                                    uncheckedThumbColor = Color(0xFFCBD5E1),
+                                    uncheckedTrackColor = Color(0xFF1E293B),
+                                    uncheckedBorderColor = Color(0xFF475569)
+                                )
                             )
                         }
 
@@ -830,7 +887,11 @@ fun SettingsScreen(
                 }
 
                 // 7. SYSTEM PERMISSIONS
-                val permSummary = if (isDndGranted && isBatteryOptIgnored) "Optimized" else "Action Needed"
+                val permSummary = when {
+                    isDndGranted && isBatteryOptIgnored -> "Optimized"
+                    isDndGranted || isBatteryOptIgnored -> "Configured"
+                    else -> "Optional"
+                }
                 ExpandableSettingsCard(
                     title = "System Permissions",
                     icon = Icons.Default.Security,

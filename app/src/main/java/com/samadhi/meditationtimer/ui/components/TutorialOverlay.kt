@@ -76,6 +76,9 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Save
 
 private data class FeatureHighlight(
     val icon: ImageVector,
@@ -113,6 +116,17 @@ private val tutorialSteps = listOf(
             FeatureHighlight(Icons.Default.DarkMode, "Tap-to-Blackout", "Tap the screen during a sit to go pure AMOLED black"),
             FeatureHighlight(Icons.Default.MusicNote, "Interval Bell", "Periodic Tibetan bowl chime to anchor wandering attention"),
             FeatureHighlight(Icons.Default.NotificationsActive, "Daily Reminders", "Optional gentle nudge at a fixed time, random hour, or interval")
+        )
+    ),
+    TutorialStep(
+        title = "Automatic Backup & Full Ownership",
+        subtitle = "Zero cloud tracking · 100% data control",
+        description = "Your practice history and reflection journals belong to you.",
+        icon = Icons.Default.CloudUpload,
+        features = listOf(
+            FeatureHighlight(Icons.Default.CloudUpload, "Automatic Google Backup", "Android automatically backs up your session logs and notes to your private Google Drive backup."),
+            FeatureHighlight(Icons.Default.Save, "Manual JSON & CSV Exports", "Export or restore your full history anytime directly in Settings for total portability."),
+            FeatureHighlight(Icons.Default.Security, "100% Private & Sandboxed", "Zero trackers, zero analytics, and zero external servers. Your sits remain sacred.")
         )
     ),
     TutorialStep(
