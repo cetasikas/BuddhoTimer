@@ -136,9 +136,8 @@ fun TimerScreen(
                 horizontalArrangement = Arrangement.Start
             ) {
                 com.samadhi.meditationtimer.ui.components.BuddhaOutlineLogo(
-                    size = 36.dp,
-                    tint = currentTheme.primaryLight,
-                    strokeWidth = 2.0f,
+                    size = 38.dp,
+                    tint = null,
                     showEnsoCircle = true
                 )
                 Spacer(modifier = Modifier.width(12.dp))
