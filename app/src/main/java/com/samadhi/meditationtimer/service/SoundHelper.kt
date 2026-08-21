@@ -30,10 +30,10 @@ class SoundHelper(private val context: Context) {
     }
 
     /**
-     * Plays the selected chime profile (Plum Village Bells, Deep Singing Bowl, Zen Tone, Mindful Chime, or Silent Haptic)
+     * Plays the selected chime profile (Mindfulness Bell, Great Temple Bell, Awakening Bell, Deep Singing Bowl, Zen Tone, Mindful Chime, or Silent Haptic)
      */
     fun playChime(
-        soundType: String = SOUND_PV_BELL_MEDIUM,
+        soundType: String = SOUND_MINDFULNESS_BELL,
         scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
     ) {
         triggerGentleVibration()
@@ -44,18 +44,18 @@ class SoundHelper(private val context: Context) {
         }
 
         val rawResId = when (soundType) {
-            SOUND_PV_BELL_BIG -> com.samadhi.meditationtimer.R.raw.pv_bell_big
-            SOUND_PV_BELL_MEDIUM -> com.samadhi.meditationtimer.R.raw.pv_bell_medium
-            SOUND_PV_BELL_SMALL -> com.samadhi.meditationtimer.R.raw.pv_bell_small
+            SOUND_TEMPLE_DEEP -> com.samadhi.meditationtimer.R.raw.bell_temple_deep
+            SOUND_MINDFULNESS_BELL -> com.samadhi.meditationtimer.R.raw.bell_mindfulness
+            SOUND_AWAKENING -> com.samadhi.meditationtimer.R.raw.bell_awakening
             SOUND_SINGING_BOWL -> com.samadhi.meditationtimer.R.raw.singing_bowl
             SOUND_ZEN_TONE -> com.samadhi.meditationtimer.R.raw.zen_tone
             SOUND_CHIME -> com.samadhi.meditationtimer.R.raw.chime
             // Aliases for backwards compatibility
-            "tibetan_singing_bowl" -> com.samadhi.meditationtimer.R.raw.pv_bell_medium
-            "zen_temple_bell" -> com.samadhi.meditationtimer.R.raw.pv_bell_big
-            "tingsha_chime" -> com.samadhi.meditationtimer.R.raw.pv_bell_small
+            "pv_bell_big", "zen_temple_bell" -> com.samadhi.meditationtimer.R.raw.bell_temple_deep
+            "pv_bell_medium", "tibetan_singing_bowl" -> com.samadhi.meditationtimer.R.raw.bell_mindfulness
+            "pv_bell_small", "tingsha_chime" -> com.samadhi.meditationtimer.R.raw.bell_awakening
             "woodblock_moktak" -> com.samadhi.meditationtimer.R.raw.zen_tone
-            else -> com.samadhi.meditationtimer.R.raw.pv_bell_medium
+            else -> com.samadhi.meditationtimer.R.raw.bell_mindfulness
         }
 
         playRawSound(rawResId, soundType, scope)
@@ -358,24 +358,27 @@ class SoundHelper(private val context: Context) {
     companion object {
         private const val TAG = "SoundHelper"
 
-        const val SOUND_PV_BELL_MEDIUM = "pv_bell_medium"
-        const val SOUND_PV_BELL_BIG = "pv_bell_big"
-        const val SOUND_PV_BELL_SMALL = "pv_bell_small"
+        const val SOUND_MINDFULNESS_BELL = "bell_mindfulness"
+        const val SOUND_TEMPLE_DEEP = "bell_temple_deep"
+        const val SOUND_AWAKENING = "bell_awakening"
         const val SOUND_SINGING_BOWL = "singing_bowl"
         const val SOUND_ZEN_TONE = "zen_tone"
         const val SOUND_CHIME = "chime"
         const val SOUND_SILENT_HAPTIC = "silent_haptic"
 
         // Legacy aliases
-        const val SOUND_TIBETAN_BOWL = SOUND_PV_BELL_MEDIUM
-        const val SOUND_ZEN_BELL = SOUND_PV_BELL_BIG
-        const val SOUND_TINGSHA = SOUND_PV_BELL_SMALL
+        const val SOUND_PV_BELL_MEDIUM = SOUND_MINDFULNESS_BELL
+        const val SOUND_PV_BELL_BIG = SOUND_TEMPLE_DEEP
+        const val SOUND_PV_BELL_SMALL = SOUND_AWAKENING
+        const val SOUND_TIBETAN_BOWL = SOUND_MINDFULNESS_BELL
+        const val SOUND_ZEN_BELL = SOUND_TEMPLE_DEEP
+        const val SOUND_TINGSHA = SOUND_AWAKENING
         const val SOUND_MOKTAK = SOUND_ZEN_TONE
 
         val soundOptions = listOf(
-            SoundOption(SOUND_PV_BELL_MEDIUM, "Mindfulness Bell", "Plum Village Mindfulness Bell (27s)"),
-            SoundOption(SOUND_PV_BELL_BIG, "Great Temple Bell", "Plum Village Great Bell with awakening pre-strike (29s)"),
-            SoundOption(SOUND_PV_BELL_SMALL, "Activity Bell", "Plum Village Small Bell of Awakening (16s)"),
+            SoundOption(SOUND_MINDFULNESS_BELL, "Mindfulness Bell", "Warm, resonant bronze meditation bell (27s)"),
+            SoundOption(SOUND_TEMPLE_DEEP, "Great Temple Bell", "Deep sacred bell with gentle awakening pre-strike (29s)"),
+            SoundOption(SOUND_AWAKENING, "Awakening Bell", "Clear, gentle bell of presence (16s)"),
             SoundOption(SOUND_SINGING_BOWL, "Deep Singing Bowl", "Resonant Tibetan singing bowl (50s)"),
             SoundOption(SOUND_ZEN_TONE, "Zen Tone", "Short gentle meditation tone (2s)"),
             SoundOption(SOUND_CHIME, "Mindful Chime", "Quick soothing acoustic chime (1.6s)"),
