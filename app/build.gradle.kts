@@ -11,11 +11,11 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.samadhi.meditationtimer"
+        applicationId = "com.buddho.timer"
         minSdk = 26
         targetSdk = 34
-        versionCode = 93
-        versionName = "2.26.53"
+        versionCode = 94
+        versionName = "2.26.54"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
