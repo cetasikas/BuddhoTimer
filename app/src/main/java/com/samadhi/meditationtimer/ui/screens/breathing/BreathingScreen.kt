@@ -183,15 +183,15 @@ fun BreathingScreen(
         onSessionCompleted(completedStatus)
     }
 
-    // Warm-up Preparation Countdown ticker
+    // Warm-up Preparation Countdown ticker (Haptic only, zero audio chime)
     LaunchedEffect(isPreparing) {
         if (!isPreparing) return@LaunchedEffect
         while (isActive && isPreparing && prepRemaining > 0) {
+            soundHelper.triggerSoftTouchHaptic()
             delay(1000L)
             prepRemaining--
             if (prepRemaining <= 0) {
                 isPreparing = false
-                soundHelper.playChime(soundBellResName)
                 soundHelper.triggerGentleVibration()
                 break
             }
