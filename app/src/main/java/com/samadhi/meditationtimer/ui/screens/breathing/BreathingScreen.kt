@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -693,6 +694,7 @@ fun BreathingScreen(
                                                 .weight(1f)
                                                 .height(42.dp),
                                             shape = RoundedCornerShape(14.dp),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                                             colors = ButtonDefaults.buttonColors(
                                                 containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
                                                 contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
@@ -704,20 +706,33 @@ fun BreathingScreen(
                                                 modifier = Modifier.size(16.dp)
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text(if (isRunning) "Pause" else "Resume", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
+                                            Text(
+                                                text = if (isRunning) "Pause" else "Resume",
+                                                fontSize = 12.5.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 1,
+                                                softWrap = false
+                                            )
                                         }
 
                                         Button(
                                             onClick = { finishSession() },
                                             modifier = Modifier.height(42.dp),
                                             shape = RoundedCornerShape(14.dp),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                             colors = ButtonDefaults.buttonColors(
                                                 containerColor = ZenSurface.copy(alpha = 0.85f),
                                                 contentColor = currentTheme.primaryLight
                                             ),
                                             border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
                                         ) {
-                                            Text("Finish", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
+                                            Text(
+                                                text = "Finish",
+                                                fontSize = 12.5.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 1,
+                                                softWrap = false
+                                            )
                                         }
                                     }
                                 }
@@ -875,6 +890,25 @@ fun BreathingScreen(
                             }
                         }
 
+                        // 1. TOP TIMER BADGE (Elevated for effortless glance)
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 2.dp, bottom = 2.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(ZenSurface.copy(alpha = 0.65f))
+                                .border(1.dp, ZenBorder.copy(alpha = 0.70f), RoundedCornerShape(12.dp))
+                                .padding(horizontal = 14.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ZenTextPrimary.copy(alpha = 0.85f),
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+
                         if (isPreparing) {
                             // --- PREPARATION COUNTDOWN VIEW ---
                             Column(
@@ -947,11 +981,13 @@ fun BreathingScreen(
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center,
-                                    modifier = Modifier.padding(horizontal = 20.dp)
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 24.dp)
                                 ) {
                                     Text(
                                         text = displayCountText,
-                                        fontSize = 68.sp,
+                                        fontSize = 58.sp,
                                         fontWeight = FontWeight.Light,
                                         color = Color.White,
                                         letterSpacing = 1.sp
@@ -961,14 +997,14 @@ fun BreathingScreen(
                                         Spacer(modifier = Modifier.height(2.dp))
                                         Box(
                                             modifier = Modifier
-                                                .clip(RoundedCornerShape(12.dp))
+                                                .clip(RoundedCornerShape(10.dp))
                                                 .background(currentTheme.primary.copy(alpha = 0.18f))
-                                                .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
-                                                .padding(horizontal = 10.dp, vertical = 3.dp)
+                                                .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
+                                                .padding(horizontal = 8.dp, vertical = 2.dp)
                                         ) {
                                             Text(
                                                 text = activeStageBadge,
-                                                fontSize = 11.5.sp,
+                                                fontSize = 10.5.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = currentTheme.primaryLight
                                             )
@@ -987,56 +1023,46 @@ fun BreathingScreen(
                                     ) { phase ->
                                         Text(
                                             text = phase.displayName.uppercase(),
-                                            fontSize = 20.sp,
-                                            letterSpacing = 3.5.sp,
+                                            fontSize = 18.sp,
+                                            letterSpacing = 3.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = phaseColor,
                                             textAlign = TextAlign.Center
                                         )
                                     }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    AnimatedContent(
+                                        targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
+                                        transitionSpec = {
+                                            (fadeIn(tween(300)) + slideInVertically(tween(300)) { 6 })
+                                                .togetherWith(fadeOut(tween(200)) + slideOutVertically(tween(200)) { -6 })
+                                        },
+                                        label = "phaseInstructionFlow"
+                                    ) {
+                                        Text(
+                                            text = activeStageInstruction,
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.Normal,
+                                            color = ZenTextPrimary.copy(alpha = 0.88f),
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 2,
+                                            lineHeight = 17.sp,
+                                            modifier = Modifier.padding(horizontal = 4.dp)
+                                        )
+                                    }
                                 }
                             }
 
-                            // --- 3. INSTRUCTION & SESSION PROGRESS TIMER ---
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                            ) {
-                                AnimatedContent(
-                                    targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
-                                    transitionSpec = {
-                                        (fadeIn(tween(300)) + slideInVertically(tween(300)) { 6 })
-                                            .togetherWith(fadeOut(tween(200)) + slideOutVertically(tween(200)) { -6 })
-                                    },
-                                    label = "phaseInstructionFlow"
-                                ) {
-                                    Text(
-                                        text = activeStageInstruction,
-                                        fontSize = 15.5.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = ZenTextPrimary.copy(alpha = 0.90f),
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 2
-                                    )
-                                }
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                Text(
-                                    text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                    fontSize = 17.5.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = ZenTextPrimary.copy(alpha = 0.80f),
-                                    letterSpacing = 0.5.sp
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            // --- 4. MINIMAL CONTROL BAR WITH INTEGRATED DND ---
+                            // --- 3. MINIMAL CONTROL BAR WITH INTEGRATED DND ---
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 // DND Quick Toggle Button
@@ -1056,7 +1082,7 @@ fun BreathingScreen(
                                         }
                                     },
                                     modifier = Modifier
-                                        .size(48.dp)
+                                        .size(44.dp)
                                         .clip(CircleShape)
                                         .background(
                                             if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
@@ -1072,7 +1098,7 @@ fun BreathingScreen(
                                         imageVector = Icons.Default.DoNotDisturb,
                                         contentDescription = "Toggle DND",
                                         tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(19.dp)
                                     )
                                 }
 
@@ -1086,7 +1112,7 @@ fun BreathingScreen(
                                         phaseProgress = 0f
                                     },
                                     modifier = Modifier
-                                        .size(48.dp)
+                                        .size(44.dp)
                                         .clip(CircleShape)
                                         .background(ZenSurface.copy(alpha = 0.75f))
                                         .border(1.dp, ZenBorder, CircleShape)
@@ -1095,17 +1121,18 @@ fun BreathingScreen(
                                         imageVector = Icons.Default.Refresh,
                                         contentDescription = "Restart",
                                         tint = ZenTextSecondary,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(19.dp)
                                     )
                                 }
 
-                                // Pause / Resume Button
+                                // Pause / Resume Button (No text clipping)
                                 Button(
                                     onClick = { isRunning = !isRunning },
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(48.dp),
-                                    shape = RoundedCornerShape(16.dp),
+                                        .height(46.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
                                         contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
@@ -1114,28 +1141,37 @@ fun BreathingScreen(
                                     Icon(
                                         imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
                                         contentDescription = if (isRunning) "Pause" else "Resume",
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = if (isRunning) "Pause" else "Resume",
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 14.5.sp
+                                        fontSize = 13.5.sp,
+                                        maxLines = 1,
+                                        softWrap = false
                                     )
                                 }
 
                                 // Finish Button
                                 Button(
                                     onClick = { finishSession() },
-                                    modifier = Modifier.height(48.dp),
-                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = Modifier.height(46.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = ZenSurface.copy(alpha = 0.85f),
                                         contentColor = currentTheme.primaryLight
                                     ),
                                     border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
                                 ) {
-                                    Text("Finish", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(
+                                        text = "Finish",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
                                 }
                             }
                         }
