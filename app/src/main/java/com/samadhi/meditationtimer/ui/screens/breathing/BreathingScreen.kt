@@ -1,7 +1,6 @@
 package com.samadhi.meditationtimer.ui.screens.breathing
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -321,20 +320,12 @@ fun BreathingScreen(
         currentPhase.instruction
     }
 
-    val targetPhaseColor = when (currentPhase) {
+    val phaseColor = when (currentPhase) {
         BreathPhase.INHALE -> currentTheme.primary
         BreathPhase.HOLD_FULL -> currentTheme.primaryLight
         BreathPhase.EXHALE -> currentTheme.overrunColor
         BreathPhase.HOLD_EMPTY -> ZenAmber
     }
-
-    val animatedPhaseColor by animateColorAsState(
-        targetValue = targetPhaseColor,
-        animationSpec = tween(durationMillis = 700, easing = LinearOutSlowInEasing),
-        label = "animatedPhaseColor"
-    )
-
-    val phaseColor = animatedPhaseColor
 
     Box(
         modifier = modifier
@@ -576,20 +567,35 @@ fun BreathingScreen(
                                     AnimatedContent(
                                         targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
                                         transitionSpec = {
-                                            (fadeIn(animationSpec = tween(500, easing = LinearOutSlowInEasing)) + 
-                                             slideInVertically(animationSpec = tween(500, easing = LinearOutSlowInEasing)) { 6 })
+                                            (fadeIn(animationSpec = tween(400, easing = LinearOutSlowInEasing)) + 
+                                             slideInVertically(animationSpec = tween(400, easing = LinearOutSlowInEasing)) { 4 })
                                                 .togetherWith(
-                                                    fadeOut(animationSpec = tween(350, easing = FastOutLinearInEasing)) + 
-                                                    slideOutVertically(animationSpec = tween(350, easing = FastOutLinearInEasing)) { -6 }
+                                                    fadeOut(animationSpec = tween(300, easing = FastOutLinearInEasing)) + 
+                                                    slideOutVertically(animationSpec = tween(300, easing = FastOutLinearInEasing)) { -4 }
                                                 )
                                         },
                                         label = "phaseInstructionFlow"
-                                    ) {
+                                    ) { (phase, _) ->
+                                        val itemColor = when (phase) {
+                                            BreathPhase.INHALE -> currentTheme.primary
+                                            BreathPhase.HOLD_FULL -> currentTheme.primaryLight
+                                            BreathPhase.EXHALE -> currentTheme.overrunColor
+                                            BreathPhase.HOLD_EMPTY -> ZenAmber
+                                        }
+                                        val textToDisplay = if (isVaryingCount) {
+                                            if (phase == BreathPhase.INHALE) {
+                                                "Inhale steadily\nCount 1 → $currentVaryingDuration"
+                                            } else {
+                                                "Exhale smoothly\nCount $currentVaryingDuration → 1"
+                                            }
+                                        } else {
+                                            phase.instruction
+                                        }
                                         Text(
-                                            text = activeStageInstruction,
+                                            text = textToDisplay,
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = animatedPhaseColor,
+                                            color = itemColor,
                                             textAlign = TextAlign.Center,
                                             maxLines = 2,
                                             lineHeight = 20.sp,
@@ -980,20 +986,35 @@ fun BreathingScreen(
                                     AnimatedContent(
                                         targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
                                         transitionSpec = {
-                                            (fadeIn(animationSpec = tween(500, easing = LinearOutSlowInEasing)) + 
-                                             slideInVertically(animationSpec = tween(500, easing = LinearOutSlowInEasing)) { 6 })
+                                            (fadeIn(animationSpec = tween(400, easing = LinearOutSlowInEasing)) + 
+                                             slideInVertically(animationSpec = tween(400, easing = LinearOutSlowInEasing)) { 4 })
                                                 .togetherWith(
-                                                    fadeOut(animationSpec = tween(350, easing = FastOutLinearInEasing)) + 
-                                                    slideOutVertically(animationSpec = tween(350, easing = FastOutLinearInEasing)) { -6 }
+                                                    fadeOut(animationSpec = tween(300, easing = FastOutLinearInEasing)) + 
+                                                    slideOutVertically(animationSpec = tween(300, easing = FastOutLinearInEasing)) { -4 }
                                                 )
                                         },
                                         label = "phaseInstructionFlow"
-                                    ) {
+                                    ) { (phase, _) ->
+                                        val itemColor = when (phase) {
+                                            BreathPhase.INHALE -> currentTheme.primary
+                                            BreathPhase.HOLD_FULL -> currentTheme.primaryLight
+                                            BreathPhase.EXHALE -> currentTheme.overrunColor
+                                            BreathPhase.HOLD_EMPTY -> ZenAmber
+                                        }
+                                        val textToDisplay = if (isVaryingCount) {
+                                            if (phase == BreathPhase.INHALE) {
+                                                "Inhale steadily\nCount 1 → $currentVaryingDuration"
+                                            } else {
+                                                "Exhale smoothly\nCount $currentVaryingDuration → 1"
+                                            }
+                                        } else {
+                                            phase.instruction
+                                        }
                                         Text(
-                                            text = activeStageInstruction,
+                                            text = textToDisplay,
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = animatedPhaseColor,
+                                            color = itemColor,
                                             textAlign = TextAlign.Center,
                                             maxLines = 2,
                                             lineHeight = 22.sp,
