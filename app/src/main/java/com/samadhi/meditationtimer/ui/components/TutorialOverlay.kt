@@ -1,7 +1,10 @@
 package com.samadhi.meditationtimer.ui.components
 
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,7 +26,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Air
+import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.HourglassBottom
@@ -39,8 +44,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -130,10 +137,10 @@ private val tutorialSteps = listOf(
         )
     ),
     TutorialStep(
-        title = "Two Quick Permissions",
-        subtitle = "Recommended for uninterrupted long sits",
-        description = "Neither is required, but both help:\n\n• Do Not Disturb — silences calls & notifications during your sit\n• Battery Optimization — prevents Android from stopping your timer after 15–20 minutes",
-        icon = Icons.Default.DoNotDisturb,
+        title = "Recommended Permissions",
+        subtitle = "Enable for quiet, uninterrupted sits",
+        description = "Grant these two permissions so phone calls stay silenced and your timer runs without interruption.",
+        icon = Icons.Default.Security,
         isPermissionStep = true
     )
 )
@@ -152,6 +159,29 @@ fun TutorialOverlay(
     var currentStepIndex by remember { mutableIntStateOf(0) }
     val step = tutorialSteps[currentStepIndex]
     val isLastStep = currentStepIndex == tutorialSteps.size - 1
+
+    val notificationManager = remember { context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager }
+    val powerManager = remember { context.getSystemService(Context.POWER_SERVICE) as? PowerManager }
+
+    fun checkDnd(): Boolean = notificationManager?.isNotificationPolicyAccessGranted ?: false
+    fun checkBattery(): Boolean = powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: true
+
+    var isDndGranted by remember { mutableStateOf(checkDnd()) }
+    var isBatteryOptIgnored by remember { mutableStateOf(checkBattery()) }
+
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                isDndGranted = checkDnd()
+                isBatteryOptIgnored = checkBattery()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Box(
         modifier = modifier
@@ -319,63 +349,194 @@ fun TutorialOverlay(
 
             // Permissions Quick Access (On Permission Step)
             if (step.isPermissionStep) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
+                Spacer(modifier = Modifier.height(14.dp))
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = {
-                            context.startActivity(
-                                Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
-                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                }
+                    // DND Permission Card
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isDndGranted) currentTheme.primary.copy(alpha = 0.12f)
+                                else ZenSurfaceVariant.copy(alpha = 0.7f)
                             )
-                        },
-                        modifier = Modifier.weight(1f).height(38.dp),
-                        shape = RoundedCornerShape(19.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = ZenSurface,
-                            contentColor = currentTheme.primaryLight
-                        ),
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
+                            .border(
+                                1.dp,
+                                if (isDndGranted) currentTheme.primaryLight.copy(alpha = 0.4f) else ZenBorder,
+                                RoundedCornerShape(12.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "Grant DND",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = currentTheme.primaryLight,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f).padding(end = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DoNotDisturb,
+                                contentDescription = null,
+                                tint = if (isDndGranted) currentTheme.primaryLight else ZenTextSecondary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Do Not Disturb (DND)",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ZenTextPrimary
+                                )
+                                Text(
+                                    text = if (isDndGranted) "Calls & notifications silenced during sits" else "Required to auto-silence notifications",
+                                    fontSize = 10.5.sp,
+                                    color = ZenTextSecondary
+                                )
+                            }
+                        }
+
+                        if (isDndGranted) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Granted",
+                                    tint = currentTheme.primaryLight,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Granted",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = currentTheme.primaryLight
+                                )
+                            }
+                        } else {
+                            Button(
+                                onClick = {
+                                    context.startActivity(
+                                        Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
+                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        }
+                                    )
+                                },
+                                modifier = Modifier.height(32.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = currentTheme.primary,
+                                    contentColor = ZenObsidian
+                                )
+                            ) {
+                                Text(
+                                    text = "Grant DND",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = ZenObsidian
+                                )
+                            }
+                        }
                     }
 
-                    OutlinedButton(
-                        onClick = {
-                            context.startActivity(
-                                Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
-                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                }
+                    // Battery Saver Exemption Card
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isBatteryOptIgnored) currentTheme.primary.copy(alpha = 0.12f)
+                                else ZenSurfaceVariant.copy(alpha = 0.7f)
                             )
-                        },
-                        modifier = Modifier.weight(1f).height(38.dp),
-                        shape = RoundedCornerShape(19.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = ZenSurface,
-                            contentColor = currentTheme.primaryLight
-                        ),
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
+                            .border(
+                                1.dp,
+                                if (isBatteryOptIgnored) currentTheme.primaryLight.copy(alpha = 0.4f) else ZenBorder,
+                                RoundedCornerShape(12.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "Battery Settings",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = currentTheme.primaryLight,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f).padding(end = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.BatteryChargingFull,
+                                contentDescription = null,
+                                tint = if (isBatteryOptIgnored) currentTheme.primaryLight else ZenTextSecondary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Disable Battery Saver",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ZenTextPrimary
+                                )
+                                Text(
+                                    text = if (isBatteryOptIgnored) "Protected against Android background sleep kill" else "Prevents timer stopping after 15–20 min",
+                                    fontSize = 10.5.sp,
+                                    color = ZenTextSecondary
+                                )
+                            }
+                        }
+
+                        if (isBatteryOptIgnored) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Optimized",
+                                    tint = currentTheme.primaryLight,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Optimized",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = currentTheme.primaryLight
+                                )
+                            }
+                        } else {
+                            Button(
+                                onClick = {
+                                    try {
+                                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                            data = Uri.parse("package:${context.packageName}")
+                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        }
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        val fallback = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        }
+                                        context.startActivity(fallback)
+                                    }
+                                },
+                                modifier = Modifier.height(32.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = currentTheme.primary,
+                                    contentColor = ZenObsidian
+                                )
+                            ) {
+                                Text(
+                                    text = "Disable",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = ZenObsidian
+                                )
+                            }
+                        }
                     }
                 }
             }

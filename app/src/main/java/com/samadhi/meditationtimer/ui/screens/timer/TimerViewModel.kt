@@ -75,7 +75,8 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             mindfulnessIntervalMinutes = prefs.getInt("mindfulness_interval_min", 0),
             tapToBlackoutEnabled = prefs.getBoolean("tap_to_blackout", true),
             keepScreenAwake = prefs.getBoolean("keep_screen_awake", true),
-            isBoxBreathingMode = prefs.getBoolean("box_breathing_mode", false)
+            isBoxBreathingMode = prefs.getBoolean("box_breathing_mode", false),
+            isCountdownHapticsEnabled = prefs.getBoolean("countdown_haptics", true)
         )
     }
 
@@ -94,6 +95,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putBoolean("tap_to_blackout", newConfig.tapToBlackoutEnabled)
             putBoolean("keep_screen_awake", newConfig.keepScreenAwake)
             putBoolean("box_breathing_mode", newConfig.isBoxBreathingMode)
+            putBoolean("countdown_haptics", newConfig.isCountdownHapticsEnabled)
             apply()
         }
     }
@@ -104,6 +106,10 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updatePrepTimeSeconds(seconds: Int) {
         saveConfig(_config.value.copy(prepTimeSeconds = seconds))
+    }
+
+    fun toggleCountdownHaptics(enabled: Boolean) {
+        saveConfig(_config.value.copy(isCountdownHapticsEnabled = enabled))
     }
 
     fun toggleOpenEnded(isOpenEnded: Boolean) {

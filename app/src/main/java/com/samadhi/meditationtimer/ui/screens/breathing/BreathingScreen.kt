@@ -157,6 +157,7 @@ fun BreathingScreen(
     }
 
     val prepSec = remember { prefs.getInt("prep_time_sec", 5) }
+    val isCountdownHaptics = remember { prefs.getBoolean("countdown_haptics", true) }
     var isPreparing by remember { mutableStateOf(prepSec > 0) }
     var prepRemaining by remember { mutableIntStateOf(prepSec) }
 
@@ -187,12 +188,16 @@ fun BreathingScreen(
     LaunchedEffect(isPreparing) {
         if (!isPreparing) return@LaunchedEffect
         while (isActive && isPreparing && prepRemaining > 0) {
-            soundHelper.triggerSoftTouchHaptic()
+            if (isCountdownHaptics) {
+                soundHelper.triggerSoftTouchHaptic()
+            }
             delay(1000L)
             prepRemaining--
             if (prepRemaining <= 0) {
                 isPreparing = false
-                soundHelper.triggerGentleVibration()
+                if (isCountdownHaptics) {
+                    soundHelper.triggerGentleVibration()
+                }
                 break
             }
         }

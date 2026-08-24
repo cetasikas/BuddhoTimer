@@ -114,6 +114,7 @@ class MeditationTimerService : Service() {
         timerJob = serviceScope.launch {
             // 1. Preparation Phase (if any)
             var currentPrep = prepSec
+            val countdownHaptics = getSharedPreferences("timer_prefs", Context.MODE_PRIVATE).getBoolean("countdown_haptics", true)
             while (currentPrep > 0 && isActive) {
                 _timerStatus.value = TimerStatus.Preparing(currentPrep)
                 updateNotification(
@@ -122,7 +123,9 @@ class MeditationTimerService : Service() {
                     isPaused = false,
                     isOverrun = false
                 )
-                soundHelper.triggerGentleVibration()
+                if (countdownHaptics) {
+                    soundHelper.triggerGentleVibration()
+                }
                 delay(1000L)
                 currentPrep--
             }

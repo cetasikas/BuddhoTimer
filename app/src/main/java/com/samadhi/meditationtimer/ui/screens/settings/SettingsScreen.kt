@@ -884,6 +884,47 @@ fun SettingsScreen(
                                 )
                             }
                         }
+
+                        if (config.prepTimeSeconds > 0) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(ZenBorder.copy(alpha = 0.5f))
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                                    Text(
+                                        text = "Countdown Haptic Cues",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = ZenTextPrimary
+                                    )
+                                    Text(
+                                        text = "Subtle vibration pulse on each countdown second",
+                                        fontSize = 11.sp,
+                                        color = ZenTextSecondary
+                                    )
+                                }
+                                Switch(
+                                    checked = config.isCountdownHapticsEnabled,
+                                    onCheckedChange = { timerViewModel.toggleCountdownHaptics(it) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = ZenObsidian,
+                                        checkedTrackColor = currentTheme.primary,
+                                        uncheckedThumbColor = ZenTextMuted,
+                                        uncheckedTrackColor = ZenSurfaceVariant
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
 
