@@ -185,6 +185,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_OPEN_ENDED, currentConfig.isOpenEnded)
             putExtra(MeditationTimerService.EXTRA_SOUND_BELL, currentConfig.soundBellResName)
             putExtra(MeditationTimerService.EXTRA_MINDFULNESS_INTERVAL_MIN, currentConfig.mindfulnessIntervalMinutes)
+            putExtra(MeditationTimerService.EXTRA_COMPLETION_BELL, currentConfig.isCompletionBellEnabled)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

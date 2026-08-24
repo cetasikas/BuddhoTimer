@@ -536,36 +536,7 @@ fun TimerScreen(
                                     .border(1.2.dp, currentTheme.primary.copy(alpha = 0.50f), RoundedCornerShape(16.dp))
                                     .padding(vertical = 4.dp)
                             ) {
-                                data class PatternMenuItem(
-                                    val id: String,
-                                    val title: String,
-                                    val summary: String
-                                )
-
-                                val patternsList = listOf(
-                                    PatternMenuItem(
-                                        id = "box",
-                                        title = "Box Breathing (4-4-4-4)",
-                                        summary = "Focus & Stress Reset • 4s In • 4s Hold • 4s Out • 4s Hold"
-                                    ),
-                                    PatternMenuItem(
-                                        id = "478",
-                                        title = "4-7-8 Deep Relaxation",
-                                        summary = "Deep Sleep & Relaxation • 4s In • 7s Hold • 8s Out"
-                                    ),
-                                    PatternMenuItem(
-                                        id = "resonant",
-                                        title = "Coherence Breathing (5-5)",
-                                        summary = "Heart Coherence • 5s Inhale • 5s Exhale"
-                                    ),
-                                    PatternMenuItem(
-                                        id = "gentle_box",
-                                        title = "Gentle Box (3-3-3-3)",
-                                        summary = "Beginner Friendly • 3s In • 3s Hold • 3s Out • 3s Hold"
-                                    )
-                                )
-
-                                patternsList.forEach { item ->
+                                BreathingPattern.allPatterns.forEach { item ->
                                     val isSelected = selectedPattern.id == item.id
                                     DropdownMenuItem(
                                         text = {
@@ -580,14 +551,14 @@ fun TimerScreen(
                                                         .padding(vertical = 2.dp)
                                                 ) {
                                                     Text(
-                                                        text = item.title,
+                                                        text = item.name,
                                                         fontSize = 14.sp,
                                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                         color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
                                                     )
                                                     Spacer(modifier = Modifier.height(2.dp))
                                                     Text(
-                                                        text = item.summary,
+                                                        text = item.subtitle,
                                                         fontSize = 11.5.sp,
                                                         color = if (isSelected) currentTheme.primaryLight.copy(alpha = 0.85f) else ZenTextSecondary
                                                     )

@@ -40,6 +40,7 @@ class MeditationTimerService : Service() {
     private var overrunSeconds: Int = 0
     private var isOpenEnded: Boolean = false
     private var isDndEnabledForSession: Boolean = false
+    private var isCompletionBellEnabledForSession: Boolean = false
     private var hasChimedForOverrun: Boolean = false
 
     private var soundBellResName: String = SoundHelper.SOUND_TIBETAN_BOWL
@@ -68,7 +69,8 @@ class MeditationTimerService : Service() {
                 val openEnded = intent.getBooleanExtra(EXTRA_OPEN_ENDED, false)
                 val soundBell = intent.getStringExtra(EXTRA_SOUND_BELL) ?: SoundHelper.SOUND_TIBETAN_BOWL
                 val mindfulnessIntervalMin = intent.getIntExtra(EXTRA_MINDFULNESS_INTERVAL_MIN, 0)
-                startTimer(targetSec, prepSec, autoDnd, openEnded, soundBell, mindfulnessIntervalMin)
+                val completionBell = intent.getBooleanExtra(EXTRA_COMPLETION_BELL, false)
+                startTimer(targetSec, prepSec, autoDnd, openEnded, soundBell, mindfulnessIntervalMin, completionBell)
             }
             ACTION_PAUSE -> pauseTimer()
             ACTION_RESUME -> resumeTimer()
@@ -84,13 +86,15 @@ class MeditationTimerService : Service() {
         autoDnd: Boolean,
         openEnded: Boolean,
         soundBell: String,
-        mindfulnessIntervalMin: Int
+        mindfulnessIntervalMin: Int,
+        completionBell: Boolean
     ) {
         targetDurationSec = targetSec
         prepTimeSec = prepSec
         isDndEnabledForSession = autoDnd
         isOpenEnded = openEnded
         soundBellResName = soundBell
+        isCompletionBellEnabledForSession = completionBell
         elapsedSeconds = 0
         overrunSeconds = 0
         hasChimedForOverrun = false
@@ -181,9 +185,8 @@ class MeditationTimerService : Service() {
                         
                         if (!hasChimedForOverrun) {
                             hasChimedForOverrun = true
-                            soundHelper.triggerHarmonicCompletionHaptic()
-                            val isCompletionBell = getSharedPreferences("timer_prefs", Context.MODE_PRIVATE).getBoolean("completion_bell_enabled", false)
-                            if (isCompletionBell) {
+                            if (isCompletionBellEnabledForSession) {
+                                soundHelper.triggerHarmonicCompletionHaptic()
                                 soundHelper.playChime(soundBellResName, serviceScope)
                             }
                         }
@@ -264,8 +267,8 @@ class MeditationTimerService : Service() {
                             overrunSeconds = elapsedSeconds - targetDurationSec
                             if (!hasChimedForOverrun) {
                                 hasChimedForOverrun = true
-                                val isCompletionBell = getSharedPreferences("timer_prefs", Context.MODE_PRIVATE).getBoolean("completion_bell_enabled", false)
-                                if (isCompletionBell) {
+                                if (isCompletionBellEnabledForSession) {
+                                    soundHelper.triggerHarmonicCompletionHaptic()
                                     soundHelper.playChime(soundBellResName, serviceScope)
                                 }
                             }
@@ -381,6 +384,7 @@ class MeditationTimerService : Service() {
         const val EXTRA_OPEN_ENDED = "extra_open_ended"
         const val EXTRA_SOUND_BELL = "extra_sound_bell"
         const val EXTRA_MINDFULNESS_INTERVAL_MIN = "extra_mindfulness_interval_min"
+        const val EXTRA_COMPLETION_BELL = "extra_completion_bell"
 
         private val _timerStatus = MutableStateFlow<TimerStatus>(TimerStatus.Idle)
         val timerStatus: StateFlow<TimerStatus> = _timerStatus.asStateFlow()
