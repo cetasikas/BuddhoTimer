@@ -8,14 +8,14 @@ plugins {
 
 android {
     namespace = "com.samadhi.meditationtimer"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.buddho.timer"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 94
-        versionName = "2.26.54"
+        targetSdk = 35
+        versionCode = 95
+        versionName = "2.26.55"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -43,6 +43,9 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
