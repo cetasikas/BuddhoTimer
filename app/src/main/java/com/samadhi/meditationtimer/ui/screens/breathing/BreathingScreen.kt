@@ -310,9 +310,9 @@ fun BreathingScreen(
 
     val activeStageInstruction = if (isVaryingCount) {
         if (currentPhase == BreathPhase.INHALE) {
-            "Inhale • Count 1 → $currentVaryingDuration"
+            "Inhale steadily\nCount 1 → $currentVaryingDuration"
         } else {
-            "Exhale • Count $currentVaryingDuration → 1"
+            "Exhale smoothly\nCount $currentVaryingDuration → 1"
         }
     } else {
         currentPhase.instruction
@@ -554,7 +554,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = displayCountText,
-                                        fontSize = 42.sp,
+                                        fontSize = 46.sp,
                                         fontWeight = FontWeight.Light,
                                         color = Color.White,
                                         letterSpacing = 1.sp
@@ -571,7 +571,7 @@ fun BreathingScreen(
                                         ) {
                                             Text(
                                                 text = activeStageBadge,
-                                                fontSize = 10.sp,
+                                                fontSize = 11.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = currentTheme.primaryLight
                                             )
@@ -590,21 +590,21 @@ fun BreathingScreen(
                                     ) {
                                         Text(
                                             text = activeStageInstruction,
-                                            fontSize = 13.5.sp,
+                                            fontSize = 15.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = phaseColor,
                                             textAlign = TextAlign.Center,
-                                            maxLines = 1,
-                                            softWrap = false,
-                                            letterSpacing = 0.5.sp
+                                            maxLines = 2,
+                                            lineHeight = 20.sp,
+                                            letterSpacing = 0.3.sp
                                         )
                                     }
 
-                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Spacer(modifier = Modifier.height(14.dp))
 
                                     Text(
                                         text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                        fontSize = 15.5.sp,
+                                        fontSize = 16.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = ZenTextPrimary.copy(alpha = 0.85f),
                                         letterSpacing = 0.5.sp
@@ -954,7 +954,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = displayCountText,
-                                        fontSize = 50.sp,
+                                        fontSize = 58.sp,
                                         fontWeight = FontWeight.Light,
                                         color = Color.White,
                                         letterSpacing = 1.sp
@@ -971,14 +971,14 @@ fun BreathingScreen(
                                         ) {
                                             Text(
                                                 text = activeStageBadge,
-                                                fontSize = 10.sp,
+                                                fontSize = 11.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = currentTheme.primaryLight
                                             )
                                         }
                                     }
 
-                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Spacer(modifier = Modifier.height(4.dp))
 
                                     AnimatedContent(
                                         targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
@@ -990,13 +990,14 @@ fun BreathingScreen(
                                     ) {
                                         Text(
                                             text = activeStageInstruction,
-                                            fontSize = 13.5.sp,
+                                            fontSize = 16.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = phaseColor,
                                             textAlign = TextAlign.Center,
-                                            maxLines = 1,
-                                            softWrap = false,
-                                            letterSpacing = 0.5.sp
+                                            maxLines = 2,
+                                            lineHeight = 22.sp,
+                                            letterSpacing = 0.3.sp,
+                                            modifier = Modifier.padding(horizontal = 16.dp)
                                         )
                                     }
                                 }

@@ -1,10 +1,10 @@
 package com.samadhi.meditationtimer.domain.model
 
 enum class BreathPhase(val displayName: String, val instruction: String) {
-    INHALE("Inhale", "Inhale smoothly"),
-    HOLD_FULL("Hold", "Pause & hold full"),
-    EXHALE("Exhale", "Exhale & let go"),
-    HOLD_EMPTY("Hold", "Rest in stillness")
+    INHALE("Inhale", "Inhale smoothly\nthrough the nose"),
+    HOLD_FULL("Hold", "Pause & rest gently\nwith full lungs"),
+    EXHALE("Exhale", "Exhale slowly\nand let go"),
+    HOLD_EMPTY("Hold", "Rest peacefully\nin stillness")
 }
 
 data class BreathingPattern(
