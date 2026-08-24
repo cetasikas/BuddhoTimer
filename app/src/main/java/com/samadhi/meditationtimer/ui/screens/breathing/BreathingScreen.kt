@@ -1,6 +1,9 @@
 package com.samadhi.meditationtimer.ui.screens.breathing
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -318,12 +321,20 @@ fun BreathingScreen(
         currentPhase.instruction
     }
 
-    val phaseColor = when (currentPhase) {
+    val targetPhaseColor = when (currentPhase) {
         BreathPhase.INHALE -> currentTheme.primary
         BreathPhase.HOLD_FULL -> currentTheme.primaryLight
         BreathPhase.EXHALE -> currentTheme.overrunColor
-        BreathPhase.HOLD_EMPTY -> com.samadhi.meditationtimer.ui.theme.ZenAmber
+        BreathPhase.HOLD_EMPTY -> ZenAmber
     }
+
+    val animatedPhaseColor by animateColorAsState(
+        targetValue = targetPhaseColor,
+        animationSpec = tween(durationMillis = 700, easing = LinearOutSlowInEasing),
+        label = "animatedPhaseColor"
+    )
+
+    val phaseColor = animatedPhaseColor
 
     Box(
         modifier = modifier
@@ -560,8 +571,35 @@ fun BreathingScreen(
                                         letterSpacing = 1.sp
                                     )
 
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    AnimatedContent(
+                                        targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
+                                        transitionSpec = {
+                                            (fadeIn(animationSpec = tween(500, easing = LinearOutSlowInEasing)) + 
+                                             slideInVertically(animationSpec = tween(500, easing = LinearOutSlowInEasing)) { 6 })
+                                                .togetherWith(
+                                                    fadeOut(animationSpec = tween(350, easing = FastOutLinearInEasing)) + 
+                                                    slideOutVertically(animationSpec = tween(350, easing = FastOutLinearInEasing)) { -6 }
+                                                )
+                                        },
+                                        label = "phaseInstructionFlow"
+                                    ) {
+                                        Text(
+                                            text = activeStageInstruction,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = animatedPhaseColor,
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 2,
+                                            lineHeight = 20.sp,
+                                            letterSpacing = 0.3.sp
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
                                     if (isVaryingCount) {
-                                        Spacer(modifier = Modifier.height(2.dp))
                                         Box(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(10.dp))
@@ -576,31 +614,8 @@ fun BreathingScreen(
                                                 color = currentTheme.primaryLight
                                             )
                                         }
+                                        Spacer(modifier = Modifier.height(6.dp))
                                     }
-
-                                    Spacer(modifier = Modifier.height(4.dp))
-
-                                    AnimatedContent(
-                                        targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
-                                        transitionSpec = {
-                                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { 6 })
-                                                .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -6 })
-                                        },
-                                        label = "phaseInstructionFlow"
-                                    ) {
-                                        Text(
-                                            text = activeStageInstruction,
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = phaseColor,
-                                            textAlign = TextAlign.Center,
-                                            maxLines = 2,
-                                            lineHeight = 20.sp,
-                                            letterSpacing = 0.3.sp
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.height(14.dp))
 
                                     Text(
                                         text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
@@ -610,7 +625,7 @@ fun BreathingScreen(
                                         letterSpacing = 0.5.sp
                                     )
 
-                                    Spacer(modifier = Modifier.height(20.dp))
+                                    Spacer(modifier = Modifier.height(18.dp))
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -960,31 +975,17 @@ fun BreathingScreen(
                                         letterSpacing = 1.sp
                                     )
 
-                                    if (isVaryingCount) {
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(currentTheme.primary.copy(alpha = 0.18f))
-                                                .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
-                                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                                        ) {
-                                            Text(
-                                                text = activeStageBadge,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = currentTheme.primaryLight
-                                            )
-                                        }
-                                    }
-
                                     Spacer(modifier = Modifier.height(4.dp))
 
                                     AnimatedContent(
                                         targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
                                         transitionSpec = {
-                                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { 6 })
-                                                .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -6 })
+                                            (fadeIn(animationSpec = tween(500, easing = LinearOutSlowInEasing)) + 
+                                             slideInVertically(animationSpec = tween(500, easing = LinearOutSlowInEasing)) { 6 })
+                                                .togetherWith(
+                                                    fadeOut(animationSpec = tween(350, easing = FastOutLinearInEasing)) + 
+                                                    slideOutVertically(animationSpec = tween(350, easing = FastOutLinearInEasing)) { -6 }
+                                                )
                                         },
                                         label = "phaseInstructionFlow"
                                     ) {
@@ -992,7 +993,7 @@ fun BreathingScreen(
                                             text = activeStageInstruction,
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = phaseColor,
+                                            color = animatedPhaseColor,
                                             textAlign = TextAlign.Center,
                                             maxLines = 2,
                                             lineHeight = 22.sp,
@@ -1003,13 +1004,31 @@ fun BreathingScreen(
                                 }
                             }
 
-                            // --- 3. SESSION PROGRESS (Positioned just beneath the animation, well above controls) ---
+                            // --- 3. SESSION PROGRESS & STAGE INFO ---
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 20.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
+                                if (isVaryingCount) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(currentTheme.primary.copy(alpha = 0.18f))
+                                            .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
+                                            .padding(horizontal = 12.dp, vertical = 3.dp)
+                                    ) {
+                                        Text(
+                                            text = activeStageBadge,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = currentTheme.primaryLight
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                }
+
                                 Text(
                                     text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
                                     fontSize = 17.sp,
@@ -1019,7 +1038,7 @@ fun BreathingScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(28.dp))
+                            Spacer(modifier = Modifier.height(24.dp))
 
                             // --- 3. MINIMAL CONTROL BAR WITH INTEGRATED DND ---
                             Row(
