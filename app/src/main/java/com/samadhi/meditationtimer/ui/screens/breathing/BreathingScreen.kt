@@ -310,9 +310,9 @@ fun BreathingScreen(
 
     val activeStageInstruction = if (isVaryingCount) {
         if (currentPhase == BreathPhase.INHALE) {
-            "Inhale steadily • Count upward (1 → $currentVaryingDuration)"
+            "Inhale • Count 1 → $currentVaryingDuration"
         } else {
-            "Exhale smoothly • Reverse count ($currentVaryingDuration → 1)"
+            "Exhale • Count $currentVaryingDuration → 1"
         }
     } else {
         currentPhase.instruction
@@ -554,7 +554,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = displayCountText,
-                                        fontSize = 46.sp,
+                                        fontSize = 42.sp,
                                         fontWeight = FontWeight.Light,
                                         color = Color.White,
                                         letterSpacing = 1.sp
@@ -564,21 +564,21 @@ fun BreathingScreen(
                                         Spacer(modifier = Modifier.height(2.dp))
                                         Box(
                                             modifier = Modifier
-                                                .clip(RoundedCornerShape(12.dp))
+                                                .clip(RoundedCornerShape(10.dp))
                                                 .background(currentTheme.primary.copy(alpha = 0.15f))
-                                                .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                                                .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
                                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                                         ) {
                                             Text(
                                                 text = activeStageBadge,
-                                                fontSize = 10.5.sp,
+                                                fontSize = 10.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = currentTheme.primaryLight
                                             )
                                         }
                                     }
 
-                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Spacer(modifier = Modifier.height(4.dp))
 
                                     AnimatedContent(
                                         targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
@@ -590,16 +590,17 @@ fun BreathingScreen(
                                     ) {
                                         Text(
                                             text = activeStageInstruction,
-                                            fontSize = 14.5.sp,
+                                            fontSize = 13.5.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = phaseColor,
                                             textAlign = TextAlign.Center,
-                                            maxLines = 2,
-                                            lineHeight = 19.sp
+                                            maxLines = 1,
+                                            softWrap = false,
+                                            letterSpacing = 0.5.sp
                                         )
                                     }
 
-                                    Spacer(modifier = Modifier.height(14.dp))
+                                    Spacer(modifier = Modifier.height(12.dp))
 
                                     Text(
                                         text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
@@ -953,7 +954,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = displayCountText,
-                                        fontSize = 62.sp,
+                                        fontSize = 50.sp,
                                         fontWeight = FontWeight.Light,
                                         color = Color.White,
                                         letterSpacing = 1.sp
@@ -970,14 +971,14 @@ fun BreathingScreen(
                                         ) {
                                             Text(
                                                 text = activeStageBadge,
-                                                fontSize = 10.5.sp,
+                                                fontSize = 10.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = currentTheme.primaryLight
                                             )
                                         }
                                     }
 
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(3.dp))
 
                                     AnimatedContent(
                                         targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
@@ -989,13 +990,13 @@ fun BreathingScreen(
                                     ) {
                                         Text(
                                             text = activeStageInstruction,
-                                            fontSize = 15.sp,
+                                            fontSize = 13.5.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = phaseColor,
                                             textAlign = TextAlign.Center,
-                                            maxLines = 2,
-                                            lineHeight = 20.sp,
-                                            modifier = Modifier.padding(horizontal = 20.dp)
+                                            maxLines = 1,
+                                            softWrap = false,
+                                            letterSpacing = 0.5.sp
                                         )
                                     }
                                 }
