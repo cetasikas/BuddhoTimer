@@ -59,14 +59,14 @@ object MeditationGuides {
             id = "varying_count",
             topicNumber = 4,
             iconName = "varying",
-            title = "The Varying-Count Breath Technique",
-            subtitle = "A structured counting anchor to overcome mental autopilot",
-            quote = "“When rhythmic counting becomes routine, the mind slips into autopilot. Varying the count re-engages direct awareness and anchors the mind in the living breath.”",
+            title = "The Varying Breath & Counting Method (Gaṇanā)",
+            subtitle = "Authentic Buddhist methods to overcome autopilot without strain",
+            quote = "“Meditation is letting go. Never force or strain the breath. Counting is just a temporary tool to anchor a restless mind until it settles into silence.” — Ajahn Brahm",
             practicalSteps = listOf(
-                "Stage 1 — The 9-Count (Long Breath): Inhale steadily while counting 1…9; exhale in reverse 9…1. Engages full lung capacity with deep, grounding relaxation.",
-                "Stage 2 — The 6-Count (Medium Breath): Inhale 1…6; exhale 6…1. As the nervous system calms, shorten the count to match the settled respiration rate.",
-                "Stage 3 — The 3-Count (Settled Breath): Inhale 1…3; exhale 3…1. Used when distractions intrude, or when the breath naturally becomes subtle and shallow.",
-                "Stage 4 — Return & Release: Step back up in reverse (3 → 6 → 9) before releasing all counting into open, effortless awareness."
+                "Ajahn Brahm's Core Rule — No Forcing: The breath must always remain natural and comfortable. Never stretch or hold the breath beyond what feels pleasant and effortless.",
+                "The 3-4-5 Progressive Cadence: Inhale & exhale for 3s (Grounding), expand to 4s (Centering), then 5s (Heart Coherence) before gently returning down.",
+                "The Traditional Breath-Cycle Pyramid (Visuddhimagga): Alternatively, count whole breaths in ascending sets: count 1…5, then 1…6, up to 1…10, then step back down (10→5).",
+                "Dropping the Numbers: Once the mind feels unified, grounded, and tranquil, let go of all counting and rest in the silent, beautiful breath."
             )
         ),
         TopicCardData(

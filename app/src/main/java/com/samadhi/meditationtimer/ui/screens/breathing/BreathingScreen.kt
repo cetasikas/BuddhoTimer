@@ -300,11 +300,11 @@ fun BreathingScreen(
     }
 
     val activeStageBadge = when (varyingStage) {
-        1 -> "Stage 1 • 9-Count (Long Breath)"
-        2 -> "Stage 2 • 6-Count (Medium Breath)"
-        3 -> "Stage 3 • 3-Count (Settled Breath)"
-        4 -> if (stage4Step == 0) "Stage 4 • Return (6-Count)" else "Stage 4 • Return (9-Count)"
-        else -> "Stage 1 • 9-Count"
+        1 -> "Stage 1 • 3-Count (Grounding Breath)"
+        2 -> "Stage 2 • 4-Count (Centering Breath)"
+        3 -> "Stage 3 • 5-Count (Coherence Breath)"
+        4 -> if (stage4Step == 0) "Stage 4 • Return (4-Count)" else "Stage 4 • Return (3-Count)"
+        else -> "Stage 1 • 3-Count"
     }
 
     val activeStageInstruction = if (isVaryingCount) {
@@ -412,7 +412,7 @@ fun BreathingScreen(
 
                                     val topPatterns = listOf(
                                         TopPatternMenuItem(BreathingPattern.BOX_BREATHING, "Focus & Stress Reset • 4s In • 4s Hold • 4s Out • 4s Hold"),
-                                        TopPatternMenuItem(BreathingPattern.VARYING_COUNT, "Anti-Autopilot • 9-Count → 6-Count → 3-Count → Return"),
+                                        TopPatternMenuItem(BreathingPattern.VARYING_COUNT, "Anti-Autopilot • 3-Count → 4-Count → 5-Count → Return"),
                                         TopPatternMenuItem(BreathingPattern.RELAX_4_7_8, "Deep Sleep & Relaxation • 4s In • 7s Hold • 8s Out"),
                                         TopPatternMenuItem(BreathingPattern.RESONANT_BREATH, "Heart Coherence • 5s Inhale • 5s Exhale"),
                                         TopPatternMenuItem(BreathingPattern.TRANQUIL_3_3_3_3, "Beginner Friendly • 3s In • 3s Hold • 3s Out • 3s Hold")
@@ -786,7 +786,7 @@ fun BreathingScreen(
 
                                     val topPatterns = listOf(
                                         TopPatternMenuItem(BreathingPattern.BOX_BREATHING, "Focus & Stress Reset • 4s In • 4s Hold • 4s Out • 4s Hold"),
-                                        TopPatternMenuItem(BreathingPattern.VARYING_COUNT, "Anti-Autopilot • 9-Count → 6-Count → 3-Count → Return"),
+                                        TopPatternMenuItem(BreathingPattern.VARYING_COUNT, "Anti-Autopilot • 3-Count → 4-Count → 5-Count → Return"),
                                         TopPatternMenuItem(BreathingPattern.RELAX_4_7_8, "Deep Sleep & Relaxation • 4s In • 7s Hold • 8s Out"),
                                         TopPatternMenuItem(BreathingPattern.RESONANT_BREATH, "Heart Coherence • 5s Inhale • 5s Exhale"),
                                         TopPatternMenuItem(BreathingPattern.TRANQUIL_3_3_3_3, "Beginner Friendly • 3s In • 3s Hold • 3s Out • 3s Hold")
@@ -1148,11 +1148,11 @@ fun BreathingScreen(
 
 private fun getVaryingStageDuration(stage: Int, stage4Step: Int): Int {
     return when (stage) {
-        1 -> 9
-        2 -> 6
-        3 -> 3
-        4 -> if (stage4Step == 0) 6 else 9
-        else -> 9
+        1 -> 3
+        2 -> 4
+        3 -> 5
+        4 -> if (stage4Step == 0) 4 else 3
+        else -> 3
     }
 }
 

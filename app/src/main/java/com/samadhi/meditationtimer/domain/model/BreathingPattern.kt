@@ -67,12 +67,12 @@ data class BreathingPattern(
 
         val VARYING_COUNT = BreathingPattern(
             id = "varying_count",
-            name = "Varying-Count Breath (9-6-3)",
-            subtitle = "Anti-Autopilot & Deep Settling",
-            description = "Scales breath counts across 4 stages (9-Count Long -> 6-Count Medium -> 3-Count Settled -> Return Sequence) to prevent subconscious drift and anchor direct awareness.",
-            inhaleSec = 9,
+            name = "Varying-Count Breath (3-4-5)",
+            subtitle = "Anti-Autopilot & Gentle Settling",
+            description = "Scales breath cadence across 4 comfortable stages (3s Grounding -> 4s Centering -> 5s Coherence -> Return) to eliminate mental drift without lung strain.",
+            inhaleSec = 3,
             holdFullSec = 0,
-            exhaleSec = 9,
+            exhaleSec = 3,
             holdEmptySec = 0
         )
 
