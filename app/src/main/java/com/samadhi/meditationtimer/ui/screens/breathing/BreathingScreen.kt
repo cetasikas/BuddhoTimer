@@ -163,15 +163,26 @@ fun BreathingScreen(
 
     var isRunning by remember { mutableStateOf(true) }
     var currentPhase by remember { mutableStateOf(BreathPhase.INHALE) }
-    var phaseSecondsRemaining by remember { mutableIntStateOf(selectedPattern.inhaleSec) }
     var totalElapsedSec by remember { mutableIntStateOf(0) }
     var completedCycles by remember { mutableIntStateOf(0) }
+
+    // Varying-Count Breath Stages (1: 9-Count, 2: 6-Count, 3: 3-Count, 4: Return 6->9)
+    var varyingStage by remember { mutableIntStateOf(1) }
+    var varyingCyclesInStage by remember { mutableIntStateOf(0) }
+    var stage4Step by remember { mutableIntStateOf(0) }
+
+    var phaseSecondsRemaining by remember {
+        mutableIntStateOf(getPhaseDuration(BreathPhase.INHALE, selectedPattern, varyingStage, stage4Step))
+    }
 
     // Smooth sub-second progress for fluid blooming transition
     var phaseProgress by remember { mutableFloatStateOf(0.0f) }
 
     fun finishSession() {
-        soundHelper.playChime(soundBellResName)
+        val isCompletionBell = prefs.getBoolean("completion_bell_enabled", false)
+        if (isCompletionBell) {
+            soundHelper.playChime(soundBellResName)
+        }
         val now = System.currentTimeMillis()
         val completedStatus = TimerStatus.Completed(
             targetDurationSec = targetTotalSec,
@@ -204,11 +215,12 @@ fun BreathingScreen(
     }
 
     // High precision, hardware-synced breath cycle ticker (100% stutter-free)
-    LaunchedEffect(isRunning, selectedPattern, isPreparing) {
+    LaunchedEffect(isRunning, selectedPattern, isPreparing, varyingStage, stage4Step) {
         if (!isRunning || isPreparing) return@LaunchedEffect
 
         currentPhase = BreathPhase.INHALE
-        phaseSecondsRemaining = selectedPattern.inhaleSec
+        val initPhaseSec = getPhaseDuration(BreathPhase.INHALE, selectedPattern, varyingStage, stage4Step)
+        phaseSecondsRemaining = initPhaseSec
         phaseProgress = 0.0f
         soundHelper.triggerGentleVibration()
 
@@ -216,7 +228,7 @@ fun BreathingScreen(
 
         while (isActive && isRunning && !isPreparing) {
             withFrameNanos { _ ->
-                val totalPhaseSec = getPhaseDuration(currentPhase, selectedPattern).coerceAtLeast(1)
+                val totalPhaseSec = getPhaseDuration(currentPhase, selectedPattern, varyingStage, stage4Step).coerceAtLeast(1)
                 val totalPhaseMs = totalPhaseSec * 1000L
                 val elapsedInPhaseMs = System.currentTimeMillis() - phaseStartTimeMs
 
@@ -226,15 +238,31 @@ fun BreathingScreen(
 
                 if (elapsedInPhaseMs >= totalPhaseMs) {
                     val nextPhase = getNextPhase(currentPhase, selectedPattern)
-                    if (currentPhase == BreathPhase.EXHALE && (nextPhase == BreathPhase.INHALE || (patternId == "box" && currentPhase == BreathPhase.HOLD_EMPTY))) {
+                    if (currentPhase == BreathPhase.EXHALE && (nextPhase == BreathPhase.INHALE || (selectedPattern.id == "box" && currentPhase == BreathPhase.HOLD_EMPTY))) {
                         completedCycles++
+                        if (selectedPattern.id == "varying_count") {
+                            varyingCyclesInStage++
+                            if (varyingStage in 1..3 && varyingCyclesInStage >= 2) {
+                                varyingStage++
+                                varyingCyclesInStage = 0
+                            } else if (varyingStage == 4) {
+                                if (stage4Step == 0) {
+                                    stage4Step = 1
+                                    varyingCyclesInStage = 0
+                                } else {
+                                    varyingStage = 1
+                                    stage4Step = 0
+                                    varyingCyclesInStage = 0
+                                }
+                            }
+                        }
                     }
                     if (currentPhase == BreathPhase.HOLD_EMPTY && nextPhase == BreathPhase.INHALE) {
                         completedCycles++
                     }
                     currentPhase = nextPhase
                     phaseStartTimeMs = System.currentTimeMillis()
-                    phaseSecondsRemaining = getPhaseDuration(nextPhase, selectedPattern)
+                    phaseSecondsRemaining = getPhaseDuration(nextPhase, selectedPattern, varyingStage, stage4Step)
                     phaseProgress = 0.0f
                     soundHelper.triggerGentleVibration()
                 }
@@ -256,6 +284,39 @@ fun BreathingScreen(
     }
 
     val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
+    val isVaryingCount = selectedPattern.id == "varying_count"
+    val currentVaryingDuration = if (isVaryingCount) getVaryingStageDuration(varyingStage, stage4Step) else 0
+
+    val displayCountText = if (isVaryingCount) {
+        if (currentPhase == BreathPhase.INHALE) {
+            val countUp = (currentVaryingDuration - phaseSecondsRemaining + 1).coerceIn(1, currentVaryingDuration)
+            "$countUp"
+        } else {
+            val countDown = phaseSecondsRemaining.coerceIn(1, currentVaryingDuration)
+            "$countDown"
+        }
+    } else {
+        "$phaseSecondsRemaining"
+    }
+
+    val activeStageBadge = when (varyingStage) {
+        1 -> "Stage 1 • 9-Count (Long Breath)"
+        2 -> "Stage 2 • 6-Count (Medium Breath)"
+        3 -> "Stage 3 • 3-Count (Settled Breath)"
+        4 -> if (stage4Step == 0) "Stage 4 • Return (6-Count)" else "Stage 4 • Return (9-Count)"
+        else -> "Stage 1 • 9-Count"
+    }
+
+    val activeStageInstruction = if (isVaryingCount) {
+        if (currentPhase == BreathPhase.INHALE) {
+            "Inhale steadily • Count upward (1 → $currentVaryingDuration)"
+        } else {
+            "Exhale smoothly • Reverse count ($currentVaryingDuration → 1)"
+        }
+    } else {
+        currentPhase.instruction
+    }
+
     val phaseColor = when (currentPhase) {
         BreathPhase.INHALE -> currentTheme.primary
         BreathPhase.HOLD_FULL -> currentTheme.primaryLight
@@ -351,6 +412,7 @@ fun BreathingScreen(
 
                                     val topPatterns = listOf(
                                         TopPatternMenuItem(BreathingPattern.BOX_BREATHING, "Focus & Stress Reset • 4s In • 4s Hold • 4s Out • 4s Hold"),
+                                        TopPatternMenuItem(BreathingPattern.VARYING_COUNT, "Anti-Autopilot • 9-Count → 6-Count → 3-Count → Return"),
                                         TopPatternMenuItem(BreathingPattern.RELAX_4_7_8, "Deep Sleep & Relaxation • 4s In • 7s Hold • 8s Out"),
                                         TopPatternMenuItem(BreathingPattern.RESONANT_BREATH, "Heart Coherence • 5s Inhale • 5s Exhale"),
                                         TopPatternMenuItem(BreathingPattern.TRANQUIL_3_3_3_3, "Beginner Friendly • 3s In • 3s Hold • 3s Out • 3s Hold")
@@ -490,12 +552,30 @@ fun BreathingScreen(
                                     verticalArrangement = Arrangement.Center
                                 ) {
                                     Text(
-                                        text = "$phaseSecondsRemaining",
+                                        text = displayCountText,
                                         fontSize = 46.sp,
                                         fontWeight = FontWeight.Light,
                                         color = Color.White,
                                         letterSpacing = 1.sp
                                     )
+
+                                    if (isVaryingCount) {
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(currentTheme.primary.copy(alpha = 0.15f))
+                                                .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = activeStageBadge,
+                                                fontSize = 10.5.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = currentTheme.primaryLight
+                                            )
+                                        }
+                                    }
 
                                     AnimatedContent(
                                         targetState = currentPhase,
@@ -518,11 +598,11 @@ fun BreathingScreen(
                                     Spacer(modifier = Modifier.height(4.dp))
 
                                     AnimatedContent(
-                                        targetState = currentPhase,
+                                        targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
                                         label = "phaseInstructionFlow"
-                                    ) { phase ->
+                                    ) {
                                         Text(
-                                            text = phase.instruction,
+                                            text = activeStageInstruction,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = ZenTextPrimary.copy(alpha = 0.90f),
@@ -706,6 +786,7 @@ fun BreathingScreen(
 
                                     val topPatterns = listOf(
                                         TopPatternMenuItem(BreathingPattern.BOX_BREATHING, "Focus & Stress Reset • 4s In • 4s Hold • 4s Out • 4s Hold"),
+                                        TopPatternMenuItem(BreathingPattern.VARYING_COUNT, "Anti-Autopilot • 9-Count → 6-Count → 3-Count → Return"),
                                         TopPatternMenuItem(BreathingPattern.RELAX_4_7_8, "Deep Sleep & Relaxation • 4s In • 7s Hold • 8s Out"),
                                         TopPatternMenuItem(BreathingPattern.RESONANT_BREATH, "Heart Coherence • 5s Inhale • 5s Exhale"),
                                         TopPatternMenuItem(BreathingPattern.TRANQUIL_3_3_3_3, "Beginner Friendly • 3s In • 3s Hold • 3s Out • 3s Hold")
@@ -869,12 +950,30 @@ fun BreathingScreen(
                                     modifier = Modifier.padding(horizontal = 20.dp)
                                 ) {
                                     Text(
-                                        text = "$phaseSecondsRemaining",
+                                        text = displayCountText,
                                         fontSize = 68.sp,
                                         fontWeight = FontWeight.Light,
                                         color = Color.White,
                                         letterSpacing = 1.sp
                                     )
+
+                                    if (isVaryingCount) {
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(currentTheme.primary.copy(alpha = 0.18f))
+                                                .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
+                                                .padding(horizontal = 10.dp, vertical = 3.dp)
+                                        ) {
+                                            Text(
+                                                text = activeStageBadge,
+                                                fontSize = 11.5.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = currentTheme.primaryLight
+                                            )
+                                        }
+                                    }
 
                                     Spacer(modifier = Modifier.height(2.dp))
 
@@ -904,15 +1003,15 @@ fun BreathingScreen(
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                             ) {
                                 AnimatedContent(
-                                    targetState = currentPhase,
+                                    targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
                                     transitionSpec = {
                                         (fadeIn(tween(300)) + slideInVertically(tween(300)) { 6 })
                                             .togetherWith(fadeOut(tween(200)) + slideOutVertically(tween(200)) { -6 })
                                     },
                                     label = "phaseInstructionFlow"
-                                ) { phase ->
+                                ) {
                                     Text(
-                                        text = phase.instruction,
+                                        text = activeStageInstruction,
                                         fontSize = 15.5.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = ZenTextPrimary.copy(alpha = 0.90f),
@@ -1047,7 +1146,31 @@ fun BreathingScreen(
     }
 }
 
-private fun getPhaseDuration(phase: BreathPhase, pattern: BreathingPattern): Int {
+private fun getVaryingStageDuration(stage: Int, stage4Step: Int): Int {
+    return when (stage) {
+        1 -> 9
+        2 -> 6
+        3 -> 3
+        4 -> if (stage4Step == 0) 6 else 9
+        else -> 9
+    }
+}
+
+private fun getPhaseDuration(
+    phase: BreathPhase,
+    pattern: BreathingPattern,
+    varyingStage: Int = 1,
+    stage4Step: Int = 0
+): Int {
+    if (pattern.id == "varying_count") {
+        val stageDuration = getVaryingStageDuration(varyingStage, stage4Step)
+        return when (phase) {
+            BreathPhase.INHALE -> stageDuration
+            BreathPhase.EXHALE -> stageDuration
+            BreathPhase.HOLD_FULL -> 0
+            BreathPhase.HOLD_EMPTY -> 0
+        }
+    }
     return when (phase) {
         BreathPhase.INHALE -> pattern.inhaleSec
         BreathPhase.HOLD_FULL -> pattern.holdFullSec
@@ -1057,6 +1180,13 @@ private fun getPhaseDuration(phase: BreathPhase, pattern: BreathingPattern): Int
 }
 
 private fun getNextPhase(current: BreathPhase, pattern: BreathingPattern): BreathPhase {
+    if (pattern.id == "varying_count") {
+        return when (current) {
+            BreathPhase.INHALE -> BreathPhase.EXHALE
+            BreathPhase.EXHALE -> BreathPhase.INHALE
+            else -> BreathPhase.INHALE
+        }
+    }
     return when (current) {
         BreathPhase.INHALE -> {
             if (pattern.holdFullSec > 0) BreathPhase.HOLD_FULL

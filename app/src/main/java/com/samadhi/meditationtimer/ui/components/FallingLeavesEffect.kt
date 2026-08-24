@@ -311,7 +311,7 @@ fun FallingLeavesEffect(
     LaunchedEffect(isBlowingAway) {
         if (isBlowingAway) {
             val startTime = System.currentTimeMillis()
-            val durationMs = 1200L
+            val durationMs = 1000L
             while (true) {
                 withFrameNanos { _ ->
                     val elapsed = System.currentTimeMillis() - startTime
@@ -518,13 +518,33 @@ fun FallingLeavesEffect(
             val px = leaf.x * w
             val py = leaf.y * h
 
-            val blowOffset = if (blowAwayProgress > 0f) {
-                val p = blowAwayProgress
-                val dir = if (leaf.isResting) (leaf.x - 0.5f).let { if (it == 0f) 1f else kotlin.math.sign(it) } else 1f
-                Offset(w * dir * p * 1.4f, -h * p * p * 0.65f)
+            // Organic Zen Wind Gust Animation
+            val leafStagger = if (leaf.isResting) {
+                ((leaf.x - 0.08f) / 0.84f * 0.22f).coerceIn(0f, 0.22f)
+            } else {
+                (leaf.depth.scaleMultiplier * 0.08f).coerceIn(0f, 0.15f)
+            }
+            val localProgress = if (blowAwayProgress > 0f) {
+                ((blowAwayProgress - leafStagger) / (1f - leafStagger)).coerceIn(0f, 1f)
+            } else 0f
+
+            val blowOffset = if (localProgress > 0f) {
+                val p = localProgress
+                val dir = if (leaf.isResting) {
+                    val side = leaf.x - 0.5f
+                    if (side >= 0f) 1.15f else -1.15f
+                } else {
+                    if (leaf.swayPhase % 2f > 1f) 1.25f else -1.25f
+                }
+                val lateralGust = w * dir * (p.pow(1.3f) * 1.1f + sin(p * 3.1415f) * 0.12f)
+                val upwardLift = -h * (p.pow(1.4f) * 0.75f + sin(p * 3.1415f + leaf.swayPhase) * 0.08f)
+                Offset(lateralGust, upwardLift)
             } else Offset.Zero
 
-            val blowRot = if (blowAwayProgress > 0f) blowAwayProgress * 340f else 0f
+            val blowRot = if (localProgress > 0f) {
+                val rotDir = if (leaf.x >= 0.5f) 1f else -1f
+                localProgress * 260f * rotDir
+            } else 0f
 
             // Staggered spawn fade + top margin ether ingress
             val spawnFade = (leaf.spawnElapsedSec / 1.2f).coerceIn(0f, 1f)
@@ -535,18 +555,21 @@ fun FallingLeavesEffect(
             val vanishFade = if (leaf.isVanishing) (1f - (leaf.vanishTimer / 0.4f)).coerceIn(0f, 1f) else 1f
             val baseTargetAlpha = leaf.alpha * ambientAlpha * topFade
             val alpha = when {
-                blowAwayProgress > 0f -> baseTargetAlpha * (1f - blowAwayProgress)
+                localProgress > 0f -> baseTargetAlpha * (1f - localProgress.pow(1.3f))
                 else -> (baseTargetAlpha * vanishFade).coerceIn(0f, 0.85f)
             }
 
-            if (alpha < 0.01f) return@forEach
+            if (alpha < 0.005f) return@forEach
 
             // Desaturate / blend background depth layer toward dark ambient
             val drawColor = if (leaf.depth == LeafDepth.BACKGROUND) {
                 lerp(leaf.color, Color(0xFF090D10), 0.35f)
             } else leaf.color
 
-            val tumbleScaleX = if (!leaf.isResting && !leaf.isSettling) {
+            val tumbleScaleX = if (localProgress > 0f) {
+                val wave = cos(localProgress * 8.0f + leaf.tumblePhase)
+                (wave * 0.40f + 0.60f).coerceIn(0.20f, 1.0f)
+            } else if (!leaf.isResting && !leaf.isSettling) {
                 val wave = cos(t * leaf.tumbleFrequency + leaf.tumblePhase)
                 (wave * 0.45f + 0.55f).coerceIn(0.20f, 1.0f)
             } else 1.0f

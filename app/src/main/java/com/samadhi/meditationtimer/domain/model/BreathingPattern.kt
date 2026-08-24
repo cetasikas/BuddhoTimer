@@ -65,6 +65,17 @@ data class BreathingPattern(
             holdEmptySec = 3
         )
 
-        val allPatterns = listOf(BOX_BREATHING, RELAX_4_7_8, RESONANT_BREATH, TRANQUIL_3_3_3_3)
+        val VARYING_COUNT = BreathingPattern(
+            id = "varying_count",
+            name = "Varying-Count Breath (9-6-3)",
+            subtitle = "Anti-Autopilot & Deep Settling",
+            description = "Scales breath counts across 4 stages (9-Count Long -> 6-Count Medium -> 3-Count Settled -> Return Sequence) to prevent subconscious drift and anchor direct awareness.",
+            inhaleSec = 9,
+            holdFullSec = 0,
+            exhaleSec = 9,
+            holdEmptySec = 0
+        )
+
+        val allPatterns = listOf(BOX_BREATHING, VARYING_COUNT, RELAX_4_7_8, RESONANT_BREATH, TRANQUIL_3_3_3_3)
     }
 }

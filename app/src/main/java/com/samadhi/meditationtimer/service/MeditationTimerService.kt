@@ -182,7 +182,10 @@ class MeditationTimerService : Service() {
                         if (!hasChimedForOverrun) {
                             hasChimedForOverrun = true
                             soundHelper.triggerHarmonicCompletionHaptic()
-                            soundHelper.playChime(soundBellResName, serviceScope)
+                            val isCompletionBell = getSharedPreferences("timer_prefs", Context.MODE_PRIVATE).getBoolean("completion_bell_enabled", false)
+                            if (isCompletionBell) {
+                                soundHelper.playChime(soundBellResName, serviceScope)
+                            }
                         }
 
                         _timerStatus.value = TimerStatus.Running(
@@ -261,7 +264,10 @@ class MeditationTimerService : Service() {
                             overrunSeconds = elapsedSeconds - targetDurationSec
                             if (!hasChimedForOverrun) {
                                 hasChimedForOverrun = true
-                                soundHelper.playChime(soundBellResName, serviceScope)
+                                val isCompletionBell = getSharedPreferences("timer_prefs", Context.MODE_PRIVATE).getBoolean("completion_bell_enabled", false)
+                                if (isCompletionBell) {
+                                    soundHelper.playChime(soundBellResName, serviceScope)
+                                }
                             }
                             _timerStatus.value = TimerStatus.Running(
                                 remainingSeconds = 0,

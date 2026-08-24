@@ -28,7 +28,8 @@ data class TimerConfiguration(
     val tapToBlackoutEnabled: Boolean = true,
     val keepScreenAwake: Boolean = true,
     val isBoxBreathingMode: Boolean = false,
-    val isCountdownHapticsEnabled: Boolean = true
+    val isCountdownHapticsEnabled: Boolean = true,
+    val isCompletionBellEnabled: Boolean = false
 ) {
     val targetDurationSeconds: Int
         get() = if (isOpenEnded) 0 else targetDurationMinutes * 60

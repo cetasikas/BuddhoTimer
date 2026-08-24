@@ -179,8 +179,9 @@ private fun SimpleTopicCard(
         1 -> ZenAmber          // Start Here Gold
         2 -> ZenTeal           // Breath Teal
         3 -> Color(0xFF81D4FA) // Buddho Sky Blue
-        4 -> Color(0xFFA5D6A7) // Walking Moss Green
-        5 -> Color(0xFFFFCC80) // Calming Amber
+        4 -> Color(0xFFCE93D8) // Varying Count Lilac
+        5 -> Color(0xFFA5D6A7) // Walking Moss Green
+        6 -> Color(0xFFFFCC80) // Calming Amber
         else -> Color(0xFFF48FB1) // Metta Rose
     }
 
@@ -188,6 +189,7 @@ private fun SimpleTopicCard(
         "start" -> Icons.Outlined.Spa
         "breath" -> Icons.Outlined.Air
         "buddho" -> Icons.Outlined.SelfImprovement
+        "varying" -> Icons.Outlined.Check
         "walking" -> Icons.AutoMirrored.Outlined.DirectionsWalk
         "restlessness" -> Icons.Outlined.WaterDrop
         else -> Icons.Outlined.FavoriteBorder
