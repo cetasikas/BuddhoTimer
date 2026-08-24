@@ -41,4 +41,4 @@ Because Buddho Timer does not collect any personal data, it is safe for users of
 
 ### 5. Contact
 If you have any questions regarding this Privacy Policy, you can open an issue on GitHub:
-- **Repository**: [https://github.com/mbodhi/BuddhoTimer](https://github.com/mbodhi/BuddhoTimer)
+- **Repository**: [https://github.com/cetasikas/BuddhoTimer](https://github.com/cetasikas/BuddhoTimer)

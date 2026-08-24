@@ -156,6 +156,10 @@ fun BreathingScreen(
         }
     }
 
+    val prepSec = remember { prefs.getInt("prep_time_sec", 5) }
+    var isPreparing by remember { mutableStateOf(prepSec > 0) }
+    var prepRemaining by remember { mutableIntStateOf(prepSec) }
+
     var isRunning by remember { mutableStateOf(true) }
     var currentPhase by remember { mutableStateOf(BreathPhase.INHALE) }
     var phaseSecondsRemaining by remember { mutableIntStateOf(selectedPattern.inhaleSec) }
@@ -179,9 +183,24 @@ fun BreathingScreen(
         onSessionCompleted(completedStatus)
     }
 
+    // Warm-up Preparation Countdown ticker
+    LaunchedEffect(isPreparing) {
+        if (!isPreparing) return@LaunchedEffect
+        while (isActive && isPreparing && prepRemaining > 0) {
+            delay(1000L)
+            prepRemaining--
+            if (prepRemaining <= 0) {
+                isPreparing = false
+                soundHelper.playChime(soundBellResName)
+                soundHelper.triggerGentleVibration()
+                break
+            }
+        }
+    }
+
     // High precision, hardware-synced breath cycle ticker (100% stutter-free)
-    LaunchedEffect(isRunning, selectedPattern) {
-        if (!isRunning) return@LaunchedEffect
+    LaunchedEffect(isRunning, selectedPattern, isPreparing) {
+        if (!isRunning || isPreparing) return@LaunchedEffect
 
         currentPhase = BreathPhase.INHALE
         phaseSecondsRemaining = selectedPattern.inhaleSec
@@ -190,7 +209,7 @@ fun BreathingScreen(
 
         var phaseStartTimeMs = System.currentTimeMillis()
 
-        while (isActive && isRunning) {
+        while (isActive && isRunning && !isPreparing) {
             withFrameNanos { _ ->
                 val totalPhaseSec = getPhaseDuration(currentPhase, selectedPattern).coerceAtLeast(1)
                 val totalPhaseMs = totalPhaseSec * 1000L
@@ -219,8 +238,9 @@ fun BreathingScreen(
     }
 
     // Secondary 1-second cadence ticker for total elapsed time
-    LaunchedEffect(isRunning) {
-        while (isActive && isRunning) {
+    LaunchedEffect(isRunning, isPreparing) {
+        if (isPreparing) return@LaunchedEffect
+        while (isActive && isRunning && !isPreparing) {
             delay(1000L)
             totalElapsedSec++
             if (targetTotalSec > 0 && totalElapsedSec >= targetTotalSec) {
@@ -386,182 +406,234 @@ fun BreathingScreen(
                         }
 
                         // Bottom Landscape Split Row
-                        Row(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Left Column: Ensō Visualizer
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                ZenParticleBreathingCanvas(
-                                    currentPhase = currentPhase,
-                                    phaseProgress = phaseProgress,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
-
-                            // Right Column: Controls & Instructions
+                        if (isPreparing) {
                             Column(
                                 modifier = Modifier
-                                    .weight(1.1f)
-                                    .fillMaxHeight()
-                                    .padding(start = 12.dp, end = 8.dp),
+                                    .fillMaxSize()
+                                    .padding(vertical = 12.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                Text(
-                                    text = "$phaseSecondsRemaining",
-                                    fontSize = 46.sp,
-                                    fontWeight = FontWeight.Light,
-                                    color = Color.White,
-                                    letterSpacing = 1.sp
-                                )
-
-                                AnimatedContent(
-                                    targetState = currentPhase,
-                                    transitionSpec = {
-                                        (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
-                                            .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
-                                    },
-                                    label = "phaseTextFlow"
-                                ) { phase ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(currentTheme.primary.copy(alpha = 0.18f))
+                                        .padding(horizontal = 18.dp, vertical = 6.dp)
+                                ) {
                                     Text(
-                                        text = phase.displayName.uppercase(),
-                                        fontSize = 17.sp,
+                                        text = "PREPARATION",
+                                        fontSize = 12.sp,
                                         letterSpacing = 3.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = phaseColor,
-                                        textAlign = TextAlign.Center
+                                        color = currentTheme.primaryLight
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(14.dp))
 
-                                AnimatedContent(
-                                    targetState = currentPhase,
-                                    label = "phaseInstructionFlow"
-                                ) { phase ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(110.dp)
+                                        .clip(CircleShape)
+                                        .background(ZenSurface.copy(alpha = 0.65f))
+                                        .border(2.dp, currentTheme.primaryLight.copy(alpha = 0.6f), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
                                     Text(
-                                        text = phase.instruction,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = ZenTextPrimary.copy(alpha = 0.90f),
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 2
+                                        text = "$prepRemaining",
+                                        fontSize = 48.sp,
+                                        fontWeight = FontWeight.ExtraLight,
+                                        color = ZenTextPrimary
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(10.dp))
 
                                 Text(
-                                    text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = ZenTextPrimary.copy(alpha = 0.85f),
-                                    letterSpacing = 0.5.sp
+                                    text = "Settle into your posture and prepare to breathe...",
+                                    fontSize = 13.sp,
+                                    color = ZenTextSecondary,
+                                    textAlign = TextAlign.Center
                                 )
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                            }
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Left Column: Ensō Visualizer
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight(),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    // DND Quick Toggle Button
-                                    IconButton(
-                                        onClick = {
-                                            if (dndManager.isDndAccessGranted) {
-                                                val next = !isAutoDnd
-                                                isAutoDnd = next
-                                                prefs.edit().putBoolean("auto_dnd", next).apply()
-                                                if (next) dndManager.enableDnd() else dndManager.restoreDnd()
-                                            } else {
-                                                context.startActivity(
-                                                    dndManager.requestDndPermissionIntent().apply {
-                                                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                                                    }
+                                    ZenParticleBreathingCanvas(
+                                        currentPhase = currentPhase,
+                                        phaseProgress = phaseProgress,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+
+                                // Right Column: Controls & Instructions
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1.1f)
+                                        .fillMaxHeight()
+                                        .padding(start = 12.dp, end = 8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "$phaseSecondsRemaining",
+                                        fontSize = 46.sp,
+                                        fontWeight = FontWeight.Light,
+                                        color = Color.White,
+                                        letterSpacing = 1.sp
+                                    )
+
+                                    AnimatedContent(
+                                        targetState = currentPhase,
+                                        transitionSpec = {
+                                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
+                                                .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
+                                        },
+                                        label = "phaseTextFlow"
+                                    ) { phase ->
+                                        Text(
+                                            text = phase.displayName.uppercase(),
+                                            fontSize = 17.sp,
+                                            letterSpacing = 3.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = phaseColor,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    AnimatedContent(
+                                        targetState = currentPhase,
+                                        label = "phaseInstructionFlow"
+                                    ) { phase ->
+                                        Text(
+                                            text = phase.instruction,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = ZenTextPrimary.copy(alpha = 0.90f),
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 2
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    Text(
+                                        text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = ZenTextPrimary.copy(alpha = 0.85f),
+                                        letterSpacing = 0.5.sp
+                                    )
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        // DND Quick Toggle Button
+                                        IconButton(
+                                            onClick = {
+                                                if (dndManager.isDndAccessGranted) {
+                                                    val next = !isAutoDnd
+                                                    isAutoDnd = next
+                                                    prefs.edit().putBoolean("auto_dnd", next).apply()
+                                                    if (next) dndManager.enableDnd() else dndManager.restoreDnd()
+                                                } else {
+                                                    context.startActivity(
+                                                        dndManager.requestDndPermissionIntent().apply {
+                                                            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                                        }
+                                                    )
+                                                }
+                                            },
+                                            modifier = Modifier
+                                                .size(42.dp)
+                                                .clip(CircleShape)
+                                                .background(
+                                                    if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
+                                                    else ZenSurface.copy(alpha = 0.75f)
                                                 )
-                                            }
-                                        },
-                                        modifier = Modifier
-                                            .size(42.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
-                                                else ZenSurface.copy(alpha = 0.75f)
+                                                .border(
+                                                    1.dp,
+                                                    if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight.copy(alpha = 0.6f) else ZenBorder,
+                                                    CircleShape
+                                                )
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.DoNotDisturb,
+                                                contentDescription = "Toggle DND",
+                                                tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
+                                                modifier = Modifier.size(18.dp)
                                             )
-                                            .border(
-                                                1.dp,
-                                                if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight.copy(alpha = 0.6f) else ZenBorder,
-                                                CircleShape
+                                        }
+
+                                        IconButton(
+                                            onClick = {
+                                                totalElapsedSec = 0
+                                                completedCycles = 0
+                                                currentPhase = BreathPhase.INHALE
+                                                phaseSecondsRemaining = selectedPattern.inhaleSec
+                                                phaseProgress = 0f
+                                            },
+                                            modifier = Modifier
+                                                .size(42.dp)
+                                                .clip(CircleShape)
+                                                .background(ZenSurface.copy(alpha = 0.75f))
+                                                .border(1.dp, ZenBorder, CircleShape)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Refresh,
+                                                contentDescription = "Restart",
+                                                tint = ZenTextSecondary,
+                                                modifier = Modifier.size(18.dp)
                                             )
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.DoNotDisturb,
-                                            contentDescription = "Toggle DND",
-                                            tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
+                                        }
 
-                                    IconButton(
-                                        onClick = {
-                                            totalElapsedSec = 0
-                                            completedCycles = 0
-                                            currentPhase = BreathPhase.INHALE
-                                            phaseSecondsRemaining = selectedPattern.inhaleSec
-                                            phaseProgress = 0f
-                                        },
-                                        modifier = Modifier
-                                            .size(42.dp)
-                                            .clip(CircleShape)
-                                            .background(ZenSurface.copy(alpha = 0.75f))
-                                            .border(1.dp, ZenBorder, CircleShape)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Refresh,
-                                            contentDescription = "Restart",
-                                            tint = ZenTextSecondary,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
+                                        Button(
+                                            onClick = { isRunning = !isRunning },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(42.dp),
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
+                                                contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
+                                            )
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                contentDescription = if (isRunning) "Pause" else "Resume",
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(if (isRunning) "Pause" else "Resume", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
+                                        }
 
-                                    Button(
-                                        onClick = { isRunning = !isRunning },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(42.dp),
-                                        shape = RoundedCornerShape(14.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
-                                            contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                            contentDescription = if (isRunning) "Pause" else "Resume",
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(if (isRunning) "Pause" else "Resume", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
-                                    }
-
-                                    Button(
-                                        onClick = { finishSession() },
-                                        modifier = Modifier.height(42.dp),
-                                        shape = RoundedCornerShape(14.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = ZenSurface.copy(alpha = 0.85f),
-                                            contentColor = currentTheme.primaryLight
-                                        ),
-                                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
-                                    ) {
-                                        Text("Finish", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
+                                        Button(
+                                            onClick = { finishSession() },
+                                            modifier = Modifier.height(42.dp),
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = ZenSurface.copy(alpha = 0.85f),
+                                                contentColor = currentTheme.primaryLight
+                                            ),
+                                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
+                                        ) {
+                                            Text("Finish", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
+                                        }
                                     }
                                 }
                             }
@@ -717,193 +789,250 @@ fun BreathingScreen(
                             }
                         }
 
-                        // --- 2. CENTRAL LIVING ZEN ENSŌ VISUALIZER ---
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            ZenParticleBreathingCanvas(
-                                currentPhase = currentPhase,
-                                phaseProgress = phaseProgress,
-                                modifier = Modifier.fillMaxSize()
-                            )
-
+                        if (isPreparing) {
+                            // --- PREPARATION COUNTDOWN VIEW ---
                             Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(horizontal = 20.dp)
+                                verticalArrangement = Arrangement.Center
                             ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(currentTheme.primary.copy(alpha = 0.18f))
+                                        .padding(horizontal = 18.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "PREPARATION",
+                                        fontSize = 12.sp,
+                                        letterSpacing = 3.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = currentTheme.primaryLight
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(28.dp))
+
+                                Box(
+                                    modifier = Modifier
+                                        .size(160.dp)
+                                        .clip(CircleShape)
+                                        .background(ZenSurface.copy(alpha = 0.65f))
+                                        .border(2.dp, currentTheme.primaryLight.copy(alpha = 0.6f), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$prepRemaining",
+                                        fontSize = 72.sp,
+                                        fontWeight = FontWeight.ExtraLight,
+                                        color = ZenTextPrimary
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(28.dp))
+
                                 Text(
-                                    text = "$phaseSecondsRemaining",
-                                    fontSize = 68.sp,
-                                    fontWeight = FontWeight.Light,
-                                    color = Color.White,
-                                    letterSpacing = 1.sp
+                                    text = "Settle into your posture and prepare to breathe...",
+                                    fontSize = 14.sp,
+                                    color = ZenTextSecondary,
+                                    textAlign = TextAlign.Center,
+                                    lineHeight = 20.sp
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(58.dp))
+                        } else {
+                            // --- 2. CENTRAL LIVING ZEN ENSŌ VISUALIZER ---
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ZenParticleBreathingCanvas(
+                                    currentPhase = currentPhase,
+                                    phaseProgress = phaseProgress,
+                                    modifier = Modifier.fillMaxSize()
                                 )
 
-                                Spacer(modifier = Modifier.height(2.dp))
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center,
+                                    modifier = Modifier.padding(horizontal = 20.dp)
+                                ) {
+                                    Text(
+                                        text = "$phaseSecondsRemaining",
+                                        fontSize = 68.sp,
+                                        fontWeight = FontWeight.Light,
+                                        color = Color.White,
+                                        letterSpacing = 1.sp
+                                    )
 
+                                    Spacer(modifier = Modifier.height(2.dp))
+
+                                    AnimatedContent(
+                                        targetState = currentPhase,
+                                        transitionSpec = {
+                                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
+                                                .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
+                                        },
+                                        label = "phaseTextFlow"
+                                    ) { phase ->
+                                        Text(
+                                            text = phase.displayName.uppercase(),
+                                            fontSize = 20.sp,
+                                            letterSpacing = 3.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = phaseColor,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+
+                            // --- 3. INSTRUCTION & SESSION PROGRESS TIMER ---
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                            ) {
                                 AnimatedContent(
                                     targetState = currentPhase,
                                     transitionSpec = {
-                                        (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
-                                            .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
+                                        (fadeIn(tween(300)) + slideInVertically(tween(300)) { 6 })
+                                            .togetherWith(fadeOut(tween(200)) + slideOutVertically(tween(200)) { -6 })
                                     },
-                                    label = "phaseTextFlow"
+                                    label = "phaseInstructionFlow"
                                 ) { phase ->
                                     Text(
-                                        text = phase.displayName.uppercase(),
-                                        fontSize = 20.sp,
-                                        letterSpacing = 3.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = phaseColor,
-                                        textAlign = TextAlign.Center
+                                        text = phase.instruction,
+                                        fontSize = 15.5.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = ZenTextPrimary.copy(alpha = 0.90f),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2
                                     )
                                 }
-                            }
-                        }
 
-                        // --- 3. INSTRUCTION & SESSION PROGRESS TIMER ---
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                        ) {
-                            AnimatedContent(
-                                targetState = currentPhase,
-                                transitionSpec = {
-                                    (fadeIn(tween(300)) + slideInVertically(tween(300)) { 6 })
-                                        .togetherWith(fadeOut(tween(200)) + slideOutVertically(tween(200)) { -6 })
-                                },
-                                label = "phaseInstructionFlow"
-                            ) { phase ->
+                                Spacer(modifier = Modifier.height(6.dp))
+
                                 Text(
-                                    text = phase.instruction,
-                                    fontSize = 15.5.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = ZenTextPrimary.copy(alpha = 0.90f),
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 2
+                                    text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
+                                    fontSize = 17.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ZenTextPrimary.copy(alpha = 0.80f),
+                                    letterSpacing = 0.5.sp
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                            Text(
-                                text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                fontSize = 17.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = ZenTextPrimary.copy(alpha = 0.80f),
-                                letterSpacing = 0.5.sp
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // --- 4. MINIMAL CONTROL BAR WITH INTEGRATED DND ---
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // DND Quick Toggle Button
-                            IconButton(
-                                onClick = {
-                                    if (dndManager.isDndAccessGranted) {
-                                        val next = !isAutoDnd
-                                        isAutoDnd = next
-                                        prefs.edit().putBoolean("auto_dnd", next).apply()
-                                        if (next) dndManager.enableDnd() else dndManager.restoreDnd()
-                                    } else {
-                                        context.startActivity(
-                                            dndManager.requestDndPermissionIntent().apply {
-                                                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                                            }
+                            // --- 4. MINIMAL CONTROL BAR WITH INTEGRATED DND ---
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // DND Quick Toggle Button
+                                IconButton(
+                                    onClick = {
+                                        if (dndManager.isDndAccessGranted) {
+                                            val next = !isAutoDnd
+                                            isAutoDnd = next
+                                            prefs.edit().putBoolean("auto_dnd", next).apply()
+                                            if (next) dndManager.enableDnd() else dndManager.restoreDnd()
+                                        } else {
+                                            context.startActivity(
+                                                dndManager.requestDndPermissionIntent().apply {
+                                                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                                }
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
+                                            else ZenSurface.copy(alpha = 0.75f)
                                         )
-                                    }
-                                },
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
-                                        else ZenSurface.copy(alpha = 0.75f)
+                                        .border(
+                                            1.dp,
+                                            if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight.copy(alpha = 0.6f) else ZenBorder,
+                                            CircleShape
+                                        )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DoNotDisturb,
+                                        contentDescription = "Toggle DND",
+                                        tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
+                                        modifier = Modifier.size(20.dp)
                                     )
-                                    .border(
-                                        1.dp,
-                                        if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight.copy(alpha = 0.6f) else ZenBorder,
-                                        CircleShape
+                                }
+
+                                // Reset Button
+                                IconButton(
+                                    onClick = {
+                                        totalElapsedSec = 0
+                                        completedCycles = 0
+                                        currentPhase = BreathPhase.INHALE
+                                        phaseSecondsRemaining = selectedPattern.inhaleSec
+                                        phaseProgress = 0f
+                                    },
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .background(ZenSurface.copy(alpha = 0.75f))
+                                        .border(1.dp, ZenBorder, CircleShape)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Restart",
+                                        tint = ZenTextSecondary,
+                                        modifier = Modifier.size(20.dp)
                                     )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.DoNotDisturb,
-                                    contentDescription = "Toggle DND",
-                                    tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                                }
 
-                            // Reset Button
-                            IconButton(
-                                onClick = {
-                                    totalElapsedSec = 0
-                                    completedCycles = 0
-                                    currentPhase = BreathPhase.INHALE
-                                    phaseSecondsRemaining = selectedPattern.inhaleSec
-                                    phaseProgress = 0f
-                                },
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(ZenSurface.copy(alpha = 0.75f))
-                                    .border(1.dp, ZenBorder, CircleShape)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Restart",
-                                    tint = ZenTextSecondary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                                // Pause / Resume Button
+                                Button(
+                                    onClick = { isRunning = !isRunning },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
+                                        contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        contentDescription = if (isRunning) "Pause" else "Resume",
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (isRunning) "Pause" else "Resume",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.5.sp
+                                    )
+                                }
 
-                            // Pause / Resume Button
-                            Button(
-                                onClick = { isRunning = !isRunning },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
-                                    contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                    contentDescription = if (isRunning) "Pause" else "Resume",
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = if (isRunning) "Pause" else "Resume",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.5.sp
-                                )
-                            }
-
-                            // Finish Button
-                            Button(
-                                onClick = { finishSession() },
-                                modifier = Modifier.height(48.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = ZenSurface.copy(alpha = 0.85f),
-                                    contentColor = currentTheme.primaryLight
-                                ),
-                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
-                            ) {
-                                Text("Finish", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
+                                // Finish Button
+                                Button(
+                                    onClick = { finishSession() },
+                                    modifier = Modifier.height(48.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = ZenSurface.copy(alpha = 0.85f),
+                                        contentColor = currentTheme.primaryLight
+                                    ),
+                                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
+                                ) {
+                                    Text("Finish", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
+                                }
                             }
                         }
                     }

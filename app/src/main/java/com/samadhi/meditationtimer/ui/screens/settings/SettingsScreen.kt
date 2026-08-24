@@ -53,6 +53,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -343,7 +344,7 @@ fun SettingsScreen(
                     }
                 }
 
-                // Support / Donate Button in Top Right of Settings
+                // Support Button in Top Right of Settings
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
@@ -352,7 +353,7 @@ fun SettingsScreen(
                         .clickable {
                             val intent = android.content.Intent(
                                 android.content.Intent.ACTION_VIEW,
-                                android.net.Uri.parse("https://ko-fi.com/hackysackapp")
+                                android.net.Uri.parse("https://cetasikas.github.io/buddho-timer/")
                             ).apply {
                                 flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
                             }
@@ -366,13 +367,13 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Favorite,
-                            contentDescription = null,
-                            tint = Color(0xFFFF5252),
-                            modifier = Modifier.size(13.dp)
+                            imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
+                            contentDescription = "Support & Docs",
+                            tint = currentTheme.primaryLight,
+                            modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "Donate",
+                            text = "Support",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = currentTheme.primaryLight
@@ -457,7 +458,7 @@ fun SettingsScreen(
                 }
 
                 // 2. BELL SOUND & CHIMES
-                val currentSoundTitle = SoundHelper.soundOptions.find { it.id == config.soundBellResName }?.title ?: "Singing Bowl"
+                val currentSoundTitle = SoundHelper.soundOptions.find { it.id == config.soundBellResName }?.title ?: "Mindfulness Bell"
                 ExpandableSettingsCard(
                     title = "Bell Sound & Chimes",
                     icon = Icons.Default.MusicNote,
@@ -655,7 +656,7 @@ fun SettingsScreen(
                 }
 
                 // 5. MEDITATION REMINDERS (OUTSIDE APP)
-                val reminderSummary = if (!reminderEnabled) "Off" else if (reminderMode == "random") "Random Waking" else if (reminderMode == "interval") "Every ${reminderIntervalHours}h" else "${if (reminderHour == 0) 12 else if (reminderHour <= 12) reminderHour else reminderHour - 12}${if (reminderHour < 12) "AM" else "PM"}"
+                val reminderSummary = if (!reminderEnabled) "Off" else if (reminderMode == "random") "3x Daily (Random)" else if (reminderMode == "interval") "Every ${reminderIntervalHours}h" else "${if (reminderHour == 0) 12 else if (reminderHour <= 12) reminderHour else reminderHour - 12}${if (reminderHour < 12) "AM" else "PM"}"
                 ExpandableSettingsCard(
                     title = "Meditation Reminders",
                     icon = Icons.Default.NotificationsActive,
@@ -669,9 +670,9 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Daily Mindfulness Reminders", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("Gentle notifications with Buddhist wisdom quotes", fontSize = 11.sp, color = ZenTextSecondary)
+                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                                Text("Mindfulness & Meditation Reminders", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text("Gentle reminders to pause, meditate, and reflect on words of wisdom", fontSize = 11.sp, color = ZenTextSecondary)
                             }
                             Switch(
                                 checked = reminderEnabled,
@@ -742,7 +743,7 @@ fun SettingsScreen(
                                         reminderPrefs.edit().putString("reminder_mode", "random").apply()
                                         com.samadhi.meditationtimer.service.reminder.MeditationReminderScheduler.scheduleRandomDailyReminder(context)
                                     },
-                                    label = { Text("Random", fontSize = 12.sp) },
+                                    label = { Text("Random (3x/Day)", fontSize = 12.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = currentTheme.primary,
                                         selectedLabelColor = ZenObsidian
@@ -775,7 +776,7 @@ fun SettingsScreen(
                                         .padding(horizontal = 12.dp, vertical = 8.dp)
                                 ) {
                                     Text(
-                                        text = "A surprise mindfulness reminder is delivered once a day at a random time during active waking hours (8:00 AM – 9:00 PM).",
+                                        text = "Receive 3 surprise meditation reminders spread throughout the day during waking hours (morning, afternoon, and evening) with inspiring words of wisdom.",
                                         fontSize = 11.5.sp,
                                         color = ZenTextSecondary,
                                         lineHeight = 16.sp

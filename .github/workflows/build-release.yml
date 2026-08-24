@@ -1,9 +1,7 @@
 name: Build & Release Android APK
 
+# Manual dispatch only to prevent exhausting GitHub Actions quota
 on:
-  push:
-    branches: [ main ]
-    tags: [ 'v*' ]
   workflow_dispatch:
 
 permissions:

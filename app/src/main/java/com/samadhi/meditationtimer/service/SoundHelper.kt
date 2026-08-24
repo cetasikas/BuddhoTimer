@@ -379,8 +379,6 @@ class SoundHelper(private val context: Context) {
             SoundOption(SOUND_MINDFULNESS_BELL, "Mindfulness Bell", "Warm, resonant bronze meditation bell (27s)"),
             SoundOption(SOUND_TEMPLE_DEEP, "Great Temple Bell", "Deep sacred bell with gentle awakening pre-strike (29s)"),
             SoundOption(SOUND_AWAKENING, "Awakening Bell", "Clear, gentle bell of presence (16s)"),
-            SoundOption(SOUND_SINGING_BOWL, "Deep Singing Bowl", "Resonant Tibetan singing bowl (50s)"),
-            SoundOption(SOUND_ZEN_TONE, "Zen Tone", "Short gentle meditation tone (2s)"),
             SoundOption(SOUND_CHIME, "Mindful Chime", "Quick soothing acoustic chime (1.6s)"),
             SoundOption(SOUND_SILENT_HAPTIC, "Silent Retreat (Haptic Only)", "Gentle soothing vibration without audio")
         )

@@ -11,7 +11,10 @@ import java.util.Calendar
 object MeditationReminderScheduler {
 
     private const val TAG = "ReminderScheduler"
-    private const val REQUEST_CODE_REMINDER = 2001
+    private const val REQUEST_CODE_REMINDER = 2000
+    private const val REQUEST_CODE_RANDOM_1 = 2001 // Morning slot
+    private const val REQUEST_CODE_RANDOM_2 = 2002 // Afternoon slot
+    private const val REQUEST_CODE_RANDOM_3 = 2003 // Evening slot
 
     fun scheduleDailyReminder(context: Context, hourOfDay: Int, minute: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
@@ -100,64 +103,82 @@ object MeditationReminderScheduler {
     fun scheduleRandomDailyReminder(context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
-        val intent = Intent(context, MeditationReminderReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            REQUEST_CODE_REMINDER,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        // 3 Distinct Waking Slots across the day:
+        // Slot 1: Morning (8:00 AM - 11:59 AM)
+        // Slot 2: Afternoon (12:00 PM - 4:59 PM)
+        // Slot 3: Evening (5:00 PM - 9:00 PM)
+        val slots = listOf(
+            Triple(REQUEST_CODE_RANDOM_1, 8..11, 0..59),
+            Triple(REQUEST_CODE_RANDOM_2, 12..16, 0..59),
+            Triple(REQUEST_CODE_RANDOM_3, 17..20, 0..59)
         )
 
-        // Random waking hour between 8 AM (8) and 9 PM (20) and random minute (0-59)
-        val randHour = (8..20).random()
-        val randMinute = (0..59).random()
+        val now = System.currentTimeMillis()
 
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, randHour)
-            set(Calendar.MINUTE, randMinute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-            if (timeInMillis <= System.currentTimeMillis()) {
-                add(Calendar.DAY_OF_YEAR, 1)
-            }
-        }
+        for ((requestCode, hourRange, minuteRange) in slots) {
+            val randHour = hourRange.random()
+            val randMinute = minuteRange.random()
 
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
+            val calendar = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, randHour)
+                set(Calendar.MINUTE, randMinute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                if (timeInMillis <= now) {
+                    add(Calendar.DAY_OF_YEAR, 1)
+                }
             }
-            Log.d(TAG, "Scheduled random waking-hour reminder for: ${calendar.time}")
-        } catch (e: SecurityException) {
-            alarmManager.set(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
+
+            val intent = Intent(context, MeditationReminderReceiver::class.java).apply {
+                putExtra("extra_slot_code", requestCode)
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                requestCode,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            Log.w(TAG, "Exact alarm restricted, set inexact random reminder for: ${calendar.time}", e)
+
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.timeInMillis,
+                        pendingIntent
+                    )
+                } else {
+                    alarmManager.setExact(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.timeInMillis,
+                        pendingIntent
+                    )
+                }
+                Log.d(TAG, "Scheduled random reminder slot $requestCode for: ${calendar.time}")
+            } catch (e: SecurityException) {
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+                Log.w(TAG, "Exact alarm restricted, set inexact random reminder for: ${calendar.time}", e)
+            }
         }
     }
 
     fun cancelReminder(context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
-        val intent = Intent(context, MeditationReminderReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            REQUEST_CODE_REMINDER,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        alarmManager.cancel(pendingIntent)
-        Log.d(TAG, "Meditation reminder cancelled")
+        val allCodes = listOf(REQUEST_CODE_REMINDER, REQUEST_CODE_RANDOM_1, REQUEST_CODE_RANDOM_2, REQUEST_CODE_RANDOM_3)
+        for (code in allCodes) {
+            val intent = Intent(context, MeditationReminderReceiver::class.java)
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                code,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.cancel(pendingIntent)
+        }
+        Log.d(TAG, "All meditation reminders cancelled")
     }
 
     fun rescheduleNextIfNeeded(context: Context) {
