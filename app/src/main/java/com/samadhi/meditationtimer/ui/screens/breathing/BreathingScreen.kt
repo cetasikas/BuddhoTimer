@@ -578,51 +578,38 @@ fun BreathingScreen(
                                         }
                                     }
 
-                                    AnimatedContent(
-                                        targetState = currentPhase,
-                                        transitionSpec = {
-                                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
-                                                .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
-                                        },
-                                        label = "phaseTextFlow"
-                                    ) { phase ->
-                                        Text(
-                                            text = phase.displayName.uppercase(),
-                                            fontSize = 17.sp,
-                                            letterSpacing = 3.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = phaseColor,
-                                            textAlign = TextAlign.Center
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(6.dp))
 
                                     AnimatedContent(
                                         targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
+                                        transitionSpec = {
+                                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { 6 })
+                                                .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -6 })
+                                        },
                                         label = "phaseInstructionFlow"
                                     ) {
                                         Text(
                                             text = activeStageInstruction,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = ZenTextPrimary.copy(alpha = 0.90f),
+                                            fontSize = 14.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = phaseColor,
                                             textAlign = TextAlign.Center,
-                                            maxLines = 2
+                                            maxLines = 2,
+                                            lineHeight = 19.sp
                                         )
                                     }
 
-                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Spacer(modifier = Modifier.height(14.dp))
 
                                     Text(
                                         text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                        fontSize = 16.sp,
+                                        fontSize = 15.5.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = ZenTextPrimary.copy(alpha = 0.85f),
                                         letterSpacing = 0.5.sp
                                     )
 
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(20.dp))
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -990,66 +977,47 @@ fun BreathingScreen(
                                         }
                                     }
 
-                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Spacer(modifier = Modifier.height(4.dp))
 
                                     AnimatedContent(
-                                        targetState = currentPhase,
+                                        targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
                                         transitionSpec = {
-                                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { 8 })
-                                                .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -8 })
+                                            (fadeIn(tween(350)) + slideInVertically(tween(350)) { 6 })
+                                                .togetherWith(fadeOut(tween(250)) + slideOutVertically(tween(250)) { -6 })
                                         },
-                                        label = "phaseTextFlow"
-                                    ) { phase ->
+                                        label = "phaseInstructionFlow"
+                                    ) {
                                         Text(
-                                            text = phase.displayName.uppercase(),
-                                            fontSize = 19.sp,
-                                            letterSpacing = 3.sp,
-                                            fontWeight = FontWeight.Bold,
+                                            text = activeStageInstruction,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.SemiBold,
                                             color = phaseColor,
-                                            textAlign = TextAlign.Center
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 2,
+                                            lineHeight = 20.sp,
+                                            modifier = Modifier.padding(horizontal = 20.dp)
                                         )
                                     }
                                 }
                             }
 
-                            // --- 3. INSTRUCTION & SESSION PROGRESS (Centered between Animation & Controls) ---
+                            // --- 3. SESSION PROGRESS (Positioned just beneath the animation, well above controls) ---
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 20.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                AnimatedContent(
-                                    targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
-                                    transitionSpec = {
-                                        (fadeIn(tween(300)) + slideInVertically(tween(300)) { 6 })
-                                            .togetherWith(fadeOut(tween(200)) + slideOutVertically(tween(200)) { -6 })
-                                    },
-                                    label = "phaseInstructionFlow"
-                                ) {
-                                    Text(
-                                        text = activeStageInstruction,
-                                        fontSize = 14.5.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = ZenTextPrimary.copy(alpha = 0.90f),
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 2,
-                                        lineHeight = 19.sp
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(14.dp))
-
                                 Text(
                                     text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                    fontSize = 16.5.sp,
+                                    fontSize = 17.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = ZenTextPrimary.copy(alpha = 0.85f),
                                     letterSpacing = 0.5.sp
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(28.dp))
 
                             // --- 3. MINIMAL CONTROL BAR WITH INTEGRATED DND ---
                             Row(
