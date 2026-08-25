@@ -202,7 +202,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun continueSession() {
+    fun continueSession(initialElapsedSec: Int = 0, initialStartTimeMs: Long = 0L) {
         val currentConfig = _config.value
         val intent = Intent(context, MeditationTimerService::class.java).apply {
             action = MeditationTimerService.ACTION_START
@@ -215,6 +215,8 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_MINDFULNESS_INTERVAL_MIN, currentConfig.mindfulnessIntervalMinutes)
             putExtra(MeditationTimerService.EXTRA_COMPLETION_BELL, currentConfig.isCompletionBellEnabled)
             putExtra(MeditationTimerService.EXTRA_START_BELL, false)
+            putExtra(MeditationTimerService.EXTRA_INITIAL_ELAPSED_SEC, initialElapsedSec)
+            putExtra(MeditationTimerService.EXTRA_INITIAL_START_TIME_MS, initialStartTimeMs)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -222,6 +224,14 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             context.startService(intent)
         }
+    }
+
+    fun adjustSessionTime(deltaSec: Int) {
+        val intent = Intent(context, MeditationTimerService::class.java).apply {
+            action = MeditationTimerService.ACTION_ADJUST_TIME
+            putExtra(MeditationTimerService.EXTRA_ADJUST_SEC, deltaSec)
+        }
+        context.startService(intent)
     }
 
     fun pauseSession() {

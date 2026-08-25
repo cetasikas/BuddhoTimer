@@ -1,8 +1,10 @@
 package com.samadhi.meditationtimer.ui.components
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -66,6 +68,12 @@ fun CircularTimerProgress(
     val activeColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary
     val glowColor = if (isOverrun) ZenOverrunGlow else currentTheme.primaryGlow
 
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = if (isPaused) 0 else 1000, easing = LinearEasing),
+        label = "smoothProgressArc"
+    )
+
     Box(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center
@@ -102,7 +110,7 @@ fun CircularTimerProgress(
             val sweepAngle = if (isOverrun) {
                 360f
             } else {
-                (progress.coerceIn(0f, 1f)) * 360f
+                animatedProgress * 360f
             }
 
             drawArc(

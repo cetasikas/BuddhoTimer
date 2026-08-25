@@ -226,7 +226,15 @@ fun MainAppScaffold() {
                                     popUpTo(Screen.Timer.route)
                                 }
                             },
-                            onContinueMeditating = {
+                            onContinueMeditatingCombined = { initialElapsedSec, initialStartTimeMs ->
+                                completedSessionData = null
+                                timerViewModel.continueSession(initialElapsedSec, initialStartTimeMs)
+                                navController.navigate(Screen.ActiveSession.route) {
+                                    popUpTo(Screen.Timer.route)
+                                }
+                            },
+                            onContinueMeditatingFresh = {
+                                completedSessionData = null
                                 timerViewModel.continueSession()
                                 navController.navigate(Screen.ActiveSession.route) {
                                     popUpTo(Screen.Timer.route)

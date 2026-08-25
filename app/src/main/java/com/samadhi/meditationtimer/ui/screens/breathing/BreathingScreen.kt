@@ -718,7 +718,7 @@ fun BreathingScreen(
                                             Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
                                         }
                                     } else {
-                                        IconButton(
+                                        OutlinedButton(
                                             onClick = {
                                                 totalElapsedSec = 0
                                                 completedCycles = 0
@@ -726,17 +726,24 @@ fun BreathingScreen(
                                                 phaseSecondsRemaining = selectedPattern.inhaleSec
                                                 phaseProgress = 0f
                                             },
-                                            modifier = Modifier
-                                                .size(42.dp)
-                                                .clip(CircleShape)
-                                                .background(ZenSurface.copy(alpha = 0.75f))
-                                                .border(1.dp, ZenBorder, CircleShape)
+                                            modifier = Modifier.height(42.dp),
+                                            shape = RoundedCornerShape(14.dp),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
+                                            border = BorderStroke(1.dp, ZenBorder)
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Refresh,
-                                                contentDescription = "Restart",
+                                                contentDescription = "Restart Session",
                                                 tint = ZenTextSecondary,
-                                                modifier = Modifier.size(18.dp)
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "Restart",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                maxLines = 1
                                             )
                                         }
 
@@ -1192,8 +1199,8 @@ fun BreathingScreen(
                                         )
                                     }
 
-                                    // Reset Button
-                                    IconButton(
+                                    // Restart Session Button
+                                    OutlinedButton(
                                         onClick = {
                                             totalElapsedSec = 0
                                             completedCycles = 0
@@ -1201,17 +1208,24 @@ fun BreathingScreen(
                                             phaseSecondsRemaining = selectedPattern.inhaleSec
                                             phaseProgress = 0f
                                         },
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .clip(CircleShape)
-                                            .background(ZenSurface.copy(alpha = 0.75f))
-                                            .border(1.dp, ZenBorder, CircleShape)
+                                        modifier = Modifier.height(46.dp),
+                                        shape = RoundedCornerShape(14.dp),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
+                                        border = BorderStroke(1.dp, ZenBorder)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Refresh,
-                                            contentDescription = "Restart",
+                                            contentDescription = "Restart Session",
                                             tint = ZenTextSecondary,
-                                            modifier = Modifier.size(19.dp)
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Restart",
+                                            fontSize = 12.5.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            maxLines = 1
                                         )
                                     }
 

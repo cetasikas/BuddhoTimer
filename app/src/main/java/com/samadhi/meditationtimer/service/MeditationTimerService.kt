@@ -74,7 +74,16 @@ class MeditationTimerService : Service() {
                 val mindfulnessIntervalMin = intent.getIntExtra(EXTRA_MINDFULNESS_INTERVAL_MIN, 0)
                 val completionBell = intent.getBooleanExtra(EXTRA_COMPLETION_BELL, false)
                 val isStartBell = intent.getBooleanExtra(EXTRA_START_BELL, false)
-                startTimer(targetSec, prepSec, autoDnd, openEnded, isOverrunEnabled, soundBell, mindfulnessIntervalMin, completionBell, isStartBell)
+                val initialElapsedSec = intent.getIntExtra(EXTRA_INITIAL_ELAPSED_SEC, 0)
+                val initialStartTimeMs = intent.getLongExtra(EXTRA_INITIAL_START_TIME_MS, 0L)
+                startTimer(
+                    targetSec, prepSec, autoDnd, openEnded, isOverrunEnabled, soundBell,
+                    mindfulnessIntervalMin, completionBell, isStartBell, initialElapsedSec, initialStartTimeMs
+                )
+            }
+            ACTION_ADJUST_TIME -> {
+                val deltaSec = intent.getIntExtra(EXTRA_ADJUST_SEC, 0)
+                adjustTimerDuration(deltaSec)
             }
             ACTION_PAUSE -> pauseTimer()
             ACTION_RESUME -> resumeTimer()
@@ -82,6 +91,22 @@ class MeditationTimerService : Service() {
             ACTION_CANCEL -> cancelTimer()
         }
         return START_NOT_STICKY
+    }
+
+    private fun adjustTimerDuration(deltaSec: Int) {
+        if (isOpenEnded) return
+        val current = _timerStatus.value
+        val minTarget = (elapsedSeconds + 10).coerceAtLeast(60)
+        val newTarget = (targetDurationSec + deltaSec).coerceAtLeast(minTarget)
+        targetDurationSec = newTarget
+        soundHelper.triggerSoftTouchHaptic()
+
+        val newRemaining = (newTarget - elapsedSeconds).coerceAtLeast(0)
+        if (current is TimerStatus.Running) {
+            _timerStatus.value = current.copy(remainingSeconds = newRemaining)
+        } else if (current is TimerStatus.Paused) {
+            _timerStatus.value = current.copy(remainingSeconds = newRemaining)
+        }
     }
 
     private fun startTimer(
@@ -93,7 +118,9 @@ class MeditationTimerService : Service() {
         soundBell: String,
         mindfulnessIntervalMin: Int,
         completionBell: Boolean,
-        isStartBell: Boolean
+        isStartBell: Boolean,
+        initialElapsedSec: Int = 0,
+        initialStartTimeMs: Long = 0L
     ) {
         targetDurationSec = targetSec
         prepTimeSec = prepSec
@@ -103,10 +130,10 @@ class MeditationTimerService : Service() {
         soundBellResName = soundBell
         isCompletionBellEnabledForSession = completionBell
         isStartBellEnabledForSession = isStartBell
-        elapsedSeconds = 0
+        elapsedSeconds = initialElapsedSec
         overrunSeconds = 0
         hasChimedForOverrun = false
-        startTimeEpochMs = System.currentTimeMillis()
+        startTimeEpochMs = if (initialStartTimeMs > 0L) initialStartTimeMs else System.currentTimeMillis()
 
         wakeLockHelper.acquireWakeLock()
 
@@ -424,6 +451,7 @@ class MeditationTimerService : Service() {
         const val ACTION_RESUME = "com.samadhi.meditationtimer.action.RESUME"
         const val ACTION_FINISH = "com.samadhi.meditationtimer.action.FINISH"
         const val ACTION_CANCEL = "com.samadhi.meditationtimer.action.CANCEL"
+        const val ACTION_ADJUST_TIME = "com.samadhi.meditationtimer.action.ADJUST_TIME"
 
         const val EXTRA_TARGET_SEC = "extra_target_sec"
         const val EXTRA_PREP_SEC = "extra_prep_sec"
@@ -434,6 +462,9 @@ class MeditationTimerService : Service() {
         const val EXTRA_MINDFULNESS_INTERVAL_MIN = "extra_mindfulness_interval_min"
         const val EXTRA_COMPLETION_BELL = "extra_completion_bell"
         const val EXTRA_START_BELL = "extra_start_bell"
+        const val EXTRA_ADJUST_SEC = "extra_adjust_sec"
+        const val EXTRA_INITIAL_ELAPSED_SEC = "extra_initial_elapsed_sec"
+        const val EXTRA_INITIAL_START_TIME_MS = "extra_initial_start_time_ms"
 
         private val _timerStatus = MutableStateFlow<TimerStatus>(TimerStatus.Idle)
         val timerStatus: StateFlow<TimerStatus> = _timerStatus.asStateFlow()

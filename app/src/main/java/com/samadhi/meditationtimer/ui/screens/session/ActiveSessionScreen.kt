@@ -17,6 +17,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -442,7 +443,56 @@ fun ActiveSessionScreen(
                                         )
                                     }
 
-                                    Spacer(modifier = Modifier.height(20.dp))
+                                     if (!config.isOpenEnded && !isOverrun) {
+                                         Spacer(modifier = Modifier.height(10.dp))
+                                         Row(
+                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                             verticalAlignment = Alignment.CenterVertically
+                                         ) {
+                                             OutlinedButton(
+                                                 onClick = { viewModel.adjustSessionTime(-300) },
+                                                 modifier = Modifier.height(32.dp),
+                                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                                 shape = RoundedCornerShape(16.dp),
+                                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
+                                                 border = BorderStroke(1.dp, ZenBorder)
+                                             ) {
+                                                 Text("-5m", fontSize = 11.5.sp, fontWeight = FontWeight.Medium)
+                                             }
+                                             OutlinedButton(
+                                                 onClick = { viewModel.adjustSessionTime(-60) },
+                                                 modifier = Modifier.height(32.dp),
+                                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                                 shape = RoundedCornerShape(16.dp),
+                                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
+                                                 border = BorderStroke(1.dp, ZenBorder)
+                                             ) {
+                                                 Text("-1m", fontSize = 11.5.sp, fontWeight = FontWeight.Medium)
+                                             }
+                                             OutlinedButton(
+                                                 onClick = { viewModel.adjustSessionTime(60) },
+                                                 modifier = Modifier.height(32.dp),
+                                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                                 shape = RoundedCornerShape(16.dp),
+                                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                                 border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
+                                             ) {
+                                                 Text("+1m", fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
+                                             }
+                                             OutlinedButton(
+                                                 onClick = { viewModel.adjustSessionTime(300) },
+                                                 modifier = Modifier.height(32.dp),
+                                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                                 shape = RoundedCornerShape(16.dp),
+                                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                                 border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
+                                             ) {
+                                                 Text("+5m", fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
+                                             }
+                                         }
+                                     }
+
+                                     Spacer(modifier = Modifier.height(14.dp))
 
                                     // Landscape Controls with integrated DND
                                     Row(
@@ -638,7 +688,56 @@ fun ActiveSessionScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(48.dp))
+                                 if (!config.isOpenEnded && !isOverrun) {
+                                     Spacer(modifier = Modifier.height(18.dp))
+                                     Row(
+                                         horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                         verticalAlignment = Alignment.CenterVertically
+                                     ) {
+                                         OutlinedButton(
+                                             onClick = { viewModel.adjustSessionTime(-300) },
+                                             modifier = Modifier.height(34.dp),
+                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                             shape = RoundedCornerShape(17.dp),
+                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
+                                             border = BorderStroke(1.dp, ZenBorder)
+                                         ) {
+                                             Text("-5m", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                         }
+                                         OutlinedButton(
+                                             onClick = { viewModel.adjustSessionTime(-60) },
+                                             modifier = Modifier.height(34.dp),
+                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                             shape = RoundedCornerShape(17.dp),
+                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
+                                             border = BorderStroke(1.dp, ZenBorder)
+                                         ) {
+                                             Text("-1m", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                         }
+                                         OutlinedButton(
+                                             onClick = { viewModel.adjustSessionTime(60) },
+                                             modifier = Modifier.height(34.dp),
+                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                             shape = RoundedCornerShape(17.dp),
+                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                             border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
+                                         ) {
+                                             Text("+1m", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                         }
+                                         OutlinedButton(
+                                             onClick = { viewModel.adjustSessionTime(300) },
+                                             modifier = Modifier.height(34.dp),
+                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                             shape = RoundedCornerShape(17.dp),
+                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                             border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
+                                         ) {
+                                             Text("+5m", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                         }
+                                     }
+                                 }
+
+                                 Spacer(modifier = Modifier.height(32.dp))
 
                                 // Action Controls with integrated DND
                                 Row(
