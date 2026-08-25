@@ -331,19 +331,21 @@ private fun DrawScope.drawZenEnsoGarland(
 }
 
 // =========================================================================
-// 1. MOONLIT BAMBOO SUMI-E CONTINUOUS TIMBER CANE ENSŌ & FOLIAGE
+// 1. MOONLIT GOLDEN TIMBER BAMBOO ENSŌ & LUSH BOTANICAL GROVE ENGINE
 // =========================================================================
 
-private data class BambooJoint(
-    val angleDeg: Float,
-    val isOutward: Boolean,
-    val leafCount: Int,
-    val swayOffset: Float
+private data class BotanicalBambooCluster(
+    val angleDeg: Float,           // Angle on the circle (0 = top, 90 = right, 180 = bottom, 270 = left)
+    val hasJoint: Boolean,         // Whether this location features a prominent golden bamboo node joint
+    val isOutward: Boolean,        // General branch tilt
+    val densityLevel: Int,         // 1 = delicate sprig, 2 = full spray, 3 = super lush dense grove
+    val baseScale: Float,          // Scale multiplier
+    val swayPhaseOffset: Float     // Wind sway phase offset
 )
 
 /**
- * Renders an authentic continuous timber bamboo frame with natural joint collars
- * and lush, slender lanceolate bamboo leaves matching traditional Sumi-e painting.
+ * Renders an authentic golden timber bamboo circular frame with prominent 3D raised
+ * joint collars and a lush, multi-layered botanical bamboo grove matching traditional watercolor art.
  */
 private fun DrawScope.drawGrowingBambooStalkEnso(
     center: Offset,
@@ -372,22 +374,25 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
 
     val totalSweep = growthFraction * 360f
 
-    // Natural bamboo cane thickness (matching traditional ink wash paintings)
-    val stalkThickness = minDim * 0.038f // ~14-16dp wide, perfectly balanced
+    // Substantial golden timber bamboo cane thickness (~18-20dp)
+    val stalkThickness = minDim * 0.044f
 
     val topLeft = Offset(center.x - baseRadius, center.y - baseRadius)
     val arcSize = androidx.compose.ui.geometry.Size(baseRadius * 2f, baseRadius * 2f)
 
-    // Palette: Authentic natural timber bamboo & golden-sage hues
-    val bambooContour = Color(0xFF1E2812)     // Dark outer ink edge
-    val bambooBody = Color(0xFF4A6B2D)        // Main natural bamboo cane body
-    val bambooMid = Color(0xFF6B8A3C)         // Lush bamboo green
-    val bambooLight = Color(0xFF8FA84E)       // Golden-sage bamboo tone
-    val bambooSheen = Color(0xFFD4E696)       // Direct sunlight cylinder sheen
+    // Palette: Warm Golden Timber Bamboo Cane (matching watercolor reference)
+    val caneShadow = Color(0xFF422E10)     // Deep woody under-shadow
+    val caneDeepWood = Color(0xFF9E7E36)   // Warm amber wood base
+    val caneBody = Color(0xFFD8C274)       // Main golden bamboo cane body
+    val caneLight = Color(0xFFEFE0A0)      // Bright golden cane highlight
+    val caneSheen = Color(0xFFFFF8D6)      // Direct sunlight reflection streak
 
-    val goldJointDark = Color(0xFF1E1A0C)     // Joint crease ink line
-    val goldJointWood = Color(0xFF8C7338)     // Warm golden-wood joint band
-    val goldJointLight = Color(0xFFD8BF72)    // Joint highlight band
+    // Foliage Palette: Rich multi-tonal watercolor bamboo leaves
+    val leafShadow = Color(0xFF092415)     // Deep forest shadow leaf
+    val leafMid = Color(0xFF1B6A3B)        // Vibrant emerald bamboo leaf
+    val leafBright = Color(0xFF38A85C)     // Fresh spring bamboo blade
+    val leafGlow = Color(0xFF6EDC94)       // Sunlight leaf highlight
+    val leafSpine = Color(0xFFC4F7D8)      // Central vein spine line
 
     // 1. Ambient Zen Core Glow (Inhale / Hold Full)
     if (growthFraction > 0.05f) {
@@ -401,8 +406,8 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    bambooLight.copy(alpha = glowAlpha * 0.65f),
-                    bambooBody.copy(alpha = glowAlpha * 0.25f),
+                    leafGlow.copy(alpha = glowAlpha * 0.65f),
+                    leafMid.copy(alpha = glowAlpha * 0.25f),
                     Color.Transparent
                 ),
                 center = center,
@@ -413,11 +418,11 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
         )
     }
 
-    // 2. Render Single Continuous Smooth Bamboo Culm (NO slice lines!)
+    // 2. Render Continuous Smooth Golden Timber Bamboo Culm
     if (totalSweep > 0.5f && overallAlpha > 0.01f) {
-        // A. Dark Outer Bamboo Contour Edge
+        // A. Deep Woody Contour Shadow Edge
         drawArc(
-            color = bambooContour.copy(alpha = 0.92f * overallAlpha),
+            color = caneShadow.copy(alpha = 0.95f * overallAlpha),
             startAngle = -90f,
             sweepAngle = totalSweep,
             useCenter = false,
@@ -426,12 +431,12 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
             style = Stroke(width = stalkThickness * 1.08f, cap = StrokeCap.Round)
         )
 
-        // B. Main Continuous Bamboo Cane Body with Natural Sweep Shading
+        // B. Main Golden Timber Cane Body with Natural Sweep Gradient
         drawArc(
             brush = Brush.sweepGradient(
                 colors = listOf(
-                    bambooBody, bambooMid, bambooLight, bambooMid,
-                    bambooBody, bambooMid, bambooLight, bambooBody
+                    caneDeepWood, caneBody, caneLight, caneBody,
+                    caneDeepWood, caneBody, caneLight, caneBody, caneDeepWood
                 ),
                 center = center
             ),
@@ -445,34 +450,36 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
 
         // C. Inner Longitudinal Cylindrical Sheen Line
         drawArc(
-            color = bambooSheen.copy(alpha = 0.40f * overallAlpha),
+            color = caneSheen.copy(alpha = 0.55f * overallAlpha),
             startAngle = -90f,
             sweepAngle = totalSweep,
             useCenter = false,
             topLeft = topLeft,
             size = arcSize,
-            style = Stroke(width = stalkThickness * 0.25f, cap = StrokeCap.Round)
+            style = Stroke(width = stalkThickness * 0.26f, cap = StrokeCap.Round)
         )
     }
 
-    // 3. Bamboo Node Joints (Natural Woody Collars) & Slender Bamboo Foliage Sprays
-    // Only 7 natural joints around the circle (~51° apart)
-    val totalSegments = 7
-    val nodeConfigs = listOf(
-        BambooJoint(0f, true, 4, 0f),         // Node 0 - Top apex
-        BambooJoint(51.4f, true, 4, 1.2f),    // Node 1 - Upper-right
-        BambooJoint(102.8f, false, 5, 2.1f),  // Node 2 - Right (framed inward & outward)
-        BambooJoint(154.2f, true, 4, 0.7f),   // Node 3 - Lower-right
-        BambooJoint(205.7f, true, 5, 1.8f),   // Node 4 - Lower-left
-        BambooJoint(257.1f, false, 5, 0.9f),  // Node 5 - Left (framed inward & outward)
-        BambooJoint(308.5f, true, 4, 1.5f)    // Node 6 - Upper-left
+    // 3. Prominent 3D Raised Golden Bamboo Joints & Dense Botanical Grove Clusters
+    // 8 primary joint locations + dense layered foliage clusters around the ring
+    val totalSegments = 8
+    val botanicalClusters = listOf(
+        BotanicalBambooCluster(0f, true, true, 2, 1.0f, 0.0f),       // Node 0 - Top Apex (Golden Joint + Arching Sprays)
+        BotanicalBambooCluster(45f, true, true, 1, 0.85f, 1.2f),     // Node 1 - Top Right (Golden Joint + Delicate Sprig)
+        BotanicalBambooCluster(90f, true, false, 2, 1.10f, 2.1f),    // Node 2 - Right (Golden Joint + Inward/Outward Sprays)
+        BotanicalBambooCluster(135f, true, true, 3, 1.35f, 0.7f),    // Node 3 - Lower Right (Golden Joint + Lush Grove)
+        BotanicalBambooCluster(180f, true, true, 3, 1.55f, 1.8f),    // Node 4 - Bottom Center (Golden Joint + Super Lush Dense Grove)
+        BotanicalBambooCluster(225f, true, true, 3, 1.50f, 2.5f),    // Node 5 - Lower Left (Golden Joint + Super Lush Dense Grove)
+        BotanicalBambooCluster(270f, true, false, 3, 1.40f, 0.9f),   // Node 6 - Left Middle (Golden Joint + Lush Left Grove)
+        BotanicalBambooCluster(315f, true, true, 2, 1.15f, 1.5f)     // Node 7 - Upper Left (Golden Joint + Arching Canopy)
     )
 
-    for ((index, config) in nodeConfigs.withIndex()) {
-        val nodeDeg = -90f + config.angleDeg
-        val isOutward = config.isOutward
-        val swayOffset = config.swayOffset
-        val leafCount = config.leafCount
+    for ((index, cluster) in botanicalClusters.withIndex()) {
+        val nodeDeg = -90f + cluster.angleDeg
+        val isOutward = cluster.isOutward
+        val swayOffset = cluster.swayPhaseOffset
+        val density = cluster.densityLevel
+        val baseScale = cluster.baseScale
         val nodeFraction = index.toFloat() / totalSegments.toFloat()
         val isTopSprout = (index == 0)
 
@@ -534,53 +541,57 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
         val nodeY = center.y + sin(nodeRad) * baseRadius
         val nodeCenter = Offset(nodeX, nodeY)
 
-        // Draw Single Authentic Bamboo Node Joint Collar
-        if (!isTopSprout || currentPhase != BreathPhase.HOLD_EMPTY) {
-            drawBambooNodeCollar(
+        // Draw Prominent Raised 3D Golden Bamboo Node Collar Ring
+        if (cluster.hasJoint && (!isTopSprout || currentPhase != BreathPhase.HOLD_EMPTY)) {
+            drawProminentBambooJointCollar(
                 nodeCenter = nodeCenter,
                 nodeRad = nodeRad,
                 stalkThickness = stalkThickness,
                 alpha = nodeAlpha,
-                bambooBody = bambooBody,
-                goldJointDark = goldJointDark,
-                goldJointWood = goldJointWood,
-                goldJointLight = goldJointLight
+                caneBody = caneBody,
+                caneDeepWood = caneDeepWood,
+                caneLight = caneLight,
+                caneShadow = caneShadow,
+                caneSheen = caneSheen
             )
         }
 
         // Tangent rotation along circle
         val tangentDeg = nodeDeg + 90f
-        val branchAngle = tangentDeg + (if (isOutward) 34f else -38f) + swayAngle
-        val leafClusterScale = (minDim / 360f) * sproutScale * (if (index % 2 == 0) 1.08f else 0.96f)
+        val branchAngle = tangentDeg + (if (isOutward) 35f else -40f) + swayAngle
+        val clusterScale = (minDim / 360f) * sproutScale * baseScale
 
         // If top sprout on HOLD_EMPTY, draw peaceful glowing aura around bud
         if (isTopSprout && currentPhase == BreathPhase.HOLD_EMPTY) {
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        bambooLight.copy(alpha = 0.35f),
-                        bambooBody.copy(alpha = 0.15f),
+                        leafGlow.copy(alpha = 0.40f),
+                        leafMid.copy(alpha = 0.15f),
                         Color.Transparent
                     ),
                     center = nodeCenter,
-                    radius = minDim * 0.07f
+                    radius = minDim * 0.08f
                 ),
-                radius = minDim * 0.07f,
+                radius = minDim * 0.08f,
                 center = nodeCenter
             )
         }
 
-        // Draw Slender Botanical Bamboo Leaf Cluster at this node
-        drawBambooLeafCluster(
+        // Draw Truly Lush Multi-Layered Botanical Bamboo Grove Cluster
+        drawLushBotanicalGrove(
             nodeCenter = nodeCenter,
             branchAngle = branchAngle,
-            scale = leafClusterScale,
+            scale = clusterScale,
             alpha = nodeAlpha,
-            leafCount = leafCount,
-            bambooBody = bambooBody,
-            bambooLight = bambooLight,
-            bambooDark = bambooContour,
-            bambooSheen = bambooSheen
+            densityLevel = density,
+            animClockSec = animClockSec,
+            swayOffset = swayOffset,
+            leafShadow = leafShadow,
+            leafMid = leafMid,
+            leafBright = leafBright,
+            leafGlow = leafGlow,
+            leafSpine = leafSpine
         )
     }
 
@@ -596,217 +607,358 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
             brush = Brush.radialGradient(
                 colors = listOf(
                     Color.White.copy(alpha = 0.95f),
-                    bambooLight.copy(alpha = 0.85f),
-                    bambooBody.copy(alpha = 0.30f),
+                    caneLight.copy(alpha = 0.90f),
+                    leafGlow.copy(alpha = 0.50f),
                     Color.Transparent
                 ),
                 center = tipOffset,
-                radius = stalkThickness * 0.85f
+                radius = stalkThickness * 0.90f
             ),
-            radius = stalkThickness * 0.85f,
+            radius = stalkThickness * 0.90f,
             center = tipOffset
         )
     }
 }
 
 /**
- * Draws an authentic natural bamboo joint with a subtle swelling and clean collar crease.
+ * Draws a prominent, clearly visible 3D raised golden bamboo joint collar with deep notch crease and golden bevel highlights.
  */
-private fun DrawScope.drawBambooNodeCollar(
+private fun DrawScope.drawProminentBambooJointCollar(
     nodeCenter: Offset,
     nodeRad: Float,
     stalkThickness: Float,
     alpha: Float,
-    bambooBody: Color,
-    goldJointDark: Color,
-    goldJointWood: Color,
-    goldJointLight: Color
+    caneBody: Color,
+    caneDeepWood: Color,
+    caneLight: Color,
+    caneShadow: Color,
+    caneSheen: Color
 ) {
     val normalX = -sin(nodeRad)
     val normalY = cos(nodeRad)
-    val jointHalfWidth = stalkThickness * 0.58f
+    val jointHalfSpan = stalkThickness * 0.68f // Clearly wider than the culm to form the raised collar
 
-    val p1 = Offset(nodeCenter.x - normalX * jointHalfWidth, nodeCenter.y - normalY * jointHalfWidth)
-    val p2 = Offset(nodeCenter.x + normalX * jointHalfWidth, nodeCenter.y + normalY * jointHalfWidth)
+    val p1 = Offset(nodeCenter.x - normalX * jointHalfSpan, nodeCenter.y - normalY * jointHalfSpan)
+    val p2 = Offset(nodeCenter.x + normalX * jointHalfSpan, nodeCenter.y + normalY * jointHalfSpan)
 
-    // 1. Natural node joint cane bulge
+    // 1. Raised 3D Bamboo Joint Swelling Bulge
     drawCircle(
-        color = bambooBody.copy(alpha = 0.95f * alpha),
-        radius = stalkThickness * 0.52f,
+        brush = Brush.radialGradient(
+            colors = listOf(
+                caneSheen.copy(alpha = 0.95f * alpha),
+                caneLight.copy(alpha = 0.95f * alpha),
+                caneDeepWood.copy(alpha = 0.95f * alpha)
+            ),
+            center = nodeCenter,
+            radius = stalkThickness * 0.65f
+        ),
+        radius = stalkThickness * 0.65f,
         center = nodeCenter
     )
 
-    // 2. Golden-wood collar band
+    // 2. Dark Notch Crease Shadow Band across the cane
     drawLine(
-        color = goldJointWood.copy(alpha = 0.90f * alpha),
+        color = Color(0xFF281804).copy(alpha = 0.95f * alpha),
         start = p1,
         end = p2,
-        strokeWidth = 3.5f,
+        strokeWidth = stalkThickness * 0.32f,
         cap = StrokeCap.Round
     )
 
-    // 3. Crisp dark joint crease line
+    // 3. Raised Golden Wooden Collar Ridge Line (Upper highlight)
     drawLine(
-        color = goldJointDark.copy(alpha = 0.95f * alpha),
-        start = p1,
-        end = p2,
-        strokeWidth = 1.8f,
+        color = caneSheen.copy(alpha = 0.95f * alpha),
+        start = Offset(p1.x + cos(nodeRad) * 2.0f, p1.y + sin(nodeRad) * 2.0f),
+        end = Offset(p2.x + cos(nodeRad) * 2.0f, p2.y + sin(nodeRad) * 2.0f),
+        strokeWidth = stalkThickness * 0.18f,
         cap = StrokeCap.Round
     )
 
-    // 4. Subtle golden highlight rim
+    // 4. Under-Bevel Shadow Line
     drawLine(
-        color = goldJointLight.copy(alpha = 0.85f * alpha),
-        start = Offset(p1.x + cos(nodeRad) * 1.5f, p1.y + sin(nodeRad) * 1.5f),
-        end = Offset(p2.x + cos(nodeRad) * 1.5f, p2.y + sin(nodeRad) * 1.5f),
-        strokeWidth = 1.2f,
+        color = caneShadow.copy(alpha = 0.85f * alpha),
+        start = Offset(p1.x - cos(nodeRad) * 1.8f, p1.y - sin(nodeRad) * 1.8f),
+        end = Offset(p2.x - cos(nodeRad) * 1.8f, p2.y - sin(nodeRad) * 1.8f),
+        strokeWidth = stalkThickness * 0.14f,
         cap = StrokeCap.Round
+    )
+
+    // 5. Center Golden Highlight Gem Shine
+    drawCircle(
+        color = Color.White.copy(alpha = 0.90f * alpha),
+        radius = stalkThickness * 0.08f,
+        center = Offset(nodeCenter.x + cos(nodeRad) * 1.2f, nodeCenter.y + sin(nodeRad) * 1.2f)
     )
 }
 
 /**
- * Draws an organic cluster of slender lanceolate bamboo leaves in Sumi-e watercolor style.
+ * Draws a truly lush, multi-layered botanical bamboo grove cluster with dense overlapping foliage sprays.
  */
-private fun DrawScope.drawBambooLeafCluster(
+private fun DrawScope.drawLushBotanicalGrove(
     nodeCenter: Offset,
     branchAngle: Float,
     scale: Float,
     alpha: Float,
-    leafCount: Int,
-    bambooBody: Color,
-    bambooLight: Color,
-    bambooDark: Color,
-    bambooSheen: Color
+    densityLevel: Int,
+    animClockSec: Float,
+    swayOffset: Float,
+    leafShadow: Color,
+    leafMid: Color,
+    leafBright: Color,
+    leafGlow: Color,
+    leafSpine: Color
 ) {
     rotate(degrees = branchAngle, pivot = nodeCenter) {
-        val twigLen = scale * 24f
-        val leafLen = scale * 44f
-        val leafWid = scale * 8.5f // Slender, elegant lanceolate blade
+        val twigLength = scale * 26f
+        val primaryLeafLen = scale * 48f
+        val primaryLeafWid = scale * 9.5f
 
-        val twigEnd = Offset(nodeCenter.x, nodeCenter.y - twigLen)
+        val twigEnd = Offset(nodeCenter.x, nodeCenter.y - twigLength)
 
-        // 1. Organic curving twig stem connecting to bamboo joint
+        // 1. Organic Curving Main Branchlet connecting to joint
         val stemPath = Path().apply {
             moveTo(nodeCenter.x, nodeCenter.y)
             quadraticTo(
-                nodeCenter.x + scale * 3.0f, nodeCenter.y - twigLen * 0.5f,
+                nodeCenter.x + scale * 4.0f, nodeCenter.y - twigLength * 0.5f,
                 twigEnd.x, twigEnd.y
             )
         }
         drawPath(
             path = stemPath,
-            color = bambooLight.copy(alpha = 0.85f * alpha),
-            style = Stroke(width = 1.8f * scale.coerceAtLeast(0.7f), cap = StrokeCap.Round)
+            color = leafBright.copy(alpha = 0.85f * alpha),
+            style = Stroke(width = 2.0f * scale.coerceAtLeast(0.7f), cap = StrokeCap.Round)
         )
 
-        // 2. Primary Center Bamboo Blade (Main prominent leaf)
-        val mainTip = Offset(twigEnd.x, twigEnd.y - leafLen)
-        drawSingleBambooBlade(
-            tip = mainTip,
-            base = twigEnd,
-            width = leafWid,
+        // =========================================================================
+        // SPRAY 1: PRIMARY MAIN CENTER FOLIAGE SPRAY (5 Overlapping Leaves)
+        // =========================================================================
+        drawBotanicalSubSpray(
+            origin = twigEnd,
+            baseAngle = 0f,
+            leafLength = primaryLeafLen,
+            leafWidth = primaryLeafWid,
             alpha = alpha,
-            leafColor = bambooBody,
-            glowColor = bambooLight,
-            shadowColor = bambooDark,
-            sheenColor = bambooSheen
+            scale = scale,
+            leafShadow = leafShadow,
+            leafMid = leafMid,
+            leafBright = leafBright,
+            leafGlow = leafGlow,
+            leafSpine = leafSpine,
+            animClockSec = animClockSec,
+            sprayOffset = swayOffset
         )
 
-        // 3. Side Blade Left (Upper secondary)
-        if (leafCount >= 2) {
-            val leftBase = Offset(twigEnd.x - scale * 7f, twigEnd.y - scale * 5f)
-            val leftTip = Offset(twigEnd.x - scale * 24f, twigEnd.y - leafLen * 0.76f)
+        // =========================================================================
+        // SPRAY 2: SECONDARY INWARD FRAMING SPRAY (4 Overlapping Leaves)
+        // =========================================================================
+        if (densityLevel >= 2) {
+            val inwardStemEnd = Offset(twigEnd.x - scale * 9f, twigEnd.y - scale * 6f)
             drawLine(
-                color = bambooLight.copy(alpha = 0.75f * alpha),
+                color = leafBright.copy(alpha = 0.80f * alpha),
                 start = twigEnd,
-                end = leftBase,
-                strokeWidth = 1.2f * scale.coerceAtLeast(0.7f),
+                end = inwardStemEnd,
+                strokeWidth = 1.4f * scale.coerceAtLeast(0.7f),
                 cap = StrokeCap.Round
             )
-            drawSingleBambooBlade(
-                tip = leftTip,
-                base = leftBase,
-                width = leafWid * 0.78f,
-                alpha = alpha * 0.90f,
-                leafColor = bambooDark,
-                glowColor = bambooLight,
-                shadowColor = Color(0xFF0C1A08),
-                sheenColor = bambooSheen
+            drawBotanicalSubSpray(
+                origin = inwardStemEnd,
+                baseAngle = -28f,
+                leafLength = primaryLeafLen * 0.85f,
+                leafWidth = primaryLeafWid * 0.82f,
+                alpha = alpha * 0.95f,
+                scale = scale * 0.88f,
+                leafShadow = leafShadow,
+                leafMid = leafMid,
+                leafBright = leafBright,
+                leafGlow = leafGlow,
+                leafSpine = leafSpine,
+                animClockSec = animClockSec,
+                sprayOffset = swayOffset + 1.2f
             )
         }
 
-        // 4. Side Blade Right (Upper secondary)
-        if (leafCount >= 3) {
-            val rightBase = Offset(twigEnd.x + scale * 7f, twigEnd.y - scale * 4f)
-            val rightTip = Offset(twigEnd.x + scale * 22f, twigEnd.y - leafLen * 0.70f)
+        // =========================================================================
+        // SPRAY 3: TERTIARY OUTWARD BURSTING SPRAY (4 Overlapping Leaves)
+        // =========================================================================
+        if (densityLevel >= 2) {
+            val outwardStemEnd = Offset(twigEnd.x + scale * 9f, twigEnd.y - scale * 5f)
             drawLine(
-                color = bambooLight.copy(alpha = 0.75f * alpha),
+                color = leafBright.copy(alpha = 0.80f * alpha),
                 start = twigEnd,
-                end = rightBase,
+                end = outwardStemEnd,
+                strokeWidth = 1.4f * scale.coerceAtLeast(0.7f),
+                cap = StrokeCap.Round
+            )
+            drawBotanicalSubSpray(
+                origin = outwardStemEnd,
+                baseAngle = 26f,
+                leafLength = primaryLeafLen * 0.82f,
+                leafWidth = primaryLeafWid * 0.80f,
+                alpha = alpha * 0.92f,
+                scale = scale * 0.85f,
+                leafShadow = leafShadow,
+                leafMid = leafMid,
+                leafBright = leafBright,
+                leafGlow = leafGlow,
+                leafSpine = leafSpine,
+                animClockSec = animClockSec,
+                sprayOffset = swayOffset + 2.4f
+            )
+        }
+
+        // =========================================================================
+        // SPRAY 4 & 5: SUPER LUSH DEEP GROVE EXTENSION (Dense Cascading Background)
+        // =========================================================================
+        if (densityLevel >= 3) {
+            // Lower Deep Background Fan (6 cascading leaves)
+            val deepBase1 = Offset(twigEnd.x - scale * 16f, twigEnd.y - scale * 12f)
+            drawLine(
+                color = leafBright.copy(alpha = 0.70f * alpha),
+                start = twigEnd,
+                end = deepBase1,
                 strokeWidth = 1.2f * scale.coerceAtLeast(0.7f),
                 cap = StrokeCap.Round
             )
-            drawSingleBambooBlade(
-                tip = rightTip,
-                base = rightBase,
-                width = leafWid * 0.72f,
+            drawBotanicalSubSpray(
+                origin = deepBase1,
+                baseAngle = -48f,
+                leafLength = primaryLeafLen * 0.75f,
+                leafWidth = primaryLeafWid * 0.74f,
+                alpha = alpha * 0.88f,
+                scale = scale * 0.80f,
+                leafShadow = leafShadow,
+                leafMid = leafMid,
+                leafBright = leafBright,
+                leafGlow = leafGlow,
+                leafSpine = leafSpine,
+                animClockSec = animClockSec,
+                sprayOffset = swayOffset + 3.5f
+            )
+
+            // Upper Deep Background Fan (6 cascading leaves)
+            val deepBase2 = Offset(twigEnd.x + scale * 16f, twigEnd.y - scale * 11f)
+            drawLine(
+                color = leafBright.copy(alpha = 0.70f * alpha),
+                start = twigEnd,
+                end = deepBase2,
+                strokeWidth = 1.2f * scale.coerceAtLeast(0.7f),
+                cap = StrokeCap.Round
+            )
+            drawBotanicalSubSpray(
+                origin = deepBase2,
+                baseAngle = 45f,
+                leafLength = primaryLeafLen * 0.72f,
+                leafWidth = primaryLeafWid * 0.70f,
                 alpha = alpha * 0.85f,
-                leafColor = bambooBody,
-                glowColor = bambooLight,
-                shadowColor = bambooDark,
-                sheenColor = bambooSheen
-            )
-        }
-
-        // 5. Outer Accent Blade (Lower left tertiary)
-        if (leafCount >= 4) {
-            val extraBase = Offset(twigEnd.x - scale * 12f, twigEnd.y - scale * 9f)
-            val extraTip = Offset(twigEnd.x - scale * 34f, twigEnd.y - leafLen * 0.54f)
-            drawLine(
-                color = bambooLight.copy(alpha = 0.70f * alpha),
-                start = twigEnd,
-                end = extraBase,
-                strokeWidth = 1.0f * scale.coerceAtLeast(0.7f),
-                cap = StrokeCap.Round
-            )
-            drawSingleBambooBlade(
-                tip = extraTip,
-                base = extraBase,
-                width = leafWid * 0.62f,
-                alpha = alpha * 0.80f,
-                leafColor = bambooLight,
-                glowColor = bambooSheen,
-                shadowColor = bambooDark,
-                sheenColor = Color.White
-            )
-        }
-
-        // 6. Outer Accent Blade 2 (Lower right tertiary)
-        if (leafCount >= 5) {
-            val extraBase2 = Offset(twigEnd.x + scale * 13f, twigEnd.y - scale * 8f)
-            val extraTip2 = Offset(twigEnd.x + scale * 30f, twigEnd.y - leafLen * 0.50f)
-            drawLine(
-                color = bambooLight.copy(alpha = 0.70f * alpha),
-                start = twigEnd,
-                end = extraBase2,
-                strokeWidth = 1.0f * scale.coerceAtLeast(0.7f),
-                cap = StrokeCap.Round
-            )
-            drawSingleBambooBlade(
-                tip = extraTip2,
-                base = extraBase2,
-                width = leafWid * 0.58f,
-                alpha = alpha * 0.78f,
-                leafColor = bambooDark,
-                glowColor = bambooLight,
-                shadowColor = Color(0xFF0C1A08),
-                sheenColor = bambooSheen
+                scale = scale * 0.78f,
+                leafShadow = leafShadow,
+                leafMid = leafMid,
+                leafBright = leafBright,
+                leafGlow = leafGlow,
+                leafSpine = leafSpine,
+                animClockSec = animClockSec,
+                sprayOffset = swayOffset + 4.2f
             )
         }
     }
 }
 
-private fun DrawScope.drawSingleBambooBlade(
+/**
+ * Draws a botanical fan spray of 4 to 5 gracefully overlapping lanceolate bamboo leaves.
+ */
+private fun DrawScope.drawBotanicalSubSpray(
+    origin: Offset,
+    baseAngle: Float,
+    leafLength: Float,
+    leafWidth: Float,
+    alpha: Float,
+    scale: Float,
+    leafShadow: Color,
+    leafMid: Color,
+    leafBright: Color,
+    leafGlow: Color,
+    leafSpine: Color,
+    animClockSec: Float,
+    sprayOffset: Float
+) {
+    rotate(degrees = baseAngle, pivot = origin) {
+        // Leaf 1: Deep Background Shadow Leaf Left (-22°)
+        val blade1Tip = Offset(origin.x - scale * 14f, origin.y - leafLength * 0.88f)
+        drawSingleBotanicalBlade(
+            tip = blade1Tip,
+            base = origin,
+            width = leafWidth * 0.82f,
+            alpha = alpha * 0.90f,
+            leafColor = leafShadow,
+            glowColor = leafMid,
+            shadowColor = Color(0xFF04140B),
+            sheenColor = leafBright,
+            flutter = sin(animClockSec * 2.2f + sprayOffset) * 2.5f
+        )
+
+        // Leaf 2: Deep Background Shadow Leaf Right (+20°)
+        val blade2Tip = Offset(origin.x + scale * 13f, origin.y - leafLength * 0.84f)
+        drawSingleBotanicalBlade(
+            tip = blade2Tip,
+            base = origin,
+            width = leafWidth * 0.78f,
+            alpha = alpha * 0.88f,
+            leafColor = leafShadow,
+            glowColor = leafMid,
+            shadowColor = Color(0xFF04140B),
+            sheenColor = leafBright,
+            flutter = sin(animClockSec * 1.9f + sprayOffset + 1.1f) * 2.5f
+        )
+
+        // Leaf 3: Midtone Body Leaf Left (-11°)
+        val blade3Tip = Offset(origin.x - scale * 7f, origin.y - leafLength * 0.94f)
+        drawSingleBotanicalBlade(
+            tip = blade3Tip,
+            base = origin,
+            width = leafWidth * 0.92f,
+            alpha = alpha * 0.95f,
+            leafColor = leafMid,
+            glowColor = leafBright,
+            shadowColor = leafShadow,
+            sheenColor = leafGlow,
+            flutter = sin(animClockSec * 2.0f + sprayOffset + 2.3f) * 3.0f
+        )
+
+        // Leaf 4: Main Prominent Foreground Blade (Center, 0°)
+        val blade4Tip = Offset(origin.x, origin.y - leafLength)
+        drawSingleBotanicalBlade(
+            tip = blade4Tip,
+            base = origin,
+            width = leafWidth,
+            alpha = alpha,
+            leafColor = leafBright,
+            glowColor = leafGlow,
+            shadowColor = leafMid,
+            sheenColor = leafSpine,
+            flutter = sin(animClockSec * 1.7f + sprayOffset + 3.1f) * 3.5f
+        )
+
+        // Leaf 5: Foreground Highlight Leaf Right (+12°)
+        val blade5Tip = Offset(origin.x + scale * 8f, origin.y - leafLength * 0.92f)
+        drawSingleBotanicalBlade(
+            tip = blade5Tip,
+            base = origin,
+            width = leafWidth * 0.88f,
+            alpha = alpha * 0.92f,
+            leafColor = leafMid,
+            glowColor = leafBright,
+            shadowColor = leafShadow,
+            sheenColor = leafGlow,
+            flutter = sin(animClockSec * 2.1f + sprayOffset + 4.5f) * 2.8f
+        )
+    }
+}
+
+/**
+ * Draws a single watercolor lanceolate bamboo blade with sharp pointed needle tip,
+ * rich multi-tonal fill, central spine line, and natural leaf belly curvature.
+ */
+private fun DrawScope.drawSingleBotanicalBlade(
     tip: Offset,
     base: Offset,
     width: Float,
@@ -814,7 +966,8 @@ private fun DrawScope.drawSingleBambooBlade(
     leafColor: Color,
     glowColor: Color,
     shadowColor: Color,
-    sheenColor: Color
+    sheenColor: Color,
+    flutter: Float
 ) {
     val dx = tip.x - base.x
     val dy = tip.y - base.y
@@ -822,24 +975,25 @@ private fun DrawScope.drawSingleBambooBlade(
     val normX = -dy / length
     val normY = dx / length
 
-    val mid1 = Offset(base.x + dx * 0.28f, base.y + dy * 0.28f)
-    val mid2 = Offset(base.x + dx * 0.68f, base.y + dy * 0.68f)
+    val mid1 = Offset(base.x + dx * 0.26f + normX * flutter * 0.4f, base.y + dy * 0.26f + normY * flutter * 0.4f)
+    val mid2 = Offset(base.x + dx * 0.65f + normX * flutter, base.y + dy * 0.65f + normY * flutter)
 
     val path = Path().apply {
         moveTo(base.x, base.y)
         cubicTo(
-            mid1.x + normX * width * 1.05f, mid1.y + normY * width * 1.05f,
-            mid2.x + normX * width * 0.70f, mid2.y + normY * width * 0.70f,
-            tip.x, tip.y
+            mid1.x + normX * width * 1.12f, mid1.y + normY * width * 1.12f,
+            mid2.x + normX * width * 0.72f, mid2.y + normY * width * 0.72f,
+            tip.x + normX * flutter * 1.2f, tip.y + normY * flutter * 1.2f
         )
         cubicTo(
-            mid2.x - normX * width * 0.70f, mid2.y - normY * width * 0.70f,
-            mid1.x - normX * width * 1.05f, mid1.y - normY * width * 1.05f,
+            mid2.x - normX * width * 0.72f, mid2.y - normY * width * 0.72f,
+            mid1.x - normX * width * 1.12f, mid1.y - normY * width * 1.12f,
             base.x, base.y
         )
         close()
     }
 
+    // Lush Botanical Gradient Fill
     drawPath(
         path = path,
         brush = Brush.linearGradient(
@@ -853,20 +1007,20 @@ private fun DrawScope.drawSingleBambooBlade(
         )
     )
 
-    // Central spine vein line
+    // Delicate Central Spine Vein Line
     drawLine(
-        color = sheenColor.copy(alpha = 0.70f * alpha),
+        color = sheenColor.copy(alpha = 0.75f * alpha),
         start = base,
-        end = Offset(base.x + dx * 0.94f, base.y + dy * 0.94f),
-        strokeWidth = 1.0f,
+        end = Offset(base.x + dx * 0.94f + normX * flutter, base.y + dy * 0.94f + normY * flutter),
+        strokeWidth = 1.1f,
         cap = StrokeCap.Round
     )
 
-    // Subtle edge rim contour
+    // Subtle Watercolor Contour Rim
     drawPath(
         path = path,
         color = glowColor.copy(alpha = 0.35f * alpha),
-        style = Stroke(width = 0.80f)
+        style = Stroke(width = 0.85f)
     )
 }
 
