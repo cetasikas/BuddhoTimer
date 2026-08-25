@@ -472,50 +472,22 @@ fun BreathingScreen(
                                     }
                                 }
                             }
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                // Restart Session Button
-                                IconButton(
-                                    onClick = {
-                                        soundHelper.triggerSoftTouchHaptic()
-                                        totalElapsedSec = 0
-                                        completedCycles = 0
-                                        currentPhase = BreathPhase.INHALE
-                                        phaseSecondsRemaining = getPhaseDuration(BreathPhase.INHALE, selectedPattern, varyingStage, stage4Step)
-                                        phaseProgress = 0f
-                                    },
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(CircleShape)
-                                        .background(ZenSurface.copy(alpha = 0.75f))
-                                        .border(1.dp, ZenBorder, CircleShape)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = "Restart Session",
-                                        tint = ZenTextSecondary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
 
-                                // Close / Cancel Button
-                                IconButton(
-                                    onClick = onClose,
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(CircleShape)
-                                        .background(ZenSurface.copy(alpha = 0.75f))
-                                        .border(1.dp, ZenBorder, CircleShape)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Exit Breathwork",
-                                        tint = ZenTextSecondary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
+                            // Close / Cancel Button
+                            IconButton(
+                                onClick = onClose,
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(ZenSurface.copy(alpha = 0.75f))
+                                    .border(1.dp, ZenBorder, CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Exit Breathwork",
+                                    tint = ZenTextSecondary,
+                                    modifier = Modifier.size(16.dp)
+                                )
                             }
                         }
 
@@ -621,19 +593,19 @@ fun BreathingScreen(
                                         label = "phaseInstructionFlow"
                                     ) { (phase, _) ->
                                         val itemColor = when (phase) {
-                                            BreathPhase.INHALE -> currentTheme.primary
-                                            BreathPhase.HOLD_FULL -> currentTheme.primaryLight
-                                            BreathPhase.EXHALE -> currentTheme.overrunColor
-                                            BreathPhase.HOLD_EMPTY -> ZenAmber
+                                             BreathPhase.INHALE -> currentTheme.primary
+                                             BreathPhase.HOLD_FULL -> currentTheme.primaryLight
+                                             BreathPhase.EXHALE -> currentTheme.overrunColor
+                                             BreathPhase.HOLD_EMPTY -> ZenAmber
                                         }
                                         val textToDisplay = if (isVaryingCount) {
-                                            if (phase == BreathPhase.INHALE) {
-                                                "Inhale steadily\nCount 1 → $currentVaryingDuration"
-                                            } else {
-                                                "Exhale smoothly\nCount $currentVaryingDuration → 1"
-                                            }
+                                             if (phase == BreathPhase.INHALE) {
+                                                 "Inhale steadily\nCount 1 → $currentVaryingDuration"
+                                             } else {
+                                                 "Exhale smoothly\nCount $currentVaryingDuration → 1"
+                                             }
                                         } else {
-                                            phase.instruction
+                                             phase.instruction
                                         }
                                         Text(
                                             text = textToDisplay,
@@ -667,13 +639,42 @@ fun BreathingScreen(
                                         Spacer(modifier = Modifier.height(6.dp))
                                     }
 
-                                    Text(
-                                        text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = ZenTextPrimary.copy(alpha = 0.85f),
-                                        letterSpacing = 0.5.sp
-                                    )
+                                    // Time with inline Restart button
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = ZenTextPrimary.copy(alpha = 0.85f),
+                                            letterSpacing = 0.5.sp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        IconButton(
+                                            onClick = {
+                                                soundHelper.triggerSoftTouchHaptic()
+                                                totalElapsedSec = 0
+                                                completedCycles = 0
+                                                currentPhase = BreathPhase.INHALE
+                                                phaseSecondsRemaining = getPhaseDuration(BreathPhase.INHALE, selectedPattern, varyingStage, stage4Step)
+                                                phaseProgress = 0f
+                                            },
+                                            modifier = Modifier
+                                                .size(26.dp)
+                                                .clip(CircleShape)
+                                                .background(ZenSurface.copy(alpha = 0.65f))
+                                                .border(1.dp, ZenBorder.copy(alpha = 0.6f), CircleShape)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Refresh,
+                                                contentDescription = "Restart Session",
+                                                tint = ZenTextSecondary,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                        }
+                                    }
 
                                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -973,50 +974,21 @@ fun BreathingScreen(
                                 }
                             }
 
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            // Close / Cancel Button
+                            IconButton(
+                                onClick = onClose,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(ZenSurface.copy(alpha = 0.75f))
+                                    .border(1.dp, ZenBorder, CircleShape)
                             ) {
-                                // Restart Session Button
-                                IconButton(
-                                    onClick = {
-                                        soundHelper.triggerSoftTouchHaptic()
-                                        totalElapsedSec = 0
-                                        completedCycles = 0
-                                        currentPhase = BreathPhase.INHALE
-                                        phaseSecondsRemaining = getPhaseDuration(BreathPhase.INHALE, selectedPattern, varyingStage, stage4Step)
-                                        phaseProgress = 0f
-                                    },
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(ZenSurface.copy(alpha = 0.75f))
-                                        .border(1.dp, ZenBorder, CircleShape)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = "Restart Session",
-                                        tint = ZenTextSecondary,
-                                        modifier = Modifier.size(17.dp)
-                                    )
-                                }
-
-                                // Close / Cancel Button
-                                IconButton(
-                                    onClick = onClose,
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(ZenSurface.copy(alpha = 0.75f))
-                                        .border(1.dp, ZenBorder, CircleShape)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Exit Breathwork",
-                                        tint = ZenTextSecondary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Exit Breathwork",
+                                    tint = ZenTextSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
                         }
 
@@ -1171,13 +1143,42 @@ fun BreathingScreen(
                                     Spacer(modifier = Modifier.height(6.dp))
                                 }
 
-                                Text(
-                                    text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = ZenTextPrimary.copy(alpha = 0.85f),
-                                    letterSpacing = 0.5.sp
-                                )
+                                // Time with inline Restart button
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = ZenTextPrimary.copy(alpha = 0.85f),
+                                        letterSpacing = 0.5.sp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    IconButton(
+                                        onClick = {
+                                            soundHelper.triggerSoftTouchHaptic()
+                                            totalElapsedSec = 0
+                                            completedCycles = 0
+                                            currentPhase = BreathPhase.INHALE
+                                            phaseSecondsRemaining = getPhaseDuration(BreathPhase.INHALE, selectedPattern, varyingStage, stage4Step)
+                                            phaseProgress = 0f
+                                        },
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(ZenSurface.copy(alpha = 0.65f))
+                                            .border(1.dp, ZenBorder.copy(alpha = 0.6f), CircleShape)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Refresh,
+                                            contentDescription = "Restart Session",
+                                            tint = ZenTextSecondary,
+                                            modifier = Modifier.size(15.dp)
+                                        )
+                                    }
+                                }
                             }
 
                             Spacer(modifier = Modifier.height(24.dp))
