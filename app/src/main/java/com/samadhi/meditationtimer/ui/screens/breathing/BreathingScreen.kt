@@ -201,6 +201,8 @@ fun BreathingScreen(
             completedTimeEpochMs = now,
             isBoxBreathing = true
         )
+        isSessionComplete = true
+        isRunning = false
         onSessionCompleted(completedStatus)
     }
 
@@ -470,21 +472,50 @@ fun BreathingScreen(
                                     }
                                 }
                             }
-                            // Close / Cancel Button
-                            IconButton(
-                                onClick = onClose,
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(ZenSurface.copy(alpha = 0.75f))
-                                    .border(1.dp, ZenBorder, CircleShape)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Exit Breathwork",
-                                    tint = ZenTextSecondary,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                // Restart Session Button
+                                IconButton(
+                                    onClick = {
+                                        soundHelper.triggerSoftTouchHaptic()
+                                        totalElapsedSec = 0
+                                        completedCycles = 0
+                                        currentPhase = BreathPhase.INHALE
+                                        phaseSecondsRemaining = getPhaseDuration(BreathPhase.INHALE, selectedPattern, varyingStage, stage4Step)
+                                        phaseProgress = 0f
+                                    },
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(CircleShape)
+                                        .background(ZenSurface.copy(alpha = 0.75f))
+                                        .border(1.dp, ZenBorder, CircleShape)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Restart Session",
+                                        tint = ZenTextSecondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+
+                                // Close / Cancel Button
+                                IconButton(
+                                    onClick = onClose,
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(CircleShape)
+                                        .background(ZenSurface.copy(alpha = 0.75f))
+                                        .border(1.dp, ZenBorder, CircleShape)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Exit Breathwork",
+                                        tint = ZenTextSecondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -644,167 +675,166 @@ fun BreathingScreen(
                                         letterSpacing = 0.5.sp
                                     )
 
-                                    Spacer(modifier = Modifier.height(18.dp))
+                                    Spacer(modifier = Modifier.height(14.dp))
 
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // DND Quick Toggle Button
-                                        IconButton(
-                                            onClick = {
-                                                if (dndManager.isDndAccessGranted) {
-                                                    val next = !isAutoDnd
-                                                    isAutoDnd = next
-                                                    prefs.edit().putBoolean("auto_dnd", next).apply()
-                                                    if (next) dndManager.enableDnd() else dndManager.restoreDnd()
-                                                } else {
-                                                    context.startActivity(
-                                                        dndManager.requestDndPermissionIntent().apply {
-                                                            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                                                        }
-                                                    )
-                                                }
-                                            },
-                                            modifier = Modifier
-                                                .size(42.dp)
-                                                .clip(CircleShape)
-                                                .background(
-                                                    if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
-                                                    else ZenSurface.copy(alpha = 0.75f)
-                                                )
-                                                .border(
-                                                    1.dp,
-                                                    if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight.copy(alpha = 0.6f) else ZenBorder,
-                                                    CircleShape
-                                                )
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.DoNotDisturb,
-                                                contentDescription = "Toggle DND",
-                                                tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-
+                                    // Landscape Controls
                                     if (isSessionComplete) {
-                                        Button(
-                                            onClick = {
-                                                if (showSessionOverview) {
-                                                    finishSession()
-                                                } else {
-                                                    onClose()
-                                                }
-                                            },
-                                            modifier = Modifier.height(42.dp),
-                                            shape = RoundedCornerShape(21.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = currentTheme.primary,
-                                                contentColor = ZenObsidian
-                                            )
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(16.dp))
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = if (showSessionOverview) "Save & Finish" else "Done",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 13.sp
-                                            )
-                                        }
+                                            Button(
+                                                onClick = {
+                                                    if (showSessionOverview) {
+                                                        finishSession()
+                                                    } else {
+                                                        onClose()
+                                                    }
+                                                },
+                                                modifier = Modifier.height(42.dp),
+                                                shape = RoundedCornerShape(21.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = currentTheme.primary,
+                                                    contentColor = ZenObsidian
+                                                )
+                                            ) {
+                                                Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(16.dp))
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = if (showSessionOverview) "Save & Finish" else "Done",
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 13.sp
+                                                )
+                                            }
 
-                                        OutlinedButton(
-                                            onClick = {
-                                                targetTotalSec += 180
-                                                isSessionComplete = false
-                                                isRunning = true
-                                            },
-                                            modifier = Modifier.height(42.dp),
-                                            shape = RoundedCornerShape(21.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
-                                            border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.7f))
-                                        ) {
-                                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
+                                            OutlinedButton(
+                                                onClick = {
+                                                    targetTotalSec += 180
+                                                    isSessionComplete = false
+                                                    isRunning = true
+                                                },
+                                                modifier = Modifier.height(42.dp),
+                                                shape = RoundedCornerShape(21.dp),
+                                                colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                                border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.7f))
+                                            ) {
+                                                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
+                                            }
                                         }
                                     } else {
-                                        OutlinedButton(
-                                            onClick = {
-                                                totalElapsedSec = 0
-                                                completedCycles = 0
-                                                currentPhase = BreathPhase.INHALE
-                                                phaseSecondsRemaining = selectedPattern.inhaleSec
-                                                phaseProgress = 0f
-                                            },
-                                            modifier = Modifier.height(42.dp),
-                                            shape = RoundedCornerShape(14.dp),
-                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
-                                            border = BorderStroke(1.dp, ZenBorder)
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Refresh,
-                                                contentDescription = "Restart Session",
-                                                tint = ZenTextSecondary,
-                                                modifier = Modifier.size(15.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = "Restart",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Medium,
-                                                maxLines = 1
-                                            )
-                                        }
+                                            // DND Quick Toggle Button
+                                            IconButton(
+                                                onClick = {
+                                                    if (dndManager.isDndAccessGranted) {
+                                                        val next = !isAutoDnd
+                                                        isAutoDnd = next
+                                                        prefs.edit().putBoolean("auto_dnd", next).apply()
+                                                        if (next) dndManager.enableDnd() else dndManager.restoreDnd()
+                                                    } else {
+                                                        context.startActivity(
+                                                            dndManager.requestDndPermissionIntent().apply {
+                                                                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                                            }
+                                                        )
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .size(42.dp)
+                                                    .clip(CircleShape)
+                                                    .background(
+                                                        if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
+                                                        else ZenSurface.copy(alpha = 0.75f)
+                                                    )
+                                                    .border(
+                                                        1.dp,
+                                                        if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight.copy(alpha = 0.6f) else ZenBorder,
+                                                        CircleShape
+                                                    )
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.DoNotDisturb,
+                                                    contentDescription = "Toggle DND",
+                                                    tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
+                                                    modifier = Modifier.size(17.dp)
+                                                )
+                                            }
 
-                                        Button(
-                                            onClick = { isRunning = !isRunning },
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .height(42.dp),
-                                            shape = RoundedCornerShape(14.dp),
-                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
-                                                contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
-                                            )
-                                        ) {
-                                            Icon(
-                                                imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                                contentDescription = if (isRunning) "Pause" else "Resume",
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = if (isRunning) "Pause" else "Resume",
-                                                fontSize = 12.5.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                maxLines = 1,
-                                                softWrap = false
-                                            )
-                                        }
+                                            // Pause / Resume Button
+                                            Button(
+                                                onClick = {
+                                                    soundHelper.triggerSoftTouchHaptic()
+                                                    isRunning = !isRunning
+                                                },
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(42.dp),
+                                                shape = RoundedCornerShape(21.dp),
+                                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = if (isRunning) ZenSurface.copy(alpha = 0.9f) else currentTheme.primary,
+                                                    contentColor = if (isRunning) currentTheme.primaryLight else ZenObsidian
+                                                ),
+                                                border = if (isRunning) BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f)) else null
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                        contentDescription = if (isRunning) "Pause" else "Resume",
+                                                        tint = if (isRunning) currentTheme.primaryLight else ZenObsidian,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(5.dp))
+                                                    Text(
+                                                        text = if (isRunning) "Pause" else "Resume",
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = if (isRunning) currentTheme.primaryLight else ZenObsidian
+                                                    )
+                                                }
+                                            }
 
-                                        Button(
-                                            onClick = { finishSession() },
-                                            modifier = Modifier.height(42.dp),
-                                            shape = RoundedCornerShape(14.dp),
-                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = ZenSurface.copy(alpha = 0.85f),
-                                                contentColor = currentTheme.primaryLight
-                                            ),
-                                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
-                                        ) {
-                                            Text(
-                                                text = "Finish",
-                                                fontSize = 12.5.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                maxLines = 1,
-                                                softWrap = false
-                                            )
+                                            // Finish Button
+                                            Button(
+                                                onClick = { finishSession() },
+                                                modifier = Modifier.height(42.dp),
+                                                shape = RoundedCornerShape(21.dp),
+                                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = currentTheme.primary.copy(alpha = 0.18f),
+                                                    contentColor = currentTheme.primaryLight
+                                                ),
+                                                border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.6f))
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = "Finish",
+                                                        tint = currentTheme.primaryLight,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text(
+                                                        text = "Finish",
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = currentTheme.primaryLight
+                                                    )
+                                                }
+                                            }
                                         }
-                                    }
                                     }
                                 }
                             }
@@ -943,21 +973,50 @@ fun BreathingScreen(
                                 }
                             }
 
-                            // Close / Cancel Button
-                            IconButton(
-                                onClick = onClose,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(ZenSurface.copy(alpha = 0.75f))
-                                    .border(1.dp, ZenBorder, CircleShape)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Exit Breathwork",
-                                    tint = ZenTextSecondary,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                // Restart Session Button
+                                IconButton(
+                                    onClick = {
+                                        soundHelper.triggerSoftTouchHaptic()
+                                        totalElapsedSec = 0
+                                        completedCycles = 0
+                                        currentPhase = BreathPhase.INHALE
+                                        phaseSecondsRemaining = getPhaseDuration(BreathPhase.INHALE, selectedPattern, varyingStage, stage4Step)
+                                        phaseProgress = 0f
+                                    },
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(ZenSurface.copy(alpha = 0.75f))
+                                        .border(1.dp, ZenBorder, CircleShape)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Restart Session",
+                                        tint = ZenTextSecondary,
+                                        modifier = Modifier.size(17.dp)
+                                    )
+                                }
+
+                                // Close / Cancel Button
+                                IconButton(
+                                    onClick = onClose,
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(ZenSurface.copy(alpha = 0.75f))
+                                        .border(1.dp, ZenBorder, CircleShape)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Exit Breathwork",
+                                        tint = ZenTextSecondary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -1140,7 +1199,7 @@ fun BreathingScreen(
                                             }
                                         },
                                         modifier = Modifier
-                                            .weight(1.2f)
+                                            .weight(1f)
                                             .height(48.dp),
                                         shape = RoundedCornerShape(24.dp),
                                         colors = ButtonDefaults.buttonColors(
@@ -1179,11 +1238,11 @@ fun BreathingScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(bottom = 6.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        .padding(horizontal = 4.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // DND Quick Toggle Button
+                                    // 1. DND Quick Toggle Button (Matches Meditation Mode)
                                     IconButton(
                                         onClick = {
                                             if (dndManager.isDndAccessGranted) {
@@ -1200,11 +1259,11 @@ fun BreathingScreen(
                                             }
                                         },
                                         modifier = Modifier
-                                            .size(44.dp)
+                                            .size(52.dp)
                                             .clip(CircleShape)
                                             .background(
                                                 if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
-                                                else ZenSurface.copy(alpha = 0.75f)
+                                                else ZenSurface.copy(alpha = 0.70f)
                                             )
                                             .border(
                                                 1.dp,
@@ -1216,87 +1275,77 @@ fun BreathingScreen(
                                             imageVector = Icons.Default.DoNotDisturb,
                                             contentDescription = "Toggle DND",
                                             tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
-                                            modifier = Modifier.size(19.dp)
+                                            modifier = Modifier.size(20.dp)
                                         )
                                     }
 
-                                    // Restart Session Button
-                                    OutlinedButton(
-                                        onClick = {
-                                            totalElapsedSec = 0
-                                            completedCycles = 0
-                                            currentPhase = BreathPhase.INHALE
-                                            phaseSecondsRemaining = selectedPattern.inhaleSec
-                                            phaseProgress = 0f
-                                        },
-                                        modifier = Modifier.height(46.dp),
-                                        shape = RoundedCornerShape(14.dp),
-                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
-                                        border = BorderStroke(1.dp, ZenBorder)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Refresh,
-                                            contentDescription = "Restart Session",
-                                            tint = ZenTextSecondary,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = "Restart",
-                                            fontSize = 12.5.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            maxLines = 1
-                                        )
-                                    }
-
-                                    // Pause / Resume Button (No text clipping)
+                                    // 2. Pause / Resume Button
                                     Button(
-                                        onClick = { isRunning = !isRunning },
+                                        onClick = {
+                                            soundHelper.triggerSoftTouchHaptic()
+                                            isRunning = !isRunning
+                                        },
                                         modifier = Modifier
                                             .weight(1f)
-                                            .height(46.dp),
-                                        shape = RoundedCornerShape(14.dp),
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
-                                            contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                            contentDescription = if (isRunning) "Pause" else "Resume",
-                                            modifier = Modifier.size(17.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = if (isRunning) "Pause" else "Resume",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.5.sp,
-                                            maxLines = 1,
-                                            softWrap = false
-                                        )
-                                    }
-
-                                    // Finish Button
-                                    Button(
-                                        onClick = { finishSession() },
-                                        modifier = Modifier.height(46.dp),
-                                        shape = RoundedCornerShape(14.dp),
+                                            .height(50.dp),
+                                        shape = RoundedCornerShape(25.dp),
                                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                                         colors = ButtonDefaults.buttonColors(
-                                            containerColor = ZenSurface.copy(alpha = 0.85f),
+                                            containerColor = if (isRunning) ZenSurface.copy(alpha = 0.9f) else currentTheme.primary,
+                                            contentColor = if (isRunning) currentTheme.primaryLight else ZenObsidian
+                                        ),
+                                        border = if (isRunning) BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f)) else null
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                contentDescription = if (isRunning) "Pause" else "Resume",
+                                                tint = if (isRunning) currentTheme.primaryLight else ZenObsidian,
+                                                modifier = Modifier.size(19.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = if (isRunning) "Pause" else "Resume",
+                                                fontSize = 14.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isRunning) currentTheme.primaryLight else ZenObsidian
+                                            )
+                                        }
+                                    }
+
+                                    // 3. Finish Button
+                                    Button(
+                                        onClick = { finishSession() },
+                                        modifier = Modifier.height(50.dp),
+                                        shape = RoundedCornerShape(25.dp),
+                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = currentTheme.primary.copy(alpha = 0.18f),
                                             contentColor = currentTheme.primaryLight
                                         ),
-                                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
+                                        border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.6f))
                                     ) {
-                                        Text(
-                                            text = "Finish",
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            maxLines = 1,
-                                            softWrap = false
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Finish",
+                                                tint = currentTheme.primaryLight,
+                                                modifier = Modifier.size(17.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "Finish",
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = currentTheme.primaryLight
+                                            )
+                                        }
                                     }
                                 }
                             }
