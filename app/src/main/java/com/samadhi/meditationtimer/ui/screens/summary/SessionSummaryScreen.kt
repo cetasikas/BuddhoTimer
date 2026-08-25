@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -75,6 +77,7 @@ import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 fun SessionSummaryScreen(
     completedStatus: TimerStatus.Completed?,
     onSaveSession: (MeditationSession) -> Unit,
+    onContinueMeditating: () -> Unit = {},
     onDiscard: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -96,7 +99,7 @@ fun SessionSummaryScreen(
 
         // Leaves Effect: Forest floor stacking for meditation sessions; ambient drifting leaves for Box Breathing
         val isMeditationSession = !completedStatus.isBoxBreathing
-        val accumulatedLeafCount = if (isMeditationSession) (completedStatus.actualDurationSec / 8).coerceIn(0, 140) else 0
+        val accumulatedLeafCount = if (isMeditationSession) (completedStatus.actualDurationSec / 12).coerceIn(0, 160) else 0
         FallingLeavesEffect(
             leafCount = if (isMeditationSession) 14 else 12,
             ambientAlpha = if (isMeditationSession) 0.35f else 0.28f,
@@ -349,12 +352,58 @@ fun SessionSummaryScreen(
                 }
             }
 
-            // Actions: Save Reflection & Discard
+            // Actions: Continue Meditating, Save Reflection & Discard
             Column(
                 modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Primary Action: Continue Meditating
                 Button(
+                    onClick = {
+                        if (!isBlowingAway) {
+                            val session = MeditationSession(
+                                startTimeEpochMs = completedStatus.startTimeEpochMs,
+                                completedTimeEpochMs = completedStatus.completedTimeEpochMs,
+                                targetDurationSec = completedStatus.targetDurationSec,
+                                actualDurationSec = completedStatus.actualDurationSec,
+                                overrunSec = completedStatus.overrunSec,
+                                rating = selectedMood,
+                                notesMarkdown = notesValue.text,
+                                completedSuccessfully = true
+                            )
+                            onSaveSession(session)
+                            pendingExitAction = { onContinueMeditating() }
+                            isBlowingAway = true
+                        }
+                    },
+                    enabled = !isBlowingAway,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = currentTheme.primary,
+                        contentColor = ZenObsidian
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = ZenObsidian,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Continue Meditating",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+
+                // Save Reflection (Complete & Return to Home)
+                OutlinedButton(
                     onClick = {
                         if (!isBlowingAway) {
                             val session = MeditationSession(
@@ -374,25 +423,22 @@ fun SessionSummaryScreen(
                     enabled = !isBlowingAway,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(46.dp),
+                        .height(44.dp),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = currentTheme.primary,
-                        contentColor = Color(0xFF041014)
-                    )
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                    border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.6f))
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        tint = currentTheme.primaryLight,
+                        modifier = Modifier.size(17.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Save Reflection",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 14.5.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        text = "Save Reflection & Done",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
@@ -406,11 +452,11 @@ fun SessionSummaryScreen(
                     enabled = !isBlowingAway,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(42.dp),
+                        .height(40.dp),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 4.dp, horizontal = 12.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
-                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenBorder))
+                    border = BorderStroke(1.dp, ZenBorder)
                 ) {
                     Text(
                         text = "Discard",

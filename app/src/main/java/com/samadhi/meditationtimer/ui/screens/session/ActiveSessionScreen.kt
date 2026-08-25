@@ -145,7 +145,9 @@ fun ActiveSessionScreen(
     }
 
     LaunchedEffect(timerStatus) {
-        if (timerStatus is TimerStatus.Idle) {
+        if (timerStatus is TimerStatus.Completed) {
+            onSessionCompleted()
+        } else if (timerStatus is TimerStatus.Idle) {
             onSessionCancelled()
         }
     }
@@ -197,7 +199,7 @@ fun ActiveSessionScreen(
                 leafCount = config.meditationLeafCount.coerceIn(10, 24),
                 pileUpAtBottom = true,
                 sessionProgressRatio = sessionProgress,
-                initialSettledLeavesCount = (elapsedMeditationSec / 18).coerceIn(0, 160),
+                initialSettledLeavesCount = (elapsedMeditationSec / 12).coerceIn(0, 160),
                 elapsedMeditationSeconds = elapsedMeditationSec,
                 ambientAlpha = 0.38f,
                 isBlowingAway = isBlowingAway,

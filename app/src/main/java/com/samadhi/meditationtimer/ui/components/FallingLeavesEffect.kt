@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -175,6 +176,8 @@ fun FallingLeavesEffect(
 
     val currentTheme = LocalZenTheme.current
     val maxRestingLeaves = 160
+    val currentElapsedMeditationSeconds by rememberUpdatedState(elapsedMeditationSeconds)
+    val currentProgressRatio by rememberUpdatedState(sessionProgressRatio)
 
     val groundMap = remember(currentTheme.id, pileUpAtBottom) {
         GroundHeightMap(timerRadiusRatio, timerCenterYRatio, timerCenterXRatio)
@@ -306,7 +309,7 @@ fun FallingLeavesEffect(
 
                     val macroWind = sin(totalElapsedSec / 38.0f) * 0.012f + sin(totalElapsedSec / 19.0f) * 0.004f
 
-                    val expectedRestingCount = (elapsedMeditationSeconds / 18).coerceIn(0, maxRestingLeaves)
+                    val expectedRestingCount = (currentElapsedMeditationSeconds / 12).coerceIn(0, maxRestingLeaves)
 
                     fallingLeaves.forEach { leaf ->
                         leaf.spawnElapsedSec += dt
@@ -331,17 +334,15 @@ fun FallingLeavesEffect(
                         val gustPeriod = 18f + (leaf.swayPhase % 7f)
                         val gustMultiplier = 0.7f + 0.3f * (sin(totalElapsedSec * (6.283f / gustPeriod) + leaf.swayPhase) * 0.5f + 0.5f)
 
-                        if (!leaf.isVanishing) {
-                            leaf.y += leaf.fallSpeed * gustMultiplier * aerodynamicDrag * dt
-                        }
+                        leaf.y += leaf.fallSpeed * gustMultiplier * aerodynamicDrag * dt
 
                         val floorContactY = groundMap.sampleFloor(leaf.x)
 
-                        if (!leaf.isVanishing && pileUpAtBottom && leaf.depth.canAccumulate && leaf.y >= floorContactY) {
+                        if (pileUpAtBottom && leaf.depth.canAccumulate && leaf.y >= floorContactY) {
                             val behindSchedule = restingLeaves.size < expectedRestingCount
-                            val settleChance = if (behindSchedule) 0.85f else 0.05f
+                            val settleChance = if (behindSchedule) 0.95f else 0.30f
 
-                            if (restingLeaves.size < maxRestingLeaves && Random.nextFloat() < settleChance) {
+                            if (restingLeaves.size < maxRestingLeaves && (behindSchedule || Random.nextFloat() < settleChance)) {
                                 val (settledX, settledY, slopeTilt) = groundMap.depositLeaf(leaf.x)
                                 val normDeg = ((leaf.rotation % 360f) + 360f) % 360f
                                 val baseTarget = if (normDeg in 0f..180f) 90f else 270f
@@ -380,30 +381,19 @@ fun FallingLeavesEffect(
                                         spawnElapsedSec = 1.2f
                                     )
                                 )
-                                leaf.y = -(Random.nextFloat() * 0.18f + 0.08f)
-                                leaf.originX = Random.nextFloat() * 0.84f + 0.08f
-                                leaf.x = leaf.originX
-                                leaf.rotation = Random.nextFloat() * 360f
-                                leaf.spawnElapsedSec = 0f
-                            } else {
-                                // Didn't settle this time — fade out in place rather than teleporting
-                                leaf.isVanishing = true
-                                leaf.vanishTimer = 0f
                             }
-                        } else if (leaf.isVanishing) {
-                            leaf.vanishTimer += dt
-                            if (leaf.vanishTimer >= 0.4f) {
-                                leaf.isVanishing = false
-                                leaf.y = -(Random.nextFloat() * 0.18f + 0.08f)
-                                leaf.originX = Random.nextFloat() * 0.84f + 0.08f
-                                leaf.x = leaf.originX
-                                leaf.rotation = Random.nextFloat() * 360f
-                                leaf.spawnElapsedSec = 0f
-                            }
+
+                            // Cycle falling particle back to top
+                            leaf.y = -(Random.nextFloat() * 0.18f + 0.08f)
+                            leaf.originX = Random.nextFloat() * 0.84f + 0.08f
+                            leaf.x = leaf.originX
+                            leaf.rotation = Random.nextFloat() * 360f
+                            leaf.spawnElapsedSec = 0f
                         } else if (leaf.y > 1.08f) {
                             leaf.y = -(Random.nextFloat() * 0.18f + 0.08f)
                             leaf.originX = Random.nextFloat() * 0.84f + 0.08f
                             leaf.x = leaf.originX
+                            leaf.rotation = Random.nextFloat() * 360f
                             leaf.spawnElapsedSec = 0f
                         }
                     }

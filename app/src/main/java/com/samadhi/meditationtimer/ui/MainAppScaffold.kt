@@ -226,6 +226,12 @@ fun MainAppScaffold() {
                                     popUpTo(Screen.Timer.route)
                                 }
                             },
+                            onContinueMeditating = {
+                                timerViewModel.continueSession()
+                                navController.navigate(Screen.ActiveSession.route) {
+                                    popUpTo(Screen.Timer.route)
+                                }
+                            },
                             onDiscard = {
                                 MeditationTimerService.resetStatus()
                                 completedSessionData = null

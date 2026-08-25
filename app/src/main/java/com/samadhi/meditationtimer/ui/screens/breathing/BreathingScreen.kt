@@ -186,6 +186,11 @@ fun BreathingScreen(
     var isSessionComplete by remember { mutableStateOf(false) }
 
     fun finishSession() {
+        val isCompletionBell = prefs.getBoolean("completion_bell_enabled", true)
+        if (isCompletionBell) {
+            soundHelper.playChime(soundBellResName)
+        }
+        soundHelper.triggerHarmonicCompletionHaptic()
         val now = System.currentTimeMillis()
         val completedStatus = TimerStatus.Completed(
             targetDurationSec = targetTotalSec,
@@ -275,19 +280,13 @@ fun BreathingScreen(
     }
 
     // Secondary 1-second cadence ticker for total elapsed time
-    LaunchedEffect(isRunning, isPreparing, isSessionComplete) {
-        if (isPreparing || isSessionComplete) return@LaunchedEffect
-        while (isActive && isRunning && !isPreparing && !isSessionComplete) {
+    LaunchedEffect(isRunning, isPreparing) {
+        if (isPreparing) return@LaunchedEffect
+        while (isActive && isRunning && !isPreparing) {
             delay(1000L)
             totalElapsedSec++
             if (targetTotalSec > 0 && totalElapsedSec >= targetTotalSec) {
-                val isCompletionBell = prefs.getBoolean("completion_bell_enabled", true)
-                if (isCompletionBell) {
-                    soundHelper.playChime(soundBellResName)
-                }
-                soundHelper.triggerHarmonicCompletionHaptic()
-                isRunning = false
-                isSessionComplete = true
+                finishSession()
                 break
             }
         }
