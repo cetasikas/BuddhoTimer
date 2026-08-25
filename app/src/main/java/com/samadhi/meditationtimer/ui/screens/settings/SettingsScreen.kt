@@ -162,13 +162,19 @@ private fun ExpandableSettingsCard(
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
                     if (!isExpanded && summaryValue != null) {
                         Text(
                             text = summaryValue,
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Medium,
                             color = currentTheme.primaryLight,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(currentTheme.primary.copy(alpha = 0.12f))
@@ -733,7 +739,7 @@ fun SettingsScreen(
                 }
 
                 // 5. POST-SESSION OVERVIEW & REFLECTION
-                val overviewSummary = if (config.showSessionOverview) "Show Overview" else "Stay on Meditation Screen"
+                val overviewSummary = if (config.showSessionOverview) "Enabled" else "Direct"
                 ExpandableSettingsCard(
                     title = "Post-Session Overview",
                     icon = Icons.Default.AutoAwesome,
@@ -747,14 +753,16 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                                Text("Show Session Overview Screen", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Text("Show Session Overview Screen", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Spacer(modifier = Modifier.height(3.dp))
                                 Text(
                                     if (config.showSessionOverview)
                                         "Displays wisdom quote, mood rating, and reflection journal when practice completes."
                                     else
-                                        "Sessions auto-save in the background and you remain in the serene meditation screen until you choose to exit.",
-                                    fontSize = 11.sp,
+                                        "Sessions auto-save in the background and you remain peacefully on the meditation screen until you choose to exit.",
+                                    fontSize = 11.5.sp,
+                                    lineHeight = 16.sp,
                                     color = ZenTextSecondary
                                 )
                             }

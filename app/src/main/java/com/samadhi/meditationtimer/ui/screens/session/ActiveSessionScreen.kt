@@ -336,10 +336,11 @@ fun ActiveSessionScreen(
                         val elapsedSec = if (status is TimerStatus.Running) status.elapsedSeconds else (status as TimerStatus.Paused).elapsedSeconds
                         val isOverrun = if (status is TimerStatus.Running) status.isOverrun else (status as TimerStatus.Paused).isOverrun
 
-                        val totalTarget = config.targetDurationSeconds
-                        val progress = if (totalTarget > 0) {
-                            (totalTarget - remainingSec).toFloat() / totalTarget.toFloat()
+                        val sessionTotalSec = elapsedSec + remainingSec
+                        val progress = if (sessionTotalSec > 0 && !config.isOpenEnded) {
+                            (elapsedSec.toFloat() / sessionTotalSec.toFloat()).coerceIn(0f, 1f)
                         } else 1.0f
+                        val currentTargetMinutes = if (sessionTotalSec > 0) (sessionTotalSec / 60).coerceAtLeast(1) else config.targetDurationMinutes
 
                         if (isLandscape) {
                             // Landscape layout: Timer on left, Header badge + Actions on right
@@ -371,13 +372,13 @@ fun ActiveSessionScreen(
                                         size = timerSize,
                                         strokeWidth = 8.dp,
                                         intervalMinutes = config.mindfulnessIntervalMinutes,
-                                        totalDurationMinutes = config.targetDurationMinutes
+                                        totalDurationMinutes = currentTargetMinutes
                                     ) {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             if (isOverrun) {
-                                                val overrunTime = elapsedSec - totalTarget
+                                                val overrunTime = elapsedSec - sessionTotalSec
                                                 Text(
-                                                    text = "+${NotificationHelper.formatSeconds(overrunTime)}",
+                                                    text = "+${NotificationHelper.formatSeconds(overrunTime.coerceAtLeast(0))}",
                                                     fontSize = 38.sp,
                                                     fontWeight = FontWeight.Light,
                                                     color = currentTheme.overrunColor
@@ -642,13 +643,13 @@ fun ActiveSessionScreen(
                                         size = 300.dp,
                                         strokeWidth = 10.dp,
                                         intervalMinutes = config.mindfulnessIntervalMinutes,
-                                        totalDurationMinutes = config.targetDurationMinutes
+                                        totalDurationMinutes = currentTargetMinutes
                                     ) {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             if (isOverrun) {
-                                                val overrunTime = elapsedSec - totalTarget
+                                                val overrunTime = elapsedSec - sessionTotalSec
                                                 Text(
-                                                    text = "+${NotificationHelper.formatSeconds(overrunTime)}",
+                                                    text = "+${NotificationHelper.formatSeconds(overrunTime.coerceAtLeast(0))}",
                                                     fontSize = 52.sp,
                                                     fontWeight = FontWeight.Light,
                                                     color = currentTheme.overrunColor
@@ -1071,13 +1072,20 @@ fun ActiveSessionScreen(
                                             contentColor = ZenObsidian
                                         )
                                     ) {
-                                        Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(20.dp))
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = if (config.showSessionOverview) "Save & Reflect" else "Done",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.5.sp
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(20.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = if (config.showSessionOverview) "Save & Reflect" else "Done",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 15.5.sp,
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                            )
+                                        }
                                     }
 
                                     OutlinedButton(
@@ -1089,18 +1097,25 @@ fun ActiveSessionScreen(
                                         },
                                         modifier = Modifier
                                             .fillMaxWidth(0.75f)
-                                            .height(48.dp)
-                                            .clip(RoundedCornerShape(24.dp)),
+                                            .height(50.dp)
+                                            .clip(RoundedCornerShape(25.dp)),
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                                         border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.7f))
                                     ) {
-                                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "Keep Meditating (Open-Ended)",
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 13.5.sp
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Keep Meditating",
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 14.5.sp,
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                            )
+                                        }
                                     }
                                 }
                             }
