@@ -44,6 +44,17 @@ class NotificationHelper(private val context: Context) {
                 setShowBadge(true)
             }
             notificationManager.createNotificationChannel(reminderChannel)
+
+            val completionChannel = NotificationChannel(
+                CHANNEL_COMPLETION_ID,
+                "Session Completion",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Alerts when a meditation or breathing session completes"
+                setShowBadge(true)
+                enableVibration(true)
+            }
+            notificationManager.createNotificationChannel(completionChannel)
         }
     }
 
@@ -142,11 +153,39 @@ class NotificationHelper(private val context: Context) {
             .build()
     }
 
+    fun showCompletionNotification(title: String, message: String) {
+        val openAppIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val openAppPendingIntent = PendingIntent.getActivity(
+            context,
+            1004,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_COMPLETION_ID)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentIntent(openAppPendingIntent)
+            .setAutoCancel(true)
+            .setColor(0xFF26A69A.toInt())
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_COMPLETION_ID, notification)
+    }
+
     companion object {
         const val CHANNEL_ID = "meditation_timer_channel"
         const val CHANNEL_REMINDERS_ID = "meditation_reminders_channel"
+        const val CHANNEL_COMPLETION_ID = "meditation_completion_channel"
         const val NOTIFICATION_ID = 1001
         const val NOTIFICATION_REMINDER_ID = 1002
+        const val NOTIFICATION_COMPLETION_ID = 1003
 
         fun formatSeconds(totalSeconds: Int): String {
             val mins = totalSeconds / 60

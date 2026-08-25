@@ -40,7 +40,9 @@ class MeditationTimerService : Service() {
     private var overrunSeconds: Int = 0
     private var isOpenEnded: Boolean = false
     private var isDndEnabledForSession: Boolean = false
+    private var isOverrunEnabledForSession: Boolean = false
     private var isCompletionBellEnabledForSession: Boolean = false
+    private var isStartBellEnabledForSession: Boolean = false
     private var hasChimedForOverrun: Boolean = false
 
     private var soundBellResName: String = SoundHelper.SOUND_TIBETAN_BOWL
@@ -67,10 +69,12 @@ class MeditationTimerService : Service() {
                 val prepSec = intent.getIntExtra(EXTRA_PREP_SEC, 5)
                 val autoDnd = intent.getBooleanExtra(EXTRA_AUTO_DND, true)
                 val openEnded = intent.getBooleanExtra(EXTRA_OPEN_ENDED, false)
+                val isOverrunEnabled = intent.getBooleanExtra(EXTRA_OVERRUN_ENABLED, false)
                 val soundBell = intent.getStringExtra(EXTRA_SOUND_BELL) ?: SoundHelper.SOUND_TIBETAN_BOWL
                 val mindfulnessIntervalMin = intent.getIntExtra(EXTRA_MINDFULNESS_INTERVAL_MIN, 0)
                 val completionBell = intent.getBooleanExtra(EXTRA_COMPLETION_BELL, false)
-                startTimer(targetSec, prepSec, autoDnd, openEnded, soundBell, mindfulnessIntervalMin, completionBell)
+                val isStartBell = intent.getBooleanExtra(EXTRA_START_BELL, false)
+                startTimer(targetSec, prepSec, autoDnd, openEnded, isOverrunEnabled, soundBell, mindfulnessIntervalMin, completionBell, isStartBell)
             }
             ACTION_PAUSE -> pauseTimer()
             ACTION_RESUME -> resumeTimer()
@@ -85,16 +89,20 @@ class MeditationTimerService : Service() {
         prepSec: Int,
         autoDnd: Boolean,
         openEnded: Boolean,
+        isOverrunEnabled: Boolean,
         soundBell: String,
         mindfulnessIntervalMin: Int,
-        completionBell: Boolean
+        completionBell: Boolean,
+        isStartBell: Boolean
     ) {
         targetDurationSec = targetSec
         prepTimeSec = prepSec
         isDndEnabledForSession = autoDnd
         isOpenEnded = openEnded
+        isOverrunEnabledForSession = isOverrunEnabled
         soundBellResName = soundBell
         isCompletionBellEnabledForSession = completionBell
+        isStartBellEnabledForSession = isStartBell
         elapsedSeconds = 0
         overrunSeconds = 0
         hasChimedForOverrun = false
@@ -128,14 +136,20 @@ class MeditationTimerService : Service() {
                     isOverrun = false
                 )
                 if (countdownHaptics) {
-                    soundHelper.triggerGentleVibration()
+                    soundHelper.triggerSoftTouchHaptic()
                 }
                 delay(1000L)
                 currentPrep--
             }
 
-            // Beginning chime
-            soundHelper.playChime(soundBellResName, serviceScope)
+            if (prepSec > 0 && countdownHaptics) {
+                soundHelper.triggerGentleVibration()
+            }
+
+            // Beginning chime (Only plays if explicitly enabled by user)
+            if (isStartBellEnabledForSession) {
+                soundHelper.playChime(soundBellResName, serviceScope)
+            }
 
             // 2. Active Session Loop
             val intervalSec = mindfulnessIntervalMin * 60
@@ -180,28 +194,45 @@ class MeditationTimerService : Service() {
                             isOverrun = false
                         )
                     } else {
-                        // In Overrun / Samadhi Extended Mode
-                        overrunSeconds = elapsedSeconds - targetDurationSec
-                        
-                        if (!hasChimedForOverrun) {
-                            hasChimedForOverrun = true
-                            if (isCompletionBellEnabledForSession) {
+                        if (isOverrunEnabledForSession) {
+                            // In Overrun / Samadhi Extended Mode
+                            overrunSeconds = elapsedSeconds - targetDurationSec
+                            
+                            if (!hasChimedForOverrun) {
+                                hasChimedForOverrun = true
+                                if (isCompletionBellEnabledForSession) {
+                                    soundHelper.playChime(soundBellResName, serviceScope)
+                                }
                                 soundHelper.triggerHarmonicCompletionHaptic()
-                                soundHelper.playChime(soundBellResName, serviceScope)
                             }
-                        }
 
-                        _timerStatus.value = TimerStatus.Running(
-                            remainingSeconds = 0,
-                            elapsedSeconds = elapsedSeconds,
-                            isOverrun = true
-                        )
-                        updateNotification(
-                            timeText = "+${NotificationHelper.formatSeconds(overrunSeconds)}",
-                            subText = "Extended Time • Total: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
-                            isPaused = false,
-                            isOverrun = true
-                        )
+                            _timerStatus.value = TimerStatus.Running(
+                                remainingSeconds = 0,
+                                elapsedSeconds = elapsedSeconds,
+                                isOverrun = true
+                            )
+                            updateNotification(
+                                timeText = "+${NotificationHelper.formatSeconds(overrunSeconds)}",
+                                subText = "Extended Time • Total: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
+                                isPaused = false,
+                                isOverrun = true
+                            )
+                        } else {
+                            // Overrun is OFF: Target reached, complete session immediately!
+                            if (!hasChimedForOverrun) {
+                                hasChimedForOverrun = true
+                                if (isCompletionBellEnabledForSession) {
+                                    soundHelper.playChime(soundBellResName, serviceScope)
+                                }
+                                soundHelper.triggerHarmonicCompletionHaptic()
+                            }
+                            notificationHelper.showCompletionNotification(
+                                title = "Meditation Complete 🪷",
+                                message = "Completed ${NotificationHelper.formatSeconds(targetDurationSec)} of meditation."
+                            )
+                            finishTimer()
+                            break
+                        }
                     }
                 }
 
@@ -264,25 +295,41 @@ class MeditationTimerService : Service() {
                                 isOverrun = false
                             )
                         } else {
-                            overrunSeconds = elapsedSeconds - targetDurationSec
-                            if (!hasChimedForOverrun) {
-                                hasChimedForOverrun = true
-                                if (isCompletionBellEnabledForSession) {
+                            if (isOverrunEnabledForSession) {
+                                overrunSeconds = elapsedSeconds - targetDurationSec
+                                if (!hasChimedForOverrun) {
+                                    hasChimedForOverrun = true
+                                    if (isCompletionBellEnabledForSession) {
+                                        soundHelper.playChime(soundBellResName, serviceScope)
+                                    }
                                     soundHelper.triggerHarmonicCompletionHaptic()
-                                    soundHelper.playChime(soundBellResName, serviceScope)
                                 }
+                                _timerStatus.value = TimerStatus.Running(
+                                    remainingSeconds = 0,
+                                    elapsedSeconds = elapsedSeconds,
+                                    isOverrun = true
+                                )
+                                updateNotification(
+                                    timeText = "+${NotificationHelper.formatSeconds(overrunSeconds)}",
+                                    subText = "Extended Time • Total: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
+                                    isPaused = false,
+                                    isOverrun = true
+                                )
+                            } else {
+                                if (!hasChimedForOverrun) {
+                                    hasChimedForOverrun = true
+                                    if (isCompletionBellEnabledForSession) {
+                                        soundHelper.playChime(soundBellResName, serviceScope)
+                                    }
+                                    soundHelper.triggerHarmonicCompletionHaptic()
+                                }
+                                notificationHelper.showCompletionNotification(
+                                    title = "Meditation Complete 🪷",
+                                    message = "Completed ${NotificationHelper.formatSeconds(targetDurationSec)} of meditation."
+                                )
+                                finishTimer()
+                                break
                             }
-                            _timerStatus.value = TimerStatus.Running(
-                                remainingSeconds = 0,
-                                elapsedSeconds = elapsedSeconds,
-                                isOverrun = true
-                            )
-                            updateNotification(
-                                timeText = "+${NotificationHelper.formatSeconds(overrunSeconds)}",
-                                subText = "Extended Time • Total: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
-                                isPaused = false,
-                                isOverrun = true
-                            )
                         }
                     }
 
@@ -382,9 +429,11 @@ class MeditationTimerService : Service() {
         const val EXTRA_PREP_SEC = "extra_prep_sec"
         const val EXTRA_AUTO_DND = "extra_auto_dnd"
         const val EXTRA_OPEN_ENDED = "extra_open_ended"
+        const val EXTRA_OVERRUN_ENABLED = "extra_overrun_enabled"
         const val EXTRA_SOUND_BELL = "extra_sound_bell"
         const val EXTRA_MINDFULNESS_INTERVAL_MIN = "extra_mindfulness_interval_min"
         const val EXTRA_COMPLETION_BELL = "extra_completion_bell"
+        const val EXTRA_START_BELL = "extra_start_bell"
 
         private val _timerStatus = MutableStateFlow<TimerStatus>(TimerStatus.Idle)
         val timerStatus: StateFlow<TimerStatus> = _timerStatus.asStateFlow()

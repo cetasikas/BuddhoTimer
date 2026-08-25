@@ -186,6 +186,7 @@ fun BreathingScreen(
         if (isCompletionBell) {
             soundHelper.playChime(soundBellResName)
         }
+        soundHelper.triggerHarmonicCompletionHaptic()
         val now = System.currentTimeMillis()
         val completedStatus = TimerStatus.Completed(
             targetDurationSec = targetTotalSec,

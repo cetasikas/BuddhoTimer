@@ -523,6 +523,44 @@ fun SettingsScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
+                        // Starting Bell Toggle
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(ZenSurfaceVariant.copy(alpha = 0.5f))
+                                .border(1.dp, ZenBorder, RoundedCornerShape(12.dp))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                Text(
+                                    text = "Session Starting Bell",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ZenTextPrimary
+                                )
+                                Text(
+                                    text = if (config.isStartBellEnabled) "Plays chime when countdown finishes and session begins" else "Silent start (settles into meditation peacefully)",
+                                    fontSize = 11.sp,
+                                    color = ZenTextSecondary
+                                )
+                            }
+                            Switch(
+                                checked = config.isStartBellEnabled,
+                                onCheckedChange = { timerViewModel.toggleStartBell(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ZenObsidian,
+                                    checkedTrackColor = currentTheme.primary,
+                                    uncheckedThumbColor = ZenTextMuted,
+                                    uncheckedTrackColor = ZenSurfaceVariant
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
                         // Completion Bell Toggle
                         Row(
                             modifier = Modifier

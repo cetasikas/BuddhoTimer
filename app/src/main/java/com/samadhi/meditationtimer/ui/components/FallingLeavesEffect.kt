@@ -259,15 +259,15 @@ fun FallingLeavesEffect(
         }
     }
 
-    LaunchedEffect(sessionProgressRatio, pileUpAtBottom) {
+    LaunchedEffect(elapsedMeditationSeconds, pileUpAtBottom) {
         if (!pileUpAtBottom) return@LaunchedEffect
-        val target = (smoothProgress(sessionProgressRatio) * maxRestingLeaves).toInt()
+        // Organic accumulation: ~1 leaf landing every 18 seconds of actual sitting time
+        // 1m -> ~3 leaves, 5m -> ~16 leaves, 15m -> ~50 leaves, 30m -> ~100 leaves, max 140
+        val target = (elapsedMeditationSeconds / 18).coerceIn(0, maxRestingLeaves)
         val missing = target - restingLeaves.size
         if (missing <= 0) return@LaunchedEffect
 
-        // A big gap only happens on first load or resuming after being away —
-        // catch up instantly there. Otherwise this fires ~once a second as
-        // progress ticks, so cap it to a slow trickle rather than a burst.
+        // Catch up on initial load or resume, otherwise trickle gently
         val toAdd = if (missing > 6) missing else 1
 
         val rng = Random(System.currentTimeMillis())
@@ -346,7 +346,7 @@ fun FallingLeavesEffect(
 
                     val macroWind = sin(totalElapsedSec / 38.0f) * 0.012f + sin(totalElapsedSec / 19.0f) * 0.004f
 
-                    val expectedRestingCount = (smoothProgress(sessionProgressRatio) * maxRestingLeaves).toInt()
+                    val expectedRestingCount = (elapsedMeditationSeconds / 18).coerceIn(0, maxRestingLeaves)
 
                     fallingLeaves.forEach { leaf ->
                         leaf.spawnElapsedSec += dt
@@ -379,11 +379,7 @@ fun FallingLeavesEffect(
 
                         if (!leaf.isVanishing && pileUpAtBottom && leaf.depth.canAccumulate && leaf.y >= floorContactY) {
                             val behindSchedule = restingLeaves.size < expectedRestingCount
-                            // Even when "ahead of schedule" (common early in a session, since the
-                            // smoothstep target sits at 0 for a while), still let leaves settle
-                            // sometimes — just less eagerly. Otherwise nothing lands until the
-                            // curve catches up.
-                            val settleChance = if (behindSchedule) 1.0f else 0.35f
+                            val settleChance = if (behindSchedule) 0.85f else 0.05f
 
                             if (restingLeaves.size < maxRestingLeaves && Random.nextFloat() < settleChance) {
                                 val (settledX, settledY, slopeTilt) = groundMap.depositLeaf(leaf.x)

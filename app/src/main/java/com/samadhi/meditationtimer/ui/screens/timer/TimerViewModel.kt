@@ -77,7 +77,8 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             keepScreenAwake = prefs.getBoolean("keep_screen_awake", true),
             isBoxBreathingMode = prefs.getBoolean("box_breathing_mode", false),
             isCountdownHapticsEnabled = prefs.getBoolean("countdown_haptics", true),
-            isCompletionBellEnabled = prefs.getBoolean("completion_bell_enabled", false)
+            isCompletionBellEnabled = prefs.getBoolean("completion_bell_enabled", false),
+            isStartBellEnabled = prefs.getBoolean("start_bell_enabled", false)
         )
     }
 
@@ -98,6 +99,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putBoolean("box_breathing_mode", newConfig.isBoxBreathingMode)
             putBoolean("countdown_haptics", newConfig.isCountdownHapticsEnabled)
             putBoolean("completion_bell_enabled", newConfig.isCompletionBellEnabled)
+            putBoolean("start_bell_enabled", newConfig.isStartBellEnabled)
             apply()
         }
     }
@@ -116,6 +118,10 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleCompletionBell(enabled: Boolean) {
         saveConfig(_config.value.copy(isCompletionBellEnabled = enabled))
+    }
+
+    fun toggleStartBell(enabled: Boolean) {
+        saveConfig(_config.value.copy(isStartBellEnabled = enabled))
     }
 
     fun toggleOpenEnded(isOpenEnded: Boolean) {
@@ -142,8 +148,8 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         saveConfig(_config.value.copy(meditationLeafCount = count))
     }
 
-    fun updateSoundBell(soundResName: String) {
-        saveConfig(_config.value.copy(soundBellResName = soundResName))
+    fun updateSoundBell(soundRes: String) {
+        saveConfig(_config.value.copy(soundBellResName = soundRes))
     }
 
     fun updateMindfulnessInterval(minutes: Int) {
@@ -163,10 +169,9 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         _isBatteryOptIgnored.value = checkBatteryOptimization()
     }
 
-    fun cycleNextQuote() {
+    fun refreshQuote() {
         val quotes = MeditationGuides.wisdomQuotes
-        val currentIndex = quotes.indexOfFirst { it.id == _currentQuote.value.id }
-        val nextIndex = if (currentIndex >= 0 && currentIndex < quotes.size - 1) currentIndex + 1 else 0
+        val nextIndex = (quotes.indexOf(_currentQuote.value) + 1) % quotes.size
         _currentQuote.value = quotes[nextIndex]
     }
 
@@ -183,9 +188,11 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_PREP_SEC, currentConfig.prepTimeSeconds)
             putExtra(MeditationTimerService.EXTRA_AUTO_DND, currentConfig.isAutoDndEnabled && _isDndGranted.value)
             putExtra(MeditationTimerService.EXTRA_OPEN_ENDED, currentConfig.isOpenEnded)
+            putExtra(MeditationTimerService.EXTRA_OVERRUN_ENABLED, currentConfig.isOverrunEnabled)
             putExtra(MeditationTimerService.EXTRA_SOUND_BELL, currentConfig.soundBellResName)
             putExtra(MeditationTimerService.EXTRA_MINDFULNESS_INTERVAL_MIN, currentConfig.mindfulnessIntervalMinutes)
             putExtra(MeditationTimerService.EXTRA_COMPLETION_BELL, currentConfig.isCompletionBellEnabled)
+            putExtra(MeditationTimerService.EXTRA_START_BELL, currentConfig.isStartBellEnabled)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
