@@ -12,6 +12,7 @@ import android.os.VibratorManager
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.exp
@@ -29,12 +30,14 @@ class SoundHelper(private val context: Context) {
         }
     }
 
+    private val audioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     /**
      * Plays the selected chime profile (Mindfulness Bell, Great Temple Bell, Awakening Bell, Deep Singing Bowl, Zen Tone, Mindful Chime, or Silent Haptic)
      */
     fun playChime(
         soundType: String = SOUND_MINDFULNESS_BELL,
-        scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+        scope: CoroutineScope = audioScope
     ) {
         triggerGentleVibration()
 

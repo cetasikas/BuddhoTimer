@@ -259,47 +259,7 @@ fun FallingLeavesEffect(
         }
     }
 
-    LaunchedEffect(elapsedMeditationSeconds, pileUpAtBottom) {
-        if (!pileUpAtBottom) return@LaunchedEffect
-        // Organic accumulation: ~1 leaf landing every 18 seconds of actual sitting time
-        // 1m -> ~3 leaves, 5m -> ~16 leaves, 15m -> ~50 leaves, 30m -> ~100 leaves, max 140
-        val target = (elapsedMeditationSeconds / 18).coerceIn(0, maxRestingLeaves)
-        val missing = target - restingLeaves.size
-        if (missing <= 0) return@LaunchedEffect
-
-        // Catch up on initial load or resume, otherwise trickle gently
-        val toAdd = if (missing > 6) missing else 1
-
-        val rng = Random(System.currentTimeMillis())
-        repeat(toAdd) {
-            val dropX = rng.nextFloat() * 0.84f + 0.08f
-            val (x, y, slopeTilt) = groundMap.depositLeaf(dropX)
-            val baseRot = if (rng.nextBoolean()) 90f else 270f
-            restingLeaves.add(
-                LeafParticle(
-                    x = x,
-                    y = y,
-                    originX = x,
-                    fallSpeed = 0f,
-                    swayAmplitude = 0f,
-                    swayFrequency = 0f,
-                    swayPhase = 0f,
-                    tumbleFrequency = 0f,
-                    tumblePhase = 0f,
-                    rotation = baseRot + slopeTilt + (rng.nextFloat() * 28f - 14f),
-                    rotationSpeed = 0f,
-                    size = rng.nextFloat().pow(1.8f) * 14f + 12f,
-                    alpha = rng.nextFloat() * 0.15f + 0.70f,
-                    color = weightedLeafColor(currentTheme.particlePalette, rng),
-                    shapeAsymmetry = (rng.nextFloat() - 0.5f) * 2f,
-                    shapeStretch = 0.85f + rng.nextFloat() * 0.30f,
-                    isResting = true,
-                    restSwayPhase = rng.nextFloat() * 6.28f,
-                    spawnElapsedSec = 1.2f
-                )
-            )
-        }
-    }
+    // Leaves only settle on the ground through natural physical contact in the frame loop below
 
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {

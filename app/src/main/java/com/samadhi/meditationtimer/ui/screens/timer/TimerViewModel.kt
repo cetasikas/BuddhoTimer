@@ -77,7 +77,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             keepScreenAwake = prefs.getBoolean("keep_screen_awake", true),
             isBoxBreathingMode = prefs.getBoolean("box_breathing_mode", false),
             isCountdownHapticsEnabled = prefs.getBoolean("countdown_haptics", true),
-            isCompletionBellEnabled = prefs.getBoolean("completion_bell_enabled", false),
+            isCompletionBellEnabled = prefs.getBoolean("completion_bell_enabled", true),
             isStartBellEnabled = prefs.getBoolean("start_bell_enabled", false)
         )
     }
@@ -193,6 +193,28 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_MINDFULNESS_INTERVAL_MIN, currentConfig.mindfulnessIntervalMinutes)
             putExtra(MeditationTimerService.EXTRA_COMPLETION_BELL, currentConfig.isCompletionBellEnabled)
             putExtra(MeditationTimerService.EXTRA_START_BELL, currentConfig.isStartBellEnabled)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+    }
+
+    fun continueSession() {
+        val currentConfig = _config.value
+        val intent = Intent(context, MeditationTimerService::class.java).apply {
+            action = MeditationTimerService.ACTION_START
+            putExtra(MeditationTimerService.EXTRA_TARGET_SEC, 0)
+            putExtra(MeditationTimerService.EXTRA_PREP_SEC, 0)
+            putExtra(MeditationTimerService.EXTRA_AUTO_DND, currentConfig.isAutoDndEnabled && _isDndGranted.value)
+            putExtra(MeditationTimerService.EXTRA_OPEN_ENDED, true)
+            putExtra(MeditationTimerService.EXTRA_OVERRUN_ENABLED, true)
+            putExtra(MeditationTimerService.EXTRA_SOUND_BELL, currentConfig.soundBellResName)
+            putExtra(MeditationTimerService.EXTRA_MINDFULNESS_INTERVAL_MIN, currentConfig.mindfulnessIntervalMinutes)
+            putExtra(MeditationTimerService.EXTRA_COMPLETION_BELL, currentConfig.isCompletionBellEnabled)
+            putExtra(MeditationTimerService.EXTRA_START_BELL, false)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

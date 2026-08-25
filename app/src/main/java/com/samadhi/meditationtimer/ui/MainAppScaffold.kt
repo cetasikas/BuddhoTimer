@@ -185,7 +185,13 @@ fun MainAppScaffold() {
                         ActiveSessionScreen(
                             viewModel = timerViewModel,
                             onSessionCompleted = {
-                                navController.navigate(Screen.Summary.route)
+                                val status = timerViewModel.timerStatus.value
+                                if (status is TimerStatus.Completed) {
+                                    completedSessionData = status
+                                }
+                                navController.navigate(Screen.Summary.route) {
+                                    popUpTo(Screen.Timer.route)
+                                }
                             },
                             onSessionCancelled = {
                                 navController.navigate(Screen.Timer.route) {

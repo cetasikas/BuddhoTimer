@@ -9,6 +9,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,6 +39,7 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -143,9 +145,7 @@ fun ActiveSessionScreen(
     }
 
     LaunchedEffect(timerStatus) {
-        if (timerStatus is TimerStatus.Completed) {
-            onSessionCompleted()
-        } else if (timerStatus is TimerStatus.Idle) {
+        if (timerStatus is TimerStatus.Idle) {
             onSessionCancelled()
         }
     }
@@ -156,6 +156,7 @@ fun ActiveSessionScreen(
     val elapsedMeditationSec = when (val s = timerStatus) {
         is TimerStatus.Running -> s.elapsedSeconds
         is TimerStatus.Paused -> s.elapsedSeconds
+        is TimerStatus.Completed -> s.actualDurationSec
         else -> 0
     }
 
@@ -725,6 +726,207 @@ fun ActiveSessionScreen(
                                                 color = ZenObsidian
                                             )
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    is TimerStatus.Completed -> {
+                        val actualSec = status.actualDurationSec
+
+                        if (isLandscape) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                CircularTimerProgress(
+                                    progress = 1.0f,
+                                    isOverrun = false,
+                                    isPaused = false,
+                                    size = 210.dp,
+                                    strokeWidth = 8.dp,
+                                    intervalMinutes = 0,
+                                    totalDurationMinutes = config.targetDurationMinutes
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = NotificationHelper.formatSeconds(actualSec),
+                                            fontSize = 38.sp,
+                                            fontWeight = FontWeight.Light,
+                                            color = currentTheme.primaryLight
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = "Completed 🪷",
+                                            fontSize = 12.sp,
+                                            color = ZenTextSecondary
+                                        )
+                                    }
+                                }
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center,
+                                    modifier = Modifier.padding(start = 16.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(currentTheme.primary.copy(alpha = 0.20f))
+                                            .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.60f), RoundedCornerShape(20.dp))
+                                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(
+                                            text = "SESSION COMPLETE 🪷",
+                                            fontSize = 12.sp,
+                                            letterSpacing = 2.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = currentTheme.primaryLight
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(20.dp))
+
+                                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        Button(
+                                            onClick = { onSessionCompleted() },
+                                            modifier = Modifier
+                                                .height(48.dp)
+                                                .clip(RoundedCornerShape(24.dp)),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = currentTheme.primary,
+                                                contentColor = ZenObsidian
+                                            )
+                                        ) {
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text("Save & Reflect", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = { viewModel.continueSession() },
+                                            modifier = Modifier
+                                                .height(48.dp)
+                                                .clip(RoundedCornerShape(24.dp)),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                            border = BorderStroke(1.dp, currentTheme.primary)
+                                        ) {
+                                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Keep Meditating", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(currentTheme.primary.copy(alpha = 0.20f))
+                                        .border(1.2.dp, currentTheme.primaryLight.copy(alpha = 0.60f), RoundedCornerShape(20.dp))
+                                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = "SESSION COMPLETE 🪷",
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 2.sp,
+                                        color = currentTheme.primaryLight
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(36.dp))
+
+                                Box(
+                                    modifier = Modifier.onGloballyPositioned { coords ->
+                                        val pos = coords.positionInRoot()
+                                        val w   = coords.size.width.toFloat()
+                                        val h   = coords.size.height.toFloat()
+                                        val cx  = pos.x + w / 2f
+                                        val cy  = pos.y + h / 2f
+                                        if (rootWidthPx > 1f && rootHeightPx > 1f) {
+                                            timerCenterXRatio = (cx / rootWidthPx).coerceIn(0.1f, 0.9f)
+                                            timerCenterYRatio = (cy / rootHeightPx).coerceIn(0.1f, 0.9f)
+                                            timerRadiusRatio  = (minOf(w, h) / 2f / rootHeightPx).coerceIn(0.05f, 0.45f)
+                                        }
+                                    }
+                                ) {
+                                    CircularTimerProgress(
+                                        progress = 1.0f,
+                                        isOverrun = false,
+                                        isPaused = false,
+                                        size = 300.dp,
+                                        strokeWidth = 10.dp,
+                                        intervalMinutes = 0,
+                                        totalDurationMinutes = config.targetDurationMinutes
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                text = NotificationHelper.formatSeconds(actualSec),
+                                                fontSize = 58.sp,
+                                                fontWeight = FontWeight.Light,
+                                                color = currentTheme.primaryLight
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = "Total Practice Time",
+                                                fontSize = 13.sp,
+                                                color = ZenTextSecondary
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(48.dp))
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Button(
+                                        onClick = { onSessionCompleted() },
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.75f)
+                                            .height(54.dp)
+                                            .clip(RoundedCornerShape(27.dp)),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = currentTheme.primary,
+                                            contentColor = ZenObsidian
+                                        )
+                                    ) {
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(20.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Save & Reflect",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp
+                                        )
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = { viewModel.continueSession() },
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.75f)
+                                            .height(50.dp)
+                                            .clip(RoundedCornerShape(25.dp)),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                        border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.7f))
+                                    ) {
+                                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Keep Meditating",
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 14.5.sp
+                                        )
                                     }
                                 }
                             }

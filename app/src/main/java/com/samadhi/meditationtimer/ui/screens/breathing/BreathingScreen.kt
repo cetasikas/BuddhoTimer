@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.Pause
@@ -41,6 +43,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -100,7 +103,7 @@ fun BreathingScreen(
     val soundBellResName = remember { prefs.getString("sound_bell_res", SoundHelper.SOUND_TIBETAN_BOWL) ?: SoundHelper.SOUND_TIBETAN_BOWL }
     val patternId = remember { prefs.getString("breathing_pattern_id", "box") ?: "box" }
     val targetMinutes = remember { prefs.getInt("breathing_duration_min", 5) }
-    val targetTotalSec = targetMinutes * 60
+    var targetTotalSec by remember { mutableIntStateOf(targetMinutes * 60) }
 
     var selectedPattern by remember {
         mutableStateOf(BreathingPattern.allPatterns.find { it.id == patternId } ?: BreathingPattern.BOX_BREATHING)
@@ -180,13 +183,9 @@ fun BreathingScreen(
 
     // Smooth sub-second progress for fluid blooming transition
     var phaseProgress by remember { mutableFloatStateOf(0.0f) }
+    var isSessionComplete by remember { mutableStateOf(false) }
 
     fun finishSession() {
-        val isCompletionBell = prefs.getBoolean("completion_bell_enabled", false)
-        if (isCompletionBell) {
-            soundHelper.playChime(soundBellResName)
-        }
-        soundHelper.triggerHarmonicCompletionHaptic()
         val now = System.currentTimeMillis()
         val completedStatus = TimerStatus.Completed(
             targetDurationSec = targetTotalSec,
@@ -219,8 +218,8 @@ fun BreathingScreen(
     }
 
     // High precision, hardware-synced breath cycle ticker (100% stutter-free)
-    LaunchedEffect(isRunning, selectedPattern, isPreparing, varyingStage, stage4Step) {
-        if (!isRunning || isPreparing) return@LaunchedEffect
+    LaunchedEffect(isRunning, selectedPattern, isPreparing, varyingStage, stage4Step, isSessionComplete) {
+        if (!isRunning || isPreparing || isSessionComplete) return@LaunchedEffect
 
         currentPhase = BreathPhase.INHALE
         val initPhaseSec = getPhaseDuration(BreathPhase.INHALE, selectedPattern, varyingStage, stage4Step)
@@ -230,7 +229,7 @@ fun BreathingScreen(
 
         var phaseStartTimeMs = System.currentTimeMillis()
 
-        while (isActive && isRunning && !isPreparing) {
+        while (isActive && isRunning && !isPreparing && !isSessionComplete) {
             withFrameNanos { _ ->
                 val totalPhaseSec = getPhaseDuration(currentPhase, selectedPattern, varyingStage, stage4Step).coerceAtLeast(1)
                 val totalPhaseMs = totalPhaseSec * 1000L
@@ -265,8 +264,9 @@ fun BreathingScreen(
                         completedCycles++
                     }
                     currentPhase = nextPhase
+                    val newPhaseSec = getPhaseDuration(nextPhase, selectedPattern, varyingStage, stage4Step).coerceAtLeast(1)
+                    phaseSecondsRemaining = newPhaseSec
                     phaseStartTimeMs = System.currentTimeMillis()
-                    phaseSecondsRemaining = getPhaseDuration(nextPhase, selectedPattern, varyingStage, stage4Step)
                     phaseProgress = 0.0f
                     soundHelper.triggerGentleVibration()
                 }
@@ -275,13 +275,19 @@ fun BreathingScreen(
     }
 
     // Secondary 1-second cadence ticker for total elapsed time
-    LaunchedEffect(isRunning, isPreparing) {
-        if (isPreparing) return@LaunchedEffect
-        while (isActive && isRunning && !isPreparing) {
+    LaunchedEffect(isRunning, isPreparing, isSessionComplete) {
+        if (isPreparing || isSessionComplete) return@LaunchedEffect
+        while (isActive && isRunning && !isPreparing && !isSessionComplete) {
             delay(1000L)
             totalElapsedSec++
             if (targetTotalSec > 0 && totalElapsedSec >= targetTotalSec) {
-                finishSession()
+                val isCompletionBell = prefs.getBoolean("completion_bell_enabled", true)
+                if (isCompletionBell) {
+                    soundHelper.playChime(soundBellResName)
+                }
+                soundHelper.triggerHarmonicCompletionHaptic()
+                isRunning = false
+                isSessionComplete = true
                 break
             }
         }
@@ -291,7 +297,9 @@ fun BreathingScreen(
     val isVaryingCount = selectedPattern.id == "varying_count"
     val currentVaryingDuration = if (isVaryingCount) getVaryingStageDuration(varyingStage, stage4Step) else 0
 
-    val displayCountText = if (isVaryingCount) {
+    val displayCountText = if (isSessionComplete) {
+        "🪷"
+    } else if (isVaryingCount) {
         if (currentPhase == BreathPhase.INHALE) {
             val countUp = (currentVaryingDuration - phaseSecondsRemaining + 1).coerceIn(1, currentVaryingDuration)
             "$countUp"
@@ -303,7 +311,9 @@ fun BreathingScreen(
         "$phaseSecondsRemaining"
     }
 
-    val activeStageBadge = when (varyingStage) {
+    val activeStageBadge = if (isSessionComplete) {
+        "BREATHWORK COMPLETE 🪷"
+    } else when (varyingStage) {
         1 -> "Stage 1 • 3-Count (Grounding Breath)"
         2 -> "Stage 2 • 4-Count (Centering Breath)"
         3 -> "Stage 3 • 5-Count (Coherence Breath)"
@@ -311,7 +321,9 @@ fun BreathingScreen(
         else -> "Stage 1 • 3-Count"
     }
 
-    val activeStageInstruction = if (isVaryingCount) {
+    val activeStageInstruction = if (isSessionComplete) {
+        "${completedCycles} Cycles • ${totalElapsedSec / 60}m Practice"
+    } else if (isVaryingCount) {
         if (currentPhase == BreathPhase.INHALE) {
             "Inhale steadily\nCount 1 → $currentVaryingDuration"
         } else {
@@ -676,6 +688,37 @@ fun BreathingScreen(
                                             )
                                         }
 
+                                    if (isSessionComplete) {
+                                        Button(
+                                            onClick = { finishSession() },
+                                            modifier = Modifier.height(42.dp),
+                                            shape = RoundedCornerShape(21.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = currentTheme.primary,
+                                                contentColor = ZenObsidian
+                                            )
+                                        ) {
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text("Save & Finish", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = {
+                                                targetTotalSec += 180
+                                                isSessionComplete = false
+                                                isRunning = true
+                                            },
+                                            modifier = Modifier.height(42.dp),
+                                            shape = RoundedCornerShape(21.dp),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                            border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.7f))
+                                        ) {
+                                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
+                                        }
+                                    } else {
                                         IconButton(
                                             onClick = {
                                                 totalElapsedSec = 0
@@ -744,6 +787,7 @@ fun BreathingScreen(
                                                 softWrap = false
                                             )
                                         }
+                                    }
                                     }
                                 }
                             }
@@ -1062,121 +1106,164 @@ fun BreathingScreen(
 
                             Spacer(modifier = Modifier.height(24.dp))
 
-                            // --- 3. MINIMAL CONTROL BAR WITH INTEGRATED DND ---
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // DND Quick Toggle Button
-                                IconButton(
-                                    onClick = {
-                                        if (dndManager.isDndAccessGranted) {
-                                            val next = !isAutoDnd
-                                            isAutoDnd = next
-                                            prefs.edit().putBoolean("auto_dnd", next).apply()
-                                            if (next) dndManager.enableDnd() else dndManager.restoreDnd()
-                                        } else {
-                                            context.startActivity(
-                                                dndManager.requestDndPermissionIntent().apply {
-                                                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                                                }
+                            if (isSessionComplete) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 6.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Button(
+                                        onClick = { finishSession() },
+                                        modifier = Modifier
+                                            .weight(1.2f)
+                                            .height(48.dp),
+                                        shape = RoundedCornerShape(24.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = currentTheme.primary,
+                                            contentColor = ZenObsidian
+                                        )
+                                    ) {
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Save & Finish", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            targetTotalSec += 180
+                                            isSessionComplete = false
+                                            isRunning = true
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(48.dp),
+                                        shape = RoundedCornerShape(24.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                        border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.7f))
+                                    ) {
+                                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                    }
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 6.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // DND Quick Toggle Button
+                                    IconButton(
+                                        onClick = {
+                                            if (dndManager.isDndAccessGranted) {
+                                                val next = !isAutoDnd
+                                                isAutoDnd = next
+                                                prefs.edit().putBoolean("auto_dnd", next).apply()
+                                                if (next) dndManager.enableDnd() else dndManager.restoreDnd()
+                                            } else {
+                                                context.startActivity(
+                                                    dndManager.requestDndPermissionIntent().apply {
+                                                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                                    }
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
+                                                else ZenSurface.copy(alpha = 0.75f)
                                             )
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
-                                            else ZenSurface.copy(alpha = 0.75f)
+                                            .border(
+                                                1.dp,
+                                                if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight.copy(alpha = 0.6f) else ZenBorder,
+                                                CircleShape
+                                            )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.DoNotDisturb,
+                                            contentDescription = "Toggle DND",
+                                            tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
+                                            modifier = Modifier.size(19.dp)
                                         )
-                                        .border(
-                                            1.dp,
-                                            if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight.copy(alpha = 0.6f) else ZenBorder,
-                                            CircleShape
+                                    }
+
+                                    // Reset Button
+                                    IconButton(
+                                        onClick = {
+                                            totalElapsedSec = 0
+                                            completedCycles = 0
+                                            currentPhase = BreathPhase.INHALE
+                                            phaseSecondsRemaining = selectedPattern.inhaleSec
+                                            phaseProgress = 0f
+                                        },
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(ZenSurface.copy(alpha = 0.75f))
+                                            .border(1.dp, ZenBorder, CircleShape)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Refresh,
+                                            contentDescription = "Restart",
+                                            tint = ZenTextSecondary,
+                                            modifier = Modifier.size(19.dp)
                                         )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.DoNotDisturb,
-                                        contentDescription = "Toggle DND",
-                                        tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
-                                        modifier = Modifier.size(19.dp)
-                                    )
-                                }
+                                    }
 
-                                // Reset Button
-                                IconButton(
-                                    onClick = {
-                                        totalElapsedSec = 0
-                                        completedCycles = 0
-                                        currentPhase = BreathPhase.INHALE
-                                        phaseSecondsRemaining = selectedPattern.inhaleSec
-                                        phaseProgress = 0f
-                                    },
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(CircleShape)
-                                        .background(ZenSurface.copy(alpha = 0.75f))
-                                        .border(1.dp, ZenBorder, CircleShape)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = "Restart",
-                                        tint = ZenTextSecondary,
-                                        modifier = Modifier.size(19.dp)
-                                    )
-                                }
+                                    // Pause / Resume Button (No text clipping)
+                                    Button(
+                                        onClick = { isRunning = !isRunning },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(46.dp),
+                                        shape = RoundedCornerShape(14.dp),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
+                                            contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
+                                        )
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = if (isRunning) "Pause" else "Resume",
+                                            modifier = Modifier.size(17.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = if (isRunning) "Pause" else "Resume",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.5.sp,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
 
-                                // Pause / Resume Button (No text clipping)
-                                Button(
-                                    onClick = { isRunning = !isRunning },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(46.dp),
-                                    shape = RoundedCornerShape(14.dp),
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (isRunning) ZenSurfaceVariant else currentTheme.primary,
-                                        contentColor = if (isRunning) ZenTextPrimary else ZenObsidian
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                        contentDescription = if (isRunning) "Pause" else "Resume",
-                                        modifier = Modifier.size(17.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = if (isRunning) "Pause" else "Resume",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.5.sp,
-                                        maxLines = 1,
-                                        softWrap = false
-                                    )
-                                }
-
-                                // Finish Button
-                                Button(
-                                    onClick = { finishSession() },
-                                    modifier = Modifier.height(46.dp),
-                                    shape = RoundedCornerShape(14.dp),
-                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = ZenSurface.copy(alpha = 0.85f),
-                                        contentColor = currentTheme.primaryLight
-                                    ),
-                                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
-                                ) {
-                                    Text(
-                                        text = "Finish",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        maxLines = 1,
-                                        softWrap = false
-                                    )
+                                    // Finish Button
+                                    Button(
+                                        onClick = { finishSession() },
+                                        modifier = Modifier.height(46.dp),
+                                        shape = RoundedCornerShape(14.dp),
+                                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = ZenSurface.copy(alpha = 0.85f),
+                                            contentColor = currentTheme.primaryLight
+                                        ),
+                                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.5f)))
+                                    ) {
+                                        Text(
+                                            text = "Finish",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
                                 }
                             }
                         }
