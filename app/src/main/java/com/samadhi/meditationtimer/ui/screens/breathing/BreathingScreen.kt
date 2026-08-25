@@ -312,7 +312,7 @@ fun BreathingScreen(
     }
 
     val activeStageBadge = if (isSessionComplete) {
-        "BREATHWORK COMPLETE 🪷"
+        "BREATHWORK COMPLETE"
     } else when (varyingStage) {
         1 -> "Stage 1 • 3-Count (Grounding Breath)"
         2 -> "Stage 2 • 4-Count (Centering Breath)"

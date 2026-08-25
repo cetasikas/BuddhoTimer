@@ -208,15 +208,17 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun continueSession(initialElapsedSec: Int = 0, initialStartTimeMs: Long = 0L) {
+    fun continueSession(initialElapsedSec: Int = 0, initialStartTimeMs: Long = 0L, addMinutes: Int = 5) {
         val currentConfig = _config.value
+        val targetSec = if (addMinutes > 0) initialElapsedSec + (addMinutes * 60) else 0
+        val isOpen = addMinutes <= 0
         val intent = Intent(context, MeditationTimerService::class.java).apply {
             action = MeditationTimerService.ACTION_START
-            putExtra(MeditationTimerService.EXTRA_TARGET_SEC, 0)
+            putExtra(MeditationTimerService.EXTRA_TARGET_SEC, targetSec)
             putExtra(MeditationTimerService.EXTRA_PREP_SEC, 0)
             putExtra(MeditationTimerService.EXTRA_AUTO_DND, currentConfig.isAutoDndEnabled && _isDndGranted.value)
-            putExtra(MeditationTimerService.EXTRA_OPEN_ENDED, true)
-            putExtra(MeditationTimerService.EXTRA_OVERRUN_ENABLED, true)
+            putExtra(MeditationTimerService.EXTRA_OPEN_ENDED, isOpen)
+            putExtra(MeditationTimerService.EXTRA_OVERRUN_ENABLED, currentConfig.isOverrunEnabled)
             putExtra(MeditationTimerService.EXTRA_SOUND_BELL, currentConfig.soundBellResName)
             putExtra(MeditationTimerService.EXTRA_MINDFULNESS_INTERVAL_MIN, currentConfig.mindfulnessIntervalMinutes)
             putExtra(MeditationTimerService.EXTRA_COMPLETION_BELL, currentConfig.isCompletionBellEnabled)

@@ -94,18 +94,34 @@ class MeditationTimerService : Service() {
     }
 
     private fun adjustTimerDuration(deltaSec: Int) {
-        if (isOpenEnded) return
-        val current = _timerStatus.value
-        val minTarget = (elapsedSeconds + 10).coerceAtLeast(60)
-        val newTarget = (targetDurationSec + deltaSec).coerceAtLeast(minTarget)
-        targetDurationSec = newTarget
+        if (isOpenEnded) {
+            if (deltaSec > 0) {
+                isOpenEnded = false
+                targetDurationSec = elapsedSeconds + deltaSec
+            } else {
+                return
+            }
+        } else {
+            val minTarget = (elapsedSeconds + 10).coerceAtLeast(60)
+            val newTarget = (targetDurationSec + deltaSec).coerceAtLeast(minTarget)
+            targetDurationSec = newTarget
+        }
         soundHelper.triggerSoftTouchHaptic()
 
-        val newRemaining = (newTarget - elapsedSeconds).coerceAtLeast(0)
+        val newRemaining = (targetDurationSec - elapsedSeconds).coerceAtLeast(0)
+        val current = _timerStatus.value
         if (current is TimerStatus.Running) {
-            _timerStatus.value = current.copy(remainingSeconds = newRemaining)
+            _timerStatus.value = current.copy(
+                remainingSeconds = newRemaining,
+                elapsedSeconds = elapsedSeconds,
+                isOverrun = false
+            )
         } else if (current is TimerStatus.Paused) {
-            _timerStatus.value = current.copy(remainingSeconds = newRemaining)
+            _timerStatus.value = current.copy(
+                remainingSeconds = newRemaining,
+                elapsedSeconds = elapsedSeconds,
+                isOverrun = false
+            )
         }
     }
 
