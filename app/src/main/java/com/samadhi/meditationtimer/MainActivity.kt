@@ -36,18 +36,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        isAppInForeground = true
-    }
-
-    override fun onStop() {
-        super.onStop()
-        isAppInForeground = false
+    override fun onResume() {
+        super.onResume()
+        com.samadhi.meditationtimer.service.NotificationHelper(this).clearTimerNotification()
     }
 
     companion object {
-        @Volatile
-        var isAppInForeground: Boolean = false
+        val isAppInForeground: Boolean
+            get() = MeditationApp.isAppInForeground
     }
 }

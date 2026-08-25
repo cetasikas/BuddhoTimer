@@ -102,6 +102,7 @@ fun TimerScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshPermissions()
+                com.samadhi.meditationtimer.service.NotificationHelper(context).clearTimerNotification()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

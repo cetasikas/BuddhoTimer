@@ -187,6 +187,19 @@ class NotificationHelper(private val context: Context) {
         notificationManager.notify(NOTIFICATION_COMPLETION_ID, notification)
     }
 
+    fun clearTimerNotification() {
+        notificationManager.cancel(NOTIFICATION_ID)
+    }
+
+    fun clearCompletionNotification() {
+        notificationManager.cancel(NOTIFICATION_COMPLETION_ID)
+    }
+
+    fun clearAllTimerNotifications() {
+        notificationManager.cancel(NOTIFICATION_ID)
+        notificationManager.cancel(NOTIFICATION_COMPLETION_ID)
+    }
+
     companion object {
         const val CHANNEL_ID = "meditation_timer_channel"
         const val CHANNEL_REMINDERS_ID = "meditation_reminders_channel"

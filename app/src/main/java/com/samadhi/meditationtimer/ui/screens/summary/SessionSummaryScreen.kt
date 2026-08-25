@@ -87,6 +87,10 @@ fun SessionSummaryScreen(
     }
 
     val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        com.samadhi.meditationtimer.service.NotificationHelper(context).clearAllTimerNotifications()
+    }
     var selectedMood by remember { mutableIntStateOf(3) }
     var notesValue by remember { mutableStateOf(TextFieldValue("")) }
     var currentWisdomQuote by remember {

@@ -401,6 +401,9 @@ class MeditationTimerService : Service() {
         }
         wakeLockHelper.releaseWakeLock()
 
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        notificationHelper.clearTimerNotification()
+
         if (showNotificationIfBackground && !MeditationApp.isAppInForeground) {
             val totalSec = elapsedSeconds
             notificationHelper.showCompletionNotification(
@@ -409,7 +412,6 @@ class MeditationTimerService : Service() {
             )
         }
 
-        stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
@@ -425,6 +427,7 @@ class MeditationTimerService : Service() {
         }
         wakeLockHelper.releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
+        notificationHelper.clearTimerNotification()
         stopSelf()
     }
 
