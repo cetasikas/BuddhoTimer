@@ -331,7 +331,7 @@ private fun DrawScope.drawZenEnsoGarland(
 }
 
 // =========================================================================
-// 1. MOONLIT BAMBOO THICK CYLINDRICAL STALK ENSŌ & FOLIAGE ENGINE
+// 1. MOONLIT BAMBOO SUMI-E CONTINUOUS TIMBER CANE ENSŌ & FOLIAGE
 // =========================================================================
 
 private data class BambooJoint(
@@ -342,8 +342,8 @@ private data class BambooJoint(
 )
 
 /**
- * Renders an authentic, thick cylindrical bamboo frame (Culm) with golden-wood
- * node collars and lush organic bamboo foliage matching natural timber bamboo.
+ * Renders an authentic continuous timber bamboo frame with natural joint collars
+ * and lush, slender lanceolate bamboo leaves matching traditional Sumi-e painting.
  */
 private fun DrawScope.drawGrowingBambooStalkEnso(
     center: Offset,
@@ -370,43 +370,39 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
         BreathPhase.HOLD_EMPTY -> 0.0f
     }
 
-    // 8 major bamboo internodes around the circle (~45° each)
-    val totalSegments = 8
-    val stepAngle = 360f / totalSegments.toFloat()
     val totalSweep = growthFraction * 360f
 
-    // Substantial bamboo culm thickness (matching natural timber bamboo)
-    val stalkThickness = minDim * 0.052f
+    // Natural bamboo cane thickness (matching traditional ink wash paintings)
+    val stalkThickness = minDim * 0.038f // ~14-16dp wide, perfectly balanced
 
     val topLeft = Offset(center.x - baseRadius, center.y - baseRadius)
     val arcSize = androidx.compose.ui.geometry.Size(baseRadius * 2f, baseRadius * 2f)
 
-    // Palette for authentic natural bamboo
-    val bambooDark = Color(0xFF092918)
-    val bambooBody = Color(0xFF1E7038)
-    val bambooMid = Color(0xFF2E944B)
-    val bambooLight = Color(0xFF56C476)
-    val bambooSheen = Color(0xFFB0F4C2)
+    // Palette: Authentic natural timber bamboo & golden-sage hues
+    val bambooContour = Color(0xFF1E2812)     // Dark outer ink edge
+    val bambooBody = Color(0xFF4A6B2D)        // Main natural bamboo cane body
+    val bambooMid = Color(0xFF6B8A3C)         // Lush bamboo green
+    val bambooLight = Color(0xFF8FA84E)       // Golden-sage bamboo tone
+    val bambooSheen = Color(0xFFD4E696)       // Direct sunlight cylinder sheen
 
-    val goldCollarBase = Color(0xFF38230D)
-    val goldCollarMid = Color(0xFFC8953C)
-    val goldCollarLight = Color(0xFFF2CE78)
-    val goldCollarHighlight = Color(0xFFFFF7D6)
+    val goldJointDark = Color(0xFF1E1A0C)     // Joint crease ink line
+    val goldJointWood = Color(0xFF8C7338)     // Warm golden-wood joint band
+    val goldJointLight = Color(0xFFD8BF72)    // Joint highlight band
 
     // 1. Ambient Zen Core Glow (Inhale / Hold Full)
     if (growthFraction > 0.05f) {
         val coreGlowRadius = baseRadius * (0.92f * growthFraction)
         val glowAlpha = when (currentPhase) {
-            BreathPhase.INHALE -> 0.14f * phaseProgress
-            BreathPhase.HOLD_FULL -> 0.20f + 0.04f * sin(animClockSec * 2.5f)
-            BreathPhase.EXHALE -> 0.12f * (1.0f - phaseProgress)
+            BreathPhase.INHALE -> 0.12f * phaseProgress
+            BreathPhase.HOLD_FULL -> 0.18f + 0.04f * sin(animClockSec * 2.5f)
+            BreathPhase.EXHALE -> 0.10f * (1.0f - phaseProgress)
             BreathPhase.HOLD_EMPTY -> 0.0f
         }
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    bambooLight.copy(alpha = glowAlpha * 0.7f),
-                    bambooBody.copy(alpha = glowAlpha * 0.3f),
+                    bambooLight.copy(alpha = glowAlpha * 0.65f),
+                    bambooBody.copy(alpha = glowAlpha * 0.25f),
                     Color.Transparent
                 ),
                 center = center,
@@ -417,96 +413,59 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
         )
     }
 
-    // 2. Render Thick 3D Cylindrical Bamboo Culm
+    // 2. Render Single Continuous Smooth Bamboo Culm (NO slice lines!)
     if (totalSweep > 0.5f && overallAlpha > 0.01f) {
-        val fadeAngleSpan = 25f // Soft fading tip length on Inhale
+        // A. Dark Outer Bamboo Contour Edge
+        drawArc(
+            color = bambooContour.copy(alpha = 0.92f * overallAlpha),
+            startAngle = -90f,
+            sweepAngle = totalSweep,
+            useCenter = false,
+            topLeft = topLeft,
+            size = arcSize,
+            style = Stroke(width = stalkThickness * 1.08f, cap = StrokeCap.Round)
+        )
 
-        for (i in 0 until totalSegments) {
-            val segStartAngle = -90f + (i * stepAngle)
-            val segSweepMax = stepAngle
-            val segProgressAngle = (totalSweep - (i * stepAngle)).coerceIn(0f, segSweepMax)
+        // B. Main Continuous Bamboo Cane Body with Natural Sweep Shading
+        drawArc(
+            brush = Brush.sweepGradient(
+                colors = listOf(
+                    bambooBody, bambooMid, bambooLight, bambooMid,
+                    bambooBody, bambooMid, bambooLight, bambooBody
+                ),
+                center = center
+            ),
+            startAngle = -90f,
+            sweepAngle = totalSweep,
+            useCenter = false,
+            topLeft = topLeft,
+            size = arcSize,
+            style = Stroke(width = stalkThickness * 0.90f, cap = StrokeCap.Round)
+        )
 
-            if (segProgressAngle > 0.1f) {
-                // Micro-slice stepping for smooth cylindrical shading & tip feathering
-                val subStep = 3.0f
-                var currentAngle = 0f
-                while (currentAngle < segProgressAngle) {
-                    val subSweep = minOf(subStep, segProgressAngle - currentAngle)
-                    val angleFromStart = (i * stepAngle) + currentAngle + subSweep
-                    val distToTip = (totalSweep - angleFromStart).coerceAtLeast(0f)
-
-                    val sliceAlpha = if (currentPhase == BreathPhase.INHALE && totalSweep < 355f && distToTip < fadeAngleSpan) {
-                        (distToTip / fadeAngleSpan).coerceIn(0.08f, 1.0f)
-                    } else {
-                        1.0f
-                    } * overallAlpha
-
-                    val tipTaper = if (currentPhase == BreathPhase.INHALE && totalSweep < 355f && distToTip < fadeAngleSpan) {
-                        (0.55f + 0.45f * (distToTip / fadeAngleSpan))
-                    } else 1.0f
-
-                    val curThickness = stalkThickness * tipTaper
-
-                    // A. Dark Outer Cylindrical Shadow
-                    drawArc(
-                        color = bambooDark.copy(alpha = 0.95f * sliceAlpha),
-                        startAngle = segStartAngle + currentAngle,
-                        sweepAngle = subSweep + 0.6f,
-                        useCenter = false,
-                        topLeft = topLeft,
-                        size = arcSize,
-                        style = Stroke(width = curThickness * 1.05f, cap = StrokeCap.Round)
-                    )
-
-                    // B. Main Lush Bamboo Green Body
-                    drawArc(
-                        color = bambooBody.copy(alpha = 0.95f * sliceAlpha),
-                        startAngle = segStartAngle + currentAngle,
-                        sweepAngle = subSweep + 0.6f,
-                        useCenter = false,
-                        topLeft = topLeft,
-                        size = arcSize,
-                        style = Stroke(width = curThickness * 0.92f, cap = StrokeCap.Round)
-                    )
-
-                    // C. Mid-tone Bamboo Green Cylindrical Body
-                    drawArc(
-                        color = bambooMid.copy(alpha = 0.90f * sliceAlpha),
-                        startAngle = segStartAngle + currentAngle,
-                        sweepAngle = subSweep + 0.6f,
-                        useCenter = false,
-                        topLeft = topLeft,
-                        size = arcSize,
-                        style = Stroke(width = curThickness * 0.68f, cap = StrokeCap.Round)
-                    )
-
-                    // D. Cylindrical Sunlight Sheen Stripe (Upper-inner highlight)
-                    drawArc(
-                        color = bambooSheen.copy(alpha = 0.55f * sliceAlpha),
-                        startAngle = segStartAngle + currentAngle + 0.2f,
-                        sweepAngle = (subSweep - 0.2f).coerceAtLeast(0.1f),
-                        useCenter = false,
-                        topLeft = topLeft,
-                        size = arcSize,
-                        style = Stroke(width = curThickness * 0.24f, cap = StrokeCap.Round)
-                    )
-
-                    currentAngle += subStep
-                }
-            }
-        }
+        // C. Inner Longitudinal Cylindrical Sheen Line
+        drawArc(
+            color = bambooSheen.copy(alpha = 0.40f * overallAlpha),
+            startAngle = -90f,
+            sweepAngle = totalSweep,
+            useCenter = false,
+            topLeft = topLeft,
+            size = arcSize,
+            style = Stroke(width = stalkThickness * 0.25f, cap = StrokeCap.Round)
+        )
     }
 
-    // 3. Bamboo Node Joints (Golden Woody Collars) & Lush Bamboo Leaf Sprays
+    // 3. Bamboo Node Joints (Natural Woody Collars) & Slender Bamboo Foliage Sprays
+    // Only 7 natural joints around the circle (~51° apart)
+    val totalSegments = 7
     val nodeConfigs = listOf(
-        BambooJoint(0f, true, 4, 0f),        // Node 0 - Top apex
-        BambooJoint(45f, true, 4, 1.2f),     // Node 1 - Upper right
-        BambooJoint(90f, false, 5, 2.1f),    // Node 2 - Right side (inward & outward framing)
-        BambooJoint(135f, true, 4, 0.7f),    // Node 3 - Lower right
-        BambooJoint(180f, true, 5, 1.8f),    // Node 4 - Bottom cluster
-        BambooJoint(225f, true, 4, 2.5f),    // Node 5 - Lower left
-        BambooJoint(270f, false, 5, 0.9f),   // Node 6 - Left side (inward & outward framing)
-        BambooJoint(315f, true, 4, 1.5f)     // Node 7 - Upper left
+        BambooJoint(0f, true, 4, 0f),         // Node 0 - Top apex
+        BambooJoint(51.4f, true, 4, 1.2f),    // Node 1 - Upper-right
+        BambooJoint(102.8f, false, 5, 2.1f),  // Node 2 - Right (framed inward & outward)
+        BambooJoint(154.2f, true, 4, 0.7f),   // Node 3 - Lower-right
+        BambooJoint(205.7f, true, 5, 1.8f),   // Node 4 - Lower-left
+        BambooJoint(257.1f, false, 5, 0.9f),  // Node 5 - Left (framed inward & outward)
+        BambooJoint(308.5f, true, 4, 1.5f)    // Node 6 - Upper-left
     )
 
     for ((index, config) in nodeConfigs.withIndex()) {
@@ -531,14 +490,14 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
                         val progress = ((phaseProgress - nodeFraction) / 0.12f).coerceIn(0f, 1f)
                         nodeAlpha = progress * progress
                         sproutScale = 0.35f + 0.65f * progress
-                        swayAngle = (1f - progress) * (if (isOutward) 15f else -15f)
+                        swayAngle = (1f - progress) * (if (isOutward) 14f else -14f)
                     }
                 }
             }
             BreathPhase.HOLD_FULL -> {
                 nodeAlpha = 1.0f
                 sproutScale = 1.0f + 0.035f * sin(animClockSec * 2.0f + swayOffset)
-                swayAngle = sin(animClockSec * 1.8f + swayOffset) * 5.0f
+                swayAngle = sin(animClockSec * 1.8f + swayOffset) * 4.5f
             }
             BreathPhase.EXHALE -> {
                 if (isTopSprout) {
@@ -575,43 +534,43 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
         val nodeY = center.y + sin(nodeRad) * baseRadius
         val nodeCenter = Offset(nodeX, nodeY)
 
-        // Draw Golden/Woody Bamboo Node Collar (Raised ring joint)
+        // Draw Single Authentic Bamboo Node Joint Collar
         if (!isTopSprout || currentPhase != BreathPhase.HOLD_EMPTY) {
             drawBambooNodeCollar(
                 nodeCenter = nodeCenter,
                 nodeRad = nodeRad,
                 stalkThickness = stalkThickness,
                 alpha = nodeAlpha,
-                goldCollarBase = goldCollarBase,
-                goldCollarMid = goldCollarMid,
-                goldCollarLight = goldCollarLight,
-                goldCollarHighlight = goldCollarHighlight
+                bambooBody = bambooBody,
+                goldJointDark = goldJointDark,
+                goldJointWood = goldJointWood,
+                goldJointLight = goldJointLight
             )
         }
 
         // Tangent rotation along circle
         val tangentDeg = nodeDeg + 90f
-        val branchAngle = tangentDeg + (if (isOutward) 36f else -40f) + swayAngle
-        val leafClusterScale = (minDim / 360f) * sproutScale * (if (index % 2 == 0) 1.10f else 0.98f)
+        val branchAngle = tangentDeg + (if (isOutward) 34f else -38f) + swayAngle
+        val leafClusterScale = (minDim / 360f) * sproutScale * (if (index % 2 == 0) 1.08f else 0.96f)
 
         // If top sprout on HOLD_EMPTY, draw peaceful glowing aura around bud
         if (isTopSprout && currentPhase == BreathPhase.HOLD_EMPTY) {
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        bambooLight.copy(alpha = 0.40f),
+                        bambooLight.copy(alpha = 0.35f),
                         bambooBody.copy(alpha = 0.15f),
                         Color.Transparent
                     ),
                     center = nodeCenter,
-                    radius = minDim * 0.08f
+                    radius = minDim * 0.07f
                 ),
-                radius = minDim * 0.08f,
+                radius = minDim * 0.07f,
                 center = nodeCenter
             )
         }
 
-        // Draw Authentic Botanical Bamboo Leaf Cluster at this node
+        // Draw Slender Botanical Bamboo Leaf Cluster at this node
         drawBambooLeafCluster(
             nodeCenter = nodeCenter,
             branchAngle = branchAngle,
@@ -620,7 +579,7 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
             leafCount = leafCount,
             bambooBody = bambooBody,
             bambooLight = bambooLight,
-            bambooDark = bambooDark,
+            bambooDark = bambooContour,
             bambooSheen = bambooSheen
         )
     }
@@ -638,75 +597,75 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
                 colors = listOf(
                     Color.White.copy(alpha = 0.95f),
                     bambooLight.copy(alpha = 0.85f),
-                    bambooBody.copy(alpha = 0.35f),
+                    bambooBody.copy(alpha = 0.30f),
                     Color.Transparent
                 ),
                 center = tipOffset,
-                radius = stalkThickness * 0.90f
+                radius = stalkThickness * 0.85f
             ),
-            radius = stalkThickness * 0.90f,
+            radius = stalkThickness * 0.85f,
             center = tipOffset
         )
     }
 }
 
 /**
- * Draws an authentic golden-ochre raised bamboo node joint collar with bevel shading.
+ * Draws an authentic natural bamboo joint with a subtle swelling and clean collar crease.
  */
 private fun DrawScope.drawBambooNodeCollar(
     nodeCenter: Offset,
     nodeRad: Float,
     stalkThickness: Float,
     alpha: Float,
-    goldCollarBase: Color,
-    goldCollarMid: Color,
-    goldCollarLight: Color,
-    goldCollarHighlight: Color
+    bambooBody: Color,
+    goldJointDark: Color,
+    goldJointWood: Color,
+    goldJointLight: Color
 ) {
     val normalX = -sin(nodeRad)
     val normalY = cos(nodeRad)
-    val halfLen = stalkThickness * 0.65f // slightly wider than the culm to form the raised collar
+    val jointHalfWidth = stalkThickness * 0.58f
 
-    val p1 = Offset(nodeCenter.x - normalX * halfLen, nodeCenter.y - normalY * halfLen)
-    val p2 = Offset(nodeCenter.x + normalX * halfLen, nodeCenter.y + normalY * halfLen)
+    val p1 = Offset(nodeCenter.x - normalX * jointHalfWidth, nodeCenter.y - normalY * jointHalfWidth)
+    val p2 = Offset(nodeCenter.x + normalX * jointHalfWidth, nodeCenter.y + normalY * jointHalfWidth)
 
-    // 1. Dark joint crease shadow
-    drawLine(
-        color = goldCollarBase.copy(alpha = 0.95f * alpha),
-        start = p1,
-        end = p2,
-        strokeWidth = stalkThickness * 0.36f,
-        cap = StrokeCap.Round
-    )
-
-    // 2. Golden-wood raised collar body
-    drawLine(
-        color = goldCollarMid.copy(alpha = 0.95f * alpha),
-        start = p1,
-        end = p2,
-        strokeWidth = stalkThickness * 0.28f,
-        cap = StrokeCap.Round
-    )
-
-    // 3. Bright golden collar highlight band
-    drawLine(
-        color = goldCollarLight.copy(alpha = 0.90f * alpha),
-        start = Offset(nodeCenter.x - normalX * halfLen * 0.85f, nodeCenter.y - normalY * halfLen * 0.85f),
-        end = Offset(nodeCenter.x + normalX * halfLen * 0.85f, nodeCenter.y + normalY * halfLen * 0.85f),
-        strokeWidth = stalkThickness * 0.14f,
-        cap = StrokeCap.Round
-    )
-
-    // 4. Center shine dot
+    // 1. Natural node joint cane bulge
     drawCircle(
-        color = goldCollarHighlight.copy(alpha = 0.95f * alpha),
-        radius = stalkThickness * 0.08f,
+        color = bambooBody.copy(alpha = 0.95f * alpha),
+        radius = stalkThickness * 0.52f,
         center = nodeCenter
+    )
+
+    // 2. Golden-wood collar band
+    drawLine(
+        color = goldJointWood.copy(alpha = 0.90f * alpha),
+        start = p1,
+        end = p2,
+        strokeWidth = 3.5f,
+        cap = StrokeCap.Round
+    )
+
+    // 3. Crisp dark joint crease line
+    drawLine(
+        color = goldJointDark.copy(alpha = 0.95f * alpha),
+        start = p1,
+        end = p2,
+        strokeWidth = 1.8f,
+        cap = StrokeCap.Round
+    )
+
+    // 4. Subtle golden highlight rim
+    drawLine(
+        color = goldJointLight.copy(alpha = 0.85f * alpha),
+        start = Offset(p1.x + cos(nodeRad) * 1.5f, p1.y + sin(nodeRad) * 1.5f),
+        end = Offset(p2.x + cos(nodeRad) * 1.5f, p2.y + sin(nodeRad) * 1.5f),
+        strokeWidth = 1.2f,
+        cap = StrokeCap.Round
     )
 }
 
 /**
- * Draws an organic cluster of lanceolate bamboo leaves branching off a node.
+ * Draws an organic cluster of slender lanceolate bamboo leaves in Sumi-e watercolor style.
  */
 private fun DrawScope.drawBambooLeafCluster(
     nodeCenter: Offset,
@@ -720,9 +679,9 @@ private fun DrawScope.drawBambooLeafCluster(
     bambooSheen: Color
 ) {
     rotate(degrees = branchAngle, pivot = nodeCenter) {
-        val twigLen = scale * 22f
-        val leafLen = scale * 40f
-        val leafWid = scale * 9.5f
+        val twigLen = scale * 24f
+        val leafLen = scale * 44f
+        val leafWid = scale * 8.5f // Slender, elegant lanceolate blade
 
         val twigEnd = Offset(nodeCenter.x, nodeCenter.y - twigLen)
 
@@ -730,14 +689,14 @@ private fun DrawScope.drawBambooLeafCluster(
         val stemPath = Path().apply {
             moveTo(nodeCenter.x, nodeCenter.y)
             quadraticTo(
-                nodeCenter.x + scale * 3.5f, nodeCenter.y - twigLen * 0.5f,
+                nodeCenter.x + scale * 3.0f, nodeCenter.y - twigLen * 0.5f,
                 twigEnd.x, twigEnd.y
             )
         }
         drawPath(
             path = stemPath,
             color = bambooLight.copy(alpha = 0.85f * alpha),
-            style = Stroke(width = 2.0f * scale.coerceAtLeast(0.7f), cap = StrokeCap.Round)
+            style = Stroke(width = 1.8f * scale.coerceAtLeast(0.7f), cap = StrokeCap.Round)
         )
 
         // 2. Primary Center Bamboo Blade (Main prominent leaf)
@@ -756,12 +715,12 @@ private fun DrawScope.drawBambooLeafCluster(
         // 3. Side Blade Left (Upper secondary)
         if (leafCount >= 2) {
             val leftBase = Offset(twigEnd.x - scale * 7f, twigEnd.y - scale * 5f)
-            val leftTip = Offset(twigEnd.x - scale * 22f, twigEnd.y - leafLen * 0.75f)
+            val leftTip = Offset(twigEnd.x - scale * 24f, twigEnd.y - leafLen * 0.76f)
             drawLine(
                 color = bambooLight.copy(alpha = 0.75f * alpha),
                 start = twigEnd,
                 end = leftBase,
-                strokeWidth = 1.4f * scale.coerceAtLeast(0.7f),
+                strokeWidth = 1.2f * scale.coerceAtLeast(0.7f),
                 cap = StrokeCap.Round
             )
             drawSingleBambooBlade(
@@ -771,7 +730,7 @@ private fun DrawScope.drawBambooLeafCluster(
                 alpha = alpha * 0.90f,
                 leafColor = bambooDark,
                 glowColor = bambooLight,
-                shadowColor = Color(0xFF061A0F),
+                shadowColor = Color(0xFF0C1A08),
                 sheenColor = bambooSheen
             )
         }
@@ -779,12 +738,12 @@ private fun DrawScope.drawBambooLeafCluster(
         // 4. Side Blade Right (Upper secondary)
         if (leafCount >= 3) {
             val rightBase = Offset(twigEnd.x + scale * 7f, twigEnd.y - scale * 4f)
-            val rightTip = Offset(twigEnd.x + scale * 20f, twigEnd.y - leafLen * 0.68f)
+            val rightTip = Offset(twigEnd.x + scale * 22f, twigEnd.y - leafLen * 0.70f)
             drawLine(
                 color = bambooLight.copy(alpha = 0.75f * alpha),
                 start = twigEnd,
                 end = rightBase,
-                strokeWidth = 1.4f * scale.coerceAtLeast(0.7f),
+                strokeWidth = 1.2f * scale.coerceAtLeast(0.7f),
                 cap = StrokeCap.Round
             )
             drawSingleBambooBlade(
@@ -801,13 +760,13 @@ private fun DrawScope.drawBambooLeafCluster(
 
         // 5. Outer Accent Blade (Lower left tertiary)
         if (leafCount >= 4) {
-            val extraBase = Offset(twigEnd.x - scale * 11f, twigEnd.y - scale * 9f)
-            val extraTip = Offset(twigEnd.x - scale * 30f, twigEnd.y - leafLen * 0.52f)
+            val extraBase = Offset(twigEnd.x - scale * 12f, twigEnd.y - scale * 9f)
+            val extraTip = Offset(twigEnd.x - scale * 34f, twigEnd.y - leafLen * 0.54f)
             drawLine(
                 color = bambooLight.copy(alpha = 0.70f * alpha),
                 start = twigEnd,
                 end = extraBase,
-                strokeWidth = 1.1f * scale.coerceAtLeast(0.7f),
+                strokeWidth = 1.0f * scale.coerceAtLeast(0.7f),
                 cap = StrokeCap.Round
             )
             drawSingleBambooBlade(
@@ -824,13 +783,13 @@ private fun DrawScope.drawBambooLeafCluster(
 
         // 6. Outer Accent Blade 2 (Lower right tertiary)
         if (leafCount >= 5) {
-            val extraBase2 = Offset(twigEnd.x + scale * 12f, twigEnd.y - scale * 8f)
-            val extraTip2 = Offset(twigEnd.x + scale * 28f, twigEnd.y - leafLen * 0.48f)
+            val extraBase2 = Offset(twigEnd.x + scale * 13f, twigEnd.y - scale * 8f)
+            val extraTip2 = Offset(twigEnd.x + scale * 30f, twigEnd.y - leafLen * 0.50f)
             drawLine(
                 color = bambooLight.copy(alpha = 0.70f * alpha),
                 start = twigEnd,
                 end = extraBase2,
-                strokeWidth = 1.1f * scale.coerceAtLeast(0.7f),
+                strokeWidth = 1.0f * scale.coerceAtLeast(0.7f),
                 cap = StrokeCap.Round
             )
             drawSingleBambooBlade(
@@ -840,7 +799,7 @@ private fun DrawScope.drawBambooLeafCluster(
                 alpha = alpha * 0.78f,
                 leafColor = bambooDark,
                 glowColor = bambooLight,
-                shadowColor = Color(0xFF061A0F),
+                shadowColor = Color(0xFF0C1A08),
                 sheenColor = bambooSheen
             )
         }
@@ -870,11 +829,11 @@ private fun DrawScope.drawSingleBambooBlade(
         moveTo(base.x, base.y)
         cubicTo(
             mid1.x + normX * width * 1.05f, mid1.y + normY * width * 1.05f,
-            mid2.x + normX * width * 0.75f, mid2.y + normY * width * 0.75f,
+            mid2.x + normX * width * 0.70f, mid2.y + normY * width * 0.70f,
             tip.x, tip.y
         )
         cubicTo(
-            mid2.x - normX * width * 0.75f, mid2.y - normY * width * 0.75f,
+            mid2.x - normX * width * 0.70f, mid2.y - normY * width * 0.70f,
             mid1.x - normX * width * 1.05f, mid1.y - normY * width * 1.05f,
             base.x, base.y
         )
@@ -896,18 +855,18 @@ private fun DrawScope.drawSingleBambooBlade(
 
     // Central spine vein line
     drawLine(
-        color = sheenColor.copy(alpha = 0.75f * alpha),
+        color = sheenColor.copy(alpha = 0.70f * alpha),
         start = base,
-        end = Offset(base.x + dx * 0.92f, base.y + dy * 0.92f),
-        strokeWidth = 1.1f,
+        end = Offset(base.x + dx * 0.94f, base.y + dy * 0.94f),
+        strokeWidth = 1.0f,
         cap = StrokeCap.Round
     )
 
     // Subtle edge rim contour
     drawPath(
         path = path,
-        color = glowColor.copy(alpha = 0.40f * alpha),
-        style = Stroke(width = 0.85f)
+        color = glowColor.copy(alpha = 0.35f * alpha),
+        style = Stroke(width = 0.80f)
     )
 }
 
