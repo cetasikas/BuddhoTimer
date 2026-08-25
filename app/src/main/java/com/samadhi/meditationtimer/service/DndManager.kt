@@ -44,7 +44,7 @@ class DndManager(private val context: Context) {
     }
 
     /**
-     * Restores the original Do Not Disturb filter.
+     * Restores the original Do Not Disturb filter (or turns DND completely off if previous was unknown).
      */
     fun restoreDnd(): Boolean {
         if (!isDndAccessGranted || notificationManager == null) {
@@ -52,15 +52,31 @@ class DndManager(private val context: Context) {
             return false
         }
 
-        val originalFilter = previousInterruptionFilter ?: return false
+        val targetFilter = previousInterruptionFilter ?: NotificationManager.INTERRUPTION_FILTER_ALL
         try {
-            notificationManager.setInterruptionFilter(originalFilter)
-            Log.d(TAG, "Restored original DND filter to: $originalFilter")
+            notificationManager.setInterruptionFilter(targetFilter)
+            Log.d(TAG, "Restored DND filter to: $targetFilter (previous was: $previousInterruptionFilter)")
             previousInterruptionFilter = null
             return true
         } catch (e: Exception) {
             Log.e(TAG, "Error restoring DND filter", e)
             return false
+        }
+    }
+
+    /**
+     * Explicitly disables Do Not Disturb mode on the system (allows all interruptions).
+     */
+    fun turnOffDnd(): Boolean {
+        if (!isDndAccessGranted || notificationManager == null) return false
+        return try {
+            notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+            previousInterruptionFilter = null
+            Log.d(TAG, "Explicitly turned off DND (INTERRUPTION_FILTER_ALL)")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error explicitly turning off DND", e)
+            false
         }
     }
 
