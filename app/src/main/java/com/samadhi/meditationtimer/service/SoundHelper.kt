@@ -66,14 +66,12 @@ class SoundHelper(private val context: Context) {
 
     private fun playRawSound(rawResId: Int, soundType: String, scope: CoroutineScope) {
         try {
-            val mediaPlayer = android.media.MediaPlayer.create(context, rawResId)
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build()
+            val mediaPlayer = android.media.MediaPlayer.create(context, rawResId, audioAttributes, 0)
             if (mediaPlayer != null) {
-                mediaPlayer.setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build()
-                )
                 mediaPlayer.setOnCompletionListener { mp ->
                     try {
                         mp.release()
@@ -296,15 +294,20 @@ class SoundHelper(private val context: Context) {
 
     fun triggerGentleVibration() {
         try {
+            val vib = vibrator ?: return
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // Triple gentle meditative wave: wait 0ms, vibrate 120ms, wait 180ms, vibrate 160ms, wait 180ms, vibrate 220ms
+                // Triple gentle meditative wave
                 val timings = longArrayOf(0, 120, 180, 160, 180, 220)
-                val amplitudes = intArrayOf(0, 50, 0, 75, 0, 95)
-                val effect = VibrationEffect.createWaveform(timings, amplitudes, -1)
-                vibrator?.vibrate(effect)
+                val effect = if (vib.hasAmplitudeControl()) {
+                    val amplitudes = intArrayOf(0, 50, 0, 75, 0, 95)
+                    VibrationEffect.createWaveform(timings, amplitudes, -1)
+                } else {
+                    VibrationEffect.createWaveform(timings, -1)
+                }
+                vib.vibrate(effect)
             } else {
                 @Suppress("DEPRECATION")
-                vibrator?.vibrate(longArrayOf(0, 120, 180, 160, 180, 220), -1)
+                vib.vibrate(longArrayOf(0, 120, 180, 160, 180, 220), -1)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error triggering vibration", e)
@@ -313,15 +316,20 @@ class SoundHelper(private val context: Context) {
 
     fun triggerHarmonicIntervalHaptic() {
         try {
+            val vib = vibrator ?: return
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 // Gentle dual-pulse interval ripple
                 val timings = longArrayOf(0, 90, 140, 140)
-                val amplitudes = intArrayOf(0, 45, 0, 70)
-                val effect = VibrationEffect.createWaveform(timings, amplitudes, -1)
-                vibrator?.vibrate(effect)
+                val effect = if (vib.hasAmplitudeControl()) {
+                    val amplitudes = intArrayOf(0, 45, 0, 70)
+                    VibrationEffect.createWaveform(timings, amplitudes, -1)
+                } else {
+                    VibrationEffect.createWaveform(timings, -1)
+                }
+                vib.vibrate(effect)
             } else {
                 @Suppress("DEPRECATION")
-                vibrator?.vibrate(longArrayOf(0, 90, 140, 140), -1)
+                vib.vibrate(longArrayOf(0, 90, 140, 140), -1)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error triggering interval haptic", e)
@@ -330,15 +338,20 @@ class SoundHelper(private val context: Context) {
 
     fun triggerHarmonicCompletionHaptic() {
         try {
+            val vib = vibrator ?: return
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 // Deep resonant 4-stage completion cascade
                 val timings = longArrayOf(0, 150, 120, 200, 120, 260, 150, 320)
-                val amplitudes = intArrayOf(0, 40, 0, 65, 0, 90, 0, 120)
-                val effect = VibrationEffect.createWaveform(timings, amplitudes, -1)
-                vibrator?.vibrate(effect)
+                val effect = if (vib.hasAmplitudeControl()) {
+                    val amplitudes = intArrayOf(0, 40, 0, 65, 0, 90, 0, 120)
+                    VibrationEffect.createWaveform(timings, amplitudes, -1)
+                } else {
+                    VibrationEffect.createWaveform(timings, -1)
+                }
+                vib.vibrate(effect)
             } else {
                 @Suppress("DEPRECATION")
-                vibrator?.vibrate(longArrayOf(0, 150, 120, 200, 120, 260, 150, 320), -1)
+                vib.vibrate(longArrayOf(0, 150, 120, 200, 120, 260, 150, 320), -1)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error triggering completion haptic", e)
@@ -347,11 +360,18 @@ class SoundHelper(private val context: Context) {
 
     fun triggerSoftTouchHaptic() {
         try {
+            val vib = vibrator ?: return
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
+                try {
+                    vib.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
+                } catch (e: Exception) {
+                    vib.vibrate(VibrationEffect.createOneShot(20L, VibrationEffect.DEFAULT_AMPLITUDE))
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vib.vibrate(VibrationEffect.createOneShot(20L, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
                 @Suppress("DEPRECATION")
-                vibrator?.vibrate(30L)
+                vib.vibrate(20L)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error triggering touch haptic", e)

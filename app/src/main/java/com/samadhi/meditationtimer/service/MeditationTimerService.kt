@@ -8,6 +8,7 @@ import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.Log
 import com.samadhi.meditationtimer.MeditationApp
 import com.samadhi.meditationtimer.domain.model.TimerStatus
@@ -45,6 +46,10 @@ class MeditationTimerService : Service() {
     private var isCompletionBellEnabledForSession: Boolean = false
     private var isStartBellEnabledForSession: Boolean = false
     private var hasChimedForOverrun: Boolean = false
+
+    private var sessionActiveStartRealtimeMs: Long = 0L
+    private var baseElapsedSec: Int = 0
+    private var lastMindfulnessChimeInterval: Int = 0
 
     private var soundBellResName: String = SoundHelper.SOUND_TIBETAN_BOWL
 
@@ -117,10 +122,22 @@ class MeditationTimerService : Service() {
                 elapsedSeconds = elapsedSeconds,
                 isOverrun = false
             )
+            updateNotification(
+                timeText = NotificationHelper.formatSeconds(newRemaining),
+                subText = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
+                isPaused = false,
+                isOverrun = false
+            )
         } else if (current is TimerStatus.Paused) {
             _timerStatus.value = current.copy(
                 remainingSeconds = newRemaining,
                 elapsedSeconds = elapsedSeconds,
+                isOverrun = false
+            )
+            updateNotification(
+                timeText = NotificationHelper.formatSeconds(newRemaining),
+                subText = "Paused",
+                isPaused = true,
                 isOverrun = false
             )
         }
@@ -148,8 +165,12 @@ class MeditationTimerService : Service() {
         isCompletionBellEnabledForSession = completionBell
         isStartBellEnabledForSession = isStartBell
         elapsedSeconds = initialElapsedSec
+        baseElapsedSec = initialElapsedSec
         overrunSeconds = 0
         hasChimedForOverrun = false
+        lastMindfulnessChimeInterval = if (mindfulnessIntervalMin > 0 && initialElapsedSec > 0) {
+            initialElapsedSec / (mindfulnessIntervalMin * 60)
+        } else 0
         startTimeEpochMs = if (initialStartTimeMs > 0L) initialStartTimeMs else System.currentTimeMillis()
 
         wakeLockHelper.acquireWakeLock()
@@ -158,7 +179,26 @@ class MeditationTimerService : Service() {
             dndManager.enableDnd()
         }
 
-        // Set initial timer status immediately so UI updates instantaneously without a 1s lag
+        // 1. Immediately promote service to foreground to fulfill Android's startForegroundService contract
+        val initialTimeText = when {
+            prepSec > 0 -> "Starting in $prepSec s"
+            openEnded -> NotificationHelper.formatSeconds(elapsedSeconds)
+            else -> NotificationHelper.formatSeconds((targetSec - elapsedSeconds).coerceAtLeast(0))
+        }
+        val initialSubText = when {
+            prepSec > 0 -> "Take a comfortable posture"
+            openEnded -> "Open-Ended Practice"
+            else -> "Elapsed: ${NotificationHelper.formatSeconds(elapsedSeconds)}"
+        }
+
+        startForegroundServiceWithNotification(
+            timeText = initialTimeText,
+            subText = initialSubText,
+            isPaused = false,
+            isOverrun = false
+        )
+
+        // 2. Set initial timer status immediately so UI updates instantaneously without a 1s lag
         if (prepSec > 0) {
             _timerStatus.value = TimerStatus.Preparing(prepSec)
         } else if (openEnded) {
@@ -177,7 +217,7 @@ class MeditationTimerService : Service() {
 
         timerJob?.cancel()
         timerJob = serviceScope.launch {
-            // 1. Preparation Phase (if any)
+            // 3. Preparation Phase (if any)
             var currentPrep = prepSec
             val countdownHaptics = getSharedPreferences("timer_prefs", Context.MODE_PRIVATE).getBoolean("countdown_haptics", true)
             while (currentPrep > 0 && isActive) {
@@ -204,17 +244,24 @@ class MeditationTimerService : Service() {
                 soundHelper.playChime(soundBellResName, serviceScope)
             }
 
-            // 2. Active Session Loop
+            // 4. Active Session Loop with Monotonic Hardware Clock Reference
+            sessionActiveStartRealtimeMs = SystemClock.elapsedRealtime()
             val intervalSec = mindfulnessIntervalMin * 60
+
             while (isActive) {
-                elapsedSeconds++
+                val currentRealtimeMs = SystemClock.elapsedRealtime()
+                val elapsedSinceStartSec = ((currentRealtimeMs - sessionActiveStartRealtimeMs) / 1000L).toInt()
+                elapsedSeconds = baseElapsedSec + elapsedSinceStartSec
 
                 // Mindfulness Interval Bell (Chimes periodically if enabled)
-                if (intervalSec > 0 && elapsedSeconds > 0 && elapsedSeconds % intervalSec == 0) {
-                    // Only chime if not right at the end of a timed session (which plays the completion chime)
-                    if (isOpenEnded || elapsedSeconds != targetDurationSec) {
-                        soundHelper.triggerHarmonicIntervalHaptic()
-                        soundHelper.playChime(soundBellResName, serviceScope)
+                if (intervalSec > 0 && elapsedSeconds > 0) {
+                    val currentIntervalIndex = elapsedSeconds / intervalSec
+                    if (currentIntervalIndex > lastMindfulnessChimeInterval) {
+                        lastMindfulnessChimeInterval = currentIntervalIndex
+                        if (isOpenEnded || elapsedSeconds != targetDurationSec) {
+                            soundHelper.triggerHarmonicIntervalHaptic()
+                            soundHelper.playChime(soundBellResName, serviceScope)
+                        }
                     }
                 }
 
@@ -294,6 +341,7 @@ class MeditationTimerService : Service() {
         val current = _timerStatus.value
         if (current is TimerStatus.Running) {
             timerJob?.cancel()
+            baseElapsedSec = elapsedSeconds
             _timerStatus.value = TimerStatus.Paused(
                 remainingSeconds = current.remainingSeconds,
                 elapsedSeconds = current.elapsedSeconds,
@@ -313,9 +361,14 @@ class MeditationTimerService : Service() {
         val current = _timerStatus.value
         if (current is TimerStatus.Paused) {
             wakeLockHelper.acquireWakeLock()
+            sessionActiveStartRealtimeMs = SystemClock.elapsedRealtime()
+            val intervalSec = if (prepTimeSec > 0) 0 else 0 // kept for scope clarity
+
             timerJob = serviceScope.launch {
                 while (isActive) {
-                    elapsedSeconds++
+                    val currentRealtimeMs = SystemClock.elapsedRealtime()
+                    val elapsedSinceResumeSec = ((currentRealtimeMs - sessionActiveStartRealtimeMs) / 1000L).toInt()
+                    elapsedSeconds = baseElapsedSec + elapsedSinceResumeSec
 
                     if (isOpenEnded) {
                         _timerStatus.value = TimerStatus.Running(
@@ -443,7 +496,7 @@ class MeditationTimerService : Service() {
             isPaused = isPaused,
             isOverrun = isOverrun
         )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
                 NotificationHelper.NOTIFICATION_ID,
                 notification,
