@@ -223,6 +223,7 @@ fun SettingsScreen(
     var expandedChime by remember { mutableStateOf(false) }
     var expandedInterval by remember { mutableStateOf(false) }
     var expandedDisplay by remember { mutableStateOf(false) }
+    var expandedOverview by remember { mutableStateOf(false) }
     var expandedReminder by remember { mutableStateOf(false) }
     var expandedPrep by remember { mutableStateOf(false) }
     var expandedPermissions by remember { mutableStateOf(false) }
@@ -731,7 +732,49 @@ fun SettingsScreen(
                     }
                 }
 
-                // 5. MEDITATION REMINDERS (OUTSIDE APP)
+                // 5. POST-SESSION OVERVIEW & REFLECTION
+                val overviewSummary = if (config.showSessionOverview) "Show Overview" else "Stay on Meditation Screen"
+                ExpandableSettingsCard(
+                    title = "Post-Session Overview",
+                    icon = Icons.Default.AutoAwesome,
+                    summaryValue = overviewSummary,
+                    isExpanded = expandedOverview,
+                    onToggle = { expandedOverview = !expandedOverview }
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                Text("Show Session Overview Screen", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text(
+                                    if (config.showSessionOverview)
+                                        "Displays wisdom quote, mood rating, and reflection journal when practice completes."
+                                    else
+                                        "Sessions auto-save in the background and you remain in the serene meditation screen until you choose to exit.",
+                                    fontSize = 11.sp,
+                                    color = ZenTextSecondary
+                                )
+                            }
+                            Switch(
+                                checked = config.showSessionOverview,
+                                onCheckedChange = { timerViewModel.toggleShowSessionOverview(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ZenObsidian,
+                                    checkedTrackColor = currentTheme.primaryLight,
+                                    checkedBorderColor = currentTheme.primary,
+                                    uncheckedThumbColor = Color(0xFFCBD5E1),
+                                    uncheckedTrackColor = Color(0xFF1E293B),
+                                    uncheckedBorderColor = Color(0xFF475569)
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // 6. MEDITATION REMINDERS (OUTSIDE APP)
                 val reminderSummary = if (!reminderEnabled) "Off" else if (reminderMode == "random") "3x Daily (Random)" else if (reminderMode == "interval") "Every ${reminderIntervalHours}h" else "${if (reminderHour == 0) 12 else if (reminderHour <= 12) reminderHour else reminderHour - 12}${if (reminderHour < 12) "AM" else "PM"}"
                 ExpandableSettingsCard(
                     title = "Meditation Reminders",

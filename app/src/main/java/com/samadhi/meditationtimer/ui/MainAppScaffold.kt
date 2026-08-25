@@ -59,6 +59,7 @@ fun MainAppScaffold() {
     val settingsViewModel: SettingsViewModel = viewModel()
 
     val timerStatus by timerViewModel.timerStatus.collectAsState()
+    val timerConfig by timerViewModel.config.collectAsState()
     var completedSessionData by remember { mutableStateOf<TimerStatus.Completed?>(null) }
 
     val prefs = remember { context.getSharedPreferences("buddho_prefs", Context.MODE_PRIVATE) }
@@ -75,7 +76,7 @@ fun MainAppScaffold() {
     val currentRoute = navBackStackEntry?.destination?.route
 
     // Synchronize UI with background service state
-    LaunchedEffect(timerStatus) {
+    LaunchedEffect(timerStatus, timerConfig.showSessionOverview) {
         when (val status = timerStatus) {
             is TimerStatus.Preparing, is TimerStatus.Running, is TimerStatus.Paused -> {
                 if (currentRoute != Screen.ActiveSession.route) {
@@ -86,8 +87,23 @@ fun MainAppScaffold() {
             }
             is TimerStatus.Completed -> {
                 completedSessionData = status
-                navController.navigate(Screen.Summary.route) {
-                    popUpTo(Screen.Timer.route)
+                if (timerConfig.showSessionOverview) {
+                    navController.navigate(Screen.Summary.route) {
+                        popUpTo(Screen.Timer.route)
+                    }
+                } else {
+                    // Auto-save completed session in background and stay on active screen in Completed state
+                    val session = com.samadhi.meditationtimer.domain.model.MeditationSession(
+                        startTimeEpochMs = status.startTimeEpochMs,
+                        completedTimeEpochMs = status.completedTimeEpochMs,
+                        targetDurationSec = status.targetDurationSec,
+                        actualDurationSec = status.actualDurationSec,
+                        overrunSec = status.overrunSec,
+                        rating = 3,
+                        notesMarkdown = "",
+                        completedSuccessfully = true
+                    )
+                    historyViewModel.saveSession(session)
                 }
             }
             is TimerStatus.Idle -> {
@@ -189,8 +205,15 @@ fun MainAppScaffold() {
                                 if (status is TimerStatus.Completed) {
                                     completedSessionData = status
                                 }
-                                navController.navigate(Screen.Summary.route) {
-                                    popUpTo(Screen.Timer.route)
+                                if (timerConfig.showSessionOverview) {
+                                    navController.navigate(Screen.Summary.route) {
+                                        popUpTo(Screen.Timer.route)
+                                    }
+                                } else {
+                                    MeditationTimerService.resetStatus()
+                                    navController.navigate(Screen.Timer.route) {
+                                        popUpTo(Screen.Timer.route) { inclusive = true }
+                                    }
                                 }
                             },
                             onSessionCancelled = {
@@ -208,8 +231,22 @@ fun MainAppScaffold() {
                             },
                             onSessionCompleted = { completedStatus ->
                                 completedSessionData = completedStatus
-                                navController.navigate(Screen.Summary.route) {
-                                    popUpTo(Screen.Timer.route)
+                                if (timerConfig.showSessionOverview) {
+                                    navController.navigate(Screen.Summary.route) {
+                                        popUpTo(Screen.Timer.route)
+                                    }
+                                } else {
+                                    val session = com.samadhi.meditationtimer.domain.model.MeditationSession(
+                                        startTimeEpochMs = completedStatus.startTimeEpochMs,
+                                        completedTimeEpochMs = completedStatus.completedTimeEpochMs,
+                                        targetDurationSec = completedStatus.targetDurationSec,
+                                        actualDurationSec = completedStatus.actualDurationSec,
+                                        overrunSec = completedStatus.overrunSec,
+                                        rating = 3,
+                                        notesMarkdown = "",
+                                        completedSuccessfully = true
+                                    )
+                                    historyViewModel.saveSession(session)
                                 }
                             }
                         )

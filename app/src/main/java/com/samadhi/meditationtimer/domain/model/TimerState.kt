@@ -30,7 +30,8 @@ data class TimerConfiguration(
     val isBoxBreathingMode: Boolean = false,
     val isCountdownHapticsEnabled: Boolean = true,
     val isCompletionBellEnabled: Boolean = true,
-    val isStartBellEnabled: Boolean = false
+    val isStartBellEnabled: Boolean = false,
+    val showSessionOverview: Boolean = true
 ) {
     val targetDurationSeconds: Int
         get() = if (isOpenEnded) 0 else targetDurationMinutes * 60

@@ -78,7 +78,8 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             isBoxBreathingMode = prefs.getBoolean("box_breathing_mode", false),
             isCountdownHapticsEnabled = prefs.getBoolean("countdown_haptics", true),
             isCompletionBellEnabled = prefs.getBoolean("completion_bell_enabled", true),
-            isStartBellEnabled = prefs.getBoolean("start_bell_enabled", false)
+            isStartBellEnabled = prefs.getBoolean("start_bell_enabled", false),
+            showSessionOverview = prefs.getBoolean("show_session_overview", true)
         )
     }
 
@@ -100,8 +101,13 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putBoolean("countdown_haptics", newConfig.isCountdownHapticsEnabled)
             putBoolean("completion_bell_enabled", newConfig.isCompletionBellEnabled)
             putBoolean("start_bell_enabled", newConfig.isStartBellEnabled)
+            putBoolean("show_session_overview", newConfig.showSessionOverview)
             apply()
         }
+    }
+
+    fun toggleShowSessionOverview(enabled: Boolean) {
+        saveConfig(_config.value.copy(showSessionOverview = enabled))
     }
 
     fun updateDurationMinutes(minutes: Int) {

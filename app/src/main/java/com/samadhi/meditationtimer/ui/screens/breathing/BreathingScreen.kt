@@ -164,6 +164,7 @@ fun BreathingScreen(
 
     val prepSec = remember { prefs.getInt("prep_time_sec", 5) }
     val isCountdownHaptics = remember { prefs.getBoolean("countdown_haptics", true) }
+    val showSessionOverview = remember { prefs.getBoolean("show_session_overview", true) }
     var isPreparing by remember { mutableStateOf(prepSec > 0) }
     var prepRemaining by remember { mutableIntStateOf(prepSec) }
 
@@ -689,7 +690,13 @@ fun BreathingScreen(
 
                                     if (isSessionComplete) {
                                         Button(
-                                            onClick = { finishSession() },
+                                            onClick = {
+                                                if (showSessionOverview) {
+                                                    finishSession()
+                                                } else {
+                                                    onClose()
+                                                }
+                                            },
                                             modifier = Modifier.height(42.dp),
                                             shape = RoundedCornerShape(21.dp),
                                             colors = ButtonDefaults.buttonColors(
@@ -699,7 +706,11 @@ fun BreathingScreen(
                                         ) {
                                             Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(16.dp))
                                             Spacer(modifier = Modifier.width(6.dp))
-                                            Text("Save & Finish", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                            Text(
+                                                text = if (showSessionOverview) "Save & Finish" else "Done",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.sp
+                                            )
                                         }
 
                                         OutlinedButton(
@@ -1121,7 +1132,13 @@ fun BreathingScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Button(
-                                        onClick = { finishSession() },
+                                        onClick = {
+                                            if (showSessionOverview) {
+                                                finishSession()
+                                            } else {
+                                                onClose()
+                                            }
+                                        },
                                         modifier = Modifier
                                             .weight(1.2f)
                                             .height(48.dp),
@@ -1133,7 +1150,11 @@ fun BreathingScreen(
                                     ) {
                                         Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(18.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
-                                        Text("Save & Finish", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        Text(
+                                            text = if (showSessionOverview) "Save & Finish" else "Done",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp
+                                        )
                                     }
 
                                     OutlinedButton(

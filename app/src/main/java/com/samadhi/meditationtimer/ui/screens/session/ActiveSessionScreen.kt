@@ -65,6 +65,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.samadhi.meditationtimer.domain.model.TimerStatus
+import com.samadhi.meditationtimer.service.MeditationTimerService
 import com.samadhi.meditationtimer.service.NotificationHelper
 import com.samadhi.meditationtimer.ui.components.CircularTimerProgress
 import com.samadhi.meditationtimer.ui.screens.timer.TimerViewModel
@@ -145,9 +146,11 @@ fun ActiveSessionScreen(
         }
     }
 
-    LaunchedEffect(timerStatus) {
+    LaunchedEffect(timerStatus, config.showSessionOverview) {
         if (timerStatus is TimerStatus.Completed) {
-            onSessionCompleted()
+            if (config.showSessionOverview) {
+                onSessionCompleted()
+            }
         } else if (timerStatus is TimerStatus.Idle) {
             onSessionCancelled()
         }
@@ -894,7 +897,19 @@ fun ActiveSessionScreen(
 
                                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                         Button(
-                                            onClick = { onSessionCompleted() },
+                                            onClick = {
+                                                if (config.showSessionOverview) {
+                                                    onSessionCompleted()
+                                                } else {
+                                                    if (!isBlowingAway) {
+                                                        pendingExitAction = {
+                                                            MeditationTimerService.resetStatus()
+                                                            onSessionCancelled()
+                                                        }
+                                                        isBlowingAway = true
+                                                    }
+                                                }
+                                            },
                                             modifier = Modifier
                                                 .height(48.dp)
                                                 .clip(RoundedCornerShape(24.dp)),
@@ -905,7 +920,11 @@ fun ActiveSessionScreen(
                                         ) {
                                             Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(18.dp))
                                             Spacer(modifier = Modifier.width(6.dp))
-                                            Text("Save & Reflect", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                            Text(
+                                                text = if (config.showSessionOverview) "Save & Reflect" else "Done",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp
+                                            )
                                         }
 
                                         OutlinedButton(
@@ -993,7 +1012,19 @@ fun ActiveSessionScreen(
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     Button(
-                                        onClick = { onSessionCompleted() },
+                                        onClick = {
+                                            if (config.showSessionOverview) {
+                                                onSessionCompleted()
+                                            } else {
+                                                if (!isBlowingAway) {
+                                                    pendingExitAction = {
+                                                        MeditationTimerService.resetStatus()
+                                                        onSessionCancelled()
+                                                    }
+                                                    isBlowingAway = true
+                                                }
+                                            }
+                                        },
                                         modifier = Modifier
                                             .fillMaxWidth(0.75f)
                                             .height(54.dp)
@@ -1006,7 +1037,7 @@ fun ActiveSessionScreen(
                                         Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(20.dp))
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = "Save & Reflect",
+                                            text = if (config.showSessionOverview) "Save & Reflect" else "Done",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 16.sp
                                         )
