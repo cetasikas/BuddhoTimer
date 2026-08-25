@@ -338,6 +338,21 @@ private fun DrawScope.drawZenEnsoGarland(
  * Living Bamboo Culm (Stalk) that grows clockwise into a complete Ensō circle,
  * with bamboo node joints and organic leaf offshoots sprouting out along the stalk.
  */
+// =========================================================================
+// 1. MOONLIT BAMBOO GROWING STALK ENSŌ & LUSH SPRAY ENGINE
+// =========================================================================
+
+private data class BambooNodeSprout(
+    val angleDeg: Float,
+    val isOutward: Boolean,
+    val leafCount: Int,
+    val swayOffset: Float
+)
+
+/**
+ * Living Bamboo Culm (Stalk) that grows clockwise into a complete Ensō circle,
+ * with a feathered fading growing tip, bamboo node joints, and lush sprouting leaf offshoots.
+ */
 private fun DrawScope.drawGrowingBambooStalkEnso(
     center: Offset,
     baseRadius: Float,
@@ -363,10 +378,11 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
         BreathPhase.HOLD_EMPTY -> 0.0f
     }
 
-    val totalSegments = 10
-    val stepAngle = 360f / totalSegments.toFloat()
+    val totalSegments = 16
+    val stepAngle = 360f / totalSegments.toFloat() // 22.5° per node segment
     val totalSweep = growthFraction * 360f
     val stalkWidth = minDim * 0.024f
+    val fadeAngleSpan = 30f // Tip fading feather length in degrees
 
     // 1. Draw Central Core Aura when Ensō is holding or blooming
     if (growthFraction > 0.05f) {
@@ -392,76 +408,104 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
         )
     }
 
-    // 2. Draw the growing segmented bamboo culm (stalk)
+    // 2. Draw the growing segmented bamboo culm (stalk) with soft feathered tip fading
     if (totalSweep > 0.5f && overallAlpha > 0.01f) {
         val topLeft = Offset(center.x - baseRadius, center.y - baseRadius)
         val arcSize = androidx.compose.ui.geometry.Size(baseRadius * 2f, baseRadius * 2f)
 
-        // Draw segmented bamboo stalk arcs
         for (i in 0 until totalSegments) {
             val segStartAngle = -90f + (i * stepAngle)
             val segSweepMax = stepAngle
             val segProgressAngle = (totalSweep - (i * stepAngle)).coerceIn(0f, segSweepMax)
 
             if (segProgressAngle > 0.1f) {
-                // Background dark bamboo culm body
-                drawArc(
-                    color = Color(0xFF052219).copy(alpha = 0.90f * overallAlpha),
-                    startAngle = segStartAngle,
-                    sweepAngle = segProgressAngle,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = arcSize,
-                    style = Stroke(width = stalkWidth * 1.15f, cap = StrokeCap.Round)
-                )
+                // Render stalk in micro-slices for buttery smooth fading along the growing tip
+                val subStep = 3.5f
+                var currentAngle = 0f
+                while (currentAngle < segProgressAngle) {
+                    val subSweep = minOf(subStep, segProgressAngle - currentAngle)
+                    val angleFromStart = (i * stepAngle) + currentAngle + subSweep
+                    val distToTip = (totalSweep - angleFromStart).coerceAtLeast(0f)
 
-                // Foreground vibrant teal-green bamboo culm gradient
-                drawArc(
-                    brush = Brush.sweepGradient(
-                        colors = listOf(primaryDark, primary, primaryLight, primary),
-                        center = center
-                    ),
-                    startAngle = segStartAngle,
-                    sweepAngle = segProgressAngle,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = arcSize,
-                    style = Stroke(width = stalkWidth * 0.85f, cap = StrokeCap.Round)
-                )
+                    val sliceAlpha = if (currentPhase == BreathPhase.INHALE && totalSweep < 355f && distToTip < fadeAngleSpan) {
+                        (distToTip / fadeAngleSpan).coerceIn(0.08f, 1.0f)
+                    } else {
+                        1.0f
+                    } * overallAlpha
 
-                // Delicate bamboo culm highlight reflection line
-                drawArc(
-                    color = primaryLight.copy(alpha = 0.65f * overallAlpha),
-                    startAngle = segStartAngle + 1f,
-                    sweepAngle = (segProgressAngle - 2f).coerceAtLeast(0.1f),
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = arcSize,
-                    style = Stroke(width = stalkWidth * 0.28f, cap = StrokeCap.Round)
-                )
+                    val sliceWidth = if (currentPhase == BreathPhase.INHALE && totalSweep < 355f && distToTip < fadeAngleSpan) {
+                        stalkWidth * (0.50f + 0.50f * (distToTip / fadeAngleSpan))
+                    } else {
+                        stalkWidth
+                    }
+
+                    // Background dark bamboo culm body
+                    drawArc(
+                        color = Color(0xFF052219).copy(alpha = 0.90f * sliceAlpha),
+                        startAngle = segStartAngle + currentAngle,
+                        sweepAngle = subSweep + 0.5f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = sliceWidth * 1.15f, cap = StrokeCap.Round)
+                    )
+
+                    // Foreground vibrant teal-green bamboo culm gradient
+                    drawArc(
+                        brush = Brush.sweepGradient(
+                            colors = listOf(primaryDark, primary, primaryLight, primary),
+                            center = center
+                        ),
+                        startAngle = segStartAngle + currentAngle,
+                        sweepAngle = subSweep + 0.5f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = sliceWidth * 0.85f, cap = StrokeCap.Round)
+                    )
+
+                    // Delicate bamboo culm highlight reflection line
+                    drawArc(
+                        color = primaryLight.copy(alpha = 0.65f * sliceAlpha),
+                        startAngle = segStartAngle + currentAngle + 0.5f,
+                        sweepAngle = (subSweep - 0.5f).coerceAtLeast(0.1f),
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = Stroke(width = sliceWidth * 0.28f, cap = StrokeCap.Round)
+                    )
+
+                    currentAngle += subStep
+                }
             }
         }
     }
 
-    // 3. Draw Bamboo Node Joints & Sprouting Leaf Offshoots
-    // Data for the 10 nodes around the circle (angleOffset, isOutward, branchSwayOffset)
+    // 3. Draw Bamboo Node Joints & Lush Sprouting Leaf Offshoots (16 nodes around circle)
     val nodeConfigs = listOf(
-        Triple(0f, true, 0f),      // Top apex (Node 0 - Resting sprout on Hold Empty)
-        Triple(36f, false, 0.8f),  // Node 1 - Inward
-        Triple(72f, true, 1.4f),   // Node 2 - Outward
-        Triple(108f, true, 2.1f),  // Node 3 - Outward twin
-        Triple(144f, false, 0.4f), // Node 4 - Inward
-        Triple(180f, true, 1.9f),  // Node 5 - Bottom Outward
-        Triple(216f, false, 2.7f), // Node 6 - Inward
-        Triple(252f, true, 0.6f),  // Node 7 - Outward
-        Triple(288f, true, 1.2f),  // Node 8 - Outward twin
-        Triple(324f, false, 2.3f)  // Node 9 - Inward
+        BambooNodeSprout(0f, true, 3, 0f),        // Node 0 - Top apex sprout
+        BambooNodeSprout(22.5f, false, 2, 0.8f),  // Node 1 - Inward twin
+        BambooNodeSprout(45f, true, 3, 1.4f),     // Node 2 - Outward triplet
+        BambooNodeSprout(67.5f, true, 2, 2.1f),   // Node 3 - Outward twin
+        BambooNodeSprout(90f, false, 3, 0.5f),    // Node 4 - Inward triplet (Right side)
+        BambooNodeSprout(112.5f, true, 4, 1.9f),  // Node 5 - Outward lush 4-leaf cluster
+        BambooNodeSprout(135f, false, 2, 0.4f),   // Node 6 - Inward twin
+        BambooNodeSprout(157.5f, true, 3, 2.7f),  // Node 7 - Outward triplet
+        BambooNodeSprout(180f, true, 4, 1.2f),    // Node 8 - Bottom lush cluster
+        BambooNodeSprout(202.5f, false, 2, 0.9f), // Node 9 - Inward twin
+        BambooNodeSprout(225f, true, 3, 1.6f),    // Node 10 - Outward triplet
+        BambooNodeSprout(247.5f, false, 3, 2.3f), // Node 11 - Inward triplet (Left side)
+        BambooNodeSprout(270f, true, 4, 0.7f),    // Node 12 - Outward lush 4-leaf cluster
+        BambooNodeSprout(292.5f, false, 2, 1.5f), // Node 13 - Inward twin
+        BambooNodeSprout(315f, true, 3, 2.2f),    // Node 14 - Outward triplet
+        BambooNodeSprout(337.5f, false, 2, 0.6f)  // Node 15 - Inward twin
     )
 
     for ((index, config) in nodeConfigs.withIndex()) {
-        val nodeDeg = -90f + config.first
-        val isOutward = config.second
-        val swayOffset = config.third
+        val nodeDeg = -90f + config.angleDeg
+        val isOutward = config.isOutward
+        val swayOffset = config.swayOffset
+        val leafCount = config.leafCount
         val nodeFraction = index.toFloat() / totalSegments.toFloat()
         val isTopSprout = (index == 0)
 
@@ -476,17 +520,17 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
                     sproutScale = 1.0f
                 } else {
                     if (phaseProgress >= nodeFraction) {
-                        val progress = ((phaseProgress - nodeFraction) / 0.10f).coerceIn(0f, 1f)
-                        nodeAlpha = progress
-                        sproutScale = 0.2f + 0.8f * progress
-                        swayAngle = (1f - progress) * (if (isOutward) 20f else -20f)
+                        val progress = ((phaseProgress - nodeFraction) / 0.12f).coerceIn(0f, 1f)
+                        nodeAlpha = progress * progress // Soft ease-in fade
+                        sproutScale = 0.25f + 0.75f * progress
+                        swayAngle = (1f - progress) * (if (isOutward) 18f else -18f)
                     }
                 }
             }
             BreathPhase.HOLD_FULL -> {
                 nodeAlpha = 1.0f
-                sproutScale = 1.0f + 0.03f * sin(animClockSec * 2.0f + swayOffset)
-                swayAngle = sin(animClockSec * 1.8f + swayOffset) * 5f
+                sproutScale = 1.0f + 0.035f * sin(animClockSec * 2.0f + swayOffset)
+                swayAngle = sin(animClockSec * 1.8f + swayOffset) * 5.5f
             }
             BreathPhase.EXHALE -> {
                 if (isTopSprout) {
@@ -544,8 +588,8 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
 
         // Tangent rotation along the circle path
         val tangentDeg = nodeDeg + 90f
-        val branchAngle = tangentDeg + (if (isOutward) 40f else -45f) + swayAngle
-        val leafClusterScale = (minDim / 360f) * sproutScale * (if (index % 2 == 0) 1.05f else 0.90f)
+        val branchAngle = tangentDeg + (if (isOutward) 38f else -42f) + swayAngle
+        val leafClusterScale = (minDim / 360f) * sproutScale * (if (index % 2 == 0) 1.05f else 0.92f)
 
         // If top sprout during HOLD_EMPTY, draw peaceful glowing aura around the bud
         if (isTopSprout && currentPhase == BreathPhase.HOLD_EMPTY) {
@@ -570,8 +614,7 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
             branchAngle = branchAngle,
             scale = leafClusterScale,
             alpha = nodeAlpha,
-            hasTwinLeaf = (index % 2 == 0 || index == 3 || index == 8),
-            hasTripleLeaf = (index == 0 || index == 2 || index == 5),
+            leafCount = leafCount,
             primary = primary,
             primaryLight = primaryLight,
             primaryDark = primaryDark
@@ -604,23 +647,22 @@ private fun DrawScope.drawGrowingBambooStalkEnso(
 }
 
 /**
- * Draws an organic bamboo offshoot twig with sprouting bamboo leaves (1, 2, or 3 leaves).
+ * Draws an organic bamboo offshoot twig with sprouting bamboo leaves (2, 3, or 4 leaves).
  */
 private fun DrawScope.drawSproutedBambooSpray(
     nodeCenter: Offset,
     branchAngle: Float,
     scale: Float,
     alpha: Float,
-    hasTwinLeaf: Boolean,
-    hasTripleLeaf: Boolean,
+    leafCount: Int,
     primary: Color,
     primaryLight: Color,
     primaryDark: Color
 ) {
     rotate(degrees = branchAngle, pivot = nodeCenter) {
-        val stalkLength = scale * 18f
-        val leafLength = scale * 34f
-        val leafWidth = scale * 7.5f
+        val stalkLength = scale * 19f
+        val leafLength = scale * 35f
+        val leafWidth = scale * 7.8f
 
         val twigEnd = Offset(nodeCenter.x, nodeCenter.y - stalkLength)
 
@@ -649,44 +691,65 @@ private fun DrawScope.drawSproutedBambooSpray(
             glowColor = primaryLight
         )
 
-        // 3. Side Offshoot Left (Twin Leaf)
-        if (hasTwinLeaf || hasTripleLeaf) {
+        // 3. Side Offshoot Left (Leaf 2)
+        if (leafCount >= 2) {
             val leftStemEnd = Offset(twigEnd.x - scale * 6f, twigEnd.y - scale * 4f)
-            val leftTip = Offset(twigEnd.x - scale * 18f, twigEnd.y - leafLength * 0.72f)
+            val leftTip = Offset(twigEnd.x - scale * 19f, twigEnd.y - leafLength * 0.72f)
             drawLine(
                 color = primaryLight.copy(alpha = 0.70f * alpha),
                 start = twigEnd,
                 end = leftStemEnd,
-                strokeWidth = 1.0f * scale.coerceAtLeast(0.7f),
+                strokeWidth = 1.1f * scale.coerceAtLeast(0.7f),
                 cap = StrokeCap.Round
             )
             drawSingleBambooBlade(
                 tip = leftTip,
                 base = leftStemEnd,
                 width = leafWidth * 0.72f,
-                alpha = alpha * 0.85f,
+                alpha = alpha * 0.88f,
                 leafColor = primaryDark,
                 glowColor = primaryLight
             )
         }
 
-        // 4. Side Offshoot Right (Triple Leaf)
-        if (hasTripleLeaf) {
+        // 4. Side Offshoot Right (Leaf 3)
+        if (leafCount >= 3) {
             val rightStemEnd = Offset(twigEnd.x + scale * 6f, twigEnd.y - scale * 3f)
-            val rightTip = Offset(twigEnd.x + scale * 16f, twigEnd.y - leafLength * 0.65f)
+            val rightTip = Offset(twigEnd.x + scale * 17f, twigEnd.y - leafLength * 0.66f)
             drawLine(
                 color = primaryLight.copy(alpha = 0.70f * alpha),
                 start = twigEnd,
                 end = rightStemEnd,
-                strokeWidth = 1.0f * scale.coerceAtLeast(0.7f),
+                strokeWidth = 1.1f * scale.coerceAtLeast(0.7f),
                 cap = StrokeCap.Round
             )
             drawSingleBambooBlade(
                 tip = rightTip,
                 base = rightStemEnd,
-                width = leafWidth * 0.65f,
-                alpha = alpha * 0.80f,
+                width = leafWidth * 0.66f,
+                alpha = alpha * 0.82f,
                 leafColor = primary,
+                glowColor = primaryLight
+            )
+        }
+
+        // 5. Outer Accent Leaf (Leaf 4)
+        if (leafCount >= 4) {
+            val extraStemEnd = Offset(twigEnd.x - scale * 10f, twigEnd.y - scale * 7f)
+            val extraTip = Offset(twigEnd.x - scale * 26f, twigEnd.y - leafLength * 0.50f)
+            drawLine(
+                color = primaryLight.copy(alpha = 0.65f * alpha),
+                start = twigEnd,
+                end = extraStemEnd,
+                strokeWidth = 0.9f * scale.coerceAtLeast(0.7f),
+                cap = StrokeCap.Round
+            )
+            drawSingleBambooBlade(
+                tip = extraTip,
+                base = extraStemEnd,
+                width = leafWidth * 0.55f,
+                alpha = alpha * 0.75f,
+                leafColor = primaryDark,
                 glowColor = primaryLight
             )
         }
