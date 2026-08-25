@@ -154,6 +154,12 @@ class NotificationHelper(private val context: Context) {
     }
 
     fun showCompletionNotification(title: String, message: String) {
+        // If the user is actively viewing the app (e.g. on the overview/summary screen),
+        // do not post a redundant status-bar notification.
+        if (MainActivity.isAppInForeground) {
+            return
+        }
+
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }

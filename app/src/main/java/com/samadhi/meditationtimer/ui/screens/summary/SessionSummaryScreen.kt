@@ -78,8 +78,6 @@ import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 fun SessionSummaryScreen(
     completedStatus: TimerStatus.Completed?,
     onSaveSession: (MeditationSession) -> Unit,
-    onContinueMeditatingCombined: (initialElapsedSec: Int, initialStartTimeMs: Long) -> Unit = { _, _ -> },
-    onContinueMeditatingFresh: () -> Unit = {},
     onDiscard: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -98,7 +96,6 @@ fun SessionSummaryScreen(
     Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
         var isBlowingAway by remember { mutableStateOf(false) }
         var pendingExitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
-        var showContinueDialog by remember { mutableStateOf(false) }
 
         // Leaves Effect: Forest floor stacking for meditation sessions; ambient drifting leaves for Box Breathing
         val isMeditationSession = !completedStatus.isBoxBreathing
@@ -355,46 +352,12 @@ fun SessionSummaryScreen(
                 }
             }
 
-            // Actions: Continue Meditating, Save Reflection & Discard
+            // Actions: Save Reflection & Discard
             Column(
                 modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Primary Action: Continue Meditating (Triggers choice dialog)
                 Button(
-                    onClick = {
-                        if (!isBlowingAway) {
-                            showContinueDialog = true
-                        }
-                    },
-                    enabled = !isBlowingAway,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = currentTheme.primary,
-                        contentColor = ZenObsidian
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        tint = ZenObsidian,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Continue Meditating",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-
-                // Save Reflection (Complete & Return to Home)
-                OutlinedButton(
                     onClick = {
                         if (!isBlowingAway) {
                             val session = MeditationSession(
@@ -414,22 +377,26 @@ fun SessionSummaryScreen(
                     enabled = !isBlowingAway,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(44.dp),
+                        .height(48.dp),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
-                    border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.6f))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = currentTheme.primary,
+                        contentColor = ZenObsidian
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
-                        tint = currentTheme.primaryLight,
-                        modifier = Modifier.size(17.dp)
+                        tint = ZenObsidian,
+                        modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Save Reflection & Done",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
+                        text = "Save Reflection",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     )
                 }
 
@@ -443,7 +410,7 @@ fun SessionSummaryScreen(
                     enabled = !isBlowingAway,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(40.dp),
+                        .height(42.dp),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 4.dp, horizontal = 12.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
@@ -457,87 +424,6 @@ fun SessionSummaryScreen(
                 }
             }
             Spacer(modifier = Modifier.height(6.dp))
-        }
-
-        if (showContinueDialog) {
-            AlertDialog(
-                onDismissRequest = { showContinueDialog = false },
-                title = {
-                    Text(
-                        text = "Continue Practice",
-                        color = currentTheme.primaryLight,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                },
-                text = {
-                    Text(
-                        text = "How would you like to continue your meditation session?",
-                        color = ZenTextSecondary,
-                        fontSize = 14.sp,
-                        lineHeight = 20.sp
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            showContinueDialog = false
-                            pendingExitAction = {
-                                onContinueMeditatingCombined(
-                                    completedStatus.actualDurationSec,
-                                    completedStatus.startTimeEpochMs
-                                )
-                            }
-                            isBlowingAway = true
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = currentTheme.primary,
-                            contentColor = ZenObsidian
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Add to This Session", fontWeight = FontWeight.Bold)
-                    }
-                },
-                dismissButton = {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = {
-                                showContinueDialog = false
-                                val session = MeditationSession(
-                                    startTimeEpochMs = completedStatus.startTimeEpochMs,
-                                    completedTimeEpochMs = completedStatus.completedTimeEpochMs,
-                                    targetDurationSec = completedStatus.targetDurationSec,
-                                    actualDurationSec = completedStatus.actualDurationSec,
-                                    overrunSec = completedStatus.overrunSec,
-                                    rating = selectedMood,
-                                    notesMarkdown = notesValue.text,
-                                    completedSuccessfully = true
-                                )
-                                onSaveSession(session)
-                                pendingExitAction = { onContinueMeditatingFresh() }
-                                isBlowingAway = true
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
-                            border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
-                        ) {
-                            Text("Save & Start Fresh")
-                        }
-
-                        OutlinedButton(
-                            onClick = { showContinueDialog = false },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
-                            border = BorderStroke(1.dp, ZenBorder)
-                        ) {
-                            Text("Cancel")
-                        }
-                    }
-                },
-                containerColor = ZenSurface,
-                shape = RoundedCornerShape(20.dp)
-            )
         }
     }
 }
