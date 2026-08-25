@@ -141,13 +141,22 @@ class MeditationTimerService : Service() {
             dndManager.enableDnd()
         }
 
-        // Start Foreground immediately with initial notification
-        startForegroundServiceWithNotification(
-            timeText = if (prepSec > 0) "Preparing in $prepSec s" else NotificationHelper.formatSeconds(targetSec),
-            subText = if (openEnded) "Open-Ended" else "Target: ${targetSec / 60}m",
-            isPaused = false,
-            isOverrun = false
-        )
+        // Set initial timer status immediately so UI updates instantaneously without a 1s lag
+        if (prepSec > 0) {
+            _timerStatus.value = TimerStatus.Preparing(prepSec)
+        } else if (openEnded) {
+            _timerStatus.value = TimerStatus.Running(
+                remainingSeconds = 0,
+                elapsedSeconds = elapsedSeconds,
+                isOverrun = false
+            )
+        } else {
+            _timerStatus.value = TimerStatus.Running(
+                remainingSeconds = (targetSec - elapsedSeconds).coerceAtLeast(0),
+                elapsedSeconds = elapsedSeconds,
+                isOverrun = false
+            )
+        }
 
         timerJob?.cancel()
         timerJob = serviceScope.launch {

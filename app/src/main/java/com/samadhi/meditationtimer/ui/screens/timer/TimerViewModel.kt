@@ -232,6 +232,30 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun continueSessionWithTarget(targetSec: Int, initialElapsedSec: Int, initialStartTimeMs: Long) {
+        val currentConfig = _config.value
+        val intent = Intent(context, MeditationTimerService::class.java).apply {
+            action = MeditationTimerService.ACTION_START
+            putExtra(MeditationTimerService.EXTRA_TARGET_SEC, targetSec)
+            putExtra(MeditationTimerService.EXTRA_PREP_SEC, 0)
+            putExtra(MeditationTimerService.EXTRA_AUTO_DND, currentConfig.isAutoDndEnabled && _isDndGranted.value)
+            putExtra(MeditationTimerService.EXTRA_OPEN_ENDED, false)
+            putExtra(MeditationTimerService.EXTRA_OVERRUN_ENABLED, currentConfig.isOverrunEnabled)
+            putExtra(MeditationTimerService.EXTRA_SOUND_BELL, currentConfig.soundBellResName)
+            putExtra(MeditationTimerService.EXTRA_MINDFULNESS_INTERVAL_MIN, currentConfig.mindfulnessIntervalMinutes)
+            putExtra(MeditationTimerService.EXTRA_COMPLETION_BELL, currentConfig.isCompletionBellEnabled)
+            putExtra(MeditationTimerService.EXTRA_START_BELL, false)
+            putExtra(MeditationTimerService.EXTRA_INITIAL_ELAPSED_SEC, initialElapsedSec)
+            putExtra(MeditationTimerService.EXTRA_INITIAL_START_TIME_MS, initialStartTimeMs)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+    }
+
     fun adjustSessionTime(deltaSec: Int) {
         val intent = Intent(context, MeditationTimerService::class.java).apply {
             action = MeditationTimerService.ACTION_ADJUST_TIME

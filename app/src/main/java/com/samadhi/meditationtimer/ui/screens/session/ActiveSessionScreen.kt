@@ -928,7 +928,12 @@ fun ActiveSessionScreen(
                                         }
 
                                         OutlinedButton(
-                                            onClick = { viewModel.continueSession() },
+                                            onClick = {
+                                                viewModel.continueSession(
+                                                    initialElapsedSec = actualSec,
+                                                    initialStartTimeMs = status.startTimeEpochMs
+                                                )
+                                            },
                                             modifier = Modifier
                                                 .height(48.dp)
                                                 .clip(RoundedCornerShape(24.dp)),
@@ -963,7 +968,7 @@ fun ActiveSessionScreen(
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(36.dp))
+                                Spacer(modifier = Modifier.height(30.dp))
 
                                 Box(
                                     modifier = Modifier.onGloballyPositioned { coords ->
@@ -983,7 +988,7 @@ fun ActiveSessionScreen(
                                         progress = 1.0f,
                                         isOverrun = false,
                                         isPaused = false,
-                                        size = 300.dp,
+                                        size = 290.dp,
                                         strokeWidth = 10.dp,
                                         intervalMinutes = 0,
                                         totalDurationMinutes = config.targetDurationMinutes
@@ -991,7 +996,7 @@ fun ActiveSessionScreen(
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             Text(
                                                 text = NotificationHelper.formatSeconds(actualSec),
-                                                fontSize = 58.sp,
+                                                fontSize = 56.sp,
                                                 fontWeight = FontWeight.Light,
                                                 color = currentTheme.primaryLight
                                             )
@@ -1005,7 +1010,39 @@ fun ActiveSessionScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(48.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Quick Add Time Chips on Completed Screen
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    listOf(1, 5, 10).forEach { mins ->
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(ZenSurface.copy(alpha = 0.85f))
+                                                .border(1.dp, currentTheme.primary.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                                                .clickable {
+                                                    viewModel.continueSessionWithTarget(
+                                                        targetSec = actualSec + (mins * 60),
+                                                        initialElapsedSec = actualSec,
+                                                        initialStartTimeMs = status.startTimeEpochMs
+                                                    )
+                                                }
+                                                .padding(horizontal = 14.dp, vertical = 6.dp)
+                                        ) {
+                                            Text(
+                                                text = "+${mins}m",
+                                                fontSize = 12.5.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = currentTheme.primaryLight
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(24.dp))
 
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -1027,8 +1064,8 @@ fun ActiveSessionScreen(
                                         },
                                         modifier = Modifier
                                             .fillMaxWidth(0.75f)
-                                            .height(54.dp)
-                                            .clip(RoundedCornerShape(27.dp)),
+                                            .height(52.dp)
+                                            .clip(RoundedCornerShape(26.dp)),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = currentTheme.primary,
                                             contentColor = ZenObsidian
@@ -1039,25 +1076,30 @@ fun ActiveSessionScreen(
                                         Text(
                                             text = if (config.showSessionOverview) "Save & Reflect" else "Done",
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 16.sp
+                                            fontSize = 15.5.sp
                                         )
                                     }
 
                                     OutlinedButton(
-                                        onClick = { viewModel.continueSession() },
+                                        onClick = {
+                                            viewModel.continueSession(
+                                                initialElapsedSec = actualSec,
+                                                initialStartTimeMs = status.startTimeEpochMs
+                                            )
+                                        },
                                         modifier = Modifier
                                             .fillMaxWidth(0.75f)
-                                            .height(50.dp)
-                                            .clip(RoundedCornerShape(25.dp)),
+                                            .height(48.dp)
+                                            .clip(RoundedCornerShape(24.dp)),
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                                         border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.7f))
                                     ) {
                                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = "Keep Meditating",
+                                            text = "Keep Meditating (Open-Ended)",
                                             fontWeight = FontWeight.SemiBold,
-                                            fontSize = 14.5.sp
+                                            fontSize = 13.5.sp
                                         )
                                     }
                                 }
