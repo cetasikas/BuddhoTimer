@@ -405,6 +405,18 @@ fun ActiveSessionScreen(
                                                     fontSize = 11.5.sp,
                                                     color = ZenTextSecondary
                                                 )
+                                                val endTimeMs = remember(remainingSec) {
+                                                    System.currentTimeMillis() + (remainingSec * 1000L)
+                                                }
+                                                val endTimeStr = remember(endTimeMs) {
+                                                    val df = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+                                                    "Ends at " + df.format(java.util.Date(endTimeMs))
+                                                }
+                                                Text(
+                                                    text = endTimeStr,
+                                                    fontSize = 10.5.sp,
+                                                    color = ZenTextMuted
+                                                )
                                             }
                                         }
                                     }
@@ -679,6 +691,19 @@ fun ActiveSessionScreen(
                                                     text = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSec)}",
                                                     fontSize = 13.sp,
                                                     color = ZenTextSecondary
+                                                )
+                                                val endTimeMs = remember(remainingSec) {
+                                                    System.currentTimeMillis() + (remainingSec * 1000L)
+                                                }
+                                                val endTimeStr = remember(endTimeMs) {
+                                                    val df = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+                                                    "Ends at " + df.format(java.util.Date(endTimeMs))
+                                                }
+                                                Spacer(modifier = Modifier.height(3.dp))
+                                                Text(
+                                                    text = endTimeStr,
+                                                    fontSize = 11.5.sp,
+                                                    color = ZenTextMuted
                                                 )
                                             }
                                         }

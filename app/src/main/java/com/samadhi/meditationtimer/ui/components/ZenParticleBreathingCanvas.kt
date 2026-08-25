@@ -327,8 +327,70 @@ private fun DrawScope.drawZenEnsoGarland(
 }
 
 // =========================================================================
-// 1. MOONLIT BAMBOO ENSŌ LEAF
+// 1. MOONLIT BAMBOO ENSŌ LEAF & OFFSHOOT SPRAY
 // =========================================================================
+
+private fun DrawScope.drawSingleBambooBlade(
+    tip: Offset,
+    base: Offset,
+    width: Float,
+    alpha: Float,
+    leafColor: Color,
+    glowColor: Color
+) {
+    val dx = tip.x - base.x
+    val dy = tip.y - base.y
+    val length = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(1f)
+    val normX = -dy / length
+    val normY = dx / length
+
+    val mid1 = Offset(base.x + dx * 0.30f, base.y + dy * 0.30f)
+    val mid2 = Offset(base.x + dx * 0.65f, base.y + dy * 0.65f)
+
+    val path = Path().apply {
+        moveTo(base.x, base.y)
+        cubicTo(
+            mid1.x + normX * width * 0.95f, mid1.y + normY * width * 0.95f,
+            mid2.x + normX * width * 0.75f, mid2.y + normY * width * 0.75f,
+            tip.x, tip.y
+        )
+        cubicTo(
+            mid2.x - normX * width * 0.75f, mid2.y - normY * width * 0.75f,
+            mid1.x - normX * width * 0.95f, mid1.y - normY * width * 0.95f,
+            base.x, base.y
+        )
+        close()
+    }
+
+    drawPath(
+        path = path,
+        brush = Brush.linearGradient(
+            colors = listOf(
+                glowColor.copy(alpha = 0.95f * alpha),
+                leafColor.copy(alpha = 0.90f * alpha),
+                Color(0xFF041C14).copy(alpha = 0.85f * alpha)
+            ),
+            start = base,
+            end = tip
+        )
+    )
+
+    // Delicate central spine vein
+    drawLine(
+        color = glowColor.copy(alpha = 0.75f * alpha),
+        start = base,
+        end = Offset(base.x + dx * 0.90f, base.y + dy * 0.90f),
+        strokeWidth = 1.0f,
+        cap = StrokeCap.Round
+    )
+
+    // Silky outer contour
+    drawPath(
+        path = path,
+        color = glowColor.copy(alpha = 0.50f * alpha),
+        style = Stroke(width = 0.85f)
+    )
+}
 
 private fun DrawScope.drawEnsoBambooLeaf(
     center: Offset,
@@ -341,52 +403,86 @@ private fun DrawScope.drawEnsoBambooLeaf(
     primaryDark: Color
 ) {
     rotate(degrees = rotation, pivot = center) {
-        val len = scale * 38f
-        val wid = scale * 9.5f
-
-        val path = Path().apply {
-            moveTo(center.x, center.y - len * 0.45f)
-            cubicTo(
-                center.x - wid * 1.1f, center.y - len * 0.15f,
-                center.x - wid * 0.9f, center.y + len * 0.30f,
-                center.x, center.y + len * 0.55f
-            )
-            cubicTo(
-                center.x + wid * 0.9f, center.y + len * 0.30f,
-                center.x + wid * 1.1f, center.y - len * 0.15f,
-                center.x, center.y - len * 0.45f
-            )
-            close()
-        }
-
+        val len = scale * 40f
+        val wid = scale * 8.5f
         val leafGreen = if (colorVariant > 0.5f) primary else primaryDark
         val glowRim = primaryLight
 
-        drawPath(
-            path = path,
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    glowRim.copy(alpha = 0.95f * alpha),
-                    leafGreen.copy(alpha = 0.90f * alpha),
-                    Color(0xFF07241A).copy(alpha = 0.85f * alpha)
-                ),
-                startY = center.y - len * 0.45f,
-                endY = center.y + len * 0.55f
+        val nodeBase = Offset(center.x, center.y + len * 0.48f)
+        val branchJunction = Offset(center.x, center.y + len * 0.12f)
+
+        // 1. Slender Bamboo Twig Stem (connecting Ensō track to leaf spray)
+        val stalkPath = Path().apply {
+            moveTo(nodeBase.x, nodeBase.y)
+            quadraticTo(
+                center.x - scale * 3.0f, center.y + len * 0.32f,
+                branchJunction.x, branchJunction.y
             )
-        )
-
-        drawLine(
-            color = glowRim.copy(alpha = 0.80f * alpha),
-            start = Offset(center.x, center.y - len * 0.40f),
-            end = Offset(center.x, center.y + len * 0.50f),
-            strokeWidth = 1.1f,
-            cap = StrokeCap.Round
-        )
-
+        }
         drawPath(
-            path = path,
-            color = glowRim.copy(alpha = 0.65f * alpha),
-            style = Stroke(width = 1.0f)
+            path = stalkPath,
+            color = glowRim.copy(alpha = 0.80f * alpha),
+            style = Stroke(width = 1.5f * scale.coerceAtLeast(0.7f), cap = StrokeCap.Round)
+        )
+
+        // Tiny bamboo node joint accent dot
+        drawCircle(
+            color = glowRim.copy(alpha = 0.85f * alpha),
+            radius = 1.6f * scale.coerceAtLeast(0.7f),
+            center = nodeBase
+        )
+
+        // 2. Offshoot Branch Left (Secondary bamboo blade)
+        val leftTip = Offset(center.x - scale * 17f, center.y - len * 0.18f)
+        val leftStem = Path().apply {
+            moveTo(branchJunction.x, branchJunction.y)
+            quadraticTo(center.x - scale * 7f, center.y + len * 0.04f, center.x - scale * 8f, center.y - len * 0.04f)
+        }
+        drawPath(
+            path = leftStem,
+            color = glowRim.copy(alpha = 0.70f * alpha),
+            style = Stroke(width = 1.0f * scale.coerceAtLeast(0.7f), cap = StrokeCap.Round)
+        )
+        drawSingleBambooBlade(
+            tip = leftTip,
+            base = Offset(center.x - scale * 8f, center.y - len * 0.04f),
+            width = wid * 0.65f,
+            alpha = alpha * 0.85f,
+            leafColor = primaryDark,
+            glowColor = glowRim
+        )
+
+        // 3. Offshoot Branch Right (if cluster variant has 3 leaves)
+        if (colorVariant > 0.35f) {
+            val rightTip = Offset(center.x + scale * 15f, center.y - len * 0.10f)
+            val rightStem = Path().apply {
+                moveTo(branchJunction.x, branchJunction.y)
+                quadraticTo(center.x + scale * 5f, center.y + len * 0.06f, center.x + scale * 7f, center.y - len * 0.02f)
+            }
+            drawPath(
+                path = rightStem,
+                color = glowRim.copy(alpha = 0.70f * alpha),
+                style = Stroke(width = 1.0f * scale.coerceAtLeast(0.7f), cap = StrokeCap.Round)
+            )
+            drawSingleBambooBlade(
+                tip = rightTip,
+                base = Offset(center.x + scale * 7f, center.y - len * 0.02f),
+                width = wid * 0.58f,
+                alpha = alpha * 0.80f,
+                leafColor = primary,
+                glowColor = glowRim
+            )
+        }
+
+        // 4. Primary Center Bamboo Blade
+        val mainTip = Offset(center.x, center.y - len * 0.48f)
+        drawSingleBambooBlade(
+            tip = mainTip,
+            base = branchJunction,
+            width = wid,
+            alpha = alpha,
+            leafColor = leafGreen,
+            glowColor = glowRim
         )
     }
 }

@@ -1,12 +1,7 @@
 package com.samadhi.meditationtimer.ui.components
 
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -19,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -27,7 +21,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
-import com.samadhi.meditationtimer.ui.theme.ZenOverrunGlow
 
 @Composable
 fun CircularTimerProgress(
@@ -43,31 +36,7 @@ fun CircularTimerProgress(
 ) {
     val currentTheme = LocalZenTheme.current
 
-    // Subtle breathing pulse & pacing aura animation (4s in, 4s out meditative wave)
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = if (isPaused) 1.0f else 0.95f,
-        targetValue = if (isPaused) 1.0f else 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 4000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseScale"
-    )
-
-    val breathAuraAlpha by infiniteTransition.animateFloat(
-        initialValue = if (isPaused) 0.15f else 0.18f,
-        targetValue = if (isPaused) 0.15f else 0.45f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 4000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "breathAuraAlpha"
-    )
-
     val activeColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary
-    val glowColor = if (isOverrun) ZenOverrunGlow else currentTheme.primaryGlow
-
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
         animationSpec = tween(durationMillis = if (isPaused) 0 else 1000, easing = LinearEasing),
@@ -83,22 +52,7 @@ fun CircularTimerProgress(
             val center = Offset(canvasSize.width / 2f, canvasSize.height / 2f)
             val radius = (canvasSize.minDimension - strokeWidth.toPx()) / 2f
 
-            // 1. Subtle Breath Pacing Aura (Gentle expanding & contracting luminous halo)
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        glowColor.copy(alpha = breathAuraAlpha),
-                        currentTheme.primaryLight.copy(alpha = breathAuraAlpha * 0.4f),
-                        Color.Transparent
-                    ),
-                    center = center,
-                    radius = radius * 1.32f * pulseScale
-                ),
-                radius = radius * 1.30f * pulseScale,
-                center = center
-            )
-
-            // 2. Track Background Ring
+            // 1. Track Background Ring
             drawCircle(
                 color = ZenBorder,
                 radius = radius,
