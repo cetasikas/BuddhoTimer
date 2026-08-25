@@ -26,6 +26,7 @@ data class TimerConfiguration(
     val meditationLeafCount: Int = 16,
     val mindfulnessIntervalMinutes: Int = 0,
     val tapToBlackoutEnabled: Boolean = true,
+    val tapToBlackoutBreathwork: Boolean = false,
     val keepScreenAwake: Boolean = true,
     val isBoxBreathingMode: Boolean = false,
     val isCountdownHapticsEnabled: Boolean = true,

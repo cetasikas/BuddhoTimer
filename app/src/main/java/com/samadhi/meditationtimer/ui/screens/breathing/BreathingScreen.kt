@@ -110,7 +110,7 @@ fun BreathingScreen(
     }
     var isTopPatternDropdownOpen by remember { mutableStateOf(false) }
 
-    val tapToBlackout = remember { prefs.getBoolean("tap_blackout", true) }
+    val tapToBlackout = remember { prefs.getBoolean("tap_blackout_breathwork", false) }
     val dndManager = remember { com.samadhi.meditationtimer.service.DndManager(context) }
     var isAutoDnd by remember { mutableStateOf(prefs.getBoolean("auto_dnd", false)) }
     var isScreenBlackedOut by remember { mutableStateOf(false) }
@@ -357,15 +357,10 @@ fun BreathingScreen(
     ) {
         if (isScreenBlackedOut) {
             Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "•",
-                    fontSize = 14.sp,
-                    color = currentTheme.primaryLight.copy(alpha = 0.25f)
-                )
-            }
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+            )
         } else {
             androidx.compose.foundation.layout.BoxWithConstraints(
                 modifier = Modifier
@@ -651,7 +646,7 @@ fun BreathingScreen(
                                             color = ZenTextPrimary.copy(alpha = 0.85f),
                                             letterSpacing = 0.5.sp
                                         )
-                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Spacer(modifier = Modifier.width(14.dp))
                                         IconButton(
                                             onClick = {
                                                 soundHelper.triggerSoftTouchHaptic()
@@ -1155,7 +1150,7 @@ fun BreathingScreen(
                                         color = ZenTextPrimary.copy(alpha = 0.85f),
                                         letterSpacing = 0.5.sp
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(16.dp))
                                     IconButton(
                                         onClick = {
                                             soundHelper.triggerSoftTouchHaptic()

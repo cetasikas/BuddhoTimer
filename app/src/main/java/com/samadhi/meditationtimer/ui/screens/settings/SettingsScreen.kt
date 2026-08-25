@@ -696,12 +696,35 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                                Text("Tap to Blackout Screen", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text("Tap to Blackout (Meditation)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
                                 Text("Tap during sits for AMOLED black", fontSize = 11.sp, color = ZenTextSecondary)
                             }
                             Switch(
                                 checked = config.tapToBlackoutEnabled,
                                 onCheckedChange = { timerViewModel.toggleTapToBlackout(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ZenObsidian,
+                                    checkedTrackColor = currentTheme.primaryLight,
+                                    checkedBorderColor = currentTheme.primary,
+                                    uncheckedThumbColor = Color(0xFFCBD5E1),
+                                    uncheckedTrackColor = Color(0xFF1E293B),
+                                    uncheckedBorderColor = Color(0xFF475569)
+                                )
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                Text("Tap to Blackout (Breathwork)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text("Tap during breathwork for AMOLED black", fontSize = 11.sp, color = ZenTextSecondary)
+                            }
+                            Switch(
+                                checked = config.tapToBlackoutBreathwork,
+                                onCheckedChange = { timerViewModel.toggleTapToBlackoutBreathwork(it) },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = ZenObsidian,
                                     checkedTrackColor = currentTheme.primaryLight,

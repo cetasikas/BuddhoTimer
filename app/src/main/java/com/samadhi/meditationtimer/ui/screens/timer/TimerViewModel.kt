@@ -74,6 +74,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             meditationLeafCount = prefs.getInt("meditation_leaf_count", 16),
             mindfulnessIntervalMinutes = prefs.getInt("mindfulness_interval_min", 0),
             tapToBlackoutEnabled = prefs.getBoolean("tap_to_blackout", true),
+            tapToBlackoutBreathwork = prefs.getBoolean("tap_blackout_breathwork", false),
             keepScreenAwake = prefs.getBoolean("keep_screen_awake", true),
             isBoxBreathingMode = prefs.getBoolean("box_breathing_mode", false),
             isCountdownHapticsEnabled = prefs.getBoolean("countdown_haptics", true),
@@ -96,6 +97,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putInt("meditation_leaf_count", newConfig.meditationLeafCount)
             putInt("mindfulness_interval_min", newConfig.mindfulnessIntervalMinutes)
             putBoolean("tap_to_blackout", newConfig.tapToBlackoutEnabled)
+            putBoolean("tap_blackout_breathwork", newConfig.tapToBlackoutBreathwork)
             putBoolean("keep_screen_awake", newConfig.keepScreenAwake)
             putBoolean("box_breathing_mode", newConfig.isBoxBreathingMode)
             putBoolean("countdown_haptics", newConfig.isCountdownHapticsEnabled)
@@ -164,6 +166,10 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleTapToBlackout(enabled: Boolean) {
         saveConfig(_config.value.copy(tapToBlackoutEnabled = enabled))
+    }
+
+    fun toggleTapToBlackoutBreathwork(enabled: Boolean) {
+        saveConfig(_config.value.copy(tapToBlackoutBreathwork = enabled))
     }
 
     fun toggleKeepScreenAwake(enabled: Boolean) {

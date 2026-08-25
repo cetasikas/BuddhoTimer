@@ -221,16 +221,8 @@ fun ActiveSessionScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "•",
-                    fontSize = 14.sp,
-                    color = Color(0xFF222222),
-                    modifier = Modifier.alpha(0.3f)
-                )
-            }
+                    .background(Color.Black)
+            )
         } else {
             androidx.compose.foundation.layout.BoxWithConstraints(
                 modifier = Modifier
