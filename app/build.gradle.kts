@@ -8,14 +8,14 @@ plugins {
 
 android {
     namespace = "com.samadhi.meditationtimer"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.buddho.timer"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 110
-        versionName = "2.26.70"
+        targetSdk = 36
+        versionCode = 111
+        versionName = "2.27.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

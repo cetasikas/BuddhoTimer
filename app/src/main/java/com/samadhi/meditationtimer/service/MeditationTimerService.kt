@@ -9,6 +9,7 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import com.samadhi.meditationtimer.MeditationApp
 import com.samadhi.meditationtimer.domain.model.TimerStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -278,11 +279,7 @@ class MeditationTimerService : Service() {
                                 }
                                 soundHelper.triggerHarmonicCompletionHaptic()
                             }
-                            notificationHelper.showCompletionNotification(
-                                title = "Meditation Complete 🪷",
-                                message = "Completed ${NotificationHelper.formatSeconds(targetDurationSec)} of meditation."
-                            )
-                            finishTimer()
+                            finishTimer(showNotificationIfBackground = true)
                             break
                         }
                     }
@@ -375,11 +372,7 @@ class MeditationTimerService : Service() {
                                     }
                                     soundHelper.triggerHarmonicCompletionHaptic()
                                 }
-                                notificationHelper.showCompletionNotification(
-                                    title = "Meditation Complete 🪷",
-                                    message = "Completed ${NotificationHelper.formatSeconds(targetDurationSec)} of meditation."
-                                )
-                                finishTimer()
+                                finishTimer(showNotificationIfBackground = true)
                                 break
                             }
                         }
@@ -391,7 +384,7 @@ class MeditationTimerService : Service() {
         }
     }
 
-    private fun finishTimer() {
+    private fun finishTimer(showNotificationIfBackground: Boolean = true) {
         timerJob?.cancel()
         val completedMs = System.currentTimeMillis()
 
@@ -403,7 +396,21 @@ class MeditationTimerService : Service() {
             completedTimeEpochMs = completedMs
         )
 
-        cleanupAndStop()
+        if (isDndEnabledForSession) {
+            dndManager.restoreDnd()
+        }
+        wakeLockHelper.releaseWakeLock()
+
+        if (showNotificationIfBackground && !MeditationApp.isAppInForeground) {
+            val totalSec = elapsedSeconds
+            notificationHelper.showCompletionNotification(
+                title = "Meditation Complete 🪷",
+                message = "Completed ${NotificationHelper.formatSeconds(totalSec)} of meditation."
+            )
+        }
+
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     private fun cancelTimer() {

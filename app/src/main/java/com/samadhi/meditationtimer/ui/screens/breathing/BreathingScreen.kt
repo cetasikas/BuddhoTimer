@@ -111,6 +111,7 @@ fun BreathingScreen(
     var isTopPatternDropdownOpen by remember { mutableStateOf(false) }
 
     val tapToBlackout = remember { prefs.getBoolean("tap_blackout_breathwork", false) }
+    val notificationHelper = remember { NotificationHelper(context) }
     val dndManager = remember { com.samadhi.meditationtimer.service.DndManager(context) }
     var isAutoDnd by remember { mutableStateOf(prefs.getBoolean("auto_dnd", false)) }
     var isScreenBlackedOut by remember { mutableStateOf(false) }
@@ -203,6 +204,12 @@ fun BreathingScreen(
         )
         isSessionComplete = true
         isRunning = false
+        if (!com.samadhi.meditationtimer.MeditationApp.isAppInForeground) {
+            notificationHelper.showCompletionNotification(
+                title = "Breathwork Complete 🪷",
+                message = "Completed ${NotificationHelper.formatSeconds(totalElapsedSec)} of breathwork (${selectedPattern.name})."
+            )
+        }
         onSessionCompleted(completedStatus)
     }
 

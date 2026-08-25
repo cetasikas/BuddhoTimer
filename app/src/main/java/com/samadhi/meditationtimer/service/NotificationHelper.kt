@@ -15,7 +15,7 @@ import java.util.Locale
 class NotificationHelper(private val context: Context) {
 
     private val notificationManager =
-        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        context.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     init {
         createNotificationChannel()
@@ -156,7 +156,7 @@ class NotificationHelper(private val context: Context) {
     fun showCompletionNotification(title: String, message: String) {
         // If the user is actively viewing the app (e.g. on the overview/summary screen),
         // do not post a redundant status-bar notification.
-        if (MainActivity.isAppInForeground) {
+        if (com.samadhi.meditationtimer.MeditationApp.isAppInForeground) {
             return
         }
 
@@ -173,6 +173,7 @@ class NotificationHelper(private val context: Context) {
         val notification = NotificationCompat.Builder(context, CHANNEL_COMPLETION_ID)
             .setContentTitle(title)
             .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(openAppPendingIntent)
             .setAutoCancel(true)
@@ -180,6 +181,7 @@ class NotificationHelper(private val context: Context) {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .build()
 
         notificationManager.notify(NOTIFICATION_COMPLETION_ID, notification)
