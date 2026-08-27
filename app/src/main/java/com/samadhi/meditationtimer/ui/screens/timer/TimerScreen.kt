@@ -111,7 +111,7 @@ fun TimerScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // 1. Subtle, Dynamic Whole-Screen Swirling Falling Leaves
         FallingLeavesEffect(
             enabled = config.showLeavesDuringMeditation,
@@ -189,18 +189,18 @@ fun TimerScreen(
                         ) {
                             Text(
                                 text = "${config.targetDurationMinutes}",
-                                fontSize = 72.sp,
-                                fontWeight = FontWeight.ExtraLight,
-                                letterSpacing = (-2).sp,
-                                color = ZenTextPrimary,
+                                fontSize = 76.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = (-1.5).sp,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                             Text(
                                 text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
                                 letterSpacing = 3.sp,
-                                color = currentTheme.primaryLight,
+                                color = currentTheme.primary,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         }
@@ -229,8 +229,8 @@ fun TimerScreen(
                                     modifier = Modifier
                                         .weight(1f)
                                         .clip(RoundedCornerShape(14.dp))
-                                        .background(if (isSelected) currentTheme.primary.copy(alpha = 0.28f) else ZenSurface.copy(alpha = 0.70f))
-                                        .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primaryLight else ZenBorder, RoundedCornerShape(14.dp))
+                                        .background(if (isSelected) currentTheme.primary.copy(alpha = 0.22f) else currentTheme.surfaceVariant)
+                                        .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primary else currentTheme.border, RoundedCornerShape(14.dp))
                                         .clickable {
                                             viewModel.updateDurationMinutes(duration)
                                             leafBurstTrigger++
@@ -242,18 +242,16 @@ fun TimerScreen(
                                         text = "${duration}m",
                                         fontSize = 13.5.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
+                                        color = if (isSelected) currentTheme.primary else currentTheme.textSecondary
                                     )
                                 }
                             }
                         }
 
-                        // Meditation Options (DND & Continue Past Target Time)
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Do Not Disturb Toggle (Off by default)
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -289,18 +287,17 @@ fun TimerScreen(
                                             leafBurstTrigger++
                                         },
                                         colors = SwitchDefaults.colors(
-                                            checkedThumbColor = ZenObsidian,
-                                            checkedTrackColor = currentTheme.primaryLight,
+                                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                            checkedTrackColor = currentTheme.primary,
                                             checkedBorderColor = currentTheme.primary,
-                                            uncheckedThumbColor = Color(0xFFCBD5E1),
-                                            uncheckedTrackColor = Color(0xFF1E293B),
-                                            uncheckedBorderColor = Color(0xFF475569)
+                                            uncheckedThumbColor = currentTheme.textSecondary,
+                                            uncheckedTrackColor = currentTheme.surfaceVariant,
+                                            uncheckedBorderColor = currentTheme.border
                                         )
                                     )
                                 }
                             }
 
-                            // Continue Past Target Time Toggle
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -336,12 +333,12 @@ fun TimerScreen(
                                             leafBurstTrigger++
                                         },
                                         colors = SwitchDefaults.colors(
-                                            checkedThumbColor = ZenObsidian,
-                                            checkedTrackColor = currentTheme.primaryLight,
+                                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                            checkedTrackColor = currentTheme.primary,
                                             checkedBorderColor = currentTheme.primary,
-                                            uncheckedThumbColor = Color(0xFFCBD5E1),
-                                            uncheckedTrackColor = Color(0xFF1E293B),
-                                            uncheckedBorderColor = Color(0xFF475569)
+                                            uncheckedThumbColor = currentTheme.textSecondary,
+                                            uncheckedTrackColor = currentTheme.surfaceVariant,
+                                            uncheckedBorderColor = currentTheme.border
                                         )
                                     )
                                 }
@@ -349,7 +346,6 @@ fun TimerScreen(
                         }
                     }
                 } else {
-                    // === BOX BREATHING SETUP (CLEAN & PERFECTLY FITTED) ===
                     val cycleDurationSec = selectedPattern.totalCycleSec
                     val estimatedCycles = (breathingDurationMin * 60) / cycleDurationSec.coerceAtLeast(1)
 
@@ -360,7 +356,6 @@ fun TimerScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Large Duration & Cycles Display
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -369,23 +364,22 @@ fun TimerScreen(
                         ) {
                             Text(
                                 text = "$breathingDurationMin",
-                                fontSize = 72.sp,
-                                fontWeight = FontWeight.ExtraLight,
-                                letterSpacing = (-2).sp,
-                                color = ZenTextPrimary,
+                                fontSize = 76.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = (-1.5).sp,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                             Text(
                                 text = "$estimatedCycles CYCLES • $breathingDurationMin MINUTES",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 2.5.sp,
-                                color = currentTheme.primaryLight,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 2.sp,
+                                color = currentTheme.primary,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         }
 
-                        // Duration Slider (1 to 30 min)
                         ZenBranchSlider(
                             value = breathingDurationMin.toFloat(),
                             onValueChange = { newMin ->
@@ -397,7 +391,6 @@ fun TimerScreen(
                                 .height(54.dp)
                         )
 
-                        // 1 Clean Row of Breath Presets
                         val breathPresets = listOf(2, 5, 10, 15, 20)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -409,8 +402,8 @@ fun TimerScreen(
                                     modifier = Modifier
                                         .weight(1f)
                                         .clip(RoundedCornerShape(14.dp))
-                                        .background(if (isSelected) currentTheme.primary.copy(alpha = 0.28f) else ZenSurface.copy(alpha = 0.70f))
-                                        .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primaryLight else ZenBorder, RoundedCornerShape(14.dp))
+                                        .background(if (isSelected) currentTheme.primary.copy(alpha = 0.22f) else currentTheme.surfaceVariant)
+                                        .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primary else currentTheme.border, RoundedCornerShape(14.dp))
                                         .clickable {
                                             viewModel.updateBreathingDurationMinutes(dur)
                                             leafBurstTrigger++
@@ -422,13 +415,12 @@ fun TimerScreen(
                                         text = "${dur}m",
                                         fontSize = 13.5.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) currentTheme.primaryLight else ZenTextSecondary
+                                        color = if (isSelected) currentTheme.primary else currentTheme.textSecondary
                                     )
                                 }
                             }
                         }
 
-                        // Distinct High-Contrast Breathing Pattern Selector Card
                         var isPatternDropdownOpen by remember { mutableStateOf(false) }
 
                         val patternCategory = when (selectedPattern.id) {
@@ -493,34 +485,34 @@ fun TimerScreen(
                                     ) {
                                         when (selectedPattern.id) {
                                             "box" -> {
-                                                PhaseChip("4s Inhale", currentTheme.primaryLight)
+                                                PhaseChip("4s Inhale", currentTheme.primary)
                                                 PhaseSeparator()
-                                                PhaseChip("4s Hold", currentTheme.primaryLight)
+                                                PhaseChip("4s Hold", currentTheme.primary)
                                                 PhaseSeparator()
                                                 PhaseChip("4s Exhale", currentTheme.overrunColor)
                                                 PhaseSeparator()
-                                                PhaseChip("4s Hold", ZenAmber)
+                                                PhaseChip("4s Hold", currentTheme.secondary)
                                             }
                                             "478" -> {
-                                                PhaseChip("4s Inhale", currentTheme.primaryLight)
+                                                PhaseChip("4s Inhale", currentTheme.primary)
                                                 PhaseSeparator()
-                                                PhaseChip("7s Hold", currentTheme.primaryLight)
+                                                PhaseChip("7s Hold", currentTheme.primary)
                                                 PhaseSeparator()
                                                 PhaseChip("8s Exhale", currentTheme.overrunColor)
                                             }
                                             "resonant" -> {
-                                                PhaseChip("5s Inhale", currentTheme.primaryLight)
+                                                PhaseChip("5s Inhale", currentTheme.primary)
                                                 PhaseSeparator()
                                                 PhaseChip("5s Exhale", currentTheme.overrunColor)
                                             }
                                             else -> {
-                                                PhaseChip("3s Inhale", currentTheme.primaryLight)
+                                                PhaseChip("3s Inhale", currentTheme.primary)
                                                 PhaseSeparator()
-                                                PhaseChip("3s Hold", currentTheme.primaryLight)
+                                                PhaseChip("3s Hold", currentTheme.primary)
                                                 PhaseSeparator()
                                                 PhaseChip("3s Exhale", currentTheme.overrunColor)
                                                 PhaseSeparator()
-                                                PhaseChip("3s Hold", ZenAmber)
+                                                PhaseChip("3s Hold", currentTheme.secondary)
                                             }
                                         }
                                     }
@@ -533,7 +525,7 @@ fun TimerScreen(
                                 onDismissRequest = { isPatternDropdownOpen = false },
                                 modifier = Modifier
                                     .fillMaxWidth(0.90f)
-                                    .background(ZenSurface.copy(alpha = 0.98f))
+                                    .background(currentTheme.surfaceVariant)
                                     .border(1.2.dp, currentTheme.primary.copy(alpha = 0.50f), RoundedCornerShape(16.dp))
                                     .padding(vertical = 4.dp)
                             ) {
@@ -555,13 +547,13 @@ fun TimerScreen(
                                                         text = item.name,
                                                         fontSize = 14.sp,
                                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                        color = if (isSelected) currentTheme.primaryLight else ZenTextPrimary
+                                                        color = if (isSelected) currentTheme.primary else ZenTextPrimary
                                                     )
                                                     Spacer(modifier = Modifier.height(2.dp))
                                                     Text(
                                                         text = item.subtitle,
                                                         fontSize = 11.5.sp,
-                                                        color = if (isSelected) currentTheme.primaryLight.copy(alpha = 0.85f) else ZenTextSecondary
+                                                        color = if (isSelected) currentTheme.primary else ZenTextSecondary
                                                     )
                                                 }
 
@@ -571,13 +563,13 @@ fun TimerScreen(
                                                         modifier = Modifier
                                                             .size(24.dp)
                                                             .clip(CircleShape)
-                                                            .background(currentTheme.primary.copy(alpha = 0.35f)),
+                                                            .background(currentTheme.primary.copy(alpha = 0.22f)),
                                                         contentAlignment = Alignment.Center
                                                     ) {
                                                         Icon(
                                                             imageVector = Icons.Default.PlayArrow,
                                                             contentDescription = "Active Pattern",
-                                                            tint = currentTheme.primaryLight,
+                                                            tint = currentTheme.primary,
                                                             modifier = Modifier.size(14.dp)
                                                         )
                                                     }
@@ -592,10 +584,10 @@ fun TimerScreen(
                                         modifier = Modifier
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                             .clip(RoundedCornerShape(10.dp))
-                                            .background(if (isSelected) currentTheme.primary.copy(alpha = 0.20f) else Color.Transparent)
+                                            .background(if (isSelected) currentTheme.primary.copy(alpha = 0.18f) else Color.Transparent)
                                             .border(
                                                 if (isSelected) 1.2.dp else 0.dp,
-                                                if (isSelected) currentTheme.primaryLight.copy(alpha = 0.70f) else Color.Transparent,
+                                                if (isSelected) currentTheme.primary else Color.Transparent,
                                                 RoundedCornerShape(10.dp)
                                             )
                                     )
@@ -639,12 +631,12 @@ fun TimerScreen(
                                         leafBurstTrigger++
                                     },
                                     colors = SwitchDefaults.colors(
-                                        checkedThumbColor = ZenObsidian,
-                                        checkedTrackColor = currentTheme.primaryLight,
+                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                        checkedTrackColor = currentTheme.primary,
                                         checkedBorderColor = currentTheme.primary,
-                                        uncheckedThumbColor = Color(0xFFCBD5E1),
-                                        uncheckedTrackColor = Color(0xFF1E293B),
-                                        uncheckedBorderColor = Color(0xFF475569)
+                                        uncheckedThumbColor = currentTheme.textSecondary,
+                                        uncheckedTrackColor = currentTheme.surfaceVariant,
+                                        uncheckedBorderColor = currentTheme.border
                                     )
                                 )
                             }
@@ -661,44 +653,45 @@ fun TimerScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Practice Mode Toggle
+                // Practice Mode Segmented Pill Selector
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .background(ZenSurface.copy(alpha = 0.85f))
-                        .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
-                        .padding(3.dp),
+                        .background(currentTheme.surfaceVariant)
+                        .border(1.dp, currentTheme.border, RoundedCornerShape(20.dp))
+                        .padding(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Meditation Option
+                    val isMeditation = !config.isBoxBreathingMode
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(if (!config.isBoxBreathingMode) currentTheme.primary.copy(alpha = 0.28f) else ZenSurfaceVariant.copy(alpha = 0.45f))
-                            .border(1.dp, if (!config.isBoxBreathingMode) currentTheme.primaryLight.copy(alpha = 0.7f) else ZenBorder.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                            .background(if (isMeditation) currentTheme.primary.copy(alpha = 0.22f) else Color.Transparent)
+                            .border(if (isMeditation) 1.5.dp else 0.dp, if (isMeditation) currentTheme.primary else Color.Transparent, RoundedCornerShape(16.dp))
                             .clickable {
-                                if (config.isBoxBreathingMode) {
+                                if (!isMeditation) {
                                     viewModel.toggleBoxBreathingMode(false)
                                     sliderDragVelocity = 1.2f
                                     leafBurstTrigger++
                                 }
                             }
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                            .padding(horizontal = 16.dp, vertical = 7.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.SelfImprovement,
                                 contentDescription = null,
-                                tint = if (!config.isBoxBreathingMode) currentTheme.primaryLight else ZenTextMuted,
-                                modifier = Modifier.size(15.dp)
+                                tint = if (isMeditation) currentTheme.primary else currentTheme.textSecondary,
+                                modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Meditation",
-                                fontSize = 12.5.sp,
-                                fontWeight = if (!config.isBoxBreathingMode) FontWeight.Bold else FontWeight.Medium,
-                                color = if (!config.isBoxBreathingMode) currentTheme.primaryLight else ZenTextSecondary
+                                fontSize = 13.sp,
+                                fontWeight = if (isMeditation) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isMeditation) currentTheme.primary else currentTheme.textSecondary
                             )
                         }
                     }
@@ -707,53 +700,62 @@ fun TimerScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(if (config.isBoxBreathingMode) currentTheme.primary.copy(alpha = 0.28f) else ZenSurfaceVariant.copy(alpha = 0.45f))
-                            .border(1.dp, if (config.isBoxBreathingMode) currentTheme.primaryLight.copy(alpha = 0.7f) else ZenBorder.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                            .background(if (!isMeditation) currentTheme.primary.copy(alpha = 0.22f) else Color.Transparent)
+                            .border(if (!isMeditation) 1.5.dp else 0.dp, if (!isMeditation) currentTheme.primary else Color.Transparent, RoundedCornerShape(16.dp))
                             .clickable {
-                                if (!config.isBoxBreathingMode) {
+                                if (isMeditation) {
                                     viewModel.toggleBoxBreathingMode(true)
                                     sliderDragVelocity = 1.2f
                                     leafBurstTrigger++
                                 }
                             }
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                            .padding(horizontal = 16.dp, vertical = 7.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Outlined.Air,
                                 contentDescription = null,
-                                tint = if (config.isBoxBreathingMode) currentTheme.primaryLight else ZenTextMuted,
-                                modifier = Modifier.size(15.dp)
+                                tint = if (!isMeditation) currentTheme.primary else currentTheme.textSecondary,
+                                modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Box Breathing",
-                                fontSize = 12.5.sp,
-                                fontWeight = if (config.isBoxBreathingMode) FontWeight.Bold else FontWeight.Medium,
-                                color = if (config.isBoxBreathingMode) currentTheme.primaryLight else ZenTextSecondary
+                                fontSize = 13.sp,
+                                fontWeight = if (!isMeditation) FontWeight.Bold else FontWeight.Medium,
+                                color = if (!isMeditation) currentTheme.primary else currentTheme.textSecondary
                             )
                         }
                     }
                 }
 
-                // Primary Action Button
+                // Primary Action Button (Tactile Golden Gradient with subtle glow)
+                val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+                val buttonGradient = Brush.horizontalGradient(
+                    colors = if (isDark) {
+                        listOf(
+                            currentTheme.primary.copy(alpha = 0.88f),
+                            currentTheme.primary,
+                            Color(0xFFFFD54F)
+                        )
+                    } else {
+                        listOf(
+                            currentTheme.primary,
+                            currentTheme.primary.copy(alpha = 0.90f),
+                            currentTheme.primary
+                        )
+                    }
+                )
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
-                        .shadow(10.dp, RoundedCornerShape(18.dp), spotColor = currentTheme.primary)
+                        .shadow(8.dp, RoundedCornerShape(18.dp), spotColor = currentTheme.primary.copy(alpha = 0.40f))
                         .clip(RoundedCornerShape(18.dp))
-                        .background(
-                            Brush.horizontalGradient(
-                                colors = listOf(
-                                    currentTheme.primaryDark,
-                                    currentTheme.primary,
-                                    currentTheme.primaryLight
-                                )
-                            )
-                        )
-                        .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
+                        .background(buttonGradient)
+                        .border(1.dp, currentTheme.primary.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
                         .clickable {
                             sliderDragVelocity = 1.5f
                             leafBurstTrigger++
@@ -773,7 +775,7 @@ fun TimerScreen(
                         Icon(
                             imageVector = if (config.isBoxBreathingMode) Icons.Outlined.Air else Icons.Default.PlayArrow,
                             contentDescription = null,
-                            tint = Color(0xFF041014),
+                            tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(22.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -782,7 +784,7 @@ fun TimerScreen(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp,
-                            color = Color(0xFF041014)
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }

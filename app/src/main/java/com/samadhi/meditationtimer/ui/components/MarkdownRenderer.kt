@@ -20,24 +20,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.samadhi.meditationtimer.ui.theme.ZenAmber
-import com.samadhi.meditationtimer.ui.theme.ZenBorder
-import com.samadhi.meditationtimer.ui.theme.ZenSurface
-import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
-import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
-import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
+import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 
 @Composable
 fun MarkdownRenderer(
     markdown: String,
     modifier: Modifier = Modifier
 ) {
+    val currentTheme = LocalZenTheme.current
     val lines = markdown.lines()
 
     Column(modifier = modifier) {
@@ -50,7 +45,7 @@ fun MarkdownRenderer(
                     Text(
                         text = parseInlineMarkdown(line.removePrefix("### ")),
                         style = MaterialTheme.typography.titleLarge.copy(
-                            color = ZenAmber,
+                            color = currentTheme.primary,
                             fontWeight = FontWeight.SemiBold
                         ),
                         modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
@@ -60,7 +55,7 @@ fun MarkdownRenderer(
                     Text(
                         text = parseInlineMarkdown(line.removePrefix("## ")),
                         style = MaterialTheme.typography.headlineMedium.copy(
-                            color = ZenAmber,
+                            color = currentTheme.primary,
                             fontWeight = FontWeight.Bold
                         ),
                         modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
@@ -70,7 +65,7 @@ fun MarkdownRenderer(
                     Text(
                         text = parseInlineMarkdown(line.removePrefix("# ")),
                         style = MaterialTheme.typography.headlineLarge.copy(
-                            color = ZenAmber,
+                            color = currentTheme.primary,
                             fontWeight = FontWeight.Bold
                         ),
                         modifier = Modifier.padding(top = 16.dp, bottom = 6.dp)
@@ -81,19 +76,19 @@ fun MarkdownRenderer(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
-                            .background(ZenSurface, RoundedCornerShape(4.dp))
+                            .background(currentTheme.surfaceVariant, RoundedCornerShape(4.dp))
                     ) {
                         Box(
                             modifier = Modifier
                                 .width(4.dp)
-                                .background(ZenAmber)
+                                .background(currentTheme.primary)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = parseInlineMarkdown(line.removePrefix("> ")),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontStyle = FontStyle.Italic,
-                                color = ZenTextSecondary
+                                color = currentTheme.textSecondary
                             ),
                             modifier = Modifier.padding(vertical = 6.dp, horizontal = 4.dp)
                         )
@@ -108,16 +103,15 @@ fun MarkdownRenderer(
                             modifier = Modifier
                                 .padding(top = 8.dp, end = 8.dp)
                                 .size(6.dp)
-                                .background(ZenAmber, CircleShape)
+                                .background(currentTheme.primary, CircleShape)
                         )
                         Text(
                             text = parseInlineMarkdown(line.substring(2)),
-                            style = MaterialTheme.typography.bodyMedium.copy(color = ZenTextPrimary)
+                            style = MaterialTheme.typography.bodyMedium.copy(color = currentTheme.textPrimary)
                         )
                     }
                 }
                 line.startsWith("```") -> {
-                    // Code block
                     val codeContent = StringBuilder()
                     i++
                     while (i < lines.size && !lines[i].startsWith("```")) {
@@ -128,14 +122,14 @@ fun MarkdownRenderer(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 6.dp)
-                            .background(ZenSurface, RoundedCornerShape(8.dp))
+                            .background(currentTheme.surfaceVariant, RoundedCornerShape(8.dp))
                             .padding(10.dp)
                     ) {
                         Text(
                             text = codeContent.toString().trimEnd(),
                             fontFamily = FontFamily.Monospace,
                             fontSize = 13.sp,
-                            color = ZenTextPrimary
+                            color = currentTheme.textPrimary
                         )
                     }
                 }
@@ -145,7 +139,7 @@ fun MarkdownRenderer(
                 else -> {
                     Text(
                         text = parseInlineMarkdown(line),
-                        style = MaterialTheme.typography.bodyLarge.copy(color = ZenTextPrimary),
+                        style = MaterialTheme.typography.bodyLarge.copy(color = currentTheme.textPrimary),
                         modifier = Modifier.padding(vertical = 2.dp)
                     )
                 }
@@ -167,7 +161,7 @@ fun parseInlineMarkdown(text: String): AnnotatedString {
             val endIndex = text.indexOf("**", index + 2)
             if (endIndex != -1) {
                 val boldText = text.substring(index + 2, endIndex)
-                builder.pushStyle(SpanStyle(fontWeight = FontWeight.Bold, color = ZenTextPrimary))
+                builder.pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
                 builder.append(boldText)
                 builder.pop()
                 index = endIndex + 2
@@ -177,7 +171,7 @@ fun parseInlineMarkdown(text: String): AnnotatedString {
             val endIndex = text.indexOf("*", index + 1)
             if (endIndex != -1) {
                 val italicText = text.substring(index + 1, endIndex)
-                builder.pushStyle(SpanStyle(fontStyle = FontStyle.Italic, color = ZenTextPrimary))
+                builder.pushStyle(SpanStyle(fontStyle = FontStyle.Italic))
                 builder.append(italicText)
                 builder.pop()
                 index = endIndex + 1
@@ -189,9 +183,7 @@ fun parseInlineMarkdown(text: String): AnnotatedString {
                 val codeText = text.substring(index + 1, endIndex)
                 builder.pushStyle(
                     SpanStyle(
-                        fontFamily = FontFamily.Monospace,
-                        background = ZenSurface,
-                        color = ZenAmber
+                        fontFamily = FontFamily.Monospace
                     )
                 )
                 builder.append(codeText)

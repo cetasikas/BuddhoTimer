@@ -187,7 +187,7 @@ fun ActiveSessionScreen(
                 rootHeightPx = coords.size.height.toFloat().coerceAtLeast(1f)
             }
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.background)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -283,6 +283,7 @@ fun ActiveSessionScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(currentTheme.primary.copy(alpha = 0.18f))
+                                    .border(1.dp, currentTheme.primary.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
                                     .padding(horizontal = 18.dp, vertical = 6.dp)
                             ) {
                                 Text(
@@ -290,7 +291,7 @@ fun ActiveSessionScreen(
                                     fontSize = 12.sp,
                                     letterSpacing = 3.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = currentTheme.primaryLight
+                                    color = currentTheme.primary
                                 )
                             }
 
@@ -300,15 +301,15 @@ fun ActiveSessionScreen(
                                 modifier = Modifier
                                     .size(if (isLandscape) 110.dp else 160.dp)
                                     .clip(CircleShape)
-                                    .background(ZenSurface.copy(alpha = 0.65f))
-                                    .border(2.dp, currentTheme.primaryLight.copy(alpha = 0.6f), CircleShape),
+                                    .background(currentTheme.surfaceVariant)
+                                    .border(2.dp, currentTheme.primary, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = "${status.remainingSeconds}",
-                                    fontSize = if (isLandscape) 48.sp else 72.sp,
-                                    fontWeight = FontWeight.ExtraLight,
-                                    color = currentTheme.primaryLight
+                                    fontSize = if (isLandscape) 48.sp else 76.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
                             }
 
@@ -371,38 +372,41 @@ fun ActiveSessionScreen(
                                                 val overrunTime = elapsedSec - sessionTotalSec
                                                 Text(
                                                     text = "+${NotificationHelper.formatSeconds(overrunTime.coerceAtLeast(0))}",
-                                                    fontSize = 38.sp,
-                                                    fontWeight = FontWeight.Light,
+                                                    fontSize = 40.sp,
+                                                    fontWeight = FontWeight.Bold,
                                                     color = currentTheme.overrunColor
                                                 )
                                                 Text(
                                                     text = "Total: ${NotificationHelper.formatSeconds(elapsedSec)}",
                                                     fontSize = 12.sp,
+                                                    fontWeight = FontWeight.SemiBold,
                                                     color = ZenTextSecondary
                                                 )
                                             } else if (config.isOpenEnded) {
                                                 Text(
                                                     text = NotificationHelper.formatSeconds(elapsedSec),
-                                                    fontSize = 44.sp,
-                                                    fontWeight = FontWeight.Light,
-                                                    color = ZenTextPrimary
+                                                    fontSize = 46.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onBackground
                                                 )
                                                 Text(
                                                     text = "Elapsed Time",
                                                     fontSize = 11.5.sp,
+                                                    fontWeight = FontWeight.SemiBold,
                                                     color = ZenTextSecondary
                                                 )
                                             } else {
                                                 Text(
                                                     text = NotificationHelper.formatSeconds(remainingSec),
-                                                    fontSize = 46.sp,
-                                                    fontWeight = FontWeight.Light,
+                                                    fontSize = 48.sp,
+                                                    fontWeight = FontWeight.Bold,
                                                     letterSpacing = (-1).sp,
-                                                    color = ZenTextPrimary
+                                                    color = MaterialTheme.colorScheme.onBackground
                                                 )
                                                 Text(
                                                     text = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSec)}",
                                                     fontSize = 11.5.sp,
+                                                    fontWeight = FontWeight.Medium,
                                                     color = ZenTextSecondary
                                                 )
                                                 val endTimeMs = remember(remainingSec) {
@@ -569,7 +573,7 @@ fun ActiveSessionScreen(
                                                 .clip(RoundedCornerShape(24.dp)),
                                             colors = ButtonDefaults.buttonColors(
                                                 containerColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary,
-                                                contentColor = ZenObsidian
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
                                             )
                                         ) {
                                             Row(
@@ -579,7 +583,7 @@ fun ActiveSessionScreen(
                                                 Icon(
                                                     imageVector = Icons.Default.Check,
                                                     contentDescription = null,
-                                                    tint = ZenObsidian,
+                                                    tint = MaterialTheme.colorScheme.onPrimary,
                                                     modifier = Modifier.size(18.dp)
                                                 )
                                                 Spacer(modifier = Modifier.width(6.dp))
@@ -587,7 +591,7 @@ fun ActiveSessionScreen(
                                                     text = "Complete",
                                                     fontWeight = FontWeight.Bold,
                                                     fontSize = 14.5.sp,
-                                                    color = ZenObsidian
+                                                    color = MaterialTheme.colorScheme.onPrimary
                                                 )
                                             }
                                         }
@@ -655,41 +659,44 @@ fun ActiveSessionScreen(
                                                 val overrunTime = elapsedSec - sessionTotalSec
                                                 Text(
                                                     text = "+${NotificationHelper.formatSeconds(overrunTime.coerceAtLeast(0))}",
-                                                    fontSize = 52.sp,
-                                                    fontWeight = FontWeight.Light,
+                                                    fontSize = 56.sp,
+                                                    fontWeight = FontWeight.Bold,
                                                     color = currentTheme.overrunColor
                                                 )
                                                 Spacer(modifier = Modifier.height(4.dp))
                                                 Text(
                                                     text = "Total: ${NotificationHelper.formatSeconds(elapsedSec)}",
                                                     fontSize = 14.sp,
+                                                    fontWeight = FontWeight.SemiBold,
                                                     color = ZenTextSecondary
                                                 )
                                             } else if (config.isOpenEnded) {
                                                 Text(
                                                     text = NotificationHelper.formatSeconds(elapsedSec),
-                                                    fontSize = 62.sp,
-                                                    fontWeight = FontWeight.Light,
-                                                    color = ZenTextPrimary
+                                                    fontSize = 64.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onBackground
                                                 )
                                                 Spacer(modifier = Modifier.height(4.dp))
                                                 Text(
                                                     text = "Elapsed Time",
                                                     fontSize = 13.sp,
+                                                    fontWeight = FontWeight.SemiBold,
                                                     color = ZenTextSecondary
                                                 )
                                             } else {
                                                 Text(
                                                     text = NotificationHelper.formatSeconds(remainingSec),
-                                                    fontSize = 64.sp,
-                                                    fontWeight = FontWeight.Light,
-                                                    letterSpacing = (-1).sp,
-                                                    color = ZenTextPrimary
+                                                    fontSize = 66.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    letterSpacing = (-1.5).sp,
+                                                    color = MaterialTheme.colorScheme.onBackground
                                                 )
                                                 Spacer(modifier = Modifier.height(4.dp))
                                                 Text(
                                                     text = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSec)}",
                                                     fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Medium,
                                                     color = ZenTextSecondary
                                                 )
                                                 val endTimeMs = remember(remainingSec) {
@@ -829,7 +836,7 @@ fun ActiveSessionScreen(
                                             .clip(RoundedCornerShape(28.dp)),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary,
-                                            contentColor = ZenObsidian
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
                                         )
                                     ) {
                                         Row(
@@ -839,7 +846,7 @@ fun ActiveSessionScreen(
                                             Icon(
                                                 imageVector = Icons.Default.Check,
                                                 contentDescription = null,
-                                                tint = ZenObsidian,
+                                                tint = MaterialTheme.colorScheme.onPrimary,
                                                 modifier = Modifier.size(20.dp)
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
@@ -847,7 +854,7 @@ fun ActiveSessionScreen(
                                                 text = "Complete",
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 16.sp,
-                                                color = ZenObsidian
+                                                color = MaterialTheme.colorScheme.onPrimary
                                             )
                                         }
                                     }
@@ -935,10 +942,10 @@ fun ActiveSessionScreen(
                                                 .clip(RoundedCornerShape(24.dp)),
                                             colors = ButtonDefaults.buttonColors(
                                                 containerColor = currentTheme.primary,
-                                                contentColor = ZenObsidian
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
                                             )
                                         ) {
-                                            Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(18.dp))
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Text(
                                                 text = if (config.showSessionOverview) "Save & Reflect" else "Done",
@@ -1088,7 +1095,7 @@ fun ActiveSessionScreen(
                                             .clip(RoundedCornerShape(26.dp)),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = currentTheme.primary,
-                                            contentColor = ZenObsidian
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
                                         )
                                     ) {
                                         Row(
@@ -1096,7 +1103,7 @@ fun ActiveSessionScreen(
                                             horizontalArrangement = Arrangement.Center,
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Icon(Icons.Default.Check, contentDescription = null, tint = ZenObsidian, modifier = Modifier.size(20.dp))
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(
                                                 text = if (config.showSessionOverview) "Save & Reflect" else "Done",

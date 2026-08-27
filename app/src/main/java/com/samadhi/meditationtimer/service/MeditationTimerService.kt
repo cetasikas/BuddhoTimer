@@ -122,11 +122,14 @@ class MeditationTimerService : Service() {
                 elapsedSeconds = elapsedSeconds,
                 isOverrun = false
             )
+            // Rebase chronometer to the new remaining duration
+            val newChrono = System.currentTimeMillis() + (newRemaining * 1000L)
             updateNotification(
-                timeText = NotificationHelper.formatSeconds(newRemaining),
-                subText = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
+                contentText = "${targetDurationSec / 60} min session",
                 isPaused = false,
-                isOverrun = false
+                isOverrun = false,
+                chronoBaseMs = newChrono,
+                isCountdown = true,
             )
         } else if (current is TimerStatus.Paused) {
             _timerStatus.value = current.copy(
@@ -135,10 +138,12 @@ class MeditationTimerService : Service() {
                 isOverrun = false
             )
             updateNotification(
-                timeText = NotificationHelper.formatSeconds(newRemaining),
-                subText = "Paused",
+                contentText = "${targetDurationSec / 60} min session",
                 isPaused = true,
-                isOverrun = false
+                isOverrun = false,
+                chronoBaseMs = 0L,
+                isCountdown = false,
+                staticTimeText = NotificationHelper.formatSeconds(newRemaining)
             )
         }
     }
@@ -179,26 +184,28 @@ class MeditationTimerService : Service() {
             dndManager.enableDnd()
         }
 
-        // 1. Immediately promote service to foreground to fulfill Android's startForegroundService contract
-        val initialTimeText = when {
-            prepSec > 0 -> "Starting in $prepSec s"
-            openEnded -> NotificationHelper.formatSeconds(elapsedSeconds)
-            else -> NotificationHelper.formatSeconds((targetSec - elapsedSeconds).coerceAtLeast(0))
+        // Promote service to foreground immediately
+        val now = System.currentTimeMillis()
+        val initialChrono = when {
+            prepSec > 0 -> now + (prepSec * 1000L)
+            openEnded   -> startTimeEpochMs
+            else        -> now + ((targetSec - initialElapsedSec).coerceAtLeast(0) * 1000L)
         }
-        val initialSubText = when {
+        val initialContentText = when {
             prepSec > 0 -> "Take a comfortable posture"
-            openEnded -> "Open-Ended Practice"
-            else -> "Elapsed: ${NotificationHelper.formatSeconds(elapsedSeconds)}"
+            openEnded   -> "Open-Ended Practice"
+            else        -> "${targetSec / 60} min session"
         }
 
         startForegroundServiceWithNotification(
-            timeText = initialTimeText,
-            subText = initialSubText,
+            contentText = initialContentText,
             isPaused = false,
-            isOverrun = false
+            isOverrun = false,
+            chronoBaseMs = initialChrono,
+            isCountdown = !openEnded,
         )
 
-        // 2. Set initial timer status immediately so UI updates instantaneously without a 1s lag
+        // Set initial timer status immediately
         if (prepSec > 0) {
             _timerStatus.value = TimerStatus.Preparing(prepSec)
         } else if (openEnded) {
@@ -222,12 +229,6 @@ class MeditationTimerService : Service() {
             val countdownHaptics = getSharedPreferences("timer_prefs", Context.MODE_PRIVATE).getBoolean("countdown_haptics", true)
             while (currentPrep > 0 && isActive) {
                 _timerStatus.value = TimerStatus.Preparing(currentPrep)
-                updateNotification(
-                    timeText = "Starting in $currentPrep s",
-                    subText = "Take a comfortable posture",
-                    isPaused = false,
-                    isOverrun = false
-                )
                 if (countdownHaptics) {
                     soundHelper.triggerSoftTouchHaptic()
                 }
@@ -239,21 +240,34 @@ class MeditationTimerService : Service() {
                 soundHelper.triggerGentleVibration()
             }
 
-            // Beginning chime (Only plays if explicitly enabled by user)
+            // Beginning chime
             if (isStartBellEnabledForSession) {
                 soundHelper.playChime(soundBellResName, serviceScope)
             }
 
-            // 4. Active Session Loop with Monotonic Hardware Clock Reference
+            // 4. Active Session Loop with Monotonic Clock
             sessionActiveStartRealtimeMs = SystemClock.elapsedRealtime()
             val intervalSec = mindfulnessIntervalMin * 60
+
+            val sessionStartNow = System.currentTimeMillis()
+            val sessionChrono = when {
+                openEnded -> startTimeEpochMs
+                else      -> sessionStartNow + ((targetDurationSec - elapsedSeconds).coerceAtLeast(0) * 1000L)
+            }
+            updateNotification(
+                contentText = if (openEnded) "Open-Ended Practice" else "${targetDurationSec / 60} min session",
+                isPaused = false,
+                isOverrun = false,
+                chronoBaseMs = sessionChrono,
+                isCountdown = !openEnded,
+            )
 
             while (isActive) {
                 val currentRealtimeMs = SystemClock.elapsedRealtime()
                 val elapsedSinceStartSec = ((currentRealtimeMs - sessionActiveStartRealtimeMs) / 1000L).toInt()
                 elapsedSeconds = baseElapsedSec + elapsedSinceStartSec
 
-                // Mindfulness Interval Bell (Chimes periodically if enabled)
+                // Mindfulness Interval Bell
                 if (intervalSec > 0 && elapsedSeconds > 0) {
                     val currentIntervalIndex = elapsedSeconds / intervalSec
                     if (currentIntervalIndex > lastMindfulnessChimeInterval) {
@@ -266,20 +280,12 @@ class MeditationTimerService : Service() {
                 }
 
                 if (isOpenEnded) {
-                    // Open-ended Stopwatch mode
                     _timerStatus.value = TimerStatus.Running(
                         remainingSeconds = 0,
                         elapsedSeconds = elapsedSeconds,
                         isOverrun = false
                     )
-                    updateNotification(
-                        timeText = NotificationHelper.formatSeconds(elapsedSeconds),
-                        subText = "Open-Ended Practice",
-                        isPaused = false,
-                        isOverrun = false
-                    )
                 } else {
-                    // Target Countdown & Overrun mode
                     val remaining = targetDurationSec - elapsedSeconds
                     if (remaining > 0) {
                         _timerStatus.value = TimerStatus.Running(
@@ -287,23 +293,25 @@ class MeditationTimerService : Service() {
                             elapsedSeconds = elapsedSeconds,
                             isOverrun = false
                         )
-                        updateNotification(
-                            timeText = NotificationHelper.formatSeconds(remaining),
-                            subText = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
-                            isPaused = false,
-                            isOverrun = false
-                        )
                     } else {
                         if (isOverrunEnabledForSession) {
-                            // In Overrun / Samadhi Extended Mode
                             overrunSeconds = elapsedSeconds - targetDurationSec
-                            
+
                             if (!hasChimedForOverrun) {
                                 hasChimedForOverrun = true
                                 if (isCompletionBellEnabledForSession) {
                                     soundHelper.playChime(soundBellResName, serviceScope)
                                 }
                                 soundHelper.triggerHarmonicCompletionHaptic()
+
+                                val overrunChrono = System.currentTimeMillis() - (overrunSeconds * 1000L)
+                                updateNotification(
+                                    contentText = "Overrun • Mindful Stillness",
+                                    isPaused = false,
+                                    isOverrun = true,
+                                    chronoBaseMs = overrunChrono,
+                                    isCountdown = false,
+                                )
                             }
 
                             _timerStatus.value = TimerStatus.Running(
@@ -311,14 +319,7 @@ class MeditationTimerService : Service() {
                                 elapsedSeconds = elapsedSeconds,
                                 isOverrun = true
                             )
-                            updateNotification(
-                                timeText = "+${NotificationHelper.formatSeconds(overrunSeconds)}",
-                                subText = "Extended Time • Total: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
-                                isPaused = false,
-                                isOverrun = true
-                            )
                         } else {
-                            // Overrun is OFF: Target reached, complete session immediately!
                             if (!hasChimedForOverrun) {
                                 hasChimedForOverrun = true
                                 if (isCompletionBellEnabledForSession) {
@@ -347,11 +348,18 @@ class MeditationTimerService : Service() {
                 elapsedSeconds = current.elapsedSeconds,
                 isOverrun = current.isOverrun
             )
+            val pausedTimeText = if (current.isOverrun) {
+                "+${NotificationHelper.formatSeconds(overrunSeconds)}"
+            } else {
+                NotificationHelper.formatSeconds(current.remainingSeconds)
+            }
             updateNotification(
-                timeText = if (current.isOverrun) "+${NotificationHelper.formatSeconds(overrunSeconds)}" else NotificationHelper.formatSeconds(current.remainingSeconds),
-                subText = "Paused",
+                contentText = "Paused",
                 isPaused = true,
-                isOverrun = current.isOverrun
+                isOverrun = current.isOverrun,
+                chronoBaseMs = 0L,
+                isCountdown = false,
+                staticTimeText = pausedTimeText,
             )
             wakeLockHelper.releaseWakeLock()
         }
@@ -362,7 +370,25 @@ class MeditationTimerService : Service() {
         if (current is TimerStatus.Paused) {
             wakeLockHelper.acquireWakeLock()
             sessionActiveStartRealtimeMs = SystemClock.elapsedRealtime()
-            val intervalSec = if (prepTimeSec > 0) 0 else 0 // kept for scope clarity
+
+            val resumeNow = System.currentTimeMillis()
+            val resumeChrono = when {
+                isOpenEnded      -> startTimeEpochMs
+                current.isOverrun -> resumeNow - (overrunSeconds * 1000L)
+                else              -> resumeNow + (current.remainingSeconds * 1000L)
+            }
+            val resumeContentText = when {
+                isOpenEnded       -> "Open-Ended Practice"
+                current.isOverrun -> "Overrun • Mindful Stillness"
+                else              -> "${targetDurationSec / 60} min session"
+            }
+            updateNotification(
+                contentText = resumeContentText,
+                isPaused = false,
+                isOverrun = current.isOverrun,
+                chronoBaseMs = resumeChrono,
+                isCountdown = !isOpenEnded && !current.isOverrun,
+            )
 
             timerJob = serviceScope.launch {
                 while (isActive) {
@@ -376,24 +402,12 @@ class MeditationTimerService : Service() {
                             elapsedSeconds = elapsedSeconds,
                             isOverrun = false
                         )
-                        updateNotification(
-                            timeText = NotificationHelper.formatSeconds(elapsedSeconds),
-                            subText = "Open-Ended Practice",
-                            isPaused = false,
-                            isOverrun = false
-                        )
                     } else {
                         val remaining = targetDurationSec - elapsedSeconds
                         if (remaining > 0) {
                             _timerStatus.value = TimerStatus.Running(
                                 remainingSeconds = remaining,
                                 elapsedSeconds = elapsedSeconds,
-                                isOverrun = false
-                            )
-                            updateNotification(
-                                timeText = NotificationHelper.formatSeconds(remaining),
-                                subText = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
-                                isPaused = false,
                                 isOverrun = false
                             )
                         } else {
@@ -405,16 +419,18 @@ class MeditationTimerService : Service() {
                                         soundHelper.playChime(soundBellResName, serviceScope)
                                     }
                                     soundHelper.triggerHarmonicCompletionHaptic()
+                                    val overrunChrono = System.currentTimeMillis() - (overrunSeconds * 1000L)
+                                    updateNotification(
+                                        contentText = "Overrun • Mindful Stillness",
+                                        isPaused = false,
+                                        isOverrun = true,
+                                        chronoBaseMs = overrunChrono,
+                                        isCountdown = false,
+                                    )
                                 }
                                 _timerStatus.value = TimerStatus.Running(
                                     remainingSeconds = 0,
                                     elapsedSeconds = elapsedSeconds,
-                                    isOverrun = true
-                                )
-                                updateNotification(
-                                    timeText = "+${NotificationHelper.formatSeconds(overrunSeconds)}",
-                                    subText = "Extended Time • Total: ${NotificationHelper.formatSeconds(elapsedSeconds)}",
-                                    isPaused = false,
                                     isOverrun = true
                                 )
                             } else {
@@ -485,16 +501,20 @@ class MeditationTimerService : Service() {
     }
 
     private fun startForegroundServiceWithNotification(
-        timeText: String,
-        subText: String,
+        contentText: String,
         isPaused: Boolean,
-        isOverrun: Boolean
+        isOverrun: Boolean,
+        chronoBaseMs: Long,
+        isCountdown: Boolean,
+        staticTimeText: String = "",
     ) {
         val notification = notificationHelper.buildTimerNotification(
-            timeText = timeText,
-            subText = subText,
+            contentText = contentText,
             isPaused = isPaused,
-            isOverrun = isOverrun
+            isOverrun = isOverrun,
+            chronoBaseMs = chronoBaseMs,
+            isCountdown = isCountdown,
+            staticTimeText = staticTimeText,
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
@@ -508,16 +528,20 @@ class MeditationTimerService : Service() {
     }
 
     private fun updateNotification(
-        timeText: String,
-        subText: String,
+        contentText: String,
         isPaused: Boolean,
-        isOverrun: Boolean
+        isOverrun: Boolean,
+        chronoBaseMs: Long,
+        isCountdown: Boolean,
+        staticTimeText: String = "",
     ) {
         val notification = notificationHelper.buildTimerNotification(
-            timeText = timeText,
-            subText = subText,
+            contentText = contentText,
             isPaused = isPaused,
-            isOverrun = isOverrun
+            isOverrun = isOverrun,
+            chronoBaseMs = chronoBaseMs,
+            isCountdown = isCountdown,
+            staticTimeText = staticTimeText,
         )
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NotificationHelper.NOTIFICATION_ID, notification)

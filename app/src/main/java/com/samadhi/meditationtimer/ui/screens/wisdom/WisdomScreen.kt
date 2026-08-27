@@ -62,6 +62,7 @@ import com.samadhi.meditationtimer.R
 import com.samadhi.meditationtimer.data.wisdom.MeditationGuides
 import com.samadhi.meditationtimer.data.wisdom.TopicCardData
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
+import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
@@ -88,7 +89,7 @@ fun WisdomScreen(
     val topics = remember { MeditationGuides.topicCards }
     var expandedTopicId by remember { mutableStateOf<String?>(prefs.getString("expanded_topic_id", null)) }
 
-    Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // 1. Subtle Falling Particles on pure AMOLED black
         FallingLeavesEffect(
             leafCount = 14,
@@ -175,14 +176,16 @@ private fun SimpleTopicCard(
     isExpanded: Boolean,
     onToggle: () -> Unit
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val currentTheme = LocalZenTheme.current
     val topicColor = when (topic.topicNumber) {
-        1 -> ZenAmber          // Start Here Gold
-        2 -> ZenTeal           // Breath Teal
-        3 -> Color(0xFF81D4FA) // Buddho Sky Blue
-        4 -> Color(0xFFCE93D8) // Varying Count Lilac
-        5 -> Color(0xFFA5D6A7) // Walking Moss Green
-        6 -> Color(0xFFFFCC80) // Calming Amber
-        else -> Color(0xFFF48FB1) // Metta Rose
+        1 -> if (isDark) Color(0xFFFFD54F) else currentTheme.primary          // Start Here Gold
+        2 -> if (isDark) ZenTeal else Color(0xFF0D9488)                       // Breath Teal
+        3 -> if (isDark) Color(0xFF81D4FA) else Color(0xFF0284C7)             // Buddho Sky Blue
+        4 -> if (isDark) Color(0xFFCE93D8) else Color(0xFF7C3AED)             // Varying Count Lilac
+        5 -> if (isDark) Color(0xFFA5D6A7) else Color(0xFF15803D)             // Walking Moss Green
+        6 -> if (isDark) Color(0xFFFFB74D) else Color(0xFFC2410C)             // Calming Amber
+        else -> if (isDark) Color(0xFFF48FB1) else Color(0xFFBE185D)          // Metta Rose
     }
 
     val iconVector: ImageVector = when (topic.iconName) {

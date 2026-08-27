@@ -634,10 +634,6 @@ private fun DrawScope.drawIndividualParticle(
                 }
             }
 
-            if (isResting) {
-                drawPath(path = shapePath, color = Color(0xFF070B0E))
-            }
-
             if (isGlowing) {
                 val haloAlpha = (0.16f + 0.18f * breathingGlowFactor).coerceIn(0.10f, 0.38f)
                 drawPath(path = shapePath, color = glowColor.copy(alpha = haloAlpha), style = Stroke(width = 3.5f))
@@ -645,17 +641,17 @@ private fun DrawScope.drawIndividualParticle(
 
             drawPath(path = shapePath, color = color)
 
-            val veinAlpha = if (isResting) (0.42f * color.alpha).coerceIn(0.15f, 0.5f)
+            val veinAlpha = if (isResting) (0.28f * color.alpha).coerceIn(0.08f, 0.35f)
                             else (0.22f * color.alpha).coerceIn(0.05f, 0.28f)
             drawPath(
                 path = detailPath,
-                color = Color(0xFF041014).copy(alpha = veinAlpha),
-                style = Stroke(width = if (isResting) 1.3f else 1.0f)
+                color = Color.Black.copy(alpha = veinAlpha),
+                style = Stroke(width = if (isResting) 1.1f else 0.9f)
             )
 
             drawPath(
                 path = shapePath,
-                color = Color.Black.copy(alpha = (0.20f * color.alpha).coerceIn(0.04f, 0.28f)),
+                color = Color.Black.copy(alpha = (0.15f * color.alpha).coerceIn(0.03f, 0.20f)),
                 style = Stroke(width = 0.8f)
             )
         }

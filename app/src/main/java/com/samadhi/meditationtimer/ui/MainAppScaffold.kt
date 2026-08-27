@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -44,282 +45,270 @@ import com.samadhi.meditationtimer.ui.screens.timer.TimerScreen
 import com.samadhi.meditationtimer.ui.screens.timer.TimerViewModel
 import com.samadhi.meditationtimer.ui.screens.wisdom.WisdomScreen
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
-import com.samadhi.meditationtimer.ui.theme.ZenObsidian
-import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
-import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
-import com.samadhi.meditationtimer.ui.theme.ZenThemeId
-import com.samadhi.meditationtimer.ui.theme.getZenThemeById
+import com.samadhi.meditationtimer.ui.theme.SamadhiTimerTheme
+import com.samadhi.meditationtimer.ui.theme.rememberZenTheme
 
 @Composable
 fun MainAppScaffold() {
     val context = LocalContext.current
-    val navController = rememberNavController()
-    val timerViewModel: TimerViewModel = viewModel()
-    val historyViewModel: HistoryViewModel = viewModel()
-    val settingsViewModel: SettingsViewModel = viewModel()
-
-    val timerStatus by timerViewModel.timerStatus.collectAsState()
-    val timerConfig by timerViewModel.config.collectAsState()
-    var completedSessionData by remember { mutableStateOf<TimerStatus.Completed?>(null) }
-
     val prefs = remember { context.getSharedPreferences("buddho_prefs", Context.MODE_PRIVATE) }
-    var selectedThemeId by remember {
-        mutableStateOf(prefs.getString("selected_theme_id", ZenThemeId.GOLDEN_BODHI.id) ?: ZenThemeId.GOLDEN_BODHI.id)
-    }
     var showTutorialOverlay by remember {
         mutableStateOf(!prefs.getBoolean("has_seen_tutorial_v1", false))
     }
 
-    val currentTheme = getZenThemeById(selectedThemeId)
+    SamadhiTimerTheme {
+        val currentTheme = rememberZenTheme()
+        val navController = rememberNavController()
+        val timerViewModel: TimerViewModel = viewModel()
+        val historyViewModel: HistoryViewModel = viewModel()
+        val settingsViewModel: SettingsViewModel = viewModel()
 
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+        val timerStatus by timerViewModel.timerStatus.collectAsState()
+        val timerConfig by timerViewModel.config.collectAsState()
+        var completedSessionData by remember { mutableStateOf<TimerStatus.Completed?>(null) }
 
-    // Synchronize UI with background service state
-    LaunchedEffect(timerStatus, timerConfig.showSessionOverview) {
-        when (val status = timerStatus) {
-            is TimerStatus.Preparing, is TimerStatus.Running, is TimerStatus.Paused -> {
-                if (currentRoute != Screen.ActiveSession.route) {
-                    navController.navigate(Screen.ActiveSession.route) {
-                        launchSingleTop = true
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+
+        // Synchronize UI with background service state
+        LaunchedEffect(timerStatus, timerConfig.showSessionOverview) {
+            when (val status = timerStatus) {
+                is TimerStatus.Preparing, is TimerStatus.Running, is TimerStatus.Paused -> {
+                    if (currentRoute != Screen.ActiveSession.route) {
+                        navController.navigate(Screen.ActiveSession.route) {
+                            launchSingleTop = true
+                        }
                     }
                 }
-            }
-            is TimerStatus.Completed -> {
-                completedSessionData = status
-                if (timerConfig.showSessionOverview) {
-                    navController.navigate(Screen.Summary.route) {
-                        popUpTo(Screen.Timer.route)
+                is TimerStatus.Completed -> {
+                    completedSessionData = status
+                    if (timerConfig.showSessionOverview) {
+                        navController.navigate(Screen.Summary.route) {
+                            popUpTo(Screen.Timer.route)
+                        }
+                    } else {
+                        // Auto-save completed session in background and stay on active screen in Completed state
+                        val session = com.samadhi.meditationtimer.domain.model.MeditationSession(
+                            startTimeEpochMs = status.startTimeEpochMs,
+                            completedTimeEpochMs = status.completedTimeEpochMs,
+                            targetDurationSec = status.targetDurationSec,
+                            actualDurationSec = status.actualDurationSec,
+                            overrunSec = status.overrunSec,
+                            rating = 3,
+                            notesMarkdown = "",
+                            completedSuccessfully = true
+                        )
+                        historyViewModel.saveSession(session)
                     }
-                } else {
-                    // Auto-save completed session in background and stay on active screen in Completed state
-                    val session = com.samadhi.meditationtimer.domain.model.MeditationSession(
-                        startTimeEpochMs = status.startTimeEpochMs,
-                        completedTimeEpochMs = status.completedTimeEpochMs,
-                        targetDurationSec = status.targetDurationSec,
-                        actualDurationSec = status.actualDurationSec,
-                        overrunSec = status.overrunSec,
-                        rating = 3,
-                        notesMarkdown = "",
-                        completedSuccessfully = true
-                    )
-                    historyViewModel.saveSession(session)
                 }
-            }
-            is TimerStatus.Idle -> {
-                // If on active session and idle, return to timer screen
-                if (currentRoute == Screen.ActiveSession.route) {
-                    navController.navigate(Screen.Timer.route) {
-                        popUpTo(Screen.Timer.route) { inclusive = true }
+                is TimerStatus.Idle -> {
+                    // If on active session and idle, return to timer screen
+                    if (currentRoute == Screen.ActiveSession.route) {
+                        navController.navigate(Screen.Timer.route) {
+                            popUpTo(Screen.Timer.route) { inclusive = true }
+                        }
                     }
                 }
             }
         }
-    }
 
-    val showBottomBar = currentRoute in Screen.bottomNavItems.map { it.route }
+        val showBottomBar = currentRoute in Screen.bottomNavItems.map { it.route }
 
-    CompositionLocalProvider(LocalZenTheme provides currentTheme) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Scaffold(
-                bottomBar = {
-                    if (showBottomBar) {
-                        NavigationBar(
-                            containerColor = ZenObsidian,
-                            contentColor = ZenTextPrimary,
-                            tonalElevation = 0.dp
-                        ) {
-                            Screen.bottomNavItems.forEach { screen ->
-                                val selected = currentRoute == screen.route
-                                NavigationBarItem(
-                                    icon = {
-                                        screen.icon?.let {
-                                            Icon(
-                                                imageVector = it,
-                                                contentDescription = screen.title
-                                            )
-                                        }
-                                    },
-                                    label = {
-                                        Text(
-                                            text = screen.title,
-                                            fontSize = 11.sp,
-                                            fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal
-                                        )
-                                    },
-                                    selected = selected,
-                                    onClick = {
-                                        if (currentRoute != screen.route) {
-                                            navController.navigate(screen.route) {
-                                                popUpTo(Screen.Timer.route) {
-                                                    saveState = false
-                                                }
-                                                launchSingleTop = true
+        CompositionLocalProvider(LocalZenTheme provides currentTheme) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Scaffold(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    bottomBar = {
+                        if (showBottomBar) {
+                            NavigationBar(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                                tonalElevation = 3.dp
+                            ) {
+                                Screen.bottomNavItems.forEach { screen ->
+                                    val selected = currentRoute == screen.route
+                                    NavigationBarItem(
+                                        icon = {
+                                            screen.icon?.let {
+                                                Icon(
+                                                    imageVector = it,
+                                                    contentDescription = screen.title
+                                                )
                                             }
-                                        }
-                                    },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = ZenTextPrimary,
-                                        selectedTextColor = ZenTextPrimary,
-                                        unselectedIconColor = ZenTextMuted,
-                                        unselectedTextColor = ZenTextMuted,
-                                        indicatorColor = currentTheme.primary.copy(alpha = 0.28f)
+                                        },
+                                        label = {
+                                            Text(
+                                                text = screen.title,
+                                                fontSize = 11.sp,
+                                                fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal
+                                            )
+                                        },
+                                        selected = selected,
+                                        onClick = {
+                                            if (currentRoute != screen.route) {
+                                                navController.navigate(screen.route) {
+                                                    popUpTo(Screen.Timer.route) {
+                                                        saveState = false
+                                                    }
+                                                    launchSingleTop = true
+                                                }
+                                            }
+                                        },
+                                        colors = NavigationBarItemDefaults.colors(
+                                            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
                     }
-                }
-            ) { innerPadding ->
-                NavHost(
-                    navController = navController,
-                    startDestination = Screen.Timer.route,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(ZenObsidian)
-                        .padding(innerPadding)
-                ) {
-                    composable(Screen.Timer.route) {
-                        TimerScreen(
-                            viewModel = timerViewModel,
-                            onStartSession = {
-                                navController.navigate(Screen.ActiveSession.route)
-                            },
-                            onOpenWisdom = {
-                                navController.navigate(Screen.Wisdom.route)
-                            },
-                            onOpenSettings = {
-                                navController.navigate(Screen.Settings.route)
-                            },
-                            onOpenBreathing = {
-                                navController.navigate(Screen.Breathing.route)
-                            }
-                        )
-                    }
-
-                    composable(Screen.ActiveSession.route) {
-                        ActiveSessionScreen(
-                            viewModel = timerViewModel,
-                            onSessionCompleted = {
-                                val status = timerViewModel.timerStatus.value
-                                if (status is TimerStatus.Completed) {
-                                    completedSessionData = status
+                ) { innerPadding ->
+                    NavHost(
+                        navController = navController,
+                        startDestination = Screen.Timer.route,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(innerPadding)
+                    ) {
+                        composable(Screen.Timer.route) {
+                            TimerScreen(
+                                viewModel = timerViewModel,
+                                onStartSession = {
+                                    navController.navigate(Screen.ActiveSession.route)
+                                },
+                                onOpenWisdom = {
+                                    navController.navigate(Screen.Wisdom.route)
+                                },
+                                onOpenSettings = {
+                                    navController.navigate(Screen.Settings.route)
+                                },
+                                onOpenBreathing = {
+                                    navController.navigate(Screen.Breathing.route)
                                 }
-                                if (timerConfig.showSessionOverview) {
-                                    navController.navigate(Screen.Summary.route) {
-                                        popUpTo(Screen.Timer.route)
+                            )
+                        }
+
+                        composable(Screen.ActiveSession.route) {
+                            ActiveSessionScreen(
+                                viewModel = timerViewModel,
+                                onSessionCompleted = {
+                                    val status = timerViewModel.timerStatus.value
+                                    if (status is TimerStatus.Completed) {
+                                        completedSessionData = status
                                     }
-                                } else {
-                                    MeditationTimerService.resetStatus()
+                                    if (timerConfig.showSessionOverview) {
+                                        navController.navigate(Screen.Summary.route) {
+                                            popUpTo(Screen.Timer.route)
+                                        }
+                                    } else {
+                                        MeditationTimerService.resetStatus()
+                                        navController.navigate(Screen.Timer.route) {
+                                            popUpTo(Screen.Timer.route) { inclusive = true }
+                                        }
+                                    }
+                                },
+                                onSessionCancelled = {
                                     navController.navigate(Screen.Timer.route) {
                                         popUpTo(Screen.Timer.route) { inclusive = true }
                                     }
                                 }
-                            },
-                            onSessionCancelled = {
-                                navController.navigate(Screen.Timer.route) {
-                                    popUpTo(Screen.Timer.route) { inclusive = true }
-                                }
-                            }
-                        )
-                    }
+                            )
+                        }
 
-                    composable(Screen.Breathing.route) {
-                        BreathingScreen(
-                            onClose = {
-                                navController.popBackStack()
-                            },
-                            onSessionCompleted = { completedStatus ->
-                                completedSessionData = completedStatus
-                                if (timerConfig.showSessionOverview) {
-                                    navController.navigate(Screen.Summary.route) {
+                        composable(Screen.Breathing.route) {
+                            BreathingScreen(
+                                onClose = {
+                                    navController.popBackStack()
+                                },
+                                onSessionCompleted = { completedStatus ->
+                                    completedSessionData = completedStatus
+                                    if (timerConfig.showSessionOverview) {
+                                        navController.navigate(Screen.Summary.route) {
+                                            popUpTo(Screen.Timer.route)
+                                        }
+                                    } else {
+                                        val session = com.samadhi.meditationtimer.domain.model.MeditationSession(
+                                            startTimeEpochMs = completedStatus.startTimeEpochMs,
+                                            completedTimeEpochMs = completedStatus.completedTimeEpochMs,
+                                            targetDurationSec = completedStatus.targetDurationSec,
+                                            actualDurationSec = completedStatus.actualDurationSec,
+                                            overrunSec = completedStatus.overrunSec,
+                                            rating = 3,
+                                            notesMarkdown = "",
+                                            completedSuccessfully = true
+                                        )
+                                        historyViewModel.saveSession(session)
+                                    }
+                                }
+                            )
+                        }
+
+                        composable(Screen.Summary.route) {
+                            SessionSummaryScreen(
+                                completedStatus = completedSessionData,
+                                onSaveSession = { session ->
+                                    historyViewModel.saveSession(session)
+                                    MeditationTimerService.resetStatus()
+                                    completedSessionData = null
+                                    navController.navigate(Screen.History.route) {
                                         popUpTo(Screen.Timer.route)
                                     }
-                                } else {
-                                    val session = com.samadhi.meditationtimer.domain.model.MeditationSession(
-                                        startTimeEpochMs = completedStatus.startTimeEpochMs,
-                                        completedTimeEpochMs = completedStatus.completedTimeEpochMs,
-                                        targetDurationSec = completedStatus.targetDurationSec,
-                                        actualDurationSec = completedStatus.actualDurationSec,
-                                        overrunSec = completedStatus.overrunSec,
-                                        rating = 3,
-                                        notesMarkdown = "",
-                                        completedSuccessfully = true
-                                    )
-                                    historyViewModel.saveSession(session)
+                                },
+                                onDiscard = {
+                                    MeditationTimerService.resetStatus()
+                                    completedSessionData = null
+                                    navController.navigate(Screen.Timer.route) {
+                                        popUpTo(Screen.Timer.route) { inclusive = true }
+                                    }
                                 }
-                            }
-                        )
-                    }
+                            )
+                        }
 
-                    composable(Screen.Summary.route) {
-                        SessionSummaryScreen(
-                            completedStatus = completedSessionData,
-                            onSaveSession = { session ->
-                                historyViewModel.saveSession(session)
-                                MeditationTimerService.resetStatus()
-                                completedSessionData = null
-                                navController.navigate(Screen.History.route) {
-                                    popUpTo(Screen.Timer.route)
+                        composable(Screen.Wisdom.route) {
+                            WisdomScreen(
+                                onNavigateBack = {
+                                    if (!navController.popBackStack()) {
+                                        navController.navigate(Screen.Timer.route)
+                                    }
                                 }
-                            },
-                            onDiscard = {
-                                MeditationTimerService.resetStatus()
-                                completedSessionData = null
-                                navController.navigate(Screen.Timer.route) {
-                                    popUpTo(Screen.Timer.route) { inclusive = true }
-                                }
-                            }
-                        )
-                    }
+                            )
+                        }
 
-                    composable(Screen.Wisdom.route) {
-                        WisdomScreen(
-                            onNavigateBack = {
-                                if (!navController.popBackStack()) {
-                                    navController.navigate(Screen.Timer.route)
-                                }
-                            }
-                        )
-                    }
+                        composable(Screen.History.route) {
+                            HistoryScreen(viewModel = historyViewModel)
+                        }
 
-                    composable(Screen.History.route) {
-                        HistoryScreen(viewModel = historyViewModel)
-                    }
-
-                    composable(Screen.Settings.route) {
-                        SettingsScreen(
-                            viewModel = settingsViewModel,
-                            timerViewModel = timerViewModel,
-                            onNavigateBack = {
-                                if (!navController.popBackStack()) {
-                                    navController.navigate(Screen.Timer.route)
+                        composable(Screen.Settings.route) {
+                            SettingsScreen(
+                                viewModel = settingsViewModel,
+                                timerViewModel = timerViewModel,
+                                onNavigateBack = {
+                                    if (!navController.popBackStack()) {
+                                        navController.navigate(Screen.Timer.route)
+                                    }
+                                },
+                                onShowTutorial = {
+                                    showTutorialOverlay = true
                                 }
-                            },
-                            onShowTutorial = {
-                                showTutorialOverlay = true
-                            },
-                            onSelectTheme = { newThemeId ->
-                                selectedThemeId = newThemeId.id
-                                prefs.edit().putString("selected_theme_id", newThemeId.id).apply()
-                            }
-                        )
+                            )
+                        }
                     }
                 }
+
+                // Interactive Tutorial Overlay (Initial Launch & On-Demand)
+                TutorialOverlay(
+                    isVisible = showTutorialOverlay,
+                    onDismiss = {
+                        showTutorialOverlay = false
+                        prefs.edit().putBoolean("has_seen_tutorial_v1", true).apply()
+                    }
+                )
             }
-
-            // Interactive Tutorial Overlay (Initial Launch & On-Demand)
-            TutorialOverlay(
-                isVisible = showTutorialOverlay,
-                onDismiss = {
-                    showTutorialOverlay = false
-                    prefs.edit().putBoolean("has_seen_tutorial_v1", true).apply()
-                },
-                onSelectTheme = { newThemeId ->
-                    selectedThemeId = newThemeId.id
-                    prefs.edit().putString("selected_theme_id", newThemeId.id).apply()
-                }
-            )
         }
     }
 }

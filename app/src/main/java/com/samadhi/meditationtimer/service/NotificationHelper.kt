@@ -88,10 +88,12 @@ class NotificationHelper(private val context: Context) {
     }
 
     fun buildTimerNotification(
-        timeText: String,
-        subText: String,
+        contentText: String,
         isPaused: Boolean,
-        isOverrun: Boolean
+        isOverrun: Boolean,
+        chronoBaseMs: Long = System.currentTimeMillis(),
+        isCountdown: Boolean = false,
+        staticTimeText: String = "",
     ): Notification {
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -136,10 +138,9 @@ class NotificationHelper(private val context: Context) {
             else -> context.getString(R.string.notification_title_meditating)
         }
 
-        return NotificationCompat.Builder(context, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(title)
-            .setContentText(timeText)
-            .setSubText(subText)
+            .setContentText(if (isPaused && staticTimeText.isNotEmpty()) "Paused • $staticTimeText" else contentText)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(openAppPendingIntent)
             .setOngoing(true)
@@ -150,7 +151,22 @@ class NotificationHelper(private val context: Context) {
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build()
+
+        if (isPaused) {
+            // Paused: show static time in body; chronometer off
+            builder
+                .setUsesChronometer(false)
+                .setShowWhen(false)
+        } else {
+            // Active: chronometer self-updates; setWhen anchors reference time
+            builder
+                .setWhen(chronoBaseMs)
+                .setUsesChronometer(true)
+                .setChronometerCountDown(isCountdown)
+                .setShowWhen(true)
+        }
+
+        return builder.build()
     }
 
     fun showCompletionNotification(title: String, message: String) {
@@ -187,6 +203,45 @@ class NotificationHelper(private val context: Context) {
         notificationManager.notify(NOTIFICATION_COMPLETION_ID, notification)
     }
 
+    fun showBreathingPausedNotification(
+        patternName: String,
+        elapsedSec: Int
+    ) {
+        val resumeIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val resumePendingIntent = PendingIntent.getActivity(
+            context,
+            2001,
+            resumeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setContentTitle("🪷 Box Breathing Paused")
+            .setContentText("$patternName • ${formatSeconds(elapsedSec)} completed")
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentIntent(resumePendingIntent)
+            .setAutoCancel(true)
+            .setOngoing(false)
+            .setColor(0xFFD4AF37.toInt())
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .addAction(
+                R.drawable.ic_notification,
+                "▶ Resume Session",
+                resumePendingIntent
+            )
+            .build()
+
+        notificationManager.notify(NOTIFICATION_BREATHING_ID, notification)
+    }
+
+    fun clearBreathingNotification() {
+        notificationManager.cancel(NOTIFICATION_BREATHING_ID)
+    }
+
     fun clearTimerNotification() {
         notificationManager.cancel(NOTIFICATION_ID)
     }
@@ -198,6 +253,7 @@ class NotificationHelper(private val context: Context) {
     fun clearAllTimerNotifications() {
         notificationManager.cancel(NOTIFICATION_ID)
         notificationManager.cancel(NOTIFICATION_COMPLETION_ID)
+        notificationManager.cancel(NOTIFICATION_BREATHING_ID)
     }
 
     companion object {
@@ -207,6 +263,7 @@ class NotificationHelper(private val context: Context) {
         const val NOTIFICATION_ID = 1001
         const val NOTIFICATION_REMINDER_ID = 1002
         const val NOTIFICATION_COMPLETION_ID = 1003
+        const val NOTIFICATION_BREATHING_ID = 1005
 
         fun formatSeconds(totalSeconds: Int): String {
             val mins = totalSeconds / 60

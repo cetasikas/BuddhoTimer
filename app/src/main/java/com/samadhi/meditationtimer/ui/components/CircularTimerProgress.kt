@@ -37,6 +37,7 @@ fun CircularTimerProgress(
     val currentTheme = LocalZenTheme.current
 
     val activeColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary
+    val trackBorderColor = currentTheme.border
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
         animationSpec = tween(durationMillis = if (isPaused) 0 else 1000, easing = LinearEasing),
@@ -54,7 +55,7 @@ fun CircularTimerProgress(
 
             // 1. Track Background Ring
             drawCircle(
-                color = ZenBorder,
+                color = trackBorderColor,
                 radius = radius,
                 center = center,
                 style = Stroke(width = strokeWidth.toPx())
@@ -101,7 +102,7 @@ fun CircularTimerProgress(
                     )
                     // Inner bright core
                     drawCircle(
-                        color = if (isPassed) Color.White else ZenBorder,
+                        color = if (isPassed) Color.White else trackBorderColor,
                         radius = 2.2f,
                         center = Offset(notchX, notchY)
                     )

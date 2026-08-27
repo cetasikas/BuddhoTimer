@@ -3,6 +3,7 @@ package com.samadhi.meditationtimer.ui.screens.settings
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -96,6 +97,7 @@ import com.samadhi.meditationtimer.ui.theme.BambooTealTheme
 import com.samadhi.meditationtimer.ui.theme.GoldenBodhiTheme
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.SakuraTwilightTheme
+import com.samadhi.meditationtimer.ui.theme.SystemDynamicTheme
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
@@ -212,7 +214,7 @@ fun SettingsScreen(
     timerViewModel: TimerViewModel,
     onNavigateBack: () -> Unit,
     onShowTutorial: () -> Unit,
-    onSelectTheme: (ZenThemeId) -> Unit,
+    onSelectTheme: (ZenThemeId) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val currentTheme = LocalZenTheme.current
@@ -225,7 +227,6 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Expandable accordion states (Default compact/collapsed)
-    var expandedTheme by remember { mutableStateOf(false) }
     var expandedChime by remember { mutableStateOf(false) }
     var expandedInterval by remember { mutableStateOf(false) }
     var expandedDisplay by remember { mutableStateOf(false) }
@@ -291,7 +292,7 @@ fun SettingsScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         FallingLeavesEffect(
             enabled = config.showLeavesDuringMeditation,
             leafCount = 14,
@@ -396,75 +397,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // 1. ATMOSPHERE & THEME
-                ExpandableSettingsCard(
-                    title = "Atmosphere & Theme",
-                    icon = Icons.Default.Palette,
-                    summaryValue = currentTheme.title,
-                    isExpanded = expandedTheme,
-                    onToggle = { expandedTheme = !expandedTheme }
-                ) {
-                    val availableThemes = listOf(BambooTealTheme, GoldenBodhiTheme, SakuraTwilightTheme)
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        availableThemes.forEach { theme ->
-                            val isSelected = currentTheme.id == theme.id
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable { onSelectTheme(theme.id) },
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) theme.primary.copy(alpha = 0.18f) else ZenSurfaceVariant.copy(alpha = 0.6f)
-                                ),
-                                border = CardDefaults.outlinedCardBorder().copy(
-                                    brush = SolidColor(if (isSelected) theme.primaryLight else ZenBorder)
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(16.dp)
-                                                .clip(CircleShape)
-                                                .background(theme.primaryLight)
-                                        )
-                                        Spacer(modifier = Modifier.width(10.dp))
-                                        Column {
-                                            Text(
-                                                text = theme.title,
-                                                fontSize = 13.5.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (isSelected) theme.primaryLight else ZenTextPrimary
-                                            )
-                                            Text(
-                                                text = theme.id.subtitle,
-                                                fontSize = 11.sp,
-                                                color = ZenTextSecondary
-                                            )
-                                        }
-                                    }
-                                    if (isSelected) {
-                                        Icon(
-                                            imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = "Selected",
-                                            tint = theme.primaryLight,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // 2. BELL SOUND & CHIMES
+                // 1. BELL SOUND & CHIMES
                 val currentSoundTitle = SoundHelper.soundOptions.find { it.id == config.soundBellResName }?.title ?: "Mindfulness Bell"
                 ExpandableSettingsCard(
                     title = "Bell Sound & Chimes",

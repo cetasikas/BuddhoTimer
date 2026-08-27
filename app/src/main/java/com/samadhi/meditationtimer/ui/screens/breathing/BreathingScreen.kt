@@ -187,6 +187,31 @@ fun BreathingScreen(
     var phaseProgress by remember { mutableFloatStateOf(0.0f) }
     var isSessionComplete by remember { mutableStateOf(false) }
 
+    val currentIsRunning by androidx.compose.runtime.rememberUpdatedState(isRunning)
+    val currentIsSessionComplete by androidx.compose.runtime.rememberUpdatedState(isSessionComplete)
+    val currentIsPreparing by androidx.compose.runtime.rememberUpdatedState(isPreparing)
+    val currentPatternName by androidx.compose.runtime.rememberUpdatedState(selectedPattern.name)
+    val currentElapsedSec by androidx.compose.runtime.rememberUpdatedState(totalElapsedSec)
+
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE || event == androidx.lifecycle.Lifecycle.Event.ON_STOP) {
+                if (currentIsRunning && !currentIsSessionComplete && !currentIsPreparing) {
+                    isRunning = false
+                    notificationHelper.showBreathingPausedNotification(currentPatternName, currentElapsedSec)
+                }
+            } else if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                notificationHelper.clearBreathingNotification()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            notificationHelper.clearBreathingNotification()
+        }
+    }
+
     fun finishSession() {
         val isCompletionBell = prefs.getBoolean("completion_bell_enabled", true)
         if (isCompletionBell) {
@@ -204,6 +229,7 @@ fun BreathingScreen(
         )
         isSessionComplete = true
         isRunning = false
+        notificationHelper.clearBreathingNotification()
         if (!com.samadhi.meditationtimer.MeditationApp.isAppInForeground) {
             notificationHelper.showCompletionNotification(
                 title = "Breathwork Complete 🪷",
@@ -344,15 +370,15 @@ fun BreathingScreen(
 
     val phaseColor = when (currentPhase) {
         BreathPhase.INHALE -> currentTheme.primary
-        BreathPhase.HOLD_FULL -> currentTheme.primaryLight
+        BreathPhase.HOLD_FULL -> currentTheme.primary
         BreathPhase.EXHALE -> currentTheme.overrunColor
-        BreathPhase.HOLD_EMPTY -> ZenAmber
+        BreathPhase.HOLD_EMPTY -> currentTheme.secondary
     }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(ZenObsidian)
+            .background(MaterialTheme.colorScheme.background)
             .clickable(
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                 indication = null
@@ -530,8 +556,8 @@ fun BreathingScreen(
                                     Text(
                                         text = "$prepRemaining",
                                         fontSize = 48.sp,
-                                        fontWeight = FontWeight.ExtraLight,
-                                        color = ZenTextPrimary
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onBackground
                                     )
                                 }
 
@@ -574,9 +600,9 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = displayCountText,
-                                        fontSize = 46.sp,
-                                        fontWeight = FontWeight.Light,
-                                        color = Color.White,
+                                        fontSize = 48.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onBackground,
                                         letterSpacing = 1.sp
                                     )
 
@@ -596,9 +622,9 @@ fun BreathingScreen(
                                     ) { (phase, _) ->
                                         val itemColor = when (phase) {
                                              BreathPhase.INHALE -> currentTheme.primary
-                                             BreathPhase.HOLD_FULL -> currentTheme.primaryLight
+                                             BreathPhase.HOLD_FULL -> currentTheme.primary
                                              BreathPhase.EXHALE -> currentTheme.overrunColor
-                                             BreathPhase.HOLD_EMPTY -> ZenAmber
+                                             BreathPhase.HOLD_EMPTY -> currentTheme.secondary
                                         }
                                         val textToDisplay = if (isVaryingCount) {
                                              if (phase == BreathPhase.INHALE) {
@@ -1031,9 +1057,9 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = "$prepRemaining",
-                                        fontSize = 72.sp,
-                                        fontWeight = FontWeight.ExtraLight,
-                                        color = ZenTextPrimary
+                                        fontSize = 76.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onBackground
                                     )
                                 }
 
@@ -1070,9 +1096,9 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = displayCountText,
-                                        fontSize = 58.sp,
-                                        fontWeight = FontWeight.Light,
-                                        color = Color.White,
+                                        fontSize = 62.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onBackground,
                                         letterSpacing = 1.sp
                                     )
 
@@ -1092,9 +1118,9 @@ fun BreathingScreen(
                                     ) { (phase, _) ->
                                         val itemColor = when (phase) {
                                             BreathPhase.INHALE -> currentTheme.primary
-                                            BreathPhase.HOLD_FULL -> currentTheme.primaryLight
+                                            BreathPhase.HOLD_FULL -> currentTheme.primary
                                             BreathPhase.EXHALE -> currentTheme.overrunColor
-                                            BreathPhase.HOLD_EMPTY -> ZenAmber
+                                            BreathPhase.HOLD_EMPTY -> currentTheme.secondary
                                         }
                                         val textToDisplay = if (isVaryingCount) {
                                             if (phase == BreathPhase.INHALE) {

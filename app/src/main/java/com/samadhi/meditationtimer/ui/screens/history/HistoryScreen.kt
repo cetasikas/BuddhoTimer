@@ -46,6 +46,7 @@ import com.samadhi.meditationtimer.domain.model.MeditationSession
 import com.samadhi.meditationtimer.service.NotificationHelper
 import com.samadhi.meditationtimer.ui.components.MarkdownRenderer
 import com.samadhi.meditationtimer.ui.components.moodOptions
+import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenDanger
@@ -79,7 +80,7 @@ fun HistoryScreen(
     val stats by viewModel.stats.collectAsState()
     var sessionToDelete by remember { mutableStateOf<MeditationSession?>(null) }
 
-    Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // Subtle Falling Particles on pure AMOLED black
         FallingLeavesEffect(
             leafCount = 14,
@@ -253,6 +254,7 @@ private fun SessionCard(
     session: MeditationSession,
     onDeleteClick: () -> Unit
 ) {
+    val currentTheme = LocalZenTheme.current
     val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy • h:mm a")
     val dateString = Instant.ofEpochMilli(session.completedTimeEpochMs)
         .atZone(ZoneId.systemDefault())
@@ -311,11 +313,11 @@ private fun SessionCard(
                         Icon(
                             imageVector = moodOption.icon,
                             contentDescription = moodOption.title,
-                            tint = ZenAmber,
+                            tint = currentTheme.primary,
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(ZenSurfaceVariant)
+                                .background(currentTheme.surfaceVariant)
                                 .padding(4.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))

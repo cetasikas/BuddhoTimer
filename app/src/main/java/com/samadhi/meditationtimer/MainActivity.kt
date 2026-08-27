@@ -9,7 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.samadhi.meditationtimer.ui.MainAppScaffold
-import com.samadhi.meditationtimer.ui.theme.SamadhiTimerTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -30,15 +29,15 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            SamadhiTimerTheme {
-                MainAppScaffold()
-            }
+            MainAppScaffold()
         }
     }
 
     override fun onResume() {
         super.onResume()
-        com.samadhi.meditationtimer.service.NotificationHelper(this).clearTimerNotification()
+        val helper = com.samadhi.meditationtimer.service.NotificationHelper(this)
+        helper.clearTimerNotification()
+        helper.clearBreathingNotification()
     }
 
     companion object {

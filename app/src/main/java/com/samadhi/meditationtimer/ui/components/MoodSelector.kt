@@ -56,36 +56,40 @@ fun MoodSelector(
 
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         moodOptions.forEach { mood ->
             val isSelected = mood.level == selectedMood
-            val bg = if (isSelected) currentTheme.primary.copy(alpha = 0.22f) else ZenSurface
-            val border = if (isSelected) currentTheme.primaryLight else ZenBorder
-            val tint = if (isSelected) currentTheme.primaryLight else ZenTextMuted
+            val bg = if (isSelected) currentTheme.primary.copy(alpha = 0.22f) else currentTheme.surfaceVariant
+            val border = if (isSelected) currentTheme.primary else currentTheme.border
+            val tint = if (isSelected) currentTheme.primary else currentTheme.textSecondary
+            val textColor = if (isSelected) currentTheme.primary else currentTheme.textSecondary
 
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 3.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(bg)
-                    .border(1.dp, border, RoundedCornerShape(12.dp))
+                    .border(if (isSelected) 1.5.dp else 1.dp, border, RoundedCornerShape(12.dp))
                     .clickable { onMoodSelected(mood.level) }
-                    .padding(vertical = 10.dp),
+                    .padding(vertical = 8.dp, horizontal = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
                     imageVector = mood.icon,
                     contentDescription = mood.title,
                     tint = tint,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = mood.title,
-                    fontSize = 10.sp,
-                    color = if (isSelected) currentTheme.primaryLight else ZenTextMuted
+                    fontSize = 9.5.sp,
+                    fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium,
+                    letterSpacing = (-0.3).sp,
+                    maxLines = 1,
+                    softWrap = false,
+                    color = textColor
                 )
             }
         }

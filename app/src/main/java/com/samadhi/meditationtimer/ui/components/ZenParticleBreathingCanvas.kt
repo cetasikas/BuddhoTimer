@@ -67,7 +67,7 @@ fun ZenParticleBreathingCanvas(
     val ensoUnits = remember(zenTheme.id) {
         val count = when (zenTheme.id) {
             ZenThemeId.BAMBOO_TEAL -> 64 // Denser, lush overlapping bamboo leaf garland
-            ZenThemeId.GOLDEN_BODHI -> 42
+            ZenThemeId.GOLDEN_BODHI, ZenThemeId.SYSTEM_DYNAMIC -> 42
             ZenThemeId.SAKURA_TWILIGHT -> 42
         }
         val rand = Random(zenTheme.id.hashCode() + 108) // Auspicious seed
@@ -89,6 +89,8 @@ fun ZenParticleBreathingCanvas(
         }
     }
 
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
@@ -106,6 +108,7 @@ fun ZenParticleBreathingCanvas(
             phaseProgress = phaseProgress,
             animClockSec = animClockSec,
             themeId = zenTheme.id,
+            isDark = isDark,
             primary = zenTheme.primary,
             primaryLight = zenTheme.primaryLight,
             primaryDark = zenTheme.primaryDark
@@ -126,6 +129,7 @@ private fun DrawScope.drawZenEnsoGarland(
     phaseProgress: Float,
     animClockSec: Float,
     themeId: ZenThemeId,
+    isDark: Boolean,
     primary: Color,
     primaryLight: Color,
     primaryDark: Color
@@ -281,13 +285,14 @@ private fun DrawScope.drawZenEnsoGarland(
                     primaryDark = primaryDark
                 )
             }
-            ZenThemeId.GOLDEN_BODHI -> {
+            ZenThemeId.GOLDEN_BODHI, ZenThemeId.SYSTEM_DYNAMIC -> {
                 drawEnsoBodhiLeaf(
                     center = unitCenter,
                     scale = finalScale,
                     rotation = tangentRotation,
                     alpha = unitAlpha,
                     colorVariant = unit.colorVariant,
+                    isDark = isDark,
                     primary = primary,
                     primaryLight = primaryLight,
                     primaryDark = primaryDark
@@ -503,76 +508,130 @@ private fun DrawScope.drawEnsoBodhiLeaf(
     rotation: Float,
     alpha: Float,
     colorVariant: Float,
+    isDark: Boolean,
     primary: Color,
     primaryLight: Color,
     primaryDark: Color
 ) {
     rotate(degrees = rotation, pivot = center) {
-        val len = scale * 40f
-        val wid = scale * 15f
+        val len = scale * 43f
+        val wid = scale * 16f
 
+        // True Sacred Bodhi (Ficus Religiosa) geometry: broad cordate heart base with slender extended drip tip
         val path = Path().apply {
-            moveTo(center.x, center.y - len * 0.52f) // Tapered tip
+            moveTo(center.x, center.y - len * 0.58f) // Extended slender drip tip
             cubicTo(
-                center.x - wid * 1.15f, center.y - len * 0.20f,
-                center.x - wid * 0.85f, center.y + len * 0.35f,
+                center.x - wid * 1.30f, center.y - len * 0.18f,
+                center.x - wid * 1.10f, center.y + len * 0.38f,
                 center.x, center.y + len * 0.48f // Heart base
             )
             cubicTo(
-                center.x + wid * 0.85f, center.y + len * 0.35f,
-                center.x + wid * 1.15f, center.y - len * 0.20f,
-                center.x, center.y - len * 0.52f
+                center.x + wid * 1.10f, center.y + len * 0.38f,
+                center.x + wid * 1.30f, center.y - len * 0.18f,
+                center.x, center.y - len * 0.58f
             )
             close()
         }
 
-        val baseColor = if (colorVariant > 0.5f) primary else primaryDark
-
-        drawPath(
-            path = path,
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    primaryLight.copy(alpha = 0.95f * alpha),
-                    baseColor.copy(alpha = 0.88f * alpha),
-                    Color(0xFF5D4010).copy(alpha = 0.85f * alpha)
-                ),
-                startY = center.y - len * 0.52f,
-                endY = center.y + len * 0.48f
+        if (isDark) {
+            // Cohesive, smooth Golden Bodhi leaf gradient (no contrasting yellow tips)
+            val gradientColors = listOf(
+                primary.copy(alpha = 0.98f * alpha),
+                primary.copy(alpha = 0.90f * alpha),
+                Color(0xFF6B4205).copy(alpha = 0.88f * alpha)
             )
-        )
 
-        // Bodhi leaf central stem & lateral filament veins
-        drawLine(
-            color = primaryLight.copy(alpha = 0.85f * alpha),
-            start = Offset(center.x, center.y - len * 0.48f),
-            end = Offset(center.x, center.y + len * 0.45f),
-            strokeWidth = 1.2f,
-            cap = StrokeCap.Round
-        )
-
-        // Delicate radiating lateral veins
-        for (i in 1..3) {
-            val vy = center.y - len * 0.35f + (len * 0.65f) * (i / 4f)
-            val vLen = wid * (0.65f - (i * 0.08f))
-            drawLine(
-                color = primaryLight.copy(alpha = 0.50f * alpha),
-                start = Offset(center.x, vy),
-                end = Offset(center.x + vLen, vy - len * 0.08f),
-                strokeWidth = 0.8f
+            drawPath(
+                path = path,
+                brush = Brush.verticalGradient(
+                    colors = gradientColors,
+                    startY = center.y - len * 0.58f,
+                    endY = center.y + len * 0.48f
+                )
             )
+
+            // Natural warm botanical central spine
             drawLine(
-                color = primaryLight.copy(alpha = 0.50f * alpha),
-                start = Offset(center.x, vy),
-                end = Offset(center.x - vLen, vy - len * 0.08f),
-                strokeWidth = 0.8f
+                color = Color(0xFF2B1802).copy(alpha = 0.50f * alpha),
+                start = Offset(center.x, center.y - len * 0.52f),
+                end = Offset(center.x, center.y + len * 0.44f),
+                strokeWidth = 1.2f,
+                cap = StrokeCap.Round
+            )
+
+            // Delicate radiating natural lateral veins
+            for (i in 1..3) {
+                val vy = center.y - len * 0.35f + (len * 0.65f) * (i / 4f)
+                val vLen = wid * (0.75f - (i * 0.10f))
+                drawLine(
+                    color = Color(0xFF2B1802).copy(alpha = 0.35f * alpha),
+                    start = Offset(center.x, vy),
+                    end = Offset(center.x + vLen, vy - len * 0.08f),
+                    strokeWidth = 0.85f
+                )
+                drawLine(
+                    color = Color(0xFF2B1802).copy(alpha = 0.35f * alpha),
+                    start = Offset(center.x, vy),
+                    end = Offset(center.x - vLen, vy - len * 0.08f),
+                    strokeWidth = 0.85f
+                )
+            }
+
+            // Subtle organic contour
+            drawPath(
+                path = path,
+                color = Color(0xFF2B1802).copy(alpha = 0.30f * alpha),
+                style = Stroke(width = 0.85f)
+            )
+        } else {
+            // Light Mode: Clean warm amber gradient with crisp botanical veins
+            drawPath(
+                path = path,
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        primary.copy(alpha = 0.96f * alpha),
+                        Color(0xFFC07B12).copy(alpha = 0.92f * alpha),
+                        Color(0xFF8C5204).copy(alpha = 0.88f * alpha)
+                    ),
+                    startY = center.y - len * 0.58f,
+                    endY = center.y + len * 0.48f
+                )
+            )
+
+            // Deep golden-honey central spine
+            drawLine(
+                color = Color(0xFF5A3402).copy(alpha = 0.75f * alpha),
+                start = Offset(center.x, center.y - len * 0.52f),
+                end = Offset(center.x, center.y + len * 0.44f),
+                strokeWidth = 1.3f,
+                cap = StrokeCap.Round
+            )
+
+            // Delicate radiating lateral veins
+            for (i in 1..3) {
+                val vy = center.y - len * 0.35f + (len * 0.65f) * (i / 4f)
+                val vLen = wid * (0.75f - (i * 0.10f))
+                drawLine(
+                    color = Color(0xFF704205).copy(alpha = 0.55f * alpha),
+                    start = Offset(center.x, vy),
+                    end = Offset(center.x + vLen, vy - len * 0.08f),
+                    strokeWidth = 0.9f
+                )
+                drawLine(
+                    color = Color(0xFF704205).copy(alpha = 0.55f * alpha),
+                    start = Offset(center.x, vy),
+                    end = Offset(center.x - vLen, vy - len * 0.08f),
+                    strokeWidth = 0.9f
+                )
+            }
+
+            // Soft refined outer edge
+            drawPath(
+                path = path,
+                color = Color(0xFF4A2A01).copy(alpha = 0.35f * alpha),
+                style = Stroke(width = 0.85f)
             )
         }
-
-        drawPath(
-            path = path,
-            color = primaryLight.copy(alpha = 0.70f * alpha),
-            style = Stroke(width = 1.0f)
-        )
     }
 }
 

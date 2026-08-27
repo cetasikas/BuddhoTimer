@@ -1,34 +1,67 @@
 package com.samadhi.meditationtimer.ui.theme
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 
-// Pure AMOLED Black Zen Theme Colors
-val ZenObsidian = Color(0xFF000000)
-val ZenDarkBackground = Color(0xFF000000)
-val ZenMoonlitIndigo = Color(0xFF070B14)
-val ZenSurface = Color(0xFF0F1726)
-val ZenSurfaceVariant = Color(0xFF182235)
-val ZenBorder = Color(0xFF223048)
+// Dynamic Theme Color Accessors (automatically bound to active Material 3 ColorScheme)
+val ZenDarkBackground: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.background
 
-// 1. Moonlit Bamboo / Zen Teal Palette (Default)
+val ZenSurface: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.surfaceContainer
+
+val ZenSurfaceVariant: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.surfaceContainerHigh
+
+val ZenBorder: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.outlineVariant
+
+val ZenTextPrimary: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.onBackground
+
+val ZenTextSecondary: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.onSurfaceVariant
+
+val ZenTextMuted: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+
+val ZenObsidian: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.onPrimary
+
+// Accent and State Colors
 val ZenTeal = Color(0xFF2EA8A4)
 val ZenTealLight = Color(0xFF5EEAD4)
 val ZenTealDark = Color(0xFF164E4D)
 val ZenTealGlow = Color(0x352EA8A4)
 
-// 2. Golden Lotus / Sandalwood Amber Palette
 val ZenLotus = Color(0xFFD4AF37)
 val ZenLotusLight = Color(0xFFFFE082)
 val ZenLotusDark = Color(0xFF8D6E1C)
 val ZenLotusGlow = Color(0x35D4AF37)
 
-// 3. Sakura Twilight Palette
 val ZenSakura = Color(0xFFE0829D)
 val ZenSakuraLight = Color(0xFFFBCFE8)
 val ZenSakuraDark = Color(0xFF881337)
 val ZenSakuraGlow = Color(0x35E0829D)
 
-// Calming Sage Palette
 val ZenSage = Color(0xFF8BA888)
 val ZenSageLight = Color(0xFFAECBB0)
 val ZenSageDark = Color(0xFF4D6B51)
@@ -44,11 +77,6 @@ val ZenGoldDust = Color(0xFFF0B849)
 
 val ZenOverrunBlue = Color(0xFF60A5FA)
 val ZenOverrunGlow = Color(0x3560A5FA)
-
-// High-contrast legible text
-val ZenTextPrimary = Color(0xFFF8FAFC)
-val ZenTextSecondary = Color(0xFFCBD5E1)
-val ZenTextMuted = Color(0xFF8396B0)
 
 val ZenSuccess = Color(0xFF34D399)
 val ZenDanger = Color(0xFFF87171)

@@ -97,7 +97,7 @@ fun SessionSummaryScreen(
         mutableStateOf(com.samadhi.meditationtimer.data.wisdom.MeditationGuides.wisdomQuotes.random())
     }
 
-    Box(modifier = modifier.fillMaxSize().background(ZenObsidian)) {
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         var isBlowingAway by remember { mutableStateOf(false) }
         var pendingExitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
@@ -172,7 +172,7 @@ fun SessionSummaryScreen(
                             text = NotificationHelper.formatSeconds(completedStatus.actualDurationSec),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = currentTheme.primaryLight
+                            color = currentTheme.primary
                         )
                         Text(
                             text = "Total Practice",
@@ -195,12 +195,12 @@ fun SessionSummaryScreen(
                                 text = "+${NotificationHelper.formatSeconds(completedStatus.overrunSec)}",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = currentTheme.primaryLight
+                                color = currentTheme.overrunColor
                             )
                             Text(
                                 text = "Extended Time",
                                 fontSize = 11.sp,
-                                color = currentTheme.primary
+                                color = currentTheme.overrunColor
                             )
                         } else {
                             Text(
@@ -246,7 +246,7 @@ fun SessionSummaryScreen(
                                 fontSize = 9.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp,
-                                color = currentTheme.primaryLight
+                                color = currentTheme.primary
                             )
                         }
 
@@ -279,7 +279,7 @@ fun SessionSummaryScreen(
                             text = "— ${currentWisdomQuote.author} (${currentWisdomQuote.sourceOrTradition})",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
-                            color = currentTheme.primaryLight.copy(alpha = 0.9f)
+                            color = currentTheme.primary
                         )
                     }
                 }
@@ -292,7 +292,7 @@ fun SessionSummaryScreen(
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
-                    color = currentTheme.primaryLight
+                    color = currentTheme.primary
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 MoodSelector(
@@ -309,7 +309,7 @@ fun SessionSummaryScreen(
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
-                    color = currentTheme.primaryLight
+                    color = currentTheme.primary
                 )
                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -385,13 +385,13 @@ fun SessionSummaryScreen(
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = currentTheme.primary,
-                        contentColor = ZenObsidian
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
-                        tint = ZenObsidian,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))

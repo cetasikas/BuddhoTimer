@@ -100,9 +100,9 @@ fun ZenBranchSlider(
             val fraction = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(0f, 1f)
             val thumbX = (fraction * width).coerceIn(16f, width - 16f)
 
-            // 1. INACTIVE STEM (Ahead of thumb): Organic Dormant Slate/Wood Branch
+            // 1. INACTIVE STEM (Ahead of thumb): Organic Dormant Branch
             drawLine(
-                color = Color(0xFF1E293B),
+                color = currentTheme.border.copy(alpha = 0.65f),
                 start = Offset(thumbX, centerY),
                 end = Offset(width, centerY),
                 strokeWidth = 9.0f,
@@ -110,7 +110,7 @@ fun ZenBranchSlider(
             )
             // Subtle branch grain line
             drawLine(
-                color = Color(0xFF334155),
+                color = currentTheme.surfaceVariant.copy(alpha = 0.5f),
                 start = Offset(thumbX + 4f, centerY - 1.5f),
                 end = Offset(width - 2f, centerY - 1.5f),
                 strokeWidth = 2.8f,
@@ -123,7 +123,7 @@ fun ZenBranchSlider(
                 val nodeX = i * nodeSpacing
                 if (nodeX > thumbX + 12f) {
                     drawLine(
-                        color = Color(0xFF475569),
+                        color = currentTheme.border,
                         start = Offset(nodeX, centerY - 7f),
                         end = Offset(nodeX, centerY + 7f),
                         strokeWidth = 3.2f,
@@ -194,7 +194,7 @@ fun ZenBranchSlider(
 
             // Pebble Core
             drawCircle(
-                color = Color(0xFF0A101D),
+                color = currentTheme.primary,
                 radius = 16.5f,
                 center = Offset(thumbX, centerY)
             )
@@ -260,7 +260,7 @@ fun ZenBranchSlider(
 
             drawPath(
                 path = thumbPath,
-                color = currentTheme.primaryLight
+                color = Color.White
             )
         }
     }
