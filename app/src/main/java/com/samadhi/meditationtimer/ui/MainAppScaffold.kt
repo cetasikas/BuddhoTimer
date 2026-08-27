@@ -253,6 +253,7 @@ fun MainAppScaffold() {
                                 completedStatus = completedSessionData,
                                 onSaveSession = { session ->
                                     historyViewModel.saveSession(session)
+                                    com.samadhi.meditationtimer.service.DndManager(context).restoreDnd()
                                     MeditationTimerService.resetStatus()
                                     completedSessionData = null
                                     navController.navigate(Screen.History.route) {
@@ -260,6 +261,7 @@ fun MainAppScaffold() {
                                     }
                                 },
                                 onDiscard = {
+                                    com.samadhi.meditationtimer.service.DndManager(context).restoreDnd()
                                     MeditationTimerService.resetStatus()
                                     completedSessionData = null
                                     navController.navigate(Screen.Timer.route) {

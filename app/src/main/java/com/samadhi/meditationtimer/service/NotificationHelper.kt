@@ -26,12 +26,13 @@ class NotificationHelper(private val context: Context) {
             val timerChannel = NotificationChannel(
                 CHANNEL_ID,
                 context.getString(R.string.notification_channel_timer_name),
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = context.getString(R.string.notification_channel_timer_desc)
                 setShowBadge(false)
                 setSound(null, null)
                 enableVibration(false)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
             notificationManager.createNotificationChannel(timerChannel)
 
@@ -257,7 +258,7 @@ class NotificationHelper(private val context: Context) {
     }
 
     companion object {
-        const val CHANNEL_ID = "meditation_timer_channel"
+        const val CHANNEL_ID = "meditation_timer_channel_v2"
         const val CHANNEL_REMINDERS_ID = "meditation_reminders_channel"
         const val CHANNEL_COMPLETION_ID = "meditation_completion_channel"
         const val NOTIFICATION_ID = 1001
