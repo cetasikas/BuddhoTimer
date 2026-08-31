@@ -74,6 +74,11 @@ import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.theme.ZenTeal
 import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+
 @Composable
 fun SessionSummaryScreen(
     completedStatus: TimerStatus.Completed?,
@@ -96,8 +101,15 @@ fun SessionSummaryScreen(
     var currentWisdomQuote by remember {
         mutableStateOf(com.samadhi.meditationtimer.data.wisdom.MeditationGuides.wisdomQuotes.random())
     }
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
 
-    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .imePadding()
+    ) {
         var isBlowingAway by remember { mutableStateOf(false) }
         var pendingExitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
@@ -120,7 +132,7 @@ fun SessionSummaryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 18.dp, vertical = 10.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -332,7 +344,14 @@ fun SessionSummaryScreen(
                             onValueChange = { notesValue = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(56.dp),
+                                .height(56.dp)
+                                .onFocusChanged { focusState ->
+                                    if (focusState.isFocused) {
+                                        coroutineScope.launch {
+                                            scrollState.animateScrollTo(scrollState.maxValue)
+                                        }
+                                    }
+                                },
                             textStyle = TextStyle(
                                 color = ZenTextPrimary,
                                 fontSize = 12.5.sp,
