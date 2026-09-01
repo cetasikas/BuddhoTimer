@@ -75,10 +75,16 @@ import com.samadhi.meditationtimer.ui.theme.ZenTeal
 import com.samadhi.meditationtimer.ui.theme.ZenTealLight
 
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SessionSummaryScreen(
     completedStatus: TimerStatus.Completed?,
@@ -103,6 +109,15 @@ fun SessionSummaryScreen(
     }
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
+    val isImeVisible = WindowInsets.isImeVisible
+
+    // Auto-scroll when keyboard opens so the reflection text box and Save/Discard buttons remain fully visible above the keyboard
+    androidx.compose.runtime.LaunchedEffect(isImeVisible) {
+        if (isImeVisible) {
+            delay(120)
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
 
     Box(
         modifier = modifier
@@ -348,6 +363,7 @@ fun SessionSummaryScreen(
                                 .onFocusChanged { focusState ->
                                     if (focusState.isFocused) {
                                         coroutineScope.launch {
+                                            delay(150)
                                             scrollState.animateScrollTo(scrollState.maxValue)
                                         }
                                     }
@@ -377,7 +393,7 @@ fun SessionSummaryScreen(
 
             // Actions: Save Reflection & Discard
             Column(
-                modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Button(
@@ -446,7 +462,7 @@ fun SessionSummaryScreen(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(14.dp))
         }
     }
 }

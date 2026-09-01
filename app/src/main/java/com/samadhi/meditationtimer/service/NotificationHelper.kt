@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import com.samadhi.meditationtimer.MainActivity
 import com.samadhi.meditationtimer.R
@@ -165,6 +166,13 @@ class NotificationHelper(private val context: Context) {
                 .setUsesChronometer(true)
                 .setChronometerCountDown(isCountdown)
                 .setShowWhen(true)
+        }
+
+        // Android 16+ (API 36+) Promoted Ongoing Notification (Live Activity / Status Bar Chip)
+        if (Build.VERSION.SDK_INT >= 36) {
+            builder.addExtras(Bundle().apply {
+                putBoolean("android.requestPromotedOngoing", true)
+            })
         }
 
         return builder.build()

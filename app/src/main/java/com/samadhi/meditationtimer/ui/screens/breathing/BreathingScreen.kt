@@ -212,9 +212,9 @@ fun BreathingScreen(
         }
     }
 
-    fun finishSession() {
+    fun finishSession(isNaturalEnd: Boolean = false) {
         val isCompletionBell = prefs.getBoolean("completion_bell_enabled", true)
-        if (isCompletionBell) {
+        if (isNaturalEnd && isCompletionBell) {
             soundHelper.playChime(soundBellResName)
         }
         soundHelper.triggerHarmonicCompletionHaptic()
@@ -322,7 +322,7 @@ fun BreathingScreen(
             delay(1000L)
             totalElapsedSec++
             if (targetTotalSec > 0 && totalElapsedSec >= targetTotalSec) {
-                finishSession()
+                finishSession(isNaturalEnd = true)
                 break
             }
         }
@@ -834,10 +834,10 @@ fun BreathingScreen(
 
                                             // Finish Button
                                             Button(
-                                                onClick = { finishSession() },
-                                                modifier = Modifier.height(42.dp),
-                                                shape = RoundedCornerShape(21.dp),
-                                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                                                onClick = { finishSession(isNaturalEnd = false) },
+                                                modifier = Modifier.height(50.dp),
+                                                shape = RoundedCornerShape(25.dp),
+                                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
                                                 colors = ButtonDefaults.buttonColors(
                                                     containerColor = currentTheme.primary.copy(alpha = 0.18f),
                                                     contentColor = currentTheme.primaryLight
@@ -852,13 +852,15 @@ fun BreathingScreen(
                                                         imageVector = Icons.Default.Check,
                                                         contentDescription = "Finish",
                                                         tint = currentTheme.primaryLight,
-                                                        modifier = Modifier.size(16.dp)
+                                                        modifier = Modifier.size(17.dp)
                                                     )
                                                     Spacer(modifier = Modifier.width(4.dp))
                                                     Text(
                                                         text = "Finish",
-                                                        fontSize = 13.sp,
+                                                        fontSize = 14.sp,
                                                         fontWeight = FontWeight.Bold,
+                                                        maxLines = 1,
+                                                        softWrap = false,
                                                         color = currentTheme.primaryLight
                                                     )
                                                 }
@@ -1347,7 +1349,7 @@ fun BreathingScreen(
 
                                     // 3. Finish Button
                                     Button(
-                                        onClick = { finishSession() },
+                                        onClick = { finishSession(isNaturalEnd = false) },
                                         modifier = Modifier.height(50.dp),
                                         shape = RoundedCornerShape(25.dp),
                                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
@@ -1372,6 +1374,8 @@ fun BreathingScreen(
                                                 text = "Finish",
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Bold,
+                                                maxLines = 1,
+                                                softWrap = false,
                                                 color = currentTheme.primaryLight
                                             )
                                         }

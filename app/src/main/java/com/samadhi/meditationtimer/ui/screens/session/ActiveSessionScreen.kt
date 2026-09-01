@@ -571,6 +571,7 @@ fun ActiveSessionScreen(
                                             modifier = Modifier
                                                 .height(48.dp)
                                                 .clip(RoundedCornerShape(24.dp)),
+                                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
                                             colors = ButtonDefaults.buttonColors(
                                                 containerColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary,
                                                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -578,7 +579,7 @@ fun ActiveSessionScreen(
                                         ) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.padding(horizontal = 12.dp)
+                                                horizontalArrangement = Arrangement.Center
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Check,
@@ -590,7 +591,9 @@ fun ActiveSessionScreen(
                                                 Text(
                                                     text = "Complete",
                                                     fontWeight = FontWeight.Bold,
-                                                    fontSize = 14.5.sp,
+                                                    fontSize = 14.sp,
+                                                    maxLines = 1,
+                                                    softWrap = false,
                                                     color = MaterialTheme.colorScheme.onPrimary
                                                 )
                                             }
@@ -834,6 +837,7 @@ fun ActiveSessionScreen(
                                         modifier = Modifier
                                             .height(56.dp)
                                             .clip(RoundedCornerShape(28.dp)),
+                                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary,
                                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -841,7 +845,7 @@ fun ActiveSessionScreen(
                                     ) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                            horizontalArrangement = Arrangement.Center
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Check,
@@ -849,11 +853,13 @@ fun ActiveSessionScreen(
                                                 tint = MaterialTheme.colorScheme.onPrimary,
                                                 modifier = Modifier.size(20.dp)
                                             )
-                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
                                             Text(
                                                 text = "Complete",
                                                 fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
+                                                fontSize = 15.sp,
+                                                maxLines = 1,
+                                                softWrap = false,
                                                 color = MaterialTheme.colorScheme.onPrimary
                                             )
                                         }

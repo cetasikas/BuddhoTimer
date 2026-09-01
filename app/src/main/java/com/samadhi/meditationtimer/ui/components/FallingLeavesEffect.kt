@@ -225,7 +225,7 @@ fun FallingLeavesEffect(
             val rng = Random(42)
             for (i in 0 until leafCount) {
                 val isHero = i == 0
-                val ox = rng.nextFloat() * 0.84f + 0.08f
+                val ox = rng.nextFloat() * 0.80f + 0.10f
                 val startY = (i.toFloat() / leafCount.toFloat()) * 1.15f - 0.15f
 
                 val depth = when {
@@ -240,20 +240,21 @@ fun FallingLeavesEffect(
                         x = ox,
                         y = startY,
                         originX = ox,
-                        fallSpeed = (rng.nextFloat() * 0.006f + 0.012f) * depth.speedMultiplier * (if (isHero) 0.7f else 1f),
-                        swayAmplitude = (rng.nextFloat() * 0.05f + 0.06f) * depth.scaleMultiplier * (if (isHero) 1.15f else 1f),
-                        swayFrequency = rng.nextFloat() * 0.12f + 0.10f,
+                        // Calming, weightless descent with wide floating glide
+                        fallSpeed = (rng.nextFloat() * 0.003f + 0.0055f) * depth.speedMultiplier * (if (isHero) 0.80f else 1f),
+                        swayAmplitude = (rng.nextFloat() * 0.06f + 0.085f) * depth.scaleMultiplier * (if (isHero) 1.25f else 1f),
+                        swayFrequency = rng.nextFloat() * 0.035f + 0.045f, // ~14-18s sweeping glide period
                         swayPhase = rng.nextFloat() * 6.28f,
-                        tumbleFrequency = rng.nextFloat() * 0.40f + 0.35f,
+                        tumbleFrequency = rng.nextFloat() * 0.20f + 0.15f,
                         tumblePhase = rng.nextFloat() * 6.28f,
-                        rotation = rng.nextFloat() * 360f,
-                        rotationSpeed = (rng.nextFloat() - 0.5f) * 0.7f,
+                        rotation = 0f,
+                        rotationSpeed = 0f,
                         size = (rng.nextFloat().pow(1.8f) * 14f + 12f) * depth.scaleMultiplier * (if (isHero) 1.35f else 1f),
                         alpha = (rng.nextFloat() * 0.15f + 0.70f) * depth.alphaMultiplier * (if (isHero) 1.2f else 1f),
                         color = weightedLeafColor(currentTheme.particlePalette, rng),
                         depth = depth,
-                        shapeAsymmetry = (rng.nextFloat() - 0.5f) * 2f,
-                        shapeStretch = 0.85f + rng.nextFloat() * 0.30f,
+                        shapeAsymmetry = (rng.nextFloat() - 0.5f) * 1.5f,
+                        shapeStretch = 0.90f + rng.nextFloat() * 0.20f,
                         isResting = false,
                         spawnElapsedSec = 1.2f
                     )
@@ -266,7 +267,7 @@ fun FallingLeavesEffect(
 
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {
-            fallingLeaves.forEach { it.rotationSpeed = (Random.nextFloat() * 16f - 8f) }
+            fallingLeaves.forEach { it.swayPhase += (Random.nextFloat() * 1.5f + 0.8f) }
         }
     }
 
@@ -314,25 +315,27 @@ fun FallingLeavesEffect(
                     fallingLeaves.forEach { leaf ->
                         leaf.spawnElapsedSec += dt
 
-                        // Pendulum swing with subtle flutter
+                        // Meditative pendulum swing with gentle aerodynamic drift
                         val swingPhase = totalElapsedSec * leaf.swayFrequency + leaf.swayPhase
                         val primarySway = sin(swingPhase) * leaf.swayAmplitude
-                        val flutterSway = sin(swingPhase * 2.7f + leaf.tumblePhase) * leaf.swayAmplitude * 0.18f
+                        val flutterSway = sin(swingPhase * 2.1f + leaf.tumblePhase) * leaf.swayAmplitude * 0.14f
                         val lateralSway = primarySway + flutterSway + macroWind
                         leaf.x = (leaf.originX + lateralSway).coerceIn(0.06f, 0.94f)
 
-                        // Weathervane pendulum tilt aligned with swing direction
-                        val swingTilt = cos(swingPhase) * 60f
-                        leaf.rotation = swingTilt + leaf.rotationSpeed * totalElapsedSec
+                        // Natural aerodynamic banking angle (Kung Fu Panda ascending peach petal breeze):
+                        // When gliding right (cos > 0), the leaf banks naturally right; when gliding left (cos < 0), it banks left.
+                        val naturalBank = cos(swingPhase) * 65f
+                        val organicFlutter = sin(swingPhase * 2.2f + leaf.tumblePhase) * 6f
+                        leaf.rotation = naturalBank + organicFlutter
 
-                        // Aerodynamic drag
-                        val rad = Math.toRadians(leaf.rotation.toDouble())
-                        val orientationTilt = kotlin.math.abs(cos(rad)).toFloat()
-                        val aerodynamicDrag = (1.0f - 0.48f * orientationTilt).coerceIn(0.52f, 1.0f)
+                        // Aerodynamic lift & cushion: broad horizontal glides slow descent naturally
+                        val rad = Math.toRadians(naturalBank.toDouble())
+                        val glideLift = kotlin.math.abs(sin(rad)).toFloat()
+                        val aerodynamicDrag = (1.0f - 0.45f * glideLift).coerceIn(0.55f, 1.0f)
 
-                        // Gust pause modulation: breaks metronomic constant fall
-                        val gustPeriod = 18f + (leaf.swayPhase % 7f)
-                        val gustMultiplier = 0.7f + 0.3f * (sin(totalElapsedSec * (6.283f / gustPeriod) + leaf.swayPhase) * 0.5f + 0.5f)
+                        // Gust pause modulation: gentle meditative breath rhythm
+                        val gustPeriod = 22f + (leaf.swayPhase % 8f)
+                        val gustMultiplier = 0.80f + 0.20f * (sin(totalElapsedSec * (6.283f / gustPeriod) + leaf.swayPhase) * 0.5f + 0.5f)
 
                         leaf.y += leaf.fallSpeed * gustMultiplier * aerodynamicDrag * dt
 
@@ -514,10 +517,10 @@ fun FallingLeavesEffect(
 
             val tumbleScaleX = if (localProgress > 0f) {
                 val wave = cos(localProgress * 8.0f + leaf.tumblePhase)
-                (wave * 0.40f + 0.60f).coerceIn(0.20f, 1.0f)
+                (wave * 0.35f + 0.65f).coerceIn(0.30f, 1.0f)
             } else if (!leaf.isResting && !leaf.isSettling) {
                 val wave = cos(t * leaf.tumbleFrequency + leaf.tumblePhase)
-                (wave * 0.45f + 0.55f).coerceIn(0.20f, 1.0f)
+                (wave * 0.15f + 0.85f).coerceIn(0.70f, 1.0f)
             } else 1.0f
 
             drawIndividualParticle(
@@ -563,7 +566,7 @@ private fun DrawScope.drawIndividualParticle(
 
             val halfW = size * 0.44f * shapeStretch
             val halfH = size * 0.94f / shapeStretch
-            val asym = halfW * 0.16f * shapeAsymmetry
+            val asym = halfW * 0.14f * shapeAsymmetry
 
             when (particleType) {
                 ParticleType.BAMBOO_LEAF -> {
@@ -585,30 +588,49 @@ private fun DrawScope.drawIndividualParticle(
                     }
                 }
                 ParticleType.BODHI_LEAF -> {
-                    // Bodhi Leaf geometry (heart-shaped body with elegant extended drip tip)
-                    shapePath.moveTo(center.x, center.y - halfH * 1.05f) // Extended tip
+                    // Classic Zen Forest Leaf (Graceful Elliptic / Ovate Leaf):
+                    // Pointed apex, smooth organic swelling body, and softly tapered base with tiny petiole stem
+                    val tipY = center.y - halfH * 0.96f
+                    val baseY = center.y + halfH * 0.92f
+                    val stemTipY = center.y + halfH * 1.06f
+
+                    shapePath.moveTo(center.x, tipY)
+                    // Right leaf margin: smooth elliptic curve with subtle organic asymmetry
                     shapePath.cubicTo(
-                        center.x + halfW * 1.35f + asym, center.y - halfH * 0.35f,
-                        center.x + halfW * 1.15f + asym, center.y + halfH * 0.45f,
-                        center.x, center.y + halfH * 0.90f // Heart base
+                        center.x + halfW * 0.98f + asym, center.y - halfH * 0.42f,
+                        center.x + halfW * 1.12f + asym, center.y + halfH * 0.22f,
+                        center.x + halfW * 0.18f, baseY
                     )
+                    // Tiny petiole stem base
+                    shapePath.lineTo(center.x, stemTipY)
+                    shapePath.lineTo(center.x - halfW * 0.18f, baseY)
+                    // Left leaf margin: smooth symmetric/organic return curve
                     shapePath.cubicTo(
-                        center.x - halfW * 1.15f + asym, center.y + halfH * 0.45f,
-                        center.x - halfW * 1.35f + asym, center.y - halfH * 0.35f,
-                        center.x, center.y - halfH * 1.05f
+                        center.x - halfW * 1.12f + asym, center.y + halfH * 0.22f,
+                        center.x - halfW * 0.98f + asym, center.y - halfH * 0.42f,
+                        center.x, tipY
                     )
                     shapePath.close()
 
-                    detailPath.moveTo(center.x, center.y - halfH * 0.95f)
-                    detailPath.quadraticTo(center.x + asym * 0.3f, center.y, center.x, center.y + halfH * 0.85f)
-                    val branches = 3
+                    // Fine central midrib extending from stem to tip
+                    detailPath.moveTo(center.x, tipY + halfH * 0.05f)
+                    detailPath.quadraticTo(center.x + asym * 0.20f, center.y, center.x, stemTipY - halfH * 0.04f)
+
+                    // Delicate pinnate secondary lateral veins
+                    val branches = 4
                     for (i in 1..branches) {
-                        val fy = center.y - halfH * 0.6f + (halfH * 1.2f) * (i / (branches + 1f))
-                        val fx = center.x + asym * 0.3f * (i / (branches + 1f))
+                        val frac = i / (branches + 1f)
+                        val fy = center.y - halfH * 0.50f + (halfH * 1.25f) * frac
+                        val fx = center.x + asym * 0.20f * frac
+                        val span = halfW * (0.62f - frac * 0.12f)
+
+                        // Right side vein
                         detailPath.moveTo(fx, fy)
-                        detailPath.lineTo(fx + halfW * 0.50f, fy - halfH * 0.10f)
+                        detailPath.quadraticTo(fx + span * 0.55f, fy - halfH * 0.08f, fx + span, fy - halfH * 0.04f)
+
+                        // Left side vein
                         detailPath.moveTo(fx, fy)
-                        detailPath.lineTo(fx - halfW * 0.50f, fy - halfH * 0.10f)
+                        detailPath.quadraticTo(fx - span * 0.55f, fy - halfH * 0.08f, fx - span, fy - halfH * 0.04f)
                     }
                 }
                 ParticleType.SAKURA_PETAL -> {
