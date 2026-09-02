@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PlayArrow
@@ -91,6 +92,7 @@ fun TimerScreen(
     val config by viewModel.config.collectAsState()
     val breathingPatternId by viewModel.selectedBreathingPatternId.collectAsState()
     val breathingDurationMin by viewModel.breathingDurationMinutes.collectAsState()
+    val hasSeenDurationHint by viewModel.hasSeenDurationHint.collectAsState()
     val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -187,7 +189,10 @@ fun TimerScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
-                                .clickable { showMeditationDurationDialog = true }
+                                .clickable {
+                                    viewModel.dismissDurationHint()
+                                    showMeditationDurationDialog = true
+                                }
                                 .padding(horizontal = 16.dp, vertical = 2.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -202,25 +207,47 @@ fun TimerScreen(
                                     color = MaterialTheme.colorScheme.onBackground,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
+                                Text(
+                                    text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 3.sp,
+                                    color = currentTheme.primary,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
+                        }
+
+                        // One-time dismissible coachmark hint
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !hasSeenDurationHint,
+                            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(),
+                            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(currentTheme.surfaceVariant.copy(alpha = 0.92f))
+                                    .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                                    .clickable { viewModel.dismissDurationHint() }
+                                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                            ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Text(
-                                        text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 3.sp,
-                                        color = currentTheme.primary,
-                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                        text = "Tip: Tap time to enter custom minutes",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = currentTheme.textPrimary
                                     )
-                                    Text(
-                                        text = " • TAP TO SET",
-                                        fontSize = 10.5.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        letterSpacing = 1.5.sp,
-                                        color = currentTheme.textSecondary.copy(alpha = 0.70f),
-                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Dismiss tip",
+                                        tint = currentTheme.textSecondary,
+                                        modifier = Modifier.size(13.dp)
                                     )
                                 }
                             }
@@ -377,10 +404,14 @@ fun TimerScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         // Large Bold Duration Display with Click-to-Edit
+                        // Large Bold Duration Display with Click-to-Edit
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
-                                .clickable { showBreathingDurationDialog = true }
+                                .clickable {
+                                    viewModel.dismissDurationHint()
+                                    showBreathingDurationDialog = true
+                                }
                                 .padding(horizontal = 16.dp, vertical = 2.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -396,13 +427,48 @@ fun TimerScreen(
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                                 Text(
-                                    text = "$estimatedCycles CYCLES • $breathingDurationMin MIN • TAP TO SET",
-                                    fontSize = 12.sp,
+                                    text = "$estimatedCycles CYCLES • $breathingDurationMin MINUTES",
+                                    fontSize = 12.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.6.sp,
+                                    letterSpacing = 2.sp,
                                     color = currentTheme.primary,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
+                            }
+                        }
+
+                        // One-time dismissible coachmark hint
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !hasSeenDurationHint,
+                            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(),
+                            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(currentTheme.surfaceVariant.copy(alpha = 0.92f))
+                                    .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                                    .clickable { viewModel.dismissDurationHint() }
+                                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "Tip: Tap time to enter custom minutes",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = currentTheme.textPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Dismiss tip",
+                                        tint = currentTheme.textSecondary,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                }
                             }
                         }
 

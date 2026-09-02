@@ -57,6 +57,16 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         prefs.edit().putString("breathing_pattern_id", patternId).apply()
     }
 
+    private val _hasSeenDurationHint = MutableStateFlow(prefs.getBoolean("has_seen_duration_tap_hint", false))
+    val hasSeenDurationHint: StateFlow<Boolean> = _hasSeenDurationHint.asStateFlow()
+
+    fun dismissDurationHint() {
+        if (!_hasSeenDurationHint.value) {
+            _hasSeenDurationHint.value = true
+            prefs.edit().putBoolean("has_seen_duration_tap_hint", true).apply()
+        }
+    }
+
     fun updateBreathingDurationMinutes(minutes: Int) {
         _breathingDurationMinutes.value = minutes
         prefs.edit().putInt("breathing_duration_min", minutes).apply()
