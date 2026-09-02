@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.outlined.Air
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -41,8 +42,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import com.samadhi.meditationtimer.domain.model.BreathingPattern
-import com.samadhi.meditationtimer.ui.components.ZenBranchSlider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -54,12 +53,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -67,7 +66,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.samadhi.meditationtimer.domain.model.BreathingPattern
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
+import com.samadhi.meditationtimer.ui.components.ManualDurationInputDialog
+import com.samadhi.meditationtimer.ui.components.ZenBranchSlider
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
 import com.samadhi.meditationtimer.ui.theme.ZenObsidian
@@ -95,6 +97,8 @@ fun TimerScreen(
     val context = LocalContext.current
     var leafBurstTrigger by remember { mutableIntStateOf(0) }
     var sliderDragVelocity by remember { mutableFloatStateOf(0f) }
+    var showMeditationDurationDialog by remember { mutableStateOf(false) }
+    var showBreathingDurationDialog by remember { mutableStateOf(false) }
 
     val selectedPattern = BreathingPattern.allPatterns.find { it.id == breathingPatternId } ?: BreathingPattern.BOX_BREATHING
 
@@ -180,34 +184,53 @@ fun TimerScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Large Bold Duration Display
-                        Column(
+                        // Large Bold Duration Display with Click-to-Edit
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 2.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .clip(RoundedCornerShape(20.dp))
+                                .clickable { showMeditationDurationDialog = true }
+                                .padding(horizontal = 16.dp, vertical = 2.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "${config.targetDurationMinutes}",
-                                fontSize = 76.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = (-1.5).sp,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                            Text(
-                                text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 3.sp,
-                                color = currentTheme.primary,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "${config.targetDurationMinutes}",
+                                        fontSize = 76.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = (-1.5).sp,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Icon(
+                                        imageVector = Icons.Outlined.Edit,
+                                        contentDescription = "Edit meditation duration manually",
+                                        tint = currentTheme.primary.copy(alpha = 0.65f),
+                                        modifier = Modifier
+                                            .size(22.dp)
+                                            .padding(bottom = 6.dp)
+                                    )
+                                }
+                                Text(
+                                    text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 3.sp,
+                                    color = currentTheme.primary,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
                         }
 
                         // Organic Zen Branch Slider
                         ZenBranchSlider(
-                            value = config.targetDurationMinutes.toFloat(),
+                            value = config.targetDurationMinutes.toFloat().coerceIn(1f, 120f),
                             onValueChange = { newMin ->
                                 viewModel.updateDurationMinutes(newMin.toInt())
                             },
@@ -356,32 +379,52 @@ fun TimerScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column(
+                        // Large Bold Duration Display with Click-to-Edit
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 2.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .clip(RoundedCornerShape(20.dp))
+                                .clickable { showBreathingDurationDialog = true }
+                                .padding(horizontal = 16.dp, vertical = 2.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "$breathingDurationMin",
-                                fontSize = 76.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = (-1.5).sp,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                            Text(
-                                text = "$estimatedCycles CYCLES • $breathingDurationMin MINUTES",
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 2.sp,
-                                color = currentTheme.primary,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "$breathingDurationMin",
+                                        fontSize = 76.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = (-1.5).sp,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Icon(
+                                        imageVector = Icons.Outlined.Edit,
+                                        contentDescription = "Edit breathwork duration manually",
+                                        tint = currentTheme.primary.copy(alpha = 0.65f),
+                                        modifier = Modifier
+                                            .size(22.dp)
+                                            .padding(bottom = 6.dp)
+                                    )
+                                }
+                                Text(
+                                    text = "$estimatedCycles CYCLES • $breathingDurationMin MINUTES",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 2.sp,
+                                    color = currentTheme.primary,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
                         }
 
                         ZenBranchSlider(
-                            value = breathingDurationMin.toFloat(),
+                            value = breathingDurationMin.toFloat().coerceIn(1f, 30f),
                             onValueChange = { newMin ->
                                 viewModel.updateBreathingDurationMinutes(newMin.toInt())
                             },
@@ -789,6 +832,36 @@ fun TimerScreen(
                     }
                 }
             }
+        }
+
+        if (showMeditationDurationDialog) {
+            ManualDurationInputDialog(
+                initialMinutes = config.targetDurationMinutes,
+                minMinutes = 1,
+                maxMinutes = 180,
+                title = "Meditation Duration",
+                subtitle = "Enter sit duration in minutes (1–180)",
+                onDismiss = { showMeditationDurationDialog = false },
+                onConfirm = { minutes ->
+                    viewModel.updateDurationMinutes(minutes)
+                    leafBurstTrigger++
+                }
+            )
+        }
+
+        if (showBreathingDurationDialog) {
+            ManualDurationInputDialog(
+                initialMinutes = breathingDurationMin,
+                minMinutes = 1,
+                maxMinutes = 60,
+                title = "Breathwork Duration",
+                subtitle = "Enter breathwork duration in minutes (1–60)",
+                onDismiss = { showBreathingDurationDialog = false },
+                onConfirm = { minutes ->
+                    viewModel.updateBreathingDurationMinutes(minutes)
+                    leafBurstTrigger++
+                }
+            )
         }
     }
 }
