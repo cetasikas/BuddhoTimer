@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.outlined.Air
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -195,36 +194,35 @@ fun TimerScreen(
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
+                                Text(
+                                    text = "${config.targetDurationMinutes}",
+                                    fontSize = 76.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = (-1.5).sp,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Text(
-                                        text = "${config.targetDurationMinutes}",
-                                        fontSize = 76.sp,
+                                        text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        letterSpacing = (-1.5).sp,
-                                        color = MaterialTheme.colorScheme.onBackground,
+                                        letterSpacing = 3.sp,
+                                        color = currentTheme.primary,
                                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                     )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Icon(
-                                        imageVector = Icons.Outlined.Edit,
-                                        contentDescription = "Edit meditation duration manually",
-                                        tint = currentTheme.primary.copy(alpha = 0.65f),
-                                        modifier = Modifier
-                                            .size(22.dp)
-                                            .padding(bottom = 6.dp)
+                                    Text(
+                                        text = " • TAP TO SET",
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        letterSpacing = 1.5.sp,
+                                        color = currentTheme.textSecondary.copy(alpha = 0.70f),
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                     )
                                 }
-                                Text(
-                                    text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 3.sp,
-                                    color = currentTheme.primary,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
                             }
                         }
 
@@ -256,7 +254,6 @@ fun TimerScreen(
                                         .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primary else currentTheme.border, RoundedCornerShape(14.dp))
                                         .clickable {
                                             viewModel.updateDurationMinutes(duration)
-                                            leafBurstTrigger++
                                         }
                                         .padding(vertical = 9.dp),
                                     contentAlignment = Alignment.Center
@@ -390,33 +387,19 @@ fun TimerScreen(
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Text(
-                                        text = "$breathingDurationMin",
-                                        fontSize = 76.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = (-1.5).sp,
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Icon(
-                                        imageVector = Icons.Outlined.Edit,
-                                        contentDescription = "Edit breathwork duration manually",
-                                        tint = currentTheme.primary.copy(alpha = 0.65f),
-                                        modifier = Modifier
-                                            .size(22.dp)
-                                            .padding(bottom = 6.dp)
-                                    )
-                                }
                                 Text(
-                                    text = "$estimatedCycles CYCLES • $breathingDurationMin MINUTES",
-                                    fontSize = 12.5.sp,
+                                    text = "$breathingDurationMin",
+                                    fontSize = 76.sp,
                                     fontWeight = FontWeight.Bold,
-                                    letterSpacing = 2.sp,
+                                    letterSpacing = (-1.5).sp,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                Text(
+                                    text = "$estimatedCycles CYCLES • $breathingDurationMin MIN • TAP TO SET",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.6.sp,
                                     color = currentTheme.primary,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
@@ -449,7 +432,6 @@ fun TimerScreen(
                                         .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primary else currentTheme.border, RoundedCornerShape(14.dp))
                                         .clickable {
                                             viewModel.updateBreathingDurationMinutes(dur)
-                                            leafBurstTrigger++
                                         }
                                         .padding(vertical = 9.dp),
                                     contentAlignment = Alignment.Center
@@ -844,7 +826,6 @@ fun TimerScreen(
                 onDismiss = { showMeditationDurationDialog = false },
                 onConfirm = { minutes ->
                     viewModel.updateDurationMinutes(minutes)
-                    leafBurstTrigger++
                 }
             )
         }
@@ -859,7 +840,6 @@ fun TimerScreen(
                 onDismiss = { showBreathingDurationDialog = false },
                 onConfirm = { minutes ->
                     viewModel.updateBreathingDurationMinutes(minutes)
-                    leafBurstTrigger++
                 }
             )
         }

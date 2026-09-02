@@ -267,7 +267,10 @@ fun FallingLeavesEffect(
 
     LaunchedEffect(triggerBurst) {
         if (triggerBurst > 0) {
-            fallingLeaves.forEach { it.swayPhase += (Random.nextFloat() * 1.5f + 0.8f) }
+            // Accelerate descent smoothly without teleporting coordinates or rotation
+            fallingLeaves.forEach { leaf ->
+                leaf.fallSpeed = (leaf.fallSpeed * 1.25f).coerceAtMost(0.018f)
+            }
         }
     }
 
