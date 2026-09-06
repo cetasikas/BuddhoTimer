@@ -142,7 +142,7 @@ private fun ExpandableSettingsCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
                             .background(currentTheme.primary.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
@@ -151,53 +151,39 @@ private fun ExpandableSettingsCard(
                             imageVector = icon,
                             contentDescription = null,
                             tint = currentTheme.primaryLight,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(19.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        color = ZenTextPrimary,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
+                    Spacer(modifier = Modifier.width(13.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 14.5.sp,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = ZenTextPrimary
+                        )
+                        if (!isExpanded && summaryValue != null) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = summaryValue,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = currentTheme.primaryLight
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    if (!isExpanded && summaryValue != null) {
-                        Text(
-                            text = summaryValue,
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = currentTheme.primaryLight,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .widthIn(max = 120.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(currentTheme.primary.copy(alpha = 0.12f))
-                                .padding(horizontal = 8.dp, vertical = 3.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                    }
-
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (isExpanded) "Collapse" else "Expand",
-                        tint = ZenTextMuted,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = ZenTextMuted,
+                    modifier = Modifier.size(22.dp)
+                )
             }
 
             AnimatedVisibility(
@@ -404,10 +390,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // 1. BELL SOUND & CHIMES
-                val currentSoundTitle = when (config.soundBellResName) {
-                    SoundHelper.SOUND_SILENT_HAPTIC -> "Haptic Only"
-                    else -> SoundHelper.soundOptions.find { it.id == config.soundBellResName }?.title ?: "Mindfulness Bell"
-                }
+                val currentSoundTitle = SoundHelper.soundOptions.find { it.id == config.soundBellResName }?.title ?: "Mindfulness Bell"
                 ExpandableSettingsCard(
                     title = "Bell Sound & Chimes",
                     icon = Icons.Default.MusicNote,
