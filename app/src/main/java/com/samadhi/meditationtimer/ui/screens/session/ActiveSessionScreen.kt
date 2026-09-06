@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AllInclusive
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
@@ -505,7 +506,50 @@ fun ActiveSessionScreen(
                                          }
                                      }
 
-                                     Spacer(modifier = Modifier.height(14.dp))
+                                     if (isCountDownActive) {
+                                         Spacer(modifier = Modifier.height(8.dp))
+                                         val isOverrunOn = config.isOverrunEnabled
+                                         Box(
+                                             modifier = Modifier
+                                                 .clip(RoundedCornerShape(14.dp))
+                                                 .background(
+                                                     if (isOverrunOn) currentTheme.primary.copy(alpha = 0.16f)
+                                                     else ZenSurface.copy(alpha = 0.6f)
+                                                 )
+                                                 .border(
+                                                     1.dp,
+                                                     if (isOverrunOn) currentTheme.primary.copy(alpha = 0.6f)
+                                                     else ZenBorder.copy(alpha = 0.8f),
+                                                     RoundedCornerShape(14.dp)
+                                                 )
+                                                 .clickable {
+                                                     leavesBurstTrigger++
+                                                     viewModel.toggleOverrun(!isOverrunOn)
+                                                 }
+                                                 .padding(horizontal = 10.dp, vertical = 4.dp)
+                                         ) {
+                                             Row(
+                                                 verticalAlignment = Alignment.CenterVertically,
+                                                 horizontalArrangement = Arrangement.Center
+                                             ) {
+                                                 Icon(
+                                                     imageVector = Icons.Default.AllInclusive,
+                                                     contentDescription = "Toggle Continue Past Target Time",
+                                                     tint = if (isOverrunOn) currentTheme.primaryLight else ZenTextMuted,
+                                                     modifier = Modifier.size(13.dp)
+                                                 )
+                                                 Spacer(modifier = Modifier.width(5.dp))
+                                                 Text(
+                                                     text = if (isOverrunOn) "Continue Past Target: ON" else "Continue Past Target: OFF",
+                                                     fontSize = 10.5.sp,
+                                                     fontWeight = if (isOverrunOn) FontWeight.SemiBold else FontWeight.Medium,
+                                                     color = if (isOverrunOn) currentTheme.primaryLight else ZenTextSecondary
+                                                 )
+                                             }
+                                         }
+                                     }
+
+                                     Spacer(modifier = Modifier.height(if (isCountDownActive) 10.dp else 14.dp))
 
                                     // Landscape Controls with integrated DND
                                     Row(
@@ -763,14 +807,57 @@ fun ActiveSessionScreen(
                                           modifier = Modifier.height(34.dp),
                                           contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                                           shape = RoundedCornerShape(17.dp),
-                                          colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                                           border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
                                       ) {
                                           Text("+5m", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                       }
                                   }
 
-                                 Spacer(modifier = Modifier.height(32.dp))
+                                  if (isCountDownActive) {
+                                      Spacer(modifier = Modifier.height(12.dp))
+                                      val isOverrunOn = config.isOverrunEnabled
+                                      Box(
+                                          modifier = Modifier
+                                              .clip(RoundedCornerShape(16.dp))
+                                              .background(
+                                                  if (isOverrunOn) currentTheme.primary.copy(alpha = 0.16f)
+                                                  else ZenSurface.copy(alpha = 0.6f)
+                                              )
+                                              .border(
+                                                  1.dp,
+                                                  if (isOverrunOn) currentTheme.primary.copy(alpha = 0.6f)
+                                                  else ZenBorder.copy(alpha = 0.8f),
+                                                  RoundedCornerShape(16.dp)
+                                              )
+                                              .clickable {
+                                                  leavesBurstTrigger++
+                                                  viewModel.toggleOverrun(!isOverrunOn)
+                                              }
+                                              .padding(horizontal = 14.dp, vertical = 6.dp)
+                                      ) {
+                                          Row(
+                                              verticalAlignment = Alignment.CenterVertically,
+                                              horizontalArrangement = Arrangement.Center
+                                          ) {
+                                              Icon(
+                                                  imageVector = Icons.Default.AllInclusive,
+                                                  contentDescription = "Toggle Continue Past Target Time",
+                                                  tint = if (isOverrunOn) currentTheme.primaryLight else ZenTextMuted,
+                                                  modifier = Modifier.size(15.dp)
+                                              )
+                                              Spacer(modifier = Modifier.width(6.dp))
+                                              Text(
+                                                  text = if (isOverrunOn) "Continue Past Target: ON" else "Continue Past Target: OFF",
+                                                  fontSize = 11.5.sp,
+                                                  fontWeight = if (isOverrunOn) FontWeight.SemiBold else FontWeight.Medium,
+                                                  color = if (isOverrunOn) currentTheme.primaryLight else ZenTextSecondary
+                                              )
+                                          }
+                                      }
+                                  }
+
+                                  Spacer(modifier = Modifier.height(if (isCountDownActive) 24.dp else 32.dp))
 
                                 // Action Controls with integrated DND
                                 Row(

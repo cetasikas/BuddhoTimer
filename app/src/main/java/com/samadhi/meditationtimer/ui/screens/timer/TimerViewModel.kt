@@ -148,6 +148,11 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleOverrun(isOverrunEnabled: Boolean) {
         saveConfig(_config.value.copy(isOverrunEnabled = isOverrunEnabled))
+        val intent = Intent(context, MeditationTimerService::class.java).apply {
+            action = MeditationTimerService.ACTION_SET_OVERRUN
+            putExtra(MeditationTimerService.EXTRA_OVERRUN_ENABLED, isOverrunEnabled)
+        }
+        context.startService(intent)
     }
 
     fun toggleBoxBreathingMode(isBoxBreathing: Boolean) {

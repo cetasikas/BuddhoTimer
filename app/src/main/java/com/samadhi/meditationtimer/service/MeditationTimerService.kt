@@ -91,6 +91,11 @@ class MeditationTimerService : Service() {
                 val deltaSec = intent.getIntExtra(EXTRA_ADJUST_SEC, 0)
                 adjustTimerDuration(deltaSec)
             }
+            ACTION_SET_OVERRUN -> {
+                val enabled = intent.getBooleanExtra(EXTRA_OVERRUN_ENABLED, true)
+                isOverrunEnabledForSession = enabled
+                soundHelper.triggerSoftTouchHaptic()
+            }
             ACTION_PAUSE -> pauseTimer()
             ACTION_RESUME -> resumeTimer()
             ACTION_FINISH -> finishTimer()
@@ -564,6 +569,7 @@ class MeditationTimerService : Service() {
         const val ACTION_FINISH = "com.samadhi.meditationtimer.action.FINISH"
         const val ACTION_CANCEL = "com.samadhi.meditationtimer.action.CANCEL"
         const val ACTION_ADJUST_TIME = "com.samadhi.meditationtimer.action.ADJUST_TIME"
+        const val ACTION_SET_OVERRUN = "com.samadhi.meditationtimer.action.SET_OVERRUN"
 
         const val EXTRA_TARGET_SEC = "extra_target_sec"
         const val EXTRA_PREP_SEC = "extra_prep_sec"

@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -160,9 +161,13 @@ private fun ExpandableSettingsCard(
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         ),
-                        color = ZenTextPrimary
+                        color = ZenTextPrimary,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -178,6 +183,7 @@ private fun ExpandableSettingsCard(
                             softWrap = false,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                             modifier = Modifier
+                                .widthIn(max = 120.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(currentTheme.primary.copy(alpha = 0.12f))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
@@ -398,7 +404,10 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // 1. BELL SOUND & CHIMES
-                val currentSoundTitle = SoundHelper.soundOptions.find { it.id == config.soundBellResName }?.title ?: "Mindfulness Bell"
+                val currentSoundTitle = when (config.soundBellResName) {
+                    SoundHelper.SOUND_SILENT_HAPTIC -> "Haptic Only"
+                    else -> SoundHelper.soundOptions.find { it.id == config.soundBellResName }?.title ?: "Mindfulness Bell"
+                }
                 ExpandableSettingsCard(
                     title = "Bell Sound & Chimes",
                     icon = Icons.Default.MusicNote,
