@@ -33,18 +33,21 @@ jobs:
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: BuddhoTimer-Debug-APK
           path: app/build/outputs/apk/debug/*.apk
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: BuddhoTimer-Release-APK
           path: app/build/outputs/apk/release/*.apk
 
       - name: Upload Play Store AAB Bundle Artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: BuddhoTimer-PlayStore-AAB
           path: app/build/outputs/bundle/release/*.aab
