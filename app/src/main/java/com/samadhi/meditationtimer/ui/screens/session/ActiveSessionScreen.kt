@@ -305,11 +305,11 @@ fun ActiveSessionScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(if (isLandscape) 12.dp else (20 * dynamicScale).coerceIn(10.dp, 28.dp)))
+                            Spacer(modifier = Modifier.height(if (isLandscape) 12.dp else (20.dp * dynamicScale).coerceIn(10.dp, 28.dp)))
 
                             Box(
                                 modifier = Modifier
-                                    .size(if (isLandscape) 110.dp else (150 * dynamicScale).coerceIn(100.dp, 160.dp))
+                                    .size(if (isLandscape) 110.dp else (150.dp * dynamicScale).coerceIn(100.dp, 160.dp))
                                     .clip(CircleShape)
                                     .background(currentTheme.surfaceVariant)
                                     .border(2.dp, currentTheme.primary, CircleShape),
@@ -323,7 +323,7 @@ fun ActiveSessionScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(if (isLandscape) 10.dp else (16 * dynamicScale).coerceIn(8.dp, 20.dp)))
+                            Spacer(modifier = Modifier.height(if (isLandscape) 10.dp else (16.dp * dynamicScale).coerceIn(8.dp, 20.dp)))
 
                             Text(
                                 text = "Settle into your posture & breathe gently",
@@ -669,8 +669,8 @@ fun ActiveSessionScreen(
                                             else currentTheme.primary.copy(alpha = 0.18f)
                                         )
                                         .padding(
-                                            horizontal = (14 * dynamicScale).coerceIn(10.dp, 16.dp),
-                                            vertical = (4 * dynamicScale).coerceIn(2.dp, 6.dp)
+                                            horizontal = (14.dp * dynamicScale).coerceIn(10.dp, 16.dp),
+                                            vertical = (4.dp * dynamicScale).coerceIn(2.dp, 6.dp)
                                         )
                                 ) {
                                     Text(
@@ -682,12 +682,12 @@ fun ActiveSessionScreen(
                                         },
                                         fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
                                         fontWeight = FontWeight.Bold,
-                                        letterSpacing = (2 * dynamicScale).coerceIn(1.sp, 2.sp),
+                                        letterSpacing = (2f * dynamicScale).coerceIn(1f, 2f).sp,
                                         color = if (isOverrun) currentTheme.overrunColor else currentTheme.primaryLight
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height((20 * dynamicScale).coerceIn(6.dp, 32.dp)))
+                                Spacer(modifier = Modifier.height((20.dp * dynamicScale).coerceIn(6.dp, 32.dp)))
 
                                 // Circular Progress Display
                                 Box(
@@ -709,7 +709,7 @@ fun ActiveSessionScreen(
                                         isOverrun = isOverrun,
                                         isPaused = isPaused,
                                         size = timerSize,
-                                        strokeWidth = (9 * dynamicScale).coerceIn(7.dp, 10.dp),
+                                        strokeWidth = (9.dp * dynamicScale).coerceIn(7.dp, 10.dp),
                                         intervalMinutes = config.mindfulnessIntervalMinutes,
                                         totalDurationMinutes = currentTargetMinutes
                                     ) {
@@ -777,16 +777,16 @@ fun ActiveSessionScreen(
                                 }
 
                                 val isCountDownActive = !config.isOpenEnded && !isOverrun && remainingSec > 0
-                                Spacer(modifier = Modifier.height((12 * dynamicScale).coerceIn(4.dp, 16.dp)))
+                                Spacer(modifier = Modifier.height((12.dp * dynamicScale).coerceIn(4.dp, 16.dp)))
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy((8 * dynamicScale).coerceIn(4.dp, 10.dp)),
+                                    horizontalArrangement = Arrangement.spacedBy((8.dp * dynamicScale).coerceIn(4.dp, 10.dp)),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     if (isCountDownActive) {
                                         OutlinedButton(
                                             onClick = { viewModel.adjustSessionTime(-300) },
-                                            modifier = Modifier.height((32 * dynamicScale).coerceIn(26.dp, 34.dp)),
-                                            contentPadding = PaddingValues(horizontal = (8 * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
+                                            modifier = Modifier.height((32.dp * dynamicScale).coerceIn(26.dp, 34.dp)),
+                                            contentPadding = PaddingValues(horizontal = (8.dp * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
                                             shape = RoundedCornerShape(17.dp),
                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
                                             border = BorderStroke(1.dp, ZenBorder)
@@ -795,8 +795,8 @@ fun ActiveSessionScreen(
                                         }
                                         OutlinedButton(
                                             onClick = { viewModel.adjustSessionTime(-60) },
-                                            modifier = Modifier.height((32 * dynamicScale).coerceIn(26.dp, 34.dp)),
-                                            contentPadding = PaddingValues(horizontal = (8 * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
+                                            modifier = Modifier.height((32.dp * dynamicScale).coerceIn(26.dp, 34.dp)),
+                                            contentPadding = PaddingValues(horizontal = (8.dp * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
                                             shape = RoundedCornerShape(17.dp),
                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
                                             border = BorderStroke(1.dp, ZenBorder)
@@ -806,8 +806,8 @@ fun ActiveSessionScreen(
                                     }
                                     OutlinedButton(
                                         onClick = { viewModel.adjustSessionTime(60) },
-                                        modifier = Modifier.height((32 * dynamicScale).coerceIn(26.dp, 34.dp)),
-                                        contentPadding = PaddingValues(horizontal = (8 * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
+                                        modifier = Modifier.height((32.dp * dynamicScale).coerceIn(26.dp, 34.dp)),
+                                        contentPadding = PaddingValues(horizontal = (8.dp * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
                                         shape = RoundedCornerShape(17.dp),
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                                         border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
@@ -816,8 +816,8 @@ fun ActiveSessionScreen(
                                     }
                                     OutlinedButton(
                                         onClick = { viewModel.adjustSessionTime(300) },
-                                        modifier = Modifier.height((32 * dynamicScale).coerceIn(26.dp, 34.dp)),
-                                        contentPadding = PaddingValues(horizontal = (8 * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
+                                        modifier = Modifier.height((32.dp * dynamicScale).coerceIn(26.dp, 34.dp)),
+                                        contentPadding = PaddingValues(horizontal = (8.dp * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
                                         shape = RoundedCornerShape(17.dp),
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                                         border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
@@ -827,7 +827,7 @@ fun ActiveSessionScreen(
                                 }
 
                                 if (isCountDownActive) {
-                                    Spacer(modifier = Modifier.height((8 * dynamicScale).coerceIn(3.dp, 12.dp)))
+                                    Spacer(modifier = Modifier.height((8.dp * dynamicScale).coerceIn(3.dp, 12.dp)))
                                     val isOverrunOn = config.isOverrunEnabled
                                     Box(
                                         modifier = Modifier
@@ -847,8 +847,8 @@ fun ActiveSessionScreen(
                                                 viewModel.toggleOverrun(!isOverrunOn)
                                             }
                                             .padding(
-                                                horizontal = (12 * dynamicScale).coerceIn(8.dp, 14.dp),
-                                                vertical = (4 * dynamicScale).coerceIn(2.dp, 6.dp)
+                                                horizontal = (12.dp * dynamicScale).coerceIn(8.dp, 14.dp),
+                                                vertical = (4.dp * dynamicScale).coerceIn(2.dp, 6.dp)
                                             )
                                     ) {
                                         Row(
@@ -859,7 +859,7 @@ fun ActiveSessionScreen(
                                                 imageVector = Icons.Default.AllInclusive,
                                                 contentDescription = "Toggle Continue Past Target Time",
                                                 tint = if (isOverrunOn) currentTheme.primaryLight else ZenTextMuted,
-                                                modifier = Modifier.size((13 * dynamicScale).coerceIn(11.dp, 15.dp))
+                                                modifier = Modifier.size((13.dp * dynamicScale).coerceIn(11.dp, 15.dp))
                                             )
                                             Spacer(modifier = Modifier.width(5.dp))
                                             Text(
@@ -872,11 +872,11 @@ fun ActiveSessionScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(if (isCountDownActive) (16 * dynamicScale).coerceIn(6.dp, 24.dp) else (20 * dynamicScale).coerceIn(8.dp, 28.dp)))
+                                Spacer(modifier = Modifier.height(if (isCountDownActive) (16.dp * dynamicScale).coerceIn(6.dp, 24.dp) else (20.dp * dynamicScale).coerceIn(8.dp, 28.dp)))
 
                                 // Action Controls with integrated DND
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy((12 * dynamicScale).coerceIn(8.dp, 16.dp)),
+                                    horizontalArrangement = Arrangement.spacedBy((12.dp * dynamicScale).coerceIn(8.dp, 16.dp)),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     // Subtle DND Mode Quick-Toggle
@@ -896,7 +896,7 @@ fun ActiveSessionScreen(
                                             }
                                         },
                                         modifier = Modifier
-                                            .size((46 * dynamicScale).coerceIn(36.dp, 52.dp))
+                                            .size((46.dp * dynamicScale).coerceIn(36.dp, 52.dp))
                                             .clip(CircleShape)
                                             .background(
                                                 if (isDndActive) currentTheme.primary.copy(alpha = 0.22f)
@@ -912,7 +912,7 @@ fun ActiveSessionScreen(
                                             imageVector = Icons.Default.DoNotDisturb,
                                             contentDescription = "Toggle DND",
                                             tint = if (isDndActive) currentTheme.primaryLight else ZenTextMuted,
-                                            modifier = Modifier.size((18 * dynamicScale).coerceIn(15.dp, 22.dp))
+                                            modifier = Modifier.size((18.dp * dynamicScale).coerceIn(15.dp, 22.dp))
                                         )
                                     }
 
@@ -922,7 +922,7 @@ fun ActiveSessionScreen(
                                             if (isPaused) viewModel.resumeSession() else viewModel.pauseSession()
                                         },
                                         modifier = Modifier
-                                            .size((56 * dynamicScale).coerceIn(44.dp, 64.dp))
+                                            .size((56.dp * dynamicScale).coerceIn(44.dp, 64.dp))
                                             .clip(CircleShape)
                                             .background(ZenSurface)
                                     ) {
@@ -930,16 +930,16 @@ fun ActiveSessionScreen(
                                             imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
                                             contentDescription = if (isPaused) "Resume" else "Pause",
                                             tint = currentTheme.primaryLight,
-                                            modifier = Modifier.size((24 * dynamicScale).coerceIn(18.dp, 28.dp))
+                                            modifier = Modifier.size((24.dp * dynamicScale).coerceIn(18.dp, 28.dp))
                                         )
                                     }
 
                                     Button(
                                         onClick = { viewModel.finishSession() },
                                         modifier = Modifier
-                                            .height((48 * dynamicScale).coerceIn(38.dp, 56.dp))
+                                            .height((48.dp * dynamicScale).coerceIn(38.dp, 56.dp))
                                             .clip(RoundedCornerShape(24.dp)),
-                                        contentPadding = PaddingValues(horizontal = (16 * dynamicScale).coerceIn(12.dp, 20.dp), vertical = 0.dp),
+                                        contentPadding = PaddingValues(horizontal = (16.dp * dynamicScale).coerceIn(12.dp, 20.dp), vertical = 0.dp),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary,
                                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -953,7 +953,7 @@ fun ActiveSessionScreen(
                                                 imageVector = Icons.Default.Check,
                                                 contentDescription = null,
                                                 tint = MaterialTheme.colorScheme.onPrimary,
-                                                modifier = Modifier.size((18 * dynamicScale).coerceIn(14.dp, 20.dp))
+                                                modifier = Modifier.size((18.dp * dynamicScale).coerceIn(14.dp, 20.dp))
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Text(

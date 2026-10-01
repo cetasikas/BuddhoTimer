@@ -160,11 +160,11 @@ fun TimerScreen(
                     horizontalArrangement = Arrangement.Start
                 ) {
                     com.samadhi.meditationtimer.ui.components.BuddhaOutlineLogo(
-                        size = (36 * dynamicScale).coerceIn(24.dp, 38.dp),
+                        size = (36.dp * dynamicScale).coerceIn(24.dp, 38.dp),
                         tint = null,
                         showEnsoCircle = true
                     )
-                    Spacer(modifier = Modifier.width((10 * dynamicScale).coerceIn(6.dp, 12.dp)))
+                    Spacer(modifier = Modifier.width((10.dp * dynamicScale).coerceIn(6.dp, 12.dp)))
                     Column {
                         Text(
                             text = "Buddho Timer",
@@ -205,7 +205,7 @@ fun TimerScreen(
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy((6 * dynamicScale).coerceIn(2.dp, 8.dp), Alignment.CenterVertically)
+                                verticalArrangement = Arrangement.spacedBy((6.dp * dynamicScale).coerceIn(2.dp, 8.dp), Alignment.CenterVertically)
                             ) {
                                 // Large Bold Duration Display with Click-to-Edit
                                 Box(
@@ -284,27 +284,27 @@ fun TimerScreen(
                                     valueRange = 1f..120f,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height((44 * dynamicScale).coerceIn(32.dp, 48.dp))
+                                        .height((44.dp * dynamicScale).coerceIn(32.dp, 48.dp))
                                 )
 
                                 // Clean Row of Essential Presets
                                 val meditationPresets = listOf(5, 15, 30, 45, 60)
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy((6 * dynamicScale).coerceIn(4.dp, 8.dp))
+                                    horizontalArrangement = Arrangement.spacedBy((6.dp * dynamicScale).coerceIn(4.dp, 8.dp))
                                 ) {
                                     meditationPresets.forEach { duration ->
                                         val isSelected = config.targetDurationMinutes == duration
                                         Box(
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .clip(RoundedCornerShape((12 * dynamicScale).coerceIn(8.dp, 14.dp)))
+                                                .clip(RoundedCornerShape((12.dp * dynamicScale).coerceIn(8.dp, 14.dp)))
                                                 .background(if (isSelected) currentTheme.primary.copy(alpha = 0.22f) else currentTheme.surfaceVariant)
-                                                .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primary else currentTheme.border, RoundedCornerShape((12 * dynamicScale).coerceIn(8.dp, 14.dp)))
+                                                .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primary else currentTheme.border, RoundedCornerShape((12.dp * dynamicScale).coerceIn(8.dp, 14.dp)))
                                                 .clickable {
                                                     viewModel.updateDurationMinutes(duration)
                                                 }
-                                                .padding(vertical = (6 * dynamicScale).coerceIn(2.5.dp, 7.dp)),
+                                                .padding(vertical = (6.dp * dynamicScale).coerceIn(2.5.dp, 7.dp)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
@@ -321,10 +321,10 @@ fun TimerScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape((14 * dynamicScale).coerceIn(10.dp, 16.dp)))
+                                        .clip(RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp)))
                                         .background(ZenSurface.copy(alpha = 0.75f))
-                                        .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape((14 * dynamicScale).coerceIn(10.dp, 16.dp)))
-                                        .padding(horizontal = 12.dp, vertical = (3 * dynamicScale).coerceIn(1.5.dp, 5.dp))
+                                        .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp)))
+                                        .padding(horizontal = 12.dp, vertical = (3.dp * dynamicScale).coerceIn(1.5.dp, 5.dp))
                                 ) {
                                     Column(
                                         modifier = Modifier.fillMaxWidth()
@@ -333,7 +333,7 @@ fun TimerScreen(
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(vertical = (3 * dynamicScale).coerceIn(1.dp, 4.dp)),
+                                                .padding(vertical = (3.dp * dynamicScale).coerceIn(1.dp, 4.dp)),
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
@@ -387,7 +387,7 @@ fun TimerScreen(
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(vertical = (3 * dynamicScale).coerceIn(1.dp, 4.dp)),
+                                                .padding(vertical = (3.dp * dynamicScale).coerceIn(1.dp, 4.dp)),
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
@@ -438,7 +438,7 @@ fun TimerScreen(
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy((6 * dynamicScale).coerceIn(2.dp, 8.dp), Alignment.CenterVertically)
+                                verticalArrangement = Arrangement.spacedBy((6.dp * dynamicScale).coerceIn(2.dp, 8.dp), Alignment.CenterVertically)
                             ) {
                                 // Large Bold Duration Display with Click-to-Edit
                                 Box(
@@ -516,26 +516,26 @@ fun TimerScreen(
                                     valueRange = 1f..30f,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height((44 * dynamicScale).coerceIn(32.dp, 48.dp))
+                                        .height((44.dp * dynamicScale).coerceIn(32.dp, 48.dp))
                                 )
 
                                 val breathPresets = listOf(2, 5, 10, 15, 20)
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy((6 * dynamicScale).coerceIn(4.dp, 8.dp))
+                                    horizontalArrangement = Arrangement.spacedBy((6.dp * dynamicScale).coerceIn(4.dp, 8.dp))
                                 ) {
                                     breathPresets.forEach { dur ->
                                         val isSelected = breathingDurationMin == dur
                                         Box(
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .clip(RoundedCornerShape((12 * dynamicScale).coerceIn(8.dp, 14.dp)))
+                                                .clip(RoundedCornerShape((12.dp * dynamicScale).coerceIn(8.dp, 14.dp)))
                                                 .background(if (isSelected) currentTheme.primary.copy(alpha = 0.22f) else currentTheme.surfaceVariant)
-                                                .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primary else currentTheme.border, RoundedCornerShape((12 * dynamicScale).coerceIn(8.dp, 14.dp)))
+                                                .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primary else currentTheme.border, RoundedCornerShape((12.dp * dynamicScale).coerceIn(8.dp, 14.dp)))
                                                 .clickable {
                                                     viewModel.updateBreathingDurationMinutes(dur)
                                                 }
-                                                .padding(vertical = (6 * dynamicScale).coerceIn(2.5.dp, 7.dp)),
+                                                .padding(vertical = (6.dp * dynamicScale).coerceIn(2.5.dp, 7.dp)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
@@ -561,19 +561,19 @@ fun TimerScreen(
                                     Card(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clip(RoundedCornerShape((14 * dynamicScale).coerceIn(10.dp, 16.dp)))
+                                            .clip(RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp)))
                                             .clickable { isPatternDropdownOpen = true },
                                         colors = CardDefaults.cardColors(
                                             containerColor = ZenSurface.copy(alpha = 0.85f)
                                         ),
                                         border = BorderStroke(1.2.dp, currentTheme.primary.copy(alpha = 0.55f)),
-                                        shape = RoundedCornerShape((14 * dynamicScale).coerceIn(10.dp, 16.dp))
+                                        shape = RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp))
                                     ) {
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 12.dp, vertical = (6 * dynamicScale).coerceIn(3.dp, 8.dp)),
-                                            verticalArrangement = Arrangement.spacedBy((3 * dynamicScale).coerceIn(1.dp, 4.dp))
+                                                .padding(horizontal = 12.dp, vertical = (6.dp * dynamicScale).coerceIn(3.dp, 8.dp)),
+                                            verticalArrangement = Arrangement.spacedBy((3.dp * dynamicScale).coerceIn(1.dp, 4.dp))
                                         ) {
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),
@@ -600,14 +600,14 @@ fun TimerScreen(
                                                     imageVector = if (isPatternDropdownOpen) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                                     contentDescription = "Select Pattern",
                                                     tint = currentTheme.primaryLight,
-                                                    modifier = Modifier.size((18 * dynamicScale).coerceIn(15.dp, 20.dp))
+                                                    modifier = Modifier.size((18.dp * dynamicScale).coerceIn(15.dp, 20.dp))
                                                 )
                                             }
 
                                             // Phase Timing Visual Chips
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy((4 * dynamicScale).coerceIn(2.dp, 4.dp)),
+                                                horizontalArrangement = Arrangement.spacedBy((4.dp * dynamicScale).coerceIn(2.dp, 4.dp)),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 when (selectedPattern.id) {
@@ -725,10 +725,10 @@ fun TimerScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape((14 * dynamicScale).coerceIn(10.dp, 16.dp)))
+                                        .clip(RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp)))
                                         .background(ZenSurface.copy(alpha = 0.75f))
-                                        .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape((14 * dynamicScale).coerceIn(10.dp, 16.dp)))
-                                        .padding(horizontal = 12.dp, vertical = (4 * dynamicScale).coerceIn(2.dp, 5.dp))
+                                        .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp)))
+                                        .padding(horizontal = 12.dp, vertical = (4.dp * dynamicScale).coerceIn(2.dp, 5.dp))
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -782,7 +782,7 @@ fun TimerScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = (4 * dynamicScale).dp, bottom = (2 * dynamicScale).dp),
-                    verticalArrangement = Arrangement.spacedBy((8 * dynamicScale).coerceIn(4.dp, 10.dp)),
+                    verticalArrangement = Arrangement.spacedBy((8.dp * dynamicScale).coerceIn(4.dp, 10.dp)),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Practice Mode Segmented Pill Selector
@@ -791,7 +791,7 @@ fun TimerScreen(
                             .clip(RoundedCornerShape(20.dp))
                             .background(currentTheme.surfaceVariant)
                             .border(1.dp, currentTheme.border, RoundedCornerShape(20.dp))
-                            .padding((3 * dynamicScale).coerceIn(2.dp, 4.dp)),
+                            .padding((3.dp * dynamicScale).coerceIn(2.dp, 4.dp)),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Meditation Option
@@ -809,8 +809,8 @@ fun TimerScreen(
                                 }
                             }
                             .padding(
-                                horizontal = (14 * dynamicScale).coerceIn(8.dp, 16.dp),
-                                vertical = (5 * dynamicScale).coerceIn(3.dp, 7.dp)
+                                horizontal = (14.dp * dynamicScale).coerceIn(8.dp, 16.dp),
+                                vertical = (5.dp * dynamicScale).coerceIn(3.dp, 7.dp)
                             ),
                             contentAlignment = Alignment.Center
                         ) {
@@ -819,7 +819,7 @@ fun TimerScreen(
                                     imageVector = Icons.Default.SelfImprovement,
                                     contentDescription = null,
                                     tint = if (isMeditation) currentTheme.primary else currentTheme.textSecondary,
-                                    modifier = Modifier.size((15 * dynamicScale).coerceIn(12.dp, 16.dp))
+                                    modifier = Modifier.size((15.dp * dynamicScale).coerceIn(12.dp, 16.dp))
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
@@ -845,8 +845,8 @@ fun TimerScreen(
                                 }
                             }
                             .padding(
-                                horizontal = (14 * dynamicScale).coerceIn(8.dp, 16.dp),
-                                vertical = (5 * dynamicScale).coerceIn(3.dp, 7.dp)
+                                horizontal = (14.dp * dynamicScale).coerceIn(8.dp, 16.dp),
+                                vertical = (5.dp * dynamicScale).coerceIn(3.dp, 7.dp)
                             ),
                             contentAlignment = Alignment.Center
                         ) {
@@ -855,7 +855,7 @@ fun TimerScreen(
                                     imageVector = Icons.Outlined.Air,
                                     contentDescription = null,
                                     tint = if (!isMeditation) currentTheme.primary else currentTheme.textSecondary,
-                                    modifier = Modifier.size((15 * dynamicScale).coerceIn(12.dp, 16.dp))
+                                    modifier = Modifier.size((15.dp * dynamicScale).coerceIn(12.dp, 16.dp))
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
@@ -889,7 +889,7 @@ fun TimerScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height((48 * dynamicScale).coerceIn(38.dp, 52.dp))
+                            .height((48.dp * dynamicScale).coerceIn(38.dp, 52.dp))
                             .shadow(8.dp, RoundedCornerShape(18.dp), spotColor = currentTheme.primary.copy(alpha = 0.40f))
                             .clip(RoundedCornerShape(18.dp))
                             .background(buttonGradient)
@@ -914,7 +914,7 @@ fun TimerScreen(
                                 imageVector = if (config.isBoxBreathingMode) Icons.Outlined.Air else Icons.Default.PlayArrow,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size((20 * dynamicScale).coerceIn(16.dp, 22.dp))
+                                modifier = Modifier.size((20.dp * dynamicScale).coerceIn(16.dp, 22.dp))
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
@@ -968,8 +968,8 @@ private fun PhaseChip(label: String, color: Color, dynamicScale: Float = 1f, fon
             .background(color.copy(alpha = 0.16f))
             .border(0.8.dp, color.copy(alpha = 0.45f), RoundedCornerShape(6.dp))
             .padding(
-                horizontal = (5 * dynamicScale).coerceIn(3.dp, 6.dp),
-                vertical = (2 * dynamicScale).coerceIn(1.dp, 2.5.dp)
+                horizontal = (5.dp * dynamicScale).coerceIn(3.dp, 6.dp),
+                vertical = (2.dp * dynamicScale).coerceIn(1.dp, 2.5.dp)
             )
     ) {
         Text(

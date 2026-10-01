@@ -1042,24 +1042,24 @@ fun BreathingScreen(
                                         .clip(RoundedCornerShape(20.dp))
                                         .background(currentTheme.primary.copy(alpha = 0.18f))
                                         .padding(
-                                            horizontal = (16 * dynamicScale).coerceIn(12.dp, 18.dp),
-                                            vertical = (4 * dynamicScale).coerceIn(2.dp, 6.dp)
+                                            horizontal = (16.dp * dynamicScale).coerceIn(12.dp, 18.dp),
+                                            vertical = (4.dp * dynamicScale).coerceIn(2.dp, 6.dp)
                                         )
                                 ) {
                                     Text(
                                         text = "PREPARATION",
                                         fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
-                                        letterSpacing = (2.5 * dynamicScale).coerceIn(1.5.sp, 3.sp),
+                                        letterSpacing = (2.5f * dynamicScale).coerceIn(1.5f, 3f).sp,
                                         fontWeight = FontWeight.Bold,
                                         color = currentTheme.primaryLight
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height((18 * dynamicScale).coerceIn(8.dp, 28.dp)))
+                                Spacer(modifier = Modifier.height((18.dp * dynamicScale).coerceIn(8.dp, 28.dp)))
 
                                 Box(
                                     modifier = Modifier
-                                        .size((140 * dynamicScale).coerceIn(100.dp, 160.dp))
+                                        .size((140.dp * dynamicScale).coerceIn(100.dp, 160.dp))
                                         .clip(CircleShape)
                                         .background(ZenSurface.copy(alpha = 0.65f))
                                         .border(2.dp, currentTheme.primaryLight.copy(alpha = 0.6f), CircleShape),
@@ -1073,7 +1073,7 @@ fun BreathingScreen(
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height((18 * dynamicScale).coerceIn(8.dp, 28.dp)))
+                                Spacer(modifier = Modifier.height((18.dp * dynamicScale).coerceIn(8.dp, 28.dp)))
 
                                 Text(
                                     text = "Settle into your posture and prepare to breathe...",
@@ -1084,7 +1084,7 @@ fun BreathingScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height((32 * dynamicScale).coerceIn(12.dp, 58.dp)))
+                            Spacer(modifier = Modifier.height((32.dp * dynamicScale).coerceIn(12.dp, 58.dp)))
                         } else {
                             // --- 2. CENTRAL LIVING ZEN ENSŌ VISUALIZER ---
                             Box(
@@ -1112,7 +1112,7 @@ fun BreathingScreen(
                                         letterSpacing = 1.sp
                                     )
 
-                                    Spacer(modifier = Modifier.height((3 * dynamicScale).coerceIn(2.dp, 4.dp)))
+                                    Spacer(modifier = Modifier.height((3.dp * dynamicScale).coerceIn(2.dp, 4.dp)))
 
                                     AnimatedContent(
                                         targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
@@ -1170,8 +1170,8 @@ fun BreathingScreen(
                                             .background(currentTheme.primary.copy(alpha = 0.18f))
                                             .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
                                             .padding(
-                                                horizontal = (10 * dynamicScale).coerceIn(8.dp, 12.dp),
-                                                vertical = (2.5 * dynamicScale).coerceIn(1.5.dp, 3.dp)
+                                                horizontal = (10.dp * dynamicScale).coerceIn(8.dp, 12.dp),
+                                                vertical = (2.5.dp * dynamicScale).coerceIn(1.5.dp, 3.dp)
                                             )
                                     ) {
                                         Text(
@@ -1181,7 +1181,7 @@ fun BreathingScreen(
                                             color = currentTheme.primaryLight
                                         )
                                     }
-                                    Spacer(modifier = Modifier.height((4 * dynamicScale).coerceIn(2.dp, 6.dp)))
+                                    Spacer(modifier = Modifier.height((4.dp * dynamicScale).coerceIn(2.dp, 6.dp)))
                                 }
 
                                 // Time with inline Restart button
@@ -1207,7 +1207,7 @@ fun BreathingScreen(
                                             phaseProgress = 0f
                                         },
                                         modifier = Modifier
-                                            .size((26 * dynamicScale).coerceIn(22.dp, 28.dp))
+                                            .size((26.dp * dynamicScale).coerceIn(22.dp, 28.dp))
                                             .clip(CircleShape)
                                             .background(ZenSurface.copy(alpha = 0.65f))
                                             .border(1.dp, ZenBorder.copy(alpha = 0.6f), CircleShape)
@@ -1216,20 +1216,20 @@ fun BreathingScreen(
                                             imageVector = Icons.Default.Refresh,
                                             contentDescription = "Restart Session",
                                             tint = ZenTextSecondary,
-                                            modifier = Modifier.size((14 * dynamicScale).coerceIn(12.dp, 15.dp))
+                                            modifier = Modifier.size((14.dp * dynamicScale).coerceIn(12.dp, 15.dp))
                                         )
                                     }
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height((16 * dynamicScale).coerceIn(6.dp, 24.dp)))
+                            Spacer(modifier = Modifier.height((16.dp * dynamicScale).coerceIn(6.dp, 24.dp)))
 
                             if (isSessionComplete) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = 6.dp),
-                                    horizontalArrangement = Arrangement.spacedBy((10 * dynamicScale).coerceIn(6.dp, 10.dp)),
+                                    horizontalArrangement = Arrangement.spacedBy((10.dp * dynamicScale).coerceIn(6.dp, 10.dp)),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Button(
@@ -1242,7 +1242,7 @@ fun BreathingScreen(
                                         },
                                         modifier = Modifier
                                             .weight(1f)
-                                            .height((46 * dynamicScale).coerceIn(36.dp, 48.dp)),
+                                            .height((46.dp * dynamicScale).coerceIn(36.dp, 48.dp)),
                                         shape = RoundedCornerShape(24.dp),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = currentTheme.primary,
@@ -1266,7 +1266,7 @@ fun BreathingScreen(
                                         },
                                         modifier = Modifier
                                             .weight(1f)
-                                            .height((46 * dynamicScale).coerceIn(36.dp, 48.dp)),
+                                            .height((46.dp * dynamicScale).coerceIn(36.dp, 48.dp)),
                                         shape = RoundedCornerShape(24.dp),
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                                         border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.7f))
@@ -1280,8 +1280,8 @@ fun BreathingScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 4.dp, vertical = (4 * dynamicScale).coerceIn(2.dp, 6.dp)),
-                                    horizontalArrangement = Arrangement.spacedBy((8 * dynamicScale).coerceIn(6.dp, 10.dp)),
+                                        .padding(horizontal = 4.dp, vertical = (4.dp * dynamicScale).coerceIn(2.dp, 6.dp)),
+                                    horizontalArrangement = Arrangement.spacedBy((8.dp * dynamicScale).coerceIn(6.dp, 10.dp)),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     // 1. DND Quick Toggle Button (Matches Meditation Mode)
@@ -1301,7 +1301,7 @@ fun BreathingScreen(
                                             }
                                         },
                                         modifier = Modifier
-                                            .size((46 * dynamicScale).coerceIn(36.dp, 52.dp))
+                                            .size((46.dp * dynamicScale).coerceIn(36.dp, 52.dp))
                                             .clip(CircleShape)
                                             .background(
                                                 if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
@@ -1317,7 +1317,7 @@ fun BreathingScreen(
                                             imageVector = Icons.Default.DoNotDisturb,
                                             contentDescription = "Toggle DND",
                                             tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
-                                            modifier = Modifier.size((18 * dynamicScale).coerceIn(15.dp, 20.dp))
+                                            modifier = Modifier.size((18.dp * dynamicScale).coerceIn(15.dp, 20.dp))
                                         )
                                     }
 
@@ -1329,7 +1329,7 @@ fun BreathingScreen(
                                         },
                                         modifier = Modifier
                                             .weight(1f)
-                                            .height((46 * dynamicScale).coerceIn(36.dp, 50.dp)),
+                                            .height((46.dp * dynamicScale).coerceIn(36.dp, 50.dp)),
                                         shape = RoundedCornerShape(25.dp),
                                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                                         colors = ButtonDefaults.buttonColors(
@@ -1346,7 +1346,7 @@ fun BreathingScreen(
                                                 imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
                                                 contentDescription = if (isRunning) "Pause" else "Resume",
                                                 tint = if (isRunning) currentTheme.primaryLight else ZenObsidian,
-                                                modifier = Modifier.size((17 * dynamicScale).coerceIn(14.dp, 19.dp))
+                                                modifier = Modifier.size((17.dp * dynamicScale).coerceIn(14.dp, 19.dp))
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Text(
@@ -1361,9 +1361,9 @@ fun BreathingScreen(
                                     // 3. Finish Button
                                     Button(
                                         onClick = { finishSession(isNaturalEnd = false) },
-                                        modifier = Modifier.height((46 * dynamicScale).coerceIn(36.dp, 50.dp)),
+                                        modifier = Modifier.height((46.dp * dynamicScale).coerceIn(36.dp, 50.dp)),
                                         shape = RoundedCornerShape(25.dp),
-                                        contentPadding = PaddingValues(horizontal = (14 * dynamicScale).coerceIn(10.dp, 16.dp), vertical = 0.dp),
+                                        contentPadding = PaddingValues(horizontal = (14.dp * dynamicScale).coerceIn(10.dp, 16.dp), vertical = 0.dp),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = currentTheme.primary.copy(alpha = 0.18f),
                                             contentColor = currentTheme.primaryLight
@@ -1378,7 +1378,7 @@ fun BreathingScreen(
                                                 imageVector = Icons.Default.Check,
                                                 contentDescription = "Finish",
                                                 tint = currentTheme.primaryLight,
-                                                modifier = Modifier.size((16 * dynamicScale).coerceIn(13.dp, 17.dp))
+                                                modifier = Modifier.size((16.dp * dynamicScale).coerceIn(13.dp, 17.dp))
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(
