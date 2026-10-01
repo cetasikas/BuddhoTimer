@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -103,6 +104,10 @@ fun TimerScreen(
 
     val selectedPattern = BreathingPattern.allPatterns.find { it.id == breathingPatternId } ?: BreathingPattern.BOX_BREATHING
 
+    val density = LocalDensity.current
+    val clampedFontScale = density.fontScale.coerceIn(0.85f, 1.15f)
+    val adaptiveDurationFontSize = (72f / density.fontScale * clampedFontScale).sp
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -130,8 +135,7 @@ fun TimerScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 10.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(horizontal = 20.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -167,25 +171,31 @@ fun TimerScreen(
                 }
             }
 
-            // --- 2. DYNAMIC SETUP CONTENT (MEDITATION VS BOX BREATHING) ---
-            AnimatedContent(
-                targetState = config.isBoxBreathingMode,
-                transitionSpec = {
-                    fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(160))
-                },
-                label = "PracticeModeSetup",
-                modifier = Modifier.fillMaxWidth()
-            ) { isBoxMode ->
-                if (!isBoxMode) {
-                    // === MEDITATION TIMER SETUP (CLEAN & PERFECTLY FITTED) ===
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        // Large Bold Duration Display with Click-to-Edit
+            // --- 2. DYNAMIC SETUP CONTENT (WEIGHTED MIDDLE ZONE) ---
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedContent(
+                    targetState = config.isBoxBreathingMode,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(160))
+                    },
+                    label = "PracticeModeSetup",
+                    modifier = Modifier.fillMaxWidth()
+                ) { isBoxMode ->
+                    if (!isBoxMode) {
+                        // === MEDITATION TIMER SETUP (CLEAN & PERFECTLY FITTED) ===
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Large Bold Duration Display with Click-to-Edit
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
@@ -201,7 +211,7 @@ fun TimerScreen(
                             ) {
                                 Text(
                                     text = "${config.targetDurationMinutes}",
-                                    fontSize = 76.sp,
+                                    fontSize = adaptiveDurationFontSize,
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = (-1.5).sp,
                                     color = MaterialTheme.colorScheme.onBackground,
@@ -209,9 +219,9 @@ fun TimerScreen(
                                 )
                                 Text(
                                     text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
-                                    fontSize = 13.sp,
+                                    fontSize = 12.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    letterSpacing = 3.sp,
+                                    letterSpacing = 2.5.sp,
                                     color = currentTheme.primary,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
@@ -230,7 +240,7 @@ fun TimerScreen(
                                     .background(currentTheme.surfaceVariant.copy(alpha = 0.92f))
                                     .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
                                     .clickable { viewModel.dismissDurationHint() }
-                                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                                    .padding(horizontal = 14.dp, vertical = 4.dp)
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -262,7 +272,7 @@ fun TimerScreen(
                             valueRange = 1f..120f,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(54.dp)
+                                .height(48.dp)
                         )
 
                         // Clean Row of Essential Presets
@@ -282,12 +292,12 @@ fun TimerScreen(
                                         .clickable {
                                             viewModel.updateDurationMinutes(duration)
                                         }
-                                        .padding(vertical = 9.dp),
+                                        .padding(vertical = 7.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = "${duration}m",
-                                        fontSize = 13.5.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                         color = if (isSelected) currentTheme.primary else currentTheme.textSecondary
                                     )
@@ -295,35 +305,38 @@ fun TimerScreen(
                             }
                         }
 
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        // Consolidated Zen Settings Card (DND + Overrun)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(ZenSurface.copy(alpha = 0.75f))
+                                .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
+                                .padding(horizontal = 14.dp, vertical = 4.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(ZenSurface.copy(alpha = 0.75f))
-                                    .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
-                                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
                             ) {
+                                // 1. Do Not Disturb Row
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 10.dp)) {
                                         Text(
                                             text = "Do Not Disturb",
                                             style = MaterialTheme.typography.titleMedium.copy(
-                                                fontSize = 13.5.sp,
+                                                fontSize = 13.sp,
                                                 fontWeight = FontWeight.SemiBold
                                             ),
                                             color = ZenTextPrimary
                                         )
                                         Text(
                                             text = "Mute incoming notifications & calls during sit",
-                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.5.sp),
                                             color = ZenTextSecondary
                                         )
                                     }
@@ -343,33 +356,36 @@ fun TimerScreen(
                                         )
                                     )
                                 }
-                            }
 
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(ZenSurface.copy(alpha = 0.75f))
-                                    .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
-                                    .padding(horizontal = 14.dp, vertical = 10.dp)
-                            ) {
+                                // Hairline Zen Divider
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 1.dp)
+                                        .height(0.8.dp)
+                                        .background(ZenBorder.copy(alpha = 0.45f))
+                                )
+
+                                // 2. Continue Past Target Time Row
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 10.dp)) {
                                         Text(
                                             text = "Continue Past Target Time",
                                             style = MaterialTheme.typography.titleMedium.copy(
-                                                fontSize = 13.5.sp,
+                                                fontSize = 13.sp,
                                                 fontWeight = FontWeight.SemiBold
                                             ),
                                             color = ZenTextPrimary
                                         )
                                         Text(
                                             text = "Keep counting up after target time is reached",
-                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.5.sp),
                                             color = ZenTextSecondary
                                         )
                                     }
@@ -399,11 +415,10 @@ fun TimerScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 2.dp),
+                            .verticalScroll(rememberScrollState()),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Large Bold Duration Display with Click-to-Edit
                         // Large Bold Duration Display with Click-to-Edit
                         Box(
                             modifier = Modifier
@@ -420,7 +435,7 @@ fun TimerScreen(
                             ) {
                                 Text(
                                     text = "$breathingDurationMin",
-                                    fontSize = 76.sp,
+                                    fontSize = adaptiveDurationFontSize,
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = (-1.5).sp,
                                     color = MaterialTheme.colorScheme.onBackground,
@@ -428,9 +443,9 @@ fun TimerScreen(
                                 )
                                 Text(
                                     text = "$estimatedCycles CYCLES • $breathingDurationMin MINUTES",
-                                    fontSize = 12.5.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    letterSpacing = 2.sp,
+                                    letterSpacing = 1.8.sp,
                                     color = currentTheme.primary,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
@@ -449,7 +464,7 @@ fun TimerScreen(
                                     .background(currentTheme.surfaceVariant.copy(alpha = 0.92f))
                                     .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
                                     .clickable { viewModel.dismissDurationHint() }
-                                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                                    .padding(horizontal = 14.dp, vertical = 4.dp)
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -480,7 +495,7 @@ fun TimerScreen(
                             valueRange = 1f..30f,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(54.dp)
+                                .height(48.dp)
                         )
 
                         val breathPresets = listOf(2, 5, 10, 15, 20)
@@ -499,12 +514,12 @@ fun TimerScreen(
                                         .clickable {
                                             viewModel.updateBreathingDurationMinutes(dur)
                                         }
-                                        .padding(vertical = 9.dp),
+                                        .padding(vertical = 7.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = "${dur}m",
-                                        fontSize = 13.5.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                         color = if (isSelected) currentTheme.primary else currentTheme.textSecondary
                                     )
@@ -536,8 +551,8 @@ fun TimerScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -547,13 +562,13 @@ fun TimerScreen(
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
                                                 text = selectedPattern.name,
-                                                fontSize = 14.5.sp,
+                                                fontSize = 14.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = ZenTextPrimary
                                             )
                                             Text(
                                                 text = patternCategory,
-                                                fontSize = 10.sp,
+                                                fontSize = 9.5.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 letterSpacing = 0.8.sp,
                                                 color = currentTheme.primaryLight
@@ -564,7 +579,7 @@ fun TimerScreen(
                                             imageVector = if (isPatternDropdownOpen) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                             contentDescription = "Select Pattern",
                                             tint = currentTheme.primaryLight,
-                                            modifier = Modifier.size(22.dp)
+                                            modifier = Modifier.size(20.dp)
                                         )
                                     }
 
@@ -693,25 +708,25 @@ fun TimerScreen(
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(ZenSurface.copy(alpha = 0.75f))
                                 .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape(16.dp))
-                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                                .padding(horizontal = 14.dp, vertical = 6.dp)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 10.dp)) {
                                     Text(
                                         text = "Do Not Disturb",
                                         style = MaterialTheme.typography.titleMedium.copy(
-                                            fontSize = 13.5.sp,
+                                            fontSize = 13.sp,
                                             fontWeight = FontWeight.SemiBold
                                         ),
                                         color = ZenTextPrimary
                                     )
                                     Text(
                                         text = "Mute incoming notifications & calls during breathwork",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.5.sp),
                                         color = ZenTextSecondary
                                     )
                                 }
@@ -735,13 +750,14 @@ fun TimerScreen(
                     }
                 }
             }
+        }
 
             // --- 3. BOTTOM CONTROLS (MODE TOGGLE + PRIMARY ACTION BUTTON) ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp, bottom = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(top = 6.dp, bottom = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Practice Mode Segmented Pill Selector

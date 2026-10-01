@@ -14,8 +14,8 @@ android {
         applicationId = "com.buddho.timer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 132
-        versionName = "2.30.0"
+        versionCode = 133
+        versionName = "2.30.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
