@@ -60,6 +60,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -401,6 +402,10 @@ fun BreathingScreen(
                     .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
                 val isLandscape = maxWidth > maxHeight
+                val density = LocalDensity.current
+                val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
+                val screenScale = (maxHeight / 720.dp).coerceIn(0.68f, 1.05f)
+                val dynamicScale = (screenScale / kotlin.math.sqrt(fontScale.coerceAtLeast(1.0f).toDouble()).toFloat()).coerceIn(0.65f, 1.05f)
 
                 if (isLandscape) {
                     // Landscape Layout: Header top, Ensō on Left, Progress & Controls on Right
@@ -1036,22 +1041,25 @@ fun BreathingScreen(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(20.dp))
                                         .background(currentTheme.primary.copy(alpha = 0.18f))
-                                        .padding(horizontal = 18.dp, vertical = 6.dp)
+                                        .padding(
+                                            horizontal = (16 * dynamicScale).coerceIn(12.dp, 18.dp),
+                                            vertical = (4 * dynamicScale).coerceIn(2.dp, 6.dp)
+                                        )
                                 ) {
                                     Text(
                                         text = "PREPARATION",
-                                        fontSize = 12.sp,
-                                        letterSpacing = 3.sp,
+                                        fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                        letterSpacing = (2.5 * dynamicScale).coerceIn(1.5.sp, 3.sp),
                                         fontWeight = FontWeight.Bold,
                                         color = currentTheme.primaryLight
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(28.dp))
+                                Spacer(modifier = Modifier.height((18 * dynamicScale).coerceIn(8.dp, 28.dp)))
 
                                 Box(
                                     modifier = Modifier
-                                        .size(160.dp)
+                                        .size((140 * dynamicScale).coerceIn(100.dp, 160.dp))
                                         .clip(CircleShape)
                                         .background(ZenSurface.copy(alpha = 0.65f))
                                         .border(2.dp, currentTheme.primaryLight.copy(alpha = 0.6f), CircleShape),
@@ -1059,24 +1067,24 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = "$prepRemaining",
-                                        fontSize = 76.sp,
+                                        fontSize = ((68f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.2f)).sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onBackground
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(28.dp))
+                                Spacer(modifier = Modifier.height((18 * dynamicScale).coerceIn(8.dp, 28.dp)))
 
                                 Text(
                                     text = "Settle into your posture and prepare to breathe...",
-                                    fontSize = 14.sp,
+                                    fontSize = ((13.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
                                     color = ZenTextSecondary,
                                     textAlign = TextAlign.Center,
-                                    lineHeight = 20.sp
+                                    lineHeight = ((18f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(58.dp))
+                            Spacer(modifier = Modifier.height((32 * dynamicScale).coerceIn(12.dp, 58.dp)))
                         } else {
                             // --- 2. CENTRAL LIVING ZEN ENSŌ VISUALIZER ---
                             Box(
@@ -1098,13 +1106,13 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = displayCountText,
-                                        fontSize = 62.sp,
+                                        fontSize = ((56f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.2f)).sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onBackground,
                                         letterSpacing = 1.sp
                                     )
 
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height((3 * dynamicScale).coerceIn(2.dp, 4.dp)))
 
                                     AnimatedContent(
                                         targetState = currentPhase to (if (isVaryingCount) varyingStage else 0),
@@ -1135,12 +1143,12 @@ fun BreathingScreen(
                                         }
                                         Text(
                                             text = textToDisplay,
-                                            fontSize = 16.sp,
+                                            fontSize = ((15f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = itemColor,
                                             textAlign = TextAlign.Center,
                                             maxLines = 2,
-                                            lineHeight = 22.sp,
+                                            lineHeight = ((20f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
                                             letterSpacing = 0.3.sp,
                                             modifier = Modifier.padding(horizontal = 16.dp)
                                         )
@@ -1161,16 +1169,19 @@ fun BreathingScreen(
                                             .clip(RoundedCornerShape(12.dp))
                                             .background(currentTheme.primary.copy(alpha = 0.18f))
                                             .border(1.dp, currentTheme.primaryLight.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
-                                            .padding(horizontal = 12.dp, vertical = 3.dp)
+                                            .padding(
+                                                horizontal = (10 * dynamicScale).coerceIn(8.dp, 12.dp),
+                                                vertical = (2.5 * dynamicScale).coerceIn(1.5.dp, 3.dp)
+                                            )
                                     ) {
                                         Text(
                                             text = activeStageBadge,
-                                            fontSize = 12.sp,
+                                            fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = currentTheme.primaryLight
                                         )
                                     }
-                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Spacer(modifier = Modifier.height((4 * dynamicScale).coerceIn(2.dp, 6.dp)))
                                 }
 
                                 // Time with inline Restart button
@@ -1180,7 +1191,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                        fontSize = 17.sp,
+                                        fontSize = ((16f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = ZenTextPrimary.copy(alpha = 0.85f),
                                         letterSpacing = 0.5.sp
@@ -1196,7 +1207,7 @@ fun BreathingScreen(
                                             phaseProgress = 0f
                                         },
                                         modifier = Modifier
-                                            .size(28.dp)
+                                            .size((26 * dynamicScale).coerceIn(22.dp, 28.dp))
                                             .clip(CircleShape)
                                             .background(ZenSurface.copy(alpha = 0.65f))
                                             .border(1.dp, ZenBorder.copy(alpha = 0.6f), CircleShape)
@@ -1205,20 +1216,20 @@ fun BreathingScreen(
                                             imageVector = Icons.Default.Refresh,
                                             contentDescription = "Restart Session",
                                             tint = ZenTextSecondary,
-                                            modifier = Modifier.size(15.dp)
+                                            modifier = Modifier.size((14 * dynamicScale).coerceIn(12.dp, 15.dp))
                                         )
                                     }
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height((16 * dynamicScale).coerceIn(6.dp, 24.dp)))
 
                             if (isSessionComplete) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = 6.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    horizontalArrangement = Arrangement.spacedBy((10 * dynamicScale).coerceIn(6.dp, 10.dp)),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Button(
@@ -1231,7 +1242,7 @@ fun BreathingScreen(
                                         },
                                         modifier = Modifier
                                             .weight(1f)
-                                            .height(48.dp),
+                                            .height((46 * dynamicScale).coerceIn(36.dp, 48.dp)),
                                         shape = RoundedCornerShape(24.dp),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = currentTheme.primary,
@@ -1243,7 +1254,7 @@ fun BreathingScreen(
                                         Text(
                                             text = if (showSessionOverview) "Save & Finish" else "Done",
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp
+                                            fontSize = ((13.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp
                                         )
                                     }
 
@@ -1255,22 +1266,22 @@ fun BreathingScreen(
                                         },
                                         modifier = Modifier
                                             .weight(1f)
-                                            .height(48.dp),
+                                            .height((46 * dynamicScale).coerceIn(36.dp, 48.dp)),
                                         shape = RoundedCornerShape(24.dp),
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                                         border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.7f))
                                     ) {
                                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                        Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = ((12.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp)
                                     }
                                 }
                             } else {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 4.dp, vertical = 6.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        .padding(horizontal = 4.dp, vertical = (4 * dynamicScale).coerceIn(2.dp, 6.dp)),
+                                    horizontalArrangement = Arrangement.spacedBy((8 * dynamicScale).coerceIn(6.dp, 10.dp)),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     // 1. DND Quick Toggle Button (Matches Meditation Mode)
@@ -1290,7 +1301,7 @@ fun BreathingScreen(
                                             }
                                         },
                                         modifier = Modifier
-                                            .size(52.dp)
+                                            .size((46 * dynamicScale).coerceIn(36.dp, 52.dp))
                                             .clip(CircleShape)
                                             .background(
                                                 if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primary.copy(alpha = 0.22f)
@@ -1306,7 +1317,7 @@ fun BreathingScreen(
                                             imageVector = Icons.Default.DoNotDisturb,
                                             contentDescription = "Toggle DND",
                                             tint = if (isAutoDnd && dndManager.isDndAccessGranted) currentTheme.primaryLight else ZenTextMuted,
-                                            modifier = Modifier.size(20.dp)
+                                            modifier = Modifier.size((18 * dynamicScale).coerceIn(15.dp, 20.dp))
                                         )
                                     }
 
@@ -1318,7 +1329,7 @@ fun BreathingScreen(
                                         },
                                         modifier = Modifier
                                             .weight(1f)
-                                            .height(50.dp),
+                                            .height((46 * dynamicScale).coerceIn(36.dp, 50.dp)),
                                         shape = RoundedCornerShape(25.dp),
                                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                                         colors = ButtonDefaults.buttonColors(
@@ -1335,12 +1346,12 @@ fun BreathingScreen(
                                                 imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
                                                 contentDescription = if (isRunning) "Pause" else "Resume",
                                                 tint = if (isRunning) currentTheme.primaryLight else ZenObsidian,
-                                                modifier = Modifier.size(19.dp)
+                                                modifier = Modifier.size((17 * dynamicScale).coerceIn(14.dp, 19.dp))
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Text(
                                                 text = if (isRunning) "Pause" else "Resume",
-                                                fontSize = 14.5.sp,
+                                                fontSize = ((14f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = if (isRunning) currentTheme.primaryLight else ZenObsidian
                                             )
@@ -1350,9 +1361,9 @@ fun BreathingScreen(
                                     // 3. Finish Button
                                     Button(
                                         onClick = { finishSession(isNaturalEnd = false) },
-                                        modifier = Modifier.height(50.dp),
+                                        modifier = Modifier.height((46 * dynamicScale).coerceIn(36.dp, 50.dp)),
                                         shape = RoundedCornerShape(25.dp),
-                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                                        contentPadding = PaddingValues(horizontal = (14 * dynamicScale).coerceIn(10.dp, 16.dp), vertical = 0.dp),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = currentTheme.primary.copy(alpha = 0.18f),
                                             contentColor = currentTheme.primaryLight
@@ -1367,12 +1378,12 @@ fun BreathingScreen(
                                                 imageVector = Icons.Default.Check,
                                                 contentDescription = "Finish",
                                                 tint = currentTheme.primaryLight,
-                                                modifier = Modifier.size(17.dp)
+                                                modifier = Modifier.size((16 * dynamicScale).coerceIn(13.dp, 17.dp))
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(
                                                 text = "Finish",
-                                                fontSize = 14.sp,
+                                                fontSize = ((13.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
                                                 fontWeight = FontWeight.Bold,
                                                 maxLines = 1,
                                                 softWrap = false,

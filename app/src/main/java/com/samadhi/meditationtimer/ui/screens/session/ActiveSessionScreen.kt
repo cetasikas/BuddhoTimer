@@ -62,6 +62,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -232,7 +233,15 @@ fun ActiveSessionScreen(
                 contentAlignment = Alignment.Center
             ) {
                 val isLandscape = maxWidth > maxHeight
-                val timerSize = if (isLandscape) (maxHeight * 0.70f).coerceIn(160.dp, 250.dp) else 300.dp
+                val density = LocalDensity.current
+                val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
+                val screenScale = (maxHeight / 720.dp).coerceIn(0.65f, 1.05f)
+                val dynamicScale = (screenScale / kotlin.math.sqrt(fontScale.coerceAtLeast(1.0f).toDouble()).toFloat()).coerceIn(0.65f, 1.05f)
+                val timerSize = if (isLandscape) {
+                    (maxHeight * 0.70f).coerceIn(160.dp, 250.dp)
+                } else {
+                    (maxHeight * 0.36f).coerceIn(170.dp, 290.dp)
+                }
 
                 // Top Navigation Controls (Clean Minimal Cancel Action)
                 val dndManager = remember { com.samadhi.meditationtimer.service.DndManager(context) }
@@ -296,11 +305,11 @@ fun ActiveSessionScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(if (isLandscape) 12.dp else 28.dp))
+                            Spacer(modifier = Modifier.height(if (isLandscape) 12.dp else (20 * dynamicScale).coerceIn(10.dp, 28.dp)))
 
                             Box(
                                 modifier = Modifier
-                                    .size(if (isLandscape) 110.dp else 160.dp)
+                                    .size(if (isLandscape) 110.dp else (150 * dynamicScale).coerceIn(100.dp, 160.dp))
                                     .clip(CircleShape)
                                     .background(currentTheme.surfaceVariant)
                                     .border(2.dp, currentTheme.primary, CircleShape),
@@ -308,13 +317,13 @@ fun ActiveSessionScreen(
                             ) {
                                 Text(
                                     text = "${status.remainingSeconds}",
-                                    fontSize = if (isLandscape) 48.sp else 76.sp,
+                                    fontSize = if (isLandscape) 48.sp else ((70f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.2f)).sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(if (isLandscape) 10.dp else 20.dp))
+                            Spacer(modifier = Modifier.height(if (isLandscape) 10.dp else (16 * dynamicScale).coerceIn(8.dp, 20.dp)))
 
                             Text(
                                 text = "Settle into your posture & breathe gently",
@@ -659,7 +668,10 @@ fun ActiveSessionScreen(
                                             if (isOverrun) currentTheme.overrunColor.copy(alpha = 0.15f)
                                             else currentTheme.primary.copy(alpha = 0.18f)
                                         )
-                                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                                        .padding(
+                                            horizontal = (14 * dynamicScale).coerceIn(10.dp, 16.dp),
+                                            vertical = (4 * dynamicScale).coerceIn(2.dp, 6.dp)
+                                        )
                                 ) {
                                     Text(
                                         text = when {
@@ -668,14 +680,14 @@ fun ActiveSessionScreen(
                                             config.isOpenEnded -> "OPEN PRACTICE"
                                             else -> "MEDITATING"
                                         },
-                                        fontSize = 12.sp,
+                                        fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
                                         fontWeight = FontWeight.Bold,
-                                        letterSpacing = 2.sp,
+                                        letterSpacing = (2 * dynamicScale).coerceIn(1.sp, 2.sp),
                                         color = if (isOverrun) currentTheme.overrunColor else currentTheme.primaryLight
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(36.dp))
+                                Spacer(modifier = Modifier.height((20 * dynamicScale).coerceIn(6.dp, 32.dp)))
 
                                 // Circular Progress Display
                                 Box(
@@ -696,8 +708,8 @@ fun ActiveSessionScreen(
                                         progress = progress,
                                         isOverrun = isOverrun,
                                         isPaused = isPaused,
-                                        size = 300.dp,
-                                        strokeWidth = 10.dp,
+                                        size = timerSize,
+                                        strokeWidth = (9 * dynamicScale).coerceIn(7.dp, 10.dp),
                                         intervalMinutes = config.mindfulnessIntervalMinutes,
                                         totalDurationMinutes = currentTargetMinutes
                                     ) {
@@ -706,43 +718,43 @@ fun ActiveSessionScreen(
                                                 val overrunTime = elapsedSec - sessionTotalSec
                                                 Text(
                                                     text = "+${NotificationHelper.formatSeconds(overrunTime.coerceAtLeast(0))}",
-                                                    fontSize = 56.sp,
+                                                    fontSize = (timerSize.value * 0.18f).sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = currentTheme.overrunColor
                                                 )
-                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Spacer(modifier = Modifier.height(3.dp))
                                                 Text(
                                                     text = "Total: ${NotificationHelper.formatSeconds(elapsedSec)}",
-                                                    fontSize = 14.sp,
+                                                    fontSize = (timerSize.value * 0.046f).sp,
                                                     fontWeight = FontWeight.SemiBold,
                                                     color = ZenTextSecondary
                                                 )
                                             } else if (config.isOpenEnded) {
                                                 Text(
                                                     text = NotificationHelper.formatSeconds(elapsedSec),
-                                                    fontSize = 64.sp,
+                                                    fontSize = (timerSize.value * 0.20f).sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.onBackground
                                                 )
-                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Spacer(modifier = Modifier.height(3.dp))
                                                 Text(
                                                     text = "Elapsed Time",
-                                                    fontSize = 13.sp,
+                                                    fontSize = (timerSize.value * 0.044f).sp,
                                                     fontWeight = FontWeight.SemiBold,
                                                     color = ZenTextSecondary
                                                 )
                                             } else {
                                                 Text(
                                                     text = NotificationHelper.formatSeconds(remainingSec),
-                                                    fontSize = 66.sp,
+                                                    fontSize = (timerSize.value * 0.21f).sp,
                                                     fontWeight = FontWeight.Bold,
                                                     letterSpacing = (-1.5).sp,
                                                     color = MaterialTheme.colorScheme.onBackground
                                                 )
-                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Spacer(modifier = Modifier.height(3.dp))
                                                 Text(
                                                     text = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSec)}",
-                                                    fontSize = 13.sp,
+                                                    fontSize = (timerSize.value * 0.044f).sp,
                                                     fontWeight = FontWeight.Medium,
                                                     color = ZenTextSecondary
                                                 )
@@ -753,10 +765,10 @@ fun ActiveSessionScreen(
                                                     val df = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
                                                     "Ends at " + df.format(java.util.Date(endTimeMs))
                                                 }
-                                                Spacer(modifier = Modifier.height(3.dp))
+                                                Spacer(modifier = Modifier.height(2.dp))
                                                 Text(
                                                     text = endTimeStr,
-                                                    fontSize = 11.5.sp,
+                                                    fontSize = (timerSize.value * 0.038f).sp,
                                                     color = ZenTextMuted
                                                 )
                                             }
@@ -764,104 +776,107 @@ fun ActiveSessionScreen(
                                     }
                                 }
 
-                                  val isCountDownActive = !config.isOpenEnded && !isOverrun && remainingSec > 0
-                                  Spacer(modifier = Modifier.height(18.dp))
-                                  Row(
-                                      horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                      verticalAlignment = Alignment.CenterVertically
-                                  ) {
-                                      if (isCountDownActive) {
-                                          OutlinedButton(
-                                              onClick = { viewModel.adjustSessionTime(-300) },
-                                              modifier = Modifier.height(34.dp),
-                                              contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                                              shape = RoundedCornerShape(17.dp),
-                                              colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
-                                              border = BorderStroke(1.dp, ZenBorder)
-                                          ) {
-                                              Text("-5m", fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                                          }
-                                          OutlinedButton(
-                                              onClick = { viewModel.adjustSessionTime(-60) },
-                                              modifier = Modifier.height(34.dp),
-                                              contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                                              shape = RoundedCornerShape(17.dp),
-                                              colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
-                                              border = BorderStroke(1.dp, ZenBorder)
-                                          ) {
-                                              Text("-1m", fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                                          }
-                                      }
-                                      OutlinedButton(
-                                          onClick = { viewModel.adjustSessionTime(60) },
-                                          modifier = Modifier.height(34.dp),
-                                          contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                                          shape = RoundedCornerShape(17.dp),
-                                          colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
-                                          border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
-                                      ) {
-                                          Text("+1m", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                      }
-                                      OutlinedButton(
-                                          onClick = { viewModel.adjustSessionTime(300) },
-                                          modifier = Modifier.height(34.dp),
-                                          contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                                          shape = RoundedCornerShape(17.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
-                                          border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
-                                      ) {
-                                          Text("+5m", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                      }
-                                  }
+                                val isCountDownActive = !config.isOpenEnded && !isOverrun && remainingSec > 0
+                                Spacer(modifier = Modifier.height((12 * dynamicScale).coerceIn(4.dp, 16.dp)))
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy((8 * dynamicScale).coerceIn(4.dp, 10.dp)),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (isCountDownActive) {
+                                        OutlinedButton(
+                                            onClick = { viewModel.adjustSessionTime(-300) },
+                                            modifier = Modifier.height((32 * dynamicScale).coerceIn(26.dp, 34.dp)),
+                                            contentPadding = PaddingValues(horizontal = (8 * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
+                                            shape = RoundedCornerShape(17.dp),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
+                                            border = BorderStroke(1.dp, ZenBorder)
+                                        ) {
+                                            Text("-5m", fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp, fontWeight = FontWeight.Medium)
+                                        }
+                                        OutlinedButton(
+                                            onClick = { viewModel.adjustSessionTime(-60) },
+                                            modifier = Modifier.height((32 * dynamicScale).coerceIn(26.dp, 34.dp)),
+                                            contentPadding = PaddingValues(horizontal = (8 * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
+                                            shape = RoundedCornerShape(17.dp),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
+                                            border = BorderStroke(1.dp, ZenBorder)
+                                        ) {
+                                            Text("-1m", fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp, fontWeight = FontWeight.Medium)
+                                        }
+                                    }
+                                    OutlinedButton(
+                                        onClick = { viewModel.adjustSessionTime(60) },
+                                        modifier = Modifier.height((32 * dynamicScale).coerceIn(26.dp, 34.dp)),
+                                        contentPadding = PaddingValues(horizontal = (8 * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
+                                        shape = RoundedCornerShape(17.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                        border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
+                                    ) {
+                                        Text("+1m", fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    OutlinedButton(
+                                        onClick = { viewModel.adjustSessionTime(300) },
+                                        modifier = Modifier.height((32 * dynamicScale).coerceIn(26.dp, 34.dp)),
+                                        contentPadding = PaddingValues(horizontal = (8 * dynamicScale).coerceIn(5.dp, 10.dp), vertical = 0.dp),
+                                        shape = RoundedCornerShape(17.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
+                                        border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
+                                    ) {
+                                        Text("+5m", fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp, fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
 
-                                  if (isCountDownActive) {
-                                      Spacer(modifier = Modifier.height(12.dp))
-                                      val isOverrunOn = config.isOverrunEnabled
-                                      Box(
-                                          modifier = Modifier
-                                              .clip(RoundedCornerShape(16.dp))
-                                              .background(
-                                                  if (isOverrunOn) currentTheme.primary.copy(alpha = 0.16f)
-                                                  else ZenSurface.copy(alpha = 0.6f)
-                                              )
-                                              .border(
-                                                  1.dp,
-                                                  if (isOverrunOn) currentTheme.primary.copy(alpha = 0.6f)
-                                                  else ZenBorder.copy(alpha = 0.8f),
-                                                  RoundedCornerShape(16.dp)
-                                              )
-                                              .clickable {
-                                                  leavesBurstTrigger++
-                                                  viewModel.toggleOverrun(!isOverrunOn)
-                                              }
-                                              .padding(horizontal = 14.dp, vertical = 6.dp)
-                                      ) {
-                                          Row(
-                                              verticalAlignment = Alignment.CenterVertically,
-                                              horizontalArrangement = Arrangement.Center
-                                          ) {
-                                              Icon(
-                                                  imageVector = Icons.Default.AllInclusive,
-                                                  contentDescription = "Toggle Continue Past Target Time",
-                                                  tint = if (isOverrunOn) currentTheme.primaryLight else ZenTextMuted,
-                                                  modifier = Modifier.size(15.dp)
-                                              )
-                                              Spacer(modifier = Modifier.width(6.dp))
-                                              Text(
-                                                  text = if (isOverrunOn) "Continue Past Target: ON" else "Continue Past Target: OFF",
-                                                  fontSize = 11.5.sp,
-                                                  fontWeight = if (isOverrunOn) FontWeight.SemiBold else FontWeight.Medium,
-                                                  color = if (isOverrunOn) currentTheme.primaryLight else ZenTextSecondary
-                                              )
-                                          }
-                                      }
-                                  }
+                                if (isCountDownActive) {
+                                    Spacer(modifier = Modifier.height((8 * dynamicScale).coerceIn(3.dp, 12.dp)))
+                                    val isOverrunOn = config.isOverrunEnabled
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(
+                                                if (isOverrunOn) currentTheme.primary.copy(alpha = 0.16f)
+                                                else ZenSurface.copy(alpha = 0.6f)
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (isOverrunOn) currentTheme.primary.copy(alpha = 0.6f)
+                                                else ZenBorder.copy(alpha = 0.8f),
+                                                RoundedCornerShape(16.dp)
+                                            )
+                                            .clickable {
+                                                leavesBurstTrigger++
+                                                viewModel.toggleOverrun(!isOverrunOn)
+                                            }
+                                            .padding(
+                                                horizontal = (12 * dynamicScale).coerceIn(8.dp, 14.dp),
+                                                vertical = (4 * dynamicScale).coerceIn(2.dp, 6.dp)
+                                            )
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.AllInclusive,
+                                                contentDescription = "Toggle Continue Past Target Time",
+                                                tint = if (isOverrunOn) currentTheme.primaryLight else ZenTextMuted,
+                                                modifier = Modifier.size((13 * dynamicScale).coerceIn(11.dp, 15.dp))
+                                            )
+                                            Spacer(modifier = Modifier.width(5.dp))
+                                            Text(
+                                                text = if (isOverrunOn) "Continue Past Target: ON" else "Continue Past Target: OFF",
+                                                fontSize = ((10.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                                fontWeight = if (isOverrunOn) FontWeight.SemiBold else FontWeight.Medium,
+                                                color = if (isOverrunOn) currentTheme.primaryLight else ZenTextSecondary
+                                            )
+                                        }
+                                    }
+                                }
 
-                                  Spacer(modifier = Modifier.height(if (isCountDownActive) 24.dp else 32.dp))
+                                Spacer(modifier = Modifier.height(if (isCountDownActive) (16 * dynamicScale).coerceIn(6.dp, 24.dp) else (20 * dynamicScale).coerceIn(8.dp, 28.dp)))
 
                                 // Action Controls with integrated DND
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy((12 * dynamicScale).coerceIn(8.dp, 16.dp)),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     // Subtle DND Mode Quick-Toggle
@@ -881,7 +896,7 @@ fun ActiveSessionScreen(
                                             }
                                         },
                                         modifier = Modifier
-                                            .size(52.dp)
+                                            .size((46 * dynamicScale).coerceIn(36.dp, 52.dp))
                                             .clip(CircleShape)
                                             .background(
                                                 if (isDndActive) currentTheme.primary.copy(alpha = 0.22f)
@@ -897,7 +912,7 @@ fun ActiveSessionScreen(
                                             imageVector = Icons.Default.DoNotDisturb,
                                             contentDescription = "Toggle DND",
                                             tint = if (isDndActive) currentTheme.primaryLight else ZenTextMuted,
-                                            modifier = Modifier.size(22.dp)
+                                            modifier = Modifier.size((18 * dynamicScale).coerceIn(15.dp, 22.dp))
                                         )
                                     }
 
@@ -907,7 +922,7 @@ fun ActiveSessionScreen(
                                             if (isPaused) viewModel.resumeSession() else viewModel.pauseSession()
                                         },
                                         modifier = Modifier
-                                            .size(64.dp)
+                                            .size((56 * dynamicScale).coerceIn(44.dp, 64.dp))
                                             .clip(CircleShape)
                                             .background(ZenSurface)
                                     ) {
@@ -915,16 +930,16 @@ fun ActiveSessionScreen(
                                             imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
                                             contentDescription = if (isPaused) "Resume" else "Pause",
                                             tint = currentTheme.primaryLight,
-                                            modifier = Modifier.size(28.dp)
+                                            modifier = Modifier.size((24 * dynamicScale).coerceIn(18.dp, 28.dp))
                                         )
                                     }
 
                                     Button(
                                         onClick = { viewModel.finishSession() },
                                         modifier = Modifier
-                                            .height(56.dp)
-                                            .clip(RoundedCornerShape(28.dp)),
-                                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
+                                            .height((48 * dynamicScale).coerceIn(38.dp, 56.dp))
+                                            .clip(RoundedCornerShape(24.dp)),
+                                        contentPadding = PaddingValues(horizontal = (16 * dynamicScale).coerceIn(12.dp, 20.dp), vertical = 0.dp),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = if (isOverrun) currentTheme.overrunColor else currentTheme.primary,
                                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -938,13 +953,13 @@ fun ActiveSessionScreen(
                                                 imageVector = Icons.Default.Check,
                                                 contentDescription = null,
                                                 tint = MaterialTheme.colorScheme.onPrimary,
-                                                modifier = Modifier.size(20.dp)
+                                                modifier = Modifier.size((18 * dynamicScale).coerceIn(14.dp, 20.dp))
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Text(
                                                 text = "Complete",
                                                 fontWeight = FontWeight.Bold,
-                                                fontSize = 15.sp,
+                                                fontSize = ((14f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
                                                 maxLines = 1,
                                                 softWrap = false,
                                                 color = MaterialTheme.colorScheme.onPrimary
