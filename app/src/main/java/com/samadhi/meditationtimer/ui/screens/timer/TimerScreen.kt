@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Spa
@@ -625,34 +626,34 @@ fun TimerScreen(
                                             ) {
                                                 when (selectedPattern.id) {
                                                     "box" -> {
-                                                        PhaseChip("4s Inhale", currentTheme.primary, dynamicScale, textScale)
+                                                        PhaseChip("4s Inhale", currentTheme.primary, dynamicScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("4s Hold", currentTheme.primary, dynamicScale, textScale)
+                                                        PhaseChip("4s Hold", currentTheme.primary, dynamicScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("4s Exhale", currentTheme.overrunColor, dynamicScale, textScale)
+                                                        PhaseChip("4s Exhale", currentTheme.overrunColor, dynamicScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("4s Hold", currentTheme.secondary, dynamicScale, textScale)
+                                                        PhaseChip("4s Hold", currentTheme.secondary, dynamicScale)
                                                     }
                                                     "478" -> {
-                                                        PhaseChip("4s Inhale", currentTheme.primary, dynamicScale, textScale)
+                                                        PhaseChip("4s Inhale", currentTheme.primary, dynamicScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("7s Hold", currentTheme.primary, dynamicScale, textScale)
+                                                        PhaseChip("7s Hold", currentTheme.primary, dynamicScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("8s Exhale", currentTheme.overrunColor, dynamicScale, textScale)
+                                                        PhaseChip("8s Exhale", currentTheme.overrunColor, dynamicScale)
                                                     }
                                                     "resonant" -> {
-                                                        PhaseChip("5s Inhale", currentTheme.primary, dynamicScale, textScale)
+                                                        PhaseChip("5s Inhale", currentTheme.primary, dynamicScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("5s Exhale", currentTheme.overrunColor, dynamicScale, textScale)
+                                                        PhaseChip("5s Exhale", currentTheme.overrunColor, dynamicScale)
                                                     }
                                                     else -> {
-                                                        PhaseChip("3s Inhale", currentTheme.primary, dynamicScale, textScale)
+                                                        PhaseChip("3s Inhale", currentTheme.primary, dynamicScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("3s Hold", currentTheme.primary, dynamicScale, textScale)
+                                                        PhaseChip("3s Hold", currentTheme.primary, dynamicScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("3s Exhale", currentTheme.overrunColor, dynamicScale, textScale)
+                                                        PhaseChip("3s Exhale", currentTheme.overrunColor, dynamicScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("3s Hold", currentTheme.secondary, dynamicScale, textScale)
+                                                        PhaseChip("3s Hold", currentTheme.secondary, dynamicScale)
                                                     }
                                                 }
                                             }
@@ -1008,7 +1009,7 @@ fun TimerScreen(
 }
 
 @Composable
-private fun PhaseChip(label: String, color: Color, dynamicScale: Float = 1f, textScale: Float = 1f) {
+private fun PhaseChip(label: String, color: Color, dynamicScale: Float = 1f) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(6.dp))
