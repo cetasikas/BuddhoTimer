@@ -139,12 +139,13 @@ fun TimerScreen(
             val density = LocalDensity.current
             val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
 
-            // Dynamic scale factor based on reference viewport height (~620dp inside scaffold)
-            val heightScale = (screenHeight / 620.dp).coerceIn(0.68f, 1.15f)
-            val dynamicScale = (heightScale / kotlin.math.sqrt(fontScale.coerceAtLeast(1.0f).toDouble()).toFloat()).coerceIn(0.65f, 1.15f)
-            val adaptiveDurationFontSize = ((68f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.25f)).sp
+            // Dynamic scale factor for spacing/paddings
+            val dynamicScale = (screenHeight / 620.dp).coerceIn(0.82f, 1.05f)
+            // Text scale maintains bold, readable zen typography without feeling small
+            val textScale = (screenHeight / 620.dp).coerceIn(0.92f, 1.05f)
+            val adaptiveDurationFontSize = (74f * textScale).sp
             val showTip = screenHeight >= 460.dp && fontScale <= 1.3f && !hasSeenDurationHint
-            val showExplanations = screenHeight >= 500.dp && fontScale <= 1.25f
+            val showExplanations = screenHeight >= 500.dp && fontScale <= 1.35f
 
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -171,14 +172,14 @@ fun TimerScreen(
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.0.sp,
-                                fontSize = ((15.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.15f)).sp
+                                fontSize = (16.5f * textScale).sp
                             ),
                             color = ZenTextPrimary
                         )
                         Text(
                             text = if (config.isBoxBreathingMode) "Mindful Breathwork • Box Breathing" else "Mindful Stillness • Samadhi",
                             style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = ((11f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp
+                                fontSize = (12f * textScale).sp
                             ),
                             color = currentTheme.primaryLight
                         )
@@ -231,7 +232,7 @@ fun TimerScreen(
                                         )
                                         Text(
                                             text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
-                                            fontSize = ((12f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.2f)).sp,
+                                            fontSize = (13f * textScale).sp,
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 2.5.sp,
                                             color = currentTheme.primary,
@@ -260,7 +261,7 @@ fun TimerScreen(
                                         ) {
                                             Text(
                                                 text = "Tip: Tap time to enter custom minutes",
-                                                fontSize = ((11f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                                fontSize = (12f * textScale).sp,
                                                 fontWeight = FontWeight.Medium,
                                                 color = currentTheme.textPrimary
                                             )
@@ -309,7 +310,7 @@ fun TimerScreen(
                                         ) {
                                             Text(
                                                 text = "${duration}m",
-                                                fontSize = ((12.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.15f)).sp,
+                                                fontSize = (13.5f * textScale).sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                 color = if (isSelected) currentTheme.primary else currentTheme.textSecondary
                                             )
@@ -341,7 +342,7 @@ fun TimerScreen(
                                                 Text(
                                                     text = "Do Not Disturb",
                                                     style = MaterialTheme.typography.titleMedium.copy(
-                                                        fontSize = ((12.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.2f)).sp,
+                                                        fontSize = (13.5f * textScale).sp,
                                                         fontWeight = FontWeight.SemiBold
                                                     ),
                                                     color = ZenTextPrimary
@@ -350,7 +351,7 @@ fun TimerScreen(
                                                     Text(
                                                         text = "Mute incoming notifications & calls during sit",
                                                         style = MaterialTheme.typography.bodySmall.copy(
-                                                            fontSize = ((10f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp
+                                                            fontSize = (11f * textScale).sp
                                                         ),
                                                         color = ZenTextSecondary
                                                     )
@@ -395,7 +396,7 @@ fun TimerScreen(
                                                 Text(
                                                     text = "Continue Past Target Time",
                                                     style = MaterialTheme.typography.titleMedium.copy(
-                                                        fontSize = ((12.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.2f)).sp,
+                                                        fontSize = (13.5f * textScale).sp,
                                                         fontWeight = FontWeight.SemiBold
                                                     ),
                                                     color = ZenTextPrimary
@@ -404,7 +405,7 @@ fun TimerScreen(
                                                     Text(
                                                         text = "Keep counting up after target time is reached",
                                                         style = MaterialTheme.typography.bodySmall.copy(
-                                                            fontSize = ((10f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp
+                                                            fontSize = (11f * textScale).sp
                                                         ),
                                                         color = ZenTextSecondary
                                                     )
@@ -464,7 +465,7 @@ fun TimerScreen(
                                         )
                                         Text(
                                             text = "$estimatedCycles CYCLES • $breathingDurationMin MINUTES",
-                                            fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.2f)).sp,
+                                            fontSize = (12.5f * textScale).sp,
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 1.8.sp,
                                             color = currentTheme.primary,
@@ -493,7 +494,7 @@ fun TimerScreen(
                                         ) {
                                             Text(
                                                 text = "Tip: Tap time to enter custom minutes",
-                                                fontSize = ((11f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                                fontSize = (12f * textScale).sp,
                                                 fontWeight = FontWeight.Medium,
                                                 color = currentTheme.textPrimary
                                             )
@@ -540,7 +541,7 @@ fun TimerScreen(
                                         ) {
                                             Text(
                                                 text = "${dur}m",
-                                                fontSize = ((12.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.15f)).sp,
+                                                fontSize = (13.5f * textScale).sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                 color = if (isSelected) currentTheme.primary else currentTheme.textSecondary
                                             )
@@ -583,13 +584,13 @@ fun TimerScreen(
                                                 Column(modifier = Modifier.weight(1f)) {
                                                     Text(
                                                         text = selectedPattern.name,
-                                                        fontSize = ((13.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.2f)).sp,
+                                                        fontSize = (14.5f * textScale).sp,
                                                         fontWeight = FontWeight.Bold,
                                                         color = ZenTextPrimary
                                                     )
                                                     Text(
                                                         text = patternCategory,
-                                                        fontSize = ((9.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.1f)).sp,
+                                                        fontSize = (10.5f * textScale).sp,
                                                         fontWeight = FontWeight.SemiBold,
                                                         letterSpacing = 0.8.sp,
                                                         color = currentTheme.primaryLight
@@ -612,34 +613,34 @@ fun TimerScreen(
                                             ) {
                                                 when (selectedPattern.id) {
                                                     "box" -> {
-                                                        PhaseChip("4s Inhale", currentTheme.primary, dynamicScale, fontScale)
+                                                        PhaseChip("4s Inhale", currentTheme.primary, dynamicScale, textScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("4s Hold", currentTheme.primary, dynamicScale, fontScale)
+                                                        PhaseChip("4s Hold", currentTheme.primary, dynamicScale, textScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("4s Exhale", currentTheme.overrunColor, dynamicScale, fontScale)
+                                                        PhaseChip("4s Exhale", currentTheme.overrunColor, dynamicScale, textScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("4s Hold", currentTheme.secondary, dynamicScale, fontScale)
+                                                        PhaseChip("4s Hold", currentTheme.secondary, dynamicScale, textScale)
                                                     }
                                                     "478" -> {
-                                                        PhaseChip("4s Inhale", currentTheme.primary, dynamicScale, fontScale)
+                                                        PhaseChip("4s Inhale", currentTheme.primary, dynamicScale, textScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("7s Hold", currentTheme.primary, dynamicScale, fontScale)
+                                                        PhaseChip("7s Hold", currentTheme.primary, dynamicScale, textScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("8s Exhale", currentTheme.overrunColor, dynamicScale, fontScale)
+                                                        PhaseChip("8s Exhale", currentTheme.overrunColor, dynamicScale, textScale)
                                                     }
                                                     "resonant" -> {
-                                                        PhaseChip("5s Inhale", currentTheme.primary, dynamicScale, fontScale)
+                                                        PhaseChip("5s Inhale", currentTheme.primary, dynamicScale, textScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("5s Exhale", currentTheme.overrunColor, dynamicScale, fontScale)
+                                                        PhaseChip("5s Exhale", currentTheme.overrunColor, dynamicScale, textScale)
                                                     }
                                                     else -> {
-                                                        PhaseChip("3s Inhale", currentTheme.primary, dynamicScale, fontScale)
+                                                        PhaseChip("3s Inhale", currentTheme.primary, dynamicScale, textScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("3s Hold", currentTheme.primary, dynamicScale, fontScale)
+                                                        PhaseChip("3s Hold", currentTheme.primary, dynamicScale, textScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("3s Exhale", currentTheme.overrunColor, dynamicScale, fontScale)
+                                                        PhaseChip("3s Exhale", currentTheme.overrunColor, dynamicScale, textScale)
                                                         PhaseSeparator()
-                                                        PhaseChip("3s Hold", currentTheme.secondary, dynamicScale, fontScale)
+                                                        PhaseChip("3s Hold", currentTheme.secondary, dynamicScale, textScale)
                                                     }
                                                 }
                                             }
@@ -824,7 +825,7 @@ fun TimerScreen(
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "Meditation",
-                                    fontSize = ((12.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.15f)).sp,
+                                    fontSize = (13.5f * textScale).sp,
                                     fontWeight = if (isMeditation) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isMeditation) currentTheme.primary else currentTheme.textSecondary
                                 )
@@ -860,7 +861,7 @@ fun TimerScreen(
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "Box Breathing",
-                                    fontSize = ((12.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.15f)).sp,
+                                    fontSize = (13.5f * textScale).sp,
                                     fontWeight = if (!isMeditation) FontWeight.Bold else FontWeight.Medium,
                                     color = if (!isMeditation) currentTheme.primary else currentTheme.textSecondary
                                 )
@@ -919,7 +920,7 @@ fun TimerScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = if (config.isBoxBreathingMode) "Begin Box Breathing" else "Begin Practice",
-                                fontSize = ((15f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.15f)).sp,
+                                fontSize = (16f * textScale).sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.8.sp,
                                 color = MaterialTheme.colorScheme.onPrimary
@@ -961,7 +962,7 @@ fun TimerScreen(
 }
 
 @Composable
-private fun PhaseChip(label: String, color: Color, dynamicScale: Float = 1f, fontScale: Float = 1f) {
+private fun PhaseChip(label: String, color: Color, dynamicScale: Float = 1f, textScale: Float = 1f) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(6.dp))
@@ -974,7 +975,7 @@ private fun PhaseChip(label: String, color: Color, dynamicScale: Float = 1f, fon
     ) {
         Text(
             text = label,
-            fontSize = ((10f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.1f)).sp,
+            fontSize = (11.5f * textScale).sp,
             fontWeight = FontWeight.SemiBold,
             color = color,
             maxLines = 1,

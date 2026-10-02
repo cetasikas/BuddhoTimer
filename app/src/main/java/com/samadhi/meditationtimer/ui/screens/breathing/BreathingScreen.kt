@@ -1048,8 +1048,8 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = "PREPARATION",
-                                        fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
-                                        letterSpacing = (2.5f * dynamicScale).coerceIn(1.5f, 3f).sp,
+                                        fontSize = (12.5f * textScale).sp,
+                                        letterSpacing = (2.5f * textScale).sp,
                                         fontWeight = FontWeight.Bold,
                                         color = currentTheme.primaryLight
                                     )
@@ -1067,7 +1067,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = "$prepRemaining",
-                                        fontSize = ((68f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.2f)).sp,
+                                        fontSize = (76f * textScale).sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onBackground
                                     )
@@ -1077,10 +1077,10 @@ fun BreathingScreen(
 
                                 Text(
                                     text = "Settle into your posture and prepare to breathe...",
-                                    fontSize = ((13.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                    fontSize = (14.5f * textScale).sp,
                                     color = ZenTextSecondary,
                                     textAlign = TextAlign.Center,
-                                    lineHeight = ((18f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp
+                                    lineHeight = (19f * textScale).sp
                                 )
                             }
 
@@ -1106,7 +1106,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = displayCountText,
-                                        fontSize = ((56f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.2f)).sp,
+                                        fontSize = (62f * textScale).sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onBackground,
                                         letterSpacing = 1.sp
@@ -1143,12 +1143,12 @@ fun BreathingScreen(
                                         }
                                         Text(
                                             text = textToDisplay,
-                                            fontSize = ((15f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                            fontSize = (16f * textScale).sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = itemColor,
                                             textAlign = TextAlign.Center,
                                             maxLines = 2,
-                                            lineHeight = ((20f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                            lineHeight = (21f * textScale).sp,
                                             letterSpacing = 0.3.sp,
                                             modifier = Modifier.padding(horizontal = 16.dp)
                                         )
@@ -1176,7 +1176,7 @@ fun BreathingScreen(
                                     ) {
                                         Text(
                                             text = activeStageBadge,
-                                            fontSize = ((11.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                            fontSize = (12.5f * textScale).sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = currentTheme.primaryLight
                                         )
@@ -1191,7 +1191,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                        fontSize = ((16f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                        fontSize = (17f * textScale).sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = ZenTextPrimary.copy(alpha = 0.85f),
                                         letterSpacing = 0.5.sp
@@ -1254,7 +1254,7 @@ fun BreathingScreen(
                                         Text(
                                             text = if (showSessionOverview) "Save & Finish" else "Done",
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = ((13.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp
+                                            fontSize = (15f * textScale).sp
                                         )
                                     }
 
@@ -1273,7 +1273,7 @@ fun BreathingScreen(
                                     ) {
                                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = ((12.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp)
+                                        Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = (14.5f * textScale).sp)
                                     }
                                 }
                             } else {
@@ -1351,7 +1351,7 @@ fun BreathingScreen(
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Text(
                                                 text = if (isRunning) "Pause" else "Resume",
-                                                fontSize = ((14f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                                fontSize = (15f * textScale).sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = if (isRunning) currentTheme.primaryLight else ZenObsidian
                                             )
@@ -1383,7 +1383,7 @@ fun BreathingScreen(
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(
                                                 text = "Finish",
-                                                fontSize = ((13.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp,
+                                                fontSize = (14.5f * textScale).sp,
                                                 fontWeight = FontWeight.Bold,
                                                 maxLines = 1,
                                                 softWrap = false,
