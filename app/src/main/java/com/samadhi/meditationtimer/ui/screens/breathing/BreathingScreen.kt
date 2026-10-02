@@ -404,9 +404,15 @@ fun BreathingScreen(
                 val isLandscape = maxWidth > maxHeight
                 val density = LocalDensity.current
                 val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
-                val screenScale = (maxHeight / 720.dp).coerceIn(0.80f, 1.05f)
-                val dynamicScale = screenScale.coerceIn(0.80f, 1.05f)
-                val textScale = (maxHeight / 720.dp).coerceIn(0.92f, 1.05f)
+                val screenScale = (maxHeight / 720.dp).coerceIn(0.72f, 1.05f)
+                val dynamicScale = screenScale.coerceIn(0.72f, 1.05f)
+                val textScale = (maxHeight / 720.dp).coerceIn(0.88f, 1.05f)
+
+                fun adaptiveSp(baseSp: Float, maxFontMultiplier: Float = 1.25f): androidx.compose.ui.unit.TextUnit {
+                    val clampedMultiplier = fontScale.coerceIn(0.85f, maxFontMultiplier)
+                    val viewportCompression = (maxHeight / 720.dp).coerceIn(0.86f, 1.05f)
+                    return (baseSp * viewportCompression * (clampedMultiplier / fontScale)).sp
+                }
 
                 if (isLandscape) {
                     // Landscape Layout: Header top, Ensō on Left, Progress & Controls on Right
@@ -1049,7 +1055,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = "PREPARATION",
-                                        fontSize = (12.5f * textScale).sp,
+                                        fontSize = adaptiveSp(12.5f, 1.22f),
                                         letterSpacing = (2.5f * textScale).sp,
                                         fontWeight = FontWeight.Bold,
                                         color = currentTheme.primaryLight
@@ -1068,7 +1074,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = "$prepRemaining",
-                                        fontSize = (76f * textScale).sp,
+                                        fontSize = adaptiveSp(76f, 1.18f),
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onBackground
                                     )
@@ -1078,10 +1084,10 @@ fun BreathingScreen(
 
                                 Text(
                                     text = "Settle into your posture and prepare to breathe...",
-                                    fontSize = (14.5f * textScale).sp,
+                                    fontSize = adaptiveSp(14.5f, 1.25f),
                                     color = ZenTextSecondary,
                                     textAlign = TextAlign.Center,
-                                    lineHeight = (19f * textScale).sp
+                                    lineHeight = adaptiveSp(19f, 1.25f)
                                 )
                             }
 
@@ -1107,7 +1113,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = displayCountText,
-                                        fontSize = (62f * textScale).sp,
+                                        fontSize = adaptiveSp(62f, 1.18f),
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onBackground,
                                         letterSpacing = 1.sp
@@ -1144,12 +1150,12 @@ fun BreathingScreen(
                                         }
                                         Text(
                                             text = textToDisplay,
-                                            fontSize = (16f * textScale).sp,
+                                            fontSize = adaptiveSp(16f, 1.22f),
                                             fontWeight = FontWeight.SemiBold,
                                             color = itemColor,
                                             textAlign = TextAlign.Center,
                                             maxLines = 2,
-                                            lineHeight = (21f * textScale).sp,
+                                            lineHeight = adaptiveSp(21f, 1.22f),
                                             letterSpacing = 0.3.sp,
                                             modifier = Modifier.padding(horizontal = 16.dp)
                                         )
@@ -1177,7 +1183,7 @@ fun BreathingScreen(
                                     ) {
                                         Text(
                                             text = activeStageBadge,
-                                            fontSize = (12.5f * textScale).sp,
+                                            fontSize = adaptiveSp(12.5f, 1.22f),
                                             fontWeight = FontWeight.SemiBold,
                                             color = currentTheme.primaryLight
                                         )
@@ -1192,7 +1198,7 @@ fun BreathingScreen(
                                 ) {
                                     Text(
                                         text = "${NotificationHelper.formatSeconds(totalElapsedSec)} / ${NotificationHelper.formatSeconds(targetTotalSec)}",
-                                        fontSize = (17f * textScale).sp,
+                                        fontSize = adaptiveSp(17f, 1.22f),
                                         fontWeight = FontWeight.SemiBold,
                                         color = ZenTextPrimary.copy(alpha = 0.85f),
                                         letterSpacing = 0.5.sp
@@ -1255,7 +1261,7 @@ fun BreathingScreen(
                                         Text(
                                             text = if (showSessionOverview) "Save & Finish" else "Done",
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = (15f * textScale).sp
+                                            fontSize = adaptiveSp(15f, 1.20f)
                                         )
                                     }
 
@@ -1274,7 +1280,7 @@ fun BreathingScreen(
                                     ) {
                                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = (14.5f * textScale).sp)
+                                        Text("Keep Breathing", fontWeight = FontWeight.SemiBold, fontSize = adaptiveSp(14.5f, 1.20f))
                                     }
                                 }
                             } else {
@@ -1352,7 +1358,7 @@ fun BreathingScreen(
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Text(
                                                 text = if (isRunning) "Pause" else "Resume",
-                                                fontSize = (15f * textScale).sp,
+                                                fontSize = adaptiveSp(15f, 1.20f),
                                                 fontWeight = FontWeight.Bold,
                                                 color = if (isRunning) currentTheme.primaryLight else ZenObsidian
                                             )
@@ -1384,7 +1390,7 @@ fun BreathingScreen(
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(
                                                 text = "Finish",
-                                                fontSize = (14.5f * textScale).sp,
+                                                fontSize = adaptiveSp(14.5f, 1.25f),
                                                 fontWeight = FontWeight.Bold,
                                                 maxLines = 1,
                                                 softWrap = false,

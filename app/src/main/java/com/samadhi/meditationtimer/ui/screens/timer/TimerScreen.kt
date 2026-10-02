@@ -139,13 +139,21 @@ fun TimerScreen(
             val density = LocalDensity.current
             val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
 
-            // Dynamic scale factor for spacing/paddings
-            val dynamicScale = (screenHeight / 620.dp).coerceIn(0.82f, 1.05f)
-            // Text scale maintains bold, readable zen typography without feeling small
-            val textScale = (screenHeight / 620.dp).coerceIn(0.92f, 1.05f)
-            val adaptiveDurationFontSize = (74f * textScale).sp
-            val showTip = screenHeight >= 460.dp && fontScale <= 1.3f && !hasSeenDurationHint
-            val showExplanations = screenHeight >= 500.dp && fontScale <= 1.35f
+            // Dynamic scale factor for spacing/paddings on smaller viewports
+            val dynamicScale = (screenHeight / 620.dp).coerceIn(0.72f, 1.05f)
+
+            // Non-linear font scaling helper (Android 14 standard):
+            // Keeps typography bold & comfortable, while preventing massive 200% font blow-out
+            // on extreme accessibility settings that would cause elements to overlap
+            fun adaptiveSp(baseSp: Float, maxFontMultiplier: Float = 1.25f): androidx.compose.ui.unit.TextUnit {
+                val clampedMultiplier = fontScale.coerceIn(0.85f, maxFontMultiplier)
+                val viewportCompression = (screenHeight / 620.dp).coerceIn(0.86f, 1.05f)
+                return (baseSp * viewportCompression * (clampedMultiplier / fontScale)).sp
+            }
+
+            val adaptiveDurationFontSize = adaptiveSp(74f, 1.18f)
+            val showTip = screenHeight >= 500.dp && fontScale <= 1.25f && !hasSeenDurationHint
+            val showExplanations = screenHeight >= 520.dp && fontScale <= 1.30f
 
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -172,14 +180,14 @@ fun TimerScreen(
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.0.sp,
-                                fontSize = (16.5f * textScale).sp
+                                fontSize = adaptiveSp(16.5f, 1.25f)
                             ),
                             color = ZenTextPrimary
                         )
                         Text(
                             text = if (config.isBoxBreathingMode) "Mindful Breathwork • Box Breathing" else "Mindful Stillness • Samadhi",
                             style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = (12f * textScale).sp
+                                fontSize = adaptiveSp(12f, 1.22f)
                             ),
                             color = currentTheme.primaryLight
                         )
@@ -232,7 +240,7 @@ fun TimerScreen(
                                         )
                                         Text(
                                             text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
-                                            fontSize = (13f * textScale).sp,
+                                            fontSize = adaptiveSp(13f, 1.22f),
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 2.5.sp,
                                             color = currentTheme.primary,
@@ -261,7 +269,7 @@ fun TimerScreen(
                                         ) {
                                             Text(
                                                 text = "Tip: Tap time to enter custom minutes",
-                                                fontSize = (12f * textScale).sp,
+                                                fontSize = adaptiveSp(12f, 1.22f),
                                                 fontWeight = FontWeight.Medium,
                                                 color = currentTheme.textPrimary
                                             )
@@ -310,9 +318,11 @@ fun TimerScreen(
                                         ) {
                                             Text(
                                                 text = "${duration}m",
-                                                fontSize = (13.5f * textScale).sp,
+                                                fontSize = adaptiveSp(13.5f, 1.22f),
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (isSelected) currentTheme.primary else currentTheme.textSecondary
+                                                color = if (isSelected) currentTheme.primary else currentTheme.textSecondary,
+                                                maxLines = 1,
+                                                softWrap = false
                                             )
                                         }
                                     }
@@ -342,7 +352,7 @@ fun TimerScreen(
                                                 Text(
                                                     text = "Do Not Disturb",
                                                     style = MaterialTheme.typography.titleMedium.copy(
-                                                        fontSize = (13.5f * textScale).sp,
+                                                        fontSize = adaptiveSp(13.5f, 1.25f),
                                                         fontWeight = FontWeight.SemiBold
                                                     ),
                                                     color = ZenTextPrimary
@@ -351,7 +361,7 @@ fun TimerScreen(
                                                     Text(
                                                         text = "Mute incoming notifications & calls during sit",
                                                         style = MaterialTheme.typography.bodySmall.copy(
-                                                            fontSize = (11f * textScale).sp
+                                                            fontSize = adaptiveSp(11f, 1.20f)
                                                         ),
                                                         color = ZenTextSecondary
                                                     )
@@ -396,7 +406,7 @@ fun TimerScreen(
                                                 Text(
                                                     text = "Continue Past Target Time",
                                                     style = MaterialTheme.typography.titleMedium.copy(
-                                                        fontSize = (13.5f * textScale).sp,
+                                                        fontSize = adaptiveSp(13.5f, 1.25f),
                                                         fontWeight = FontWeight.SemiBold
                                                     ),
                                                     color = ZenTextPrimary
@@ -405,7 +415,7 @@ fun TimerScreen(
                                                     Text(
                                                         text = "Keep counting up after target time is reached",
                                                         style = MaterialTheme.typography.bodySmall.copy(
-                                                            fontSize = (11f * textScale).sp
+                                                            fontSize = adaptiveSp(11f, 1.20f)
                                                         ),
                                                         color = ZenTextSecondary
                                                     )
@@ -465,7 +475,7 @@ fun TimerScreen(
                                         )
                                         Text(
                                             text = "$estimatedCycles CYCLES • $breathingDurationMin MINUTES",
-                                            fontSize = (12.5f * textScale).sp,
+                                            fontSize = adaptiveSp(12.5f, 1.22f),
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 1.8.sp,
                                             color = currentTheme.primary,
@@ -494,7 +504,7 @@ fun TimerScreen(
                                         ) {
                                             Text(
                                                 text = "Tip: Tap time to enter custom minutes",
-                                                fontSize = (12f * textScale).sp,
+                                                fontSize = adaptiveSp(12f, 1.22f),
                                                 fontWeight = FontWeight.Medium,
                                                 color = currentTheme.textPrimary
                                             )
@@ -541,9 +551,11 @@ fun TimerScreen(
                                         ) {
                                             Text(
                                                 text = "${dur}m",
-                                                fontSize = (13.5f * textScale).sp,
+                                                fontSize = adaptiveSp(13.5f, 1.22f),
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (isSelected) currentTheme.primary else currentTheme.textSecondary
+                                                color = if (isSelected) currentTheme.primary else currentTheme.textSecondary,
+                                                maxLines = 1,
+                                                softWrap = false
                                             )
                                         }
                                     }
@@ -584,13 +596,13 @@ fun TimerScreen(
                                                 Column(modifier = Modifier.weight(1f)) {
                                                     Text(
                                                         text = selectedPattern.name,
-                                                        fontSize = (14.5f * textScale).sp,
+                                                        fontSize = adaptiveSp(14.5f, 1.25f),
                                                         fontWeight = FontWeight.Bold,
                                                         color = ZenTextPrimary
                                                     )
                                                     Text(
                                                         text = patternCategory,
-                                                        fontSize = (10.5f * textScale).sp,
+                                                        fontSize = adaptiveSp(10.5f, 1.20f),
                                                         fontWeight = FontWeight.SemiBold,
                                                         letterSpacing = 0.8.sp,
                                                         color = currentTheme.primaryLight
@@ -722,37 +734,67 @@ fun TimerScreen(
                                     }
                                 }
 
-                                // Do Not Disturb Toggle for Breathwork
-                                Box(
+                                // Do Not Disturb Card for Breathwork (matches Pattern Card styling, padding & visual balance)
+                                Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp)))
-                                        .background(ZenSurface.copy(alpha = 0.75f))
-                                        .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp)))
-                                        .padding(horizontal = 12.dp, vertical = (4.dp * dynamicScale).coerceIn(2.dp, 5.dp))
+                                        .clip(RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp))),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = ZenSurface.copy(alpha = 0.85f)
+                                    ),
+                                    border = BorderStroke(1.2.dp, currentTheme.primary.copy(alpha = 0.40f)),
+                                    shape = RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp))
                                 ) {
                                     Row(
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                horizontal = 14.dp,
+                                                vertical = (8.dp * dynamicScale).coerceIn(6.dp, 12.dp)
+                                            ),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                                            Text(
-                                                text = "Do Not Disturb",
-                                                style = MaterialTheme.typography.titleMedium.copy(
-                                                    fontSize = ((12.5f * dynamicScale) / fontScale * fontScale.coerceIn(0.9f, 1.2f)).sp,
-                                                    fontWeight = FontWeight.SemiBold
-                                                ),
-                                                color = ZenTextPrimary
-                                            )
-                                            if (showExplanations) {
-                                                Text(
-                                                    text = "Mute incoming notifications & calls during breathwork",
-                                                    style = MaterialTheme.typography.bodySmall.copy(
-                                                        fontSize = ((10f * dynamicScale) / fontScale * fontScale.coerceIn(0.85f, 1.15f)).sp
+                                        Row(
+                                            modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size((34.dp * dynamicScale).coerceIn(28.dp, 36.dp))
+                                                    .clip(CircleShape)
+                                                    .background(
+                                                        if (config.isAutoDndEnabled) currentTheme.primary.copy(alpha = 0.20f)
+                                                        else currentTheme.surfaceVariant
                                                     ),
-                                                    color = ZenTextSecondary
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.DoNotDisturb,
+                                                    contentDescription = null,
+                                                    tint = if (config.isAutoDndEnabled) currentTheme.primaryLight else ZenTextSecondary,
+                                                    modifier = Modifier.size((18.dp * dynamicScale).coerceIn(15.dp, 20.dp))
                                                 )
+                                            }
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Column {
+                                                Text(
+                                                    text = "Do Not Disturb",
+                                                    style = MaterialTheme.typography.titleMedium.copy(
+                                                        fontSize = adaptiveSp(14.5f, 1.25f),
+                                                        fontWeight = FontWeight.SemiBold
+                                                    ),
+                                                    color = ZenTextPrimary
+                                                )
+                                                if (showExplanations) {
+                                                    Text(
+                                                        text = "Mute notifications & calls during breathwork",
+                                                        style = MaterialTheme.typography.bodySmall.copy(
+                                                            fontSize = adaptiveSp(11.5f, 1.20f)
+                                                        ),
+                                                        color = ZenTextSecondary
+                                                    )
+                                                }
                                             }
                                         }
                                         Switch(
@@ -825,9 +867,11 @@ fun TimerScreen(
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "Meditation",
-                                    fontSize = (13.5f * textScale).sp,
+                                    fontSize = adaptiveSp(13.5f, 1.18f),
                                     fontWeight = if (isMeditation) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isMeditation) currentTheme.primary else currentTheme.textSecondary
+                                    color = if (isMeditation) currentTheme.primary else currentTheme.textSecondary,
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             }
                         }
@@ -861,9 +905,11 @@ fun TimerScreen(
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "Box Breathing",
-                                    fontSize = (13.5f * textScale).sp,
+                                    fontSize = adaptiveSp(13.5f, 1.18f),
                                     fontWeight = if (!isMeditation) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (!isMeditation) currentTheme.primary else currentTheme.textSecondary
+                                    color = if (!isMeditation) currentTheme.primary else currentTheme.textSecondary,
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             }
                         }
@@ -920,7 +966,7 @@ fun TimerScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = if (config.isBoxBreathingMode) "Begin Box Breathing" else "Begin Practice",
-                                fontSize = (16f * textScale).sp,
+                                fontSize = adaptiveSp(16f, 1.20f),
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.8.sp,
                                 color = MaterialTheme.colorScheme.onPrimary
@@ -973,9 +1019,12 @@ private fun PhaseChip(label: String, color: Color, dynamicScale: Float = 1f, tex
                 vertical = (2.dp * dynamicScale).coerceIn(1.dp, 2.5.dp)
             )
     ) {
+        val density = LocalDensity.current
+        val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
+        val clampedScale = fontScale.coerceIn(0.85f, 1.20f)
         Text(
             text = label,
-            fontSize = (11.5f * textScale).sp,
+            fontSize = (11.5f * (clampedScale / fontScale)).sp,
             fontWeight = FontWeight.SemiBold,
             color = color,
             maxLines = 1,

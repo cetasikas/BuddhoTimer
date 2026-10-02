@@ -235,14 +235,21 @@ fun ActiveSessionScreen(
                 val isLandscape = maxWidth > maxHeight
                 val density = LocalDensity.current
                 val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
-                val screenScale = (maxHeight / 720.dp).coerceIn(0.80f, 1.05f)
-                val dynamicScale = screenScale.coerceIn(0.80f, 1.05f)
-                val textScale = (maxHeight / 720.dp).coerceIn(0.92f, 1.05f)
+                val screenScale = (maxHeight / 720.dp).coerceIn(0.72f, 1.05f)
+                val dynamicScale = screenScale.coerceIn(0.72f, 1.05f)
+                val textScale = (maxHeight / 720.dp).coerceIn(0.88f, 1.05f)
                 val timerSize = if (isLandscape) {
-                    (maxHeight * 0.70f).coerceIn(180.dp, 260.dp)
+                    (maxHeight * 0.70f).coerceIn(160.dp, 260.dp)
                 } else {
-                    (maxHeight * 0.39f).coerceIn(210.dp, 300.dp)
+                    (maxHeight * 0.38f).coerceIn(190.dp, 300.dp)
                 }
+
+                fun adaptiveSp(baseSp: Float, maxFontMultiplier: Float = 1.25f): androidx.compose.ui.unit.TextUnit {
+                    val clampedMultiplier = fontScale.coerceIn(0.85f, maxFontMultiplier)
+                    val viewportCompression = (maxHeight / 720.dp).coerceIn(0.86f, 1.05f)
+                    return (baseSp * viewportCompression * (clampedMultiplier / fontScale)).sp
+                }
+                val digitFontScaleMultiplier = fontScale.coerceIn(0.85f, 1.18f) / fontScale
 
                 // Top Navigation Controls (Clean Minimal Cancel Action)
                 val dndManager = remember { com.samadhi.meditationtimer.service.DndManager(context) }
@@ -318,7 +325,7 @@ fun ActiveSessionScreen(
                             ) {
                                 Text(
                                     text = "${status.remainingSeconds}",
-                                    fontSize = if (isLandscape) 52.sp else (76f * textScale).sp,
+                                    fontSize = if (isLandscape) 52.sp else adaptiveSp(76f, 1.18f),
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
@@ -681,7 +688,7 @@ fun ActiveSessionScreen(
                                             config.isOpenEnded -> "OPEN PRACTICE"
                                             else -> "MEDITATING"
                                         },
-                                        fontSize = (13f * textScale).sp,
+                                        fontSize = adaptiveSp(13f, 1.25f),
                                         fontWeight = FontWeight.Bold,
                                         letterSpacing = (2f * textScale).sp,
                                         color = if (isOverrun) currentTheme.overrunColor else currentTheme.primaryLight
@@ -719,35 +726,35 @@ fun ActiveSessionScreen(
                                                 val overrunTime = elapsedSec - sessionTotalSec
                                                 Text(
                                                     text = "+${NotificationHelper.formatSeconds(overrunTime.coerceAtLeast(0))}",
-                                                    fontSize = (timerSize.value * 0.23f).coerceIn(54f, 68f).sp,
+                                                    fontSize = ((timerSize.value * 0.23f).coerceIn(52f, 68f) * digitFontScaleMultiplier).sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = currentTheme.overrunColor
                                                 )
                                                 Spacer(modifier = Modifier.height(3.dp))
                                                 Text(
                                                     text = "Total: ${NotificationHelper.formatSeconds(elapsedSec)}",
-                                                    fontSize = (13.5f * textScale).sp,
+                                                    fontSize = adaptiveSp(13.5f, 1.22f),
                                                     fontWeight = FontWeight.SemiBold,
                                                     color = ZenTextSecondary
                                                 )
                                             } else if (config.isOpenEnded) {
                                                 Text(
                                                     text = NotificationHelper.formatSeconds(elapsedSec),
-                                                    fontSize = (timerSize.value * 0.25f).coerceIn(58f, 72f).sp,
+                                                    fontSize = ((timerSize.value * 0.25f).coerceIn(56f, 72f) * digitFontScaleMultiplier).sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.onBackground
                                                 )
                                                 Spacer(modifier = Modifier.height(3.dp))
                                                 Text(
                                                     text = "Elapsed Time",
-                                                    fontSize = (13.5f * textScale).sp,
+                                                    fontSize = adaptiveSp(13.5f, 1.22f),
                                                     fontWeight = FontWeight.SemiBold,
                                                     color = ZenTextSecondary
                                                 )
                                             } else {
                                                 Text(
                                                     text = NotificationHelper.formatSeconds(remainingSec),
-                                                    fontSize = (timerSize.value * 0.25f).coerceIn(58f, 72f).sp,
+                                                    fontSize = ((timerSize.value * 0.25f).coerceIn(56f, 72f) * digitFontScaleMultiplier).sp,
                                                     fontWeight = FontWeight.Bold,
                                                     letterSpacing = (-1.5).sp,
                                                     color = MaterialTheme.colorScheme.onBackground
@@ -755,7 +762,7 @@ fun ActiveSessionScreen(
                                                 Spacer(modifier = Modifier.height(3.dp))
                                                 Text(
                                                     text = "Elapsed: ${NotificationHelper.formatSeconds(elapsedSec)}",
-                                                    fontSize = (13.5f * textScale).sp,
+                                                    fontSize = adaptiveSp(13.5f, 1.22f),
                                                     fontWeight = FontWeight.Medium,
                                                     color = ZenTextSecondary
                                                 )
@@ -769,7 +776,7 @@ fun ActiveSessionScreen(
                                                 Spacer(modifier = Modifier.height(2.dp))
                                                 Text(
                                                     text = endTimeStr,
-                                                    fontSize = (12f * textScale).sp,
+                                                    fontSize = adaptiveSp(12f, 1.20f),
                                                     color = ZenTextMuted
                                                 )
                                             }
@@ -792,7 +799,7 @@ fun ActiveSessionScreen(
                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
                                             border = BorderStroke(1.dp, ZenBorder)
                                         ) {
-                                            Text("-5m", fontSize = (13f * textScale).sp, fontWeight = FontWeight.Medium)
+                                            Text("-5m", fontSize = adaptiveSp(13f, 1.22f), fontWeight = FontWeight.Medium)
                                         }
                                         OutlinedButton(
                                             onClick = { viewModel.adjustSessionTime(-60) },
@@ -802,7 +809,7 @@ fun ActiveSessionScreen(
                                             colors = ButtonDefaults.outlinedButtonColors(contentColor = ZenTextSecondary),
                                             border = BorderStroke(1.dp, ZenBorder)
                                         ) {
-                                            Text("-1m", fontSize = (13f * textScale).sp, fontWeight = FontWeight.Medium)
+                                            Text("-1m", fontSize = adaptiveSp(13f, 1.22f), fontWeight = FontWeight.Medium)
                                         }
                                     }
                                     OutlinedButton(
@@ -813,7 +820,7 @@ fun ActiveSessionScreen(
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                                         border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
                                     ) {
-                                        Text("+1m", fontSize = (13f * textScale).sp, fontWeight = FontWeight.SemiBold)
+                                        Text("+1m", fontSize = adaptiveSp(13f, 1.22f), fontWeight = FontWeight.SemiBold)
                                     }
                                     OutlinedButton(
                                         onClick = { viewModel.adjustSessionTime(300) },
@@ -823,7 +830,7 @@ fun ActiveSessionScreen(
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = currentTheme.primaryLight),
                                         border = BorderStroke(1.dp, currentTheme.primary.copy(alpha = 0.5f))
                                     ) {
-                                        Text("+5m", fontSize = (13f * textScale).sp, fontWeight = FontWeight.SemiBold)
+                                        Text("+5m", fontSize = adaptiveSp(13f, 1.22f), fontWeight = FontWeight.SemiBold)
                                     }
                                 }
 
@@ -865,7 +872,7 @@ fun ActiveSessionScreen(
                                             Spacer(modifier = Modifier.width(5.dp))
                                             Text(
                                                 text = if (isOverrunOn) "Continue Past Target: ON" else "Continue Past Target: OFF",
-                                                fontSize = (12f * textScale).sp,
+                                                fontSize = adaptiveSp(12f, 1.20f),
                                                 fontWeight = if (isOverrunOn) FontWeight.SemiBold else FontWeight.Medium,
                                                 color = if (isOverrunOn) currentTheme.primaryLight else ZenTextSecondary
                                             )
@@ -960,7 +967,7 @@ fun ActiveSessionScreen(
                                             Text(
                                                 text = "Complete",
                                                 fontWeight = FontWeight.Bold,
-                                                fontSize = (15f * textScale).sp,
+                                                fontSize = adaptiveSp(15f, 1.20f),
                                                 maxLines = 1,
                                                 softWrap = false,
                                                 color = MaterialTheme.colorScheme.onPrimary
