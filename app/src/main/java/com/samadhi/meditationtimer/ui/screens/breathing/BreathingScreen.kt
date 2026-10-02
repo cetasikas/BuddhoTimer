@@ -404,8 +404,9 @@ fun BreathingScreen(
                 val isLandscape = maxWidth > maxHeight
                 val density = LocalDensity.current
                 val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
-                val screenScale = (maxHeight / 720.dp).coerceIn(0.68f, 1.05f)
-                val dynamicScale = (screenScale / kotlin.math.sqrt(fontScale.coerceAtLeast(1.0f).toDouble()).toFloat()).coerceIn(0.65f, 1.05f)
+                val screenScale = (maxHeight / 720.dp).coerceIn(0.80f, 1.05f)
+                val dynamicScale = screenScale.coerceIn(0.80f, 1.05f)
+                val textScale = (maxHeight / 720.dp).coerceIn(0.92f, 1.05f)
 
                 if (isLandscape) {
                     // Landscape Layout: Header top, Ensō on Left, Progress & Controls on Right
