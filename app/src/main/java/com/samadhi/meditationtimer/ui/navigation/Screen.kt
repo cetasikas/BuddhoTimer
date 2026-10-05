@@ -16,6 +16,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object Wisdom : Screen("wisdom", "Wisdom", Icons.AutoMirrored.Outlined.MenuBook)
     object History : Screen("history", "History", Icons.Outlined.History)
     object Settings : Screen("settings", "Settings", Icons.Outlined.Settings)
+    object ScreenTime : Screen("screen_time", "Screen Time")
 
     companion object {
         val bottomNavItems = listOf(Timer, Wisdom, History, Settings)

@@ -189,6 +189,9 @@ fun MainAppScaffold() {
                                 },
                                 onOpenBreathing = {
                                     navController.navigate(Screen.Breathing.route)
+                                },
+                                onOpenScreenTime = {
+                                    navController.navigate(Screen.ScreenTime.route)
                                 }
                             )
                         }
@@ -296,6 +299,24 @@ fun MainAppScaffold() {
                                 },
                                 onShowTutorial = {
                                     showTutorialOverlay = true
+                                },
+                                onOpenScreenTime = {
+                                    navController.navigate(Screen.ScreenTime.route)
+                                }
+                            )
+                        }
+
+                        composable(Screen.ScreenTime.route) {
+                            com.samadhi.meditationtimer.ui.screens.screentime.ScreenTimeScreen(
+                                onNavigateBack = {
+                                    if (!navController.popBackStack()) {
+                                        navController.navigate(Screen.Timer.route)
+                                    }
+                                },
+                                onOpenTimer = {
+                                    navController.navigate(Screen.Timer.route) {
+                                        popUpTo(Screen.Timer.route) { inclusive = true }
+                                    }
                                 }
                             )
                         }

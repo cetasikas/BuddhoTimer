@@ -151,6 +151,19 @@ fun HistoryScreen(
                 }
             }
 
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val timerPrefs = remember { context.getSharedPreferences("timer_prefs", android.content.Context.MODE_PRIVATE) }
+            val showScreenTimeInHistory = timerPrefs.getBoolean("show_screen_time_history", false)
+
+            if (showScreenTimeInHistory) {
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Screen Time Awareness & Practice Contrast (TimeAware-inspired, optional)
+                ScreenTimeInsightsCard(
+                    weeklyMeditationMinutes = (stats.totalDurationSec / 60).toLong()
+                )
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
         }
 

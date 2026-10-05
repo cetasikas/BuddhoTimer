@@ -91,6 +91,7 @@ fun TimerScreen(
     onOpenWisdom: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenBreathing: () -> Unit,
+    onOpenScreenTime: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val config by viewModel.config.collectAsState()
@@ -193,6 +194,14 @@ fun TimerScreen(
                             color = currentTheme.primaryLight
                         )
                     }
+                }
+
+                // Ambient Mindful Screen Time & Pause Banner (TimeAware-inspired, optional)
+                if (config.showScreenTimeBanner) {
+                    com.samadhi.meditationtimer.ui.components.ScreenTimeBanner(
+                        onClick = onOpenScreenTime,
+                        modifier = Modifier.padding(bottom = (3 * dynamicScale).dp)
+                    )
                 }
 
                 // --- 2. DYNAMIC SETUP CONTENT (WEIGHTED MIDDLE ZONE) ---
