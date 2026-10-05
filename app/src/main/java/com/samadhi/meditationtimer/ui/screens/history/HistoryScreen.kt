@@ -160,7 +160,7 @@ fun HistoryScreen(
 
                 // Screen Time Awareness & Practice Contrast (TimeAware-inspired, optional)
                 ScreenTimeInsightsCard(
-                    weeklyMeditationMinutes = (stats.totalDurationSec / 60).toLong()
+                    weeklyMeditationMinutes = stats.totalPracticeMinutes
                 )
             }
 

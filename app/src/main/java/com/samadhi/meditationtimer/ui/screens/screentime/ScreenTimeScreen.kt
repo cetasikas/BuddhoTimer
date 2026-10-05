@@ -372,9 +372,8 @@ fun ScreenTimeScreen(
 
                 // Mindful Practice vs Screen Time Comparison Card
                 item {
-                    val totalMeditationSec = uiState.sessionStats.totalDurationSec
-                    val totalMeditationMins = totalMeditationSec / 60
-                    val screenTimeMins = uiState.todayScreenTimeMs / 60_000
+                    val totalMeditationMins = uiState.sessionStats.totalPracticeMinutes
+                    val screenTimeMins = uiState.todayScreenTimeMs / 60_000L
 
                     Card(
                         modifier = Modifier
@@ -408,8 +407,9 @@ fun ScreenTimeScreen(
                                     )
                                 }
 
-                                if (screenTimeMins > 0 && totalMeditationMins > 0) {
-                                    val ratio = ((totalMeditationMins.toFloat() / (screenTimeMins + totalMeditationMins).coerceAtLeast(1L)) * 100).toInt()
+                                if (screenTimeMins > 0L && totalMeditationMins > 0L) {
+                                    val sumMins = (screenTimeMins + totalMeditationMins).coerceAtLeast(1L)
+                                    val ratio = ((totalMeditationMins.toFloat() / sumMins.toFloat()) * 100).toInt()
                                     Text(
                                         text = "$ratio% Mindful",
                                         style = MaterialTheme.typography.labelMedium.copy(
