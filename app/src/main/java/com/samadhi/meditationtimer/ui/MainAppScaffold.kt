@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +31,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.samadhi.meditationtimer.MeditationApp
 import com.samadhi.meditationtimer.domain.model.TimerStatus
 import com.samadhi.meditationtimer.service.MeditationTimerService
 import com.samadhi.meditationtimer.ui.components.TutorialOverlay
@@ -47,13 +49,18 @@ import com.samadhi.meditationtimer.ui.screens.wisdom.WisdomScreen
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.SamadhiTimerTheme
 import com.samadhi.meditationtimer.ui.theme.rememberZenTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainAppScaffold() {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("buddho_prefs", Context.MODE_PRIVATE) }
     var showTutorialOverlay by remember {
-        mutableStateOf(!prefs.getBoolean("has_seen_tutorial_v1", false))
+        mutableStateOf(!prefs.getBoolean("has_seen_tutorial_v2", false))
+    }
+    val appScope = rememberCoroutineScope()
+    val sessionRepository = remember {
+        (context.applicationContext as MeditationApp).sessionRepository
     }
 
     SamadhiTimerTheme {
@@ -82,6 +89,13 @@ fun MainAppScaffold() {
                 }
                 is TimerStatus.Completed -> {
                     completedSessionData = status
+                    appScope.launch {
+                        sessionRepository.recordCompletion(
+                            completedAtMs = status.completedTimeEpochMs,
+                            durationSec = status.actualDurationSec,
+                            isBreathing = false
+                        )
+                    }
                     if (timerConfig.showSessionOverview) {
                         navController.navigate(Screen.Summary.route) {
                             popUpTo(Screen.Timer.route)
@@ -230,6 +244,13 @@ fun MainAppScaffold() {
                                 },
                                 onSessionCompleted = { completedStatus ->
                                     completedSessionData = completedStatus
+                                    appScope.launch {
+                                        sessionRepository.recordCompletion(
+                                            completedAtMs = completedStatus.completedTimeEpochMs,
+                                            durationSec = completedStatus.actualDurationSec,
+                                            isBreathing = true
+                                        )
+                                    }
                                     if (timerConfig.showSessionOverview) {
                                         navController.navigate(Screen.Summary.route) {
                                             popUpTo(Screen.Timer.route)
@@ -308,11 +329,7 @@ fun MainAppScaffold() {
 
                         composable(Screen.ScreenTime.route) {
                             com.samadhi.meditationtimer.ui.screens.screentime.ScreenTimeScreen(
-                                onNavigateBack = {
-                                    if (!navController.popBackStack()) {
-                                        navController.navigate(Screen.Timer.route)
-                                    }
-                                },
+                                onNavigateBack = { navController.popBackStack() },
                                 onOpenTimer = {
                                     navController.navigate(Screen.Timer.route) {
                                         popUpTo(Screen.Timer.route) { inclusive = true }
@@ -328,7 +345,7 @@ fun MainAppScaffold() {
                     isVisible = showTutorialOverlay,
                     onDismiss = {
                         showTutorialOverlay = false
-                        prefs.edit().putBoolean("has_seen_tutorial_v1", true).apply()
+                        prefs.edit().putBoolean("has_seen_tutorial_v2", true).apply()
                     }
                 )
             }

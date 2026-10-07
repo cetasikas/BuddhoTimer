@@ -80,6 +80,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,8 +93,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.samadhi.meditationtimer.data.ScreenTimePreferences
 import com.samadhi.meditationtimer.service.SoundHelper
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
+import com.samadhi.meditationtimer.ui.components.ManualDurationInputDialog
 import com.samadhi.meditationtimer.ui.screens.timer.TimerViewModel
 import com.samadhi.meditationtimer.ui.theme.BambooTealTheme
 import com.samadhi.meditationtimer.ui.theme.GoldenBodhiTheme
@@ -108,6 +111,7 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 import com.samadhi.meditationtimer.ui.theme.ZenThemeId
+import kotlinx.coroutines.launch
 
 @Composable
 private fun ExpandableSettingsCard(
@@ -1100,7 +1104,137 @@ fun SettingsScreen(
                         // Divider
                         Box(modifier = Modifier.fillMaxWidth().height(0.6.dp).background(ZenBorder.copy(alpha = 0.5f)))
 
-                        // 4. View Screen Time Dashboard
+                        // 4. Daily Screen Time Goal
+                        val screenTimePrefs = remember { ScreenTimePreferences(context) }
+                        val dailyGoalMinutes by screenTimePrefs.dailyGoalMinutes.collectAsState(initial = 0)
+                        val goalScope = rememberCoroutineScope()
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "Daily Screen Time Goal",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ZenTextSecondary
+                            )
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                ScreenTimePreferences.goalPresets.forEach { mins ->
+                                    val isSelected = dailyGoalMinutes == mins
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = {
+                                            goalScope.launch {
+                                                screenTimePrefs.setDailyGoalMinutes(mins)
+                                            }
+                                        },
+                                        label = {
+                                            Text(
+                                                text = ScreenTimePreferences.presetLabel(mins),
+                                                fontSize = 11.5.sp
+                                            )
+                                        },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = currentTheme.primary,
+                                            selectedLabelColor = ZenObsidian
+                                        )
+                                    )
+                                }
+                            }
+                            var showGoalEdit by remember { mutableStateOf(false) }
+                            val customGoal = dailyGoalMinutes > 0 &&
+                                dailyGoalMinutes !in ScreenTimePreferences.goalPresets
+                            Text(
+                                text = if (customGoal) {
+                                    "Custom \u00B7 ${ScreenTimePreferences.presetLabel(dailyGoalMinutes)} \u00B7 tap to change"
+                                } else {
+                                    "Set your own amount"
+                                },
+                                fontSize = 11.5.sp,
+                                color = if (customGoal) currentTheme.primary else ZenTextMuted,
+                                modifier = Modifier
+                                    .clickable { showGoalEdit = true }
+                                    .padding(top = 2.dp)
+                            )
+                            if (showGoalEdit) {
+                                ManualDurationInputDialog(
+                                    initialMinutes = if (dailyGoalMinutes > 0) dailyGoalMinutes else 120,
+                                    minMinutes = 5,
+                                    maxMinutes = 24 * 60,
+                                    title = "Set Your Daily Goal",
+                                    subtitle = "Minutes of screen time per day",
+                                    onDismiss = { showGoalEdit = false },
+                                    onConfirm = { mins ->
+                                        goalScope.launch {
+                                            screenTimePrefs.setDailyGoalMinutes(mins)
+                                        }
+                                        showGoalEdit = false
+                                    }
+                                )
+                            }
+                            Text(
+                                text = "Tracked on your Screen Time dashboard for awareness. Nothing is blocked or enforced.",
+                                fontSize = 11.sp,
+                                color = ZenTextMuted
+                            )
+                        }
+
+                        // Divider
+                        Box(modifier = Modifier.fillMaxWidth().height(0.6.dp).background(ZenBorder.copy(alpha = 0.5f)))
+
+                        // 4b. Persistent screen time status notification
+                        val screenTimeNotifEnabled by screenTimePrefs.screenTimeNotificationEnabled.collectAsState(initial = false)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                                Text("Persistent Screen Time Status", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
+                                Text("Shows today's screen time, goal pace and top apps on your lock screen and in the notification shade", fontSize = 11.sp, color = ZenTextSecondary)
+                            }
+                            Switch(
+                                checked = screenTimeNotifEnabled,
+                                onCheckedChange = { isChecked ->
+                                    if (isChecked && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                        val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                                            context,
+                                            android.Manifest.permission.POST_NOTIFICATIONS
+                                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+                                        if (!hasPermission) {
+                                            postNotificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                            return@Switch
+                                        }
+                                    }
+
+                                    goalScope.launch {
+                                        screenTimePrefs.setScreenTimeNotificationEnabled(isChecked)
+                                        if (isChecked) {
+                                            com.samadhi.meditationtimer.service.screentime.ScreenTimeNotification.showOrUpdate(context)
+                                            com.samadhi.meditationtimer.service.screentime.ScreenTimeNotification.scheduleTicker(context)
+                                        } else {
+                                            com.samadhi.meditationtimer.service.screentime.ScreenTimeNotification.cancelTicker(context)
+                                            com.samadhi.meditationtimer.service.screentime.ScreenTimeNotification.cancel(context)
+                                        }
+                                    }
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ZenObsidian,
+                                    checkedTrackColor = currentTheme.primaryLight,
+                                    checkedBorderColor = currentTheme.primary,
+                                    uncheckedThumbColor = Color(0xFFCBD5E1),
+                                    uncheckedTrackColor = Color(0xFF1E293B),
+                                    uncheckedBorderColor = Color(0xFF475569)
+                                )
+                            )
+                        }
+
+                        // Divider
+                        Box(modifier = Modifier.fillMaxWidth().height(0.6.dp).background(ZenBorder.copy(alpha = 0.5f)))
+
+                        // 5. View Screen Time Dashboard
                         OutlinedButton(
                             onClick = onOpenScreenTime,
                             modifier = Modifier.fillMaxWidth(),
@@ -1326,7 +1460,7 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text("Show Tutorial Tour", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                            Text("3-step feature & atmosphere walkthrough", fontSize = 11.sp, color = ZenTextSecondary)
+                            Text("Feature & atmosphere walkthrough", fontSize = 11.sp, color = ZenTextSecondary)
                         }
                     }
                 }

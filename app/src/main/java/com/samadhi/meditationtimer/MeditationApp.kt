@@ -14,7 +14,7 @@ class MeditationApp : Application() {
     }
 
     val sessionRepository: SessionRepository by lazy {
-        SessionRepositoryImpl(database.sessionDao())
+        SessionRepositoryImpl(database.sessionDao(), database.completedSessionDao())
     }
 
     override fun onCreate() {

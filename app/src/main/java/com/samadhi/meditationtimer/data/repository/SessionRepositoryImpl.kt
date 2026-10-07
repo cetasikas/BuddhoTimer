@@ -1,8 +1,11 @@
 package com.samadhi.meditationtimer.data.repository
 
+import com.samadhi.meditationtimer.data.local.dao.CompletedSessionDao
 import com.samadhi.meditationtimer.data.local.dao.SessionDao
+import com.samadhi.meditationtimer.data.local.entity.CompletedSessionEntity
 import com.samadhi.meditationtimer.data.local.entity.SessionEntity
 import com.samadhi.meditationtimer.domain.model.MeditationSession
+import com.samadhi.meditationtimer.domain.model.PracticePeriodStats
 import com.samadhi.meditationtimer.domain.model.SessionStats
 import com.samadhi.meditationtimer.domain.repository.SessionRepository
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +16,8 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 class SessionRepositoryImpl(
-    private val sessionDao: SessionDao
+    private val sessionDao: SessionDao,
+    private val completedSessionDao: CompletedSessionDao
 ) : SessionRepository {
 
     override fun getAllSessionsFlow(): Flow<List<MeditationSession>> {
@@ -72,6 +76,27 @@ class SessionRepositoryImpl(
                 totalOverrunMinutes = totalOverrunSec / 60
             )
         }
+    }
+
+    override suspend fun getTodayPracticeStats(): PracticePeriodStats {
+        val startOfTodayMs = LocalDate.now()
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        return PracticePeriodStats(
+            sessionCount = completedSessionDao.countSince(startOfTodayMs),
+            practiceMinutes = completedSessionDao.totalDurationSecSince(startOfTodayMs) / 60
+        )
+    }
+
+    override suspend fun recordCompletion(completedAtMs: Long, durationSec: Int, isBreathing: Boolean) {
+        completedSessionDao.insert(
+            CompletedSessionEntity(
+                completedTimeEpochMs = completedAtMs,
+                actualDurationSec = durationSec,
+                isBreathing = isBreathing
+            )
+        )
     }
 
     private fun calculateStreaks(entities: List<SessionEntity>): Pair<Int, Int> {

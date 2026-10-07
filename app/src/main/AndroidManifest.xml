@@ -21,6 +21,17 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
+    <!-- Required on Android 11+ so app labels can be resolved for the packages
+         observed in usage stats events. Without this, PackageManager throws
+         NameNotFoundException for every non-visible package and screen time
+         rows are silently dropped. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
 
     <application
         android:name=".MeditationApp"
@@ -79,6 +90,19 @@
         <receiver
             android:name=".service.screentime.TimeAnchorReceiver"
             android:exported="false" />
+
+        <!-- Persistent screen time status: refresh on unlock, minute ticker
+             while the screen is on, and re-post after reboot or update. -->
+        <receiver
+            android:name=".service.screentime.ScreenTimeNotificationReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SCREEN_ON" />
+                <action android:name="android.intent.action.SCREEN_OFF" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

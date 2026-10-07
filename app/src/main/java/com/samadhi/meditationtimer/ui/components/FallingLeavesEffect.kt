@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.lerp
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ParticleType
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.min
@@ -40,11 +41,12 @@ private enum class LeafDepth(
     val scaleMultiplier: Float,
     val alphaMultiplier: Float,
     val speedMultiplier: Float,
+    val swayMultiplier: Float,
     val canAccumulate: Boolean
 ) {
-    BACKGROUND(scaleMultiplier = 0.65f, alphaMultiplier = 0.40f, speedMultiplier = 0.70f, canAccumulate = false),
-    MIDGROUND(scaleMultiplier = 1.00f, alphaMultiplier = 1.00f, speedMultiplier = 1.00f, canAccumulate = true),
-    FOREGROUND(scaleMultiplier = 1.30f, alphaMultiplier = 1.15f, speedMultiplier = 1.25f, canAccumulate = true)
+    BACKGROUND(scaleMultiplier = 0.78f, alphaMultiplier = 0.40f, speedMultiplier = 0.70f, swayMultiplier = 0.70f, canAccumulate = false),
+    MIDGROUND(scaleMultiplier = 1.00f, alphaMultiplier = 1.00f, speedMultiplier = 1.00f, swayMultiplier = 0.85f, canAccumulate = true),
+    FOREGROUND(scaleMultiplier = 1.18f, alphaMultiplier = 1.15f, speedMultiplier = 1.25f, swayMultiplier = 0.60f, canAccumulate = true)
 }
 
 private class LeafParticle(
@@ -147,6 +149,23 @@ private fun smoothProgress(x: Float): Float {
     return c * c * (3f - 2f * c)
 }
 
+/** Spawns airborne leaves along the left/right edges so the screen center stays calm. */
+private fun randomEdgeSpawnX(rng: Random): Float {
+    return if (rng.nextBoolean()) 0.06f + rng.nextFloat() * 0.20f
+    else 0.74f + rng.nextFloat() * 0.20f
+}
+
+/**
+ * A rare, coordinated "calm wave": a ~44s window every ~4 minutes during which the
+ * whole canopy slows, softens its sway, and glows a touch brighter.
+ */
+private fun calmEventBlend(t: Float): Float {
+    val cycle = 250f
+    val local = t % cycle
+    if (local > 44f) return 0f
+    return smoothProgress((local / 8f).coerceIn(0f, 1f)) * (1f - smoothProgress(((local - 32f) / 12f).coerceIn(0f, 1f)))
+}
+
 private fun weightedLeafColor(palette: List<Color>, rng: Random): Color {
     if (palette.isEmpty()) return Color.Gray
     return if (rng.nextFloat() < 0.65f) palette[0]
@@ -205,7 +224,7 @@ fun FallingLeavesEffect(
                             tumblePhase = 0f,
                             rotation = baseRot + slopeTilt + (rng.nextFloat() * 28f - 14f),
                             rotationSpeed = 0f,
-                            size = rng.nextFloat().pow(1.8f) * 14f + 12f,
+                            size = rng.nextFloat().pow(1.3f) * 5f + 13f,
                             alpha = rng.nextFloat() * 0.15f + 0.70f,
                             color = weightedLeafColor(currentTheme.particlePalette, rng),
                             shapeAsymmetry = (rng.nextFloat() - 0.5f) * 2f,
@@ -225,7 +244,7 @@ fun FallingLeavesEffect(
             val rng = Random(42)
             for (i in 0 until leafCount) {
                 val isHero = i == 0
-                val ox = rng.nextFloat() * 0.80f + 0.10f
+                val ox = randomEdgeSpawnX(rng)
                 val startY = (i.toFloat() / leafCount.toFloat()) * 1.15f - 0.15f
 
                 val depth = when {
@@ -242,14 +261,14 @@ fun FallingLeavesEffect(
                         originX = ox,
                         // Calming, weightless descent with wide floating glide
                         fallSpeed = (rng.nextFloat() * 0.003f + 0.0055f) * depth.speedMultiplier * (if (isHero) 0.80f else 1f),
-                        swayAmplitude = (rng.nextFloat() * 0.06f + 0.085f) * depth.scaleMultiplier * (if (isHero) 1.25f else 1f),
+                        swayAmplitude = (rng.nextFloat() * 0.05f + 0.075f) * depth.swayMultiplier * (if (isHero) 1.25f else 1f),
                         swayFrequency = rng.nextFloat() * 0.035f + 0.045f, // ~14-18s sweeping glide period
                         swayPhase = rng.nextFloat() * 6.28f,
                         tumbleFrequency = rng.nextFloat() * 0.20f + 0.15f,
                         tumblePhase = rng.nextFloat() * 6.28f,
                         rotation = 0f,
                         rotationSpeed = 0f,
-                        size = (rng.nextFloat().pow(1.8f) * 14f + 12f) * depth.scaleMultiplier * (if (isHero) 1.35f else 1f),
+                        size = (rng.nextFloat().pow(1.3f) * 5f + 13f) * depth.scaleMultiplier * (if (isHero) 1.15f else 1f),
                         alpha = (rng.nextFloat() * 0.15f + 0.70f) * depth.alphaMultiplier * (if (isHero) 1.2f else 1f),
                         color = weightedLeafColor(currentTheme.particlePalette, rng),
                         depth = depth,
@@ -311,6 +330,10 @@ fun FallingLeavesEffect(
                     val dt = ((nowNanos - lastTimeNanos) / 1_000_000_000f).coerceIn(0.001f, 0.050f)
                     totalElapsedSec += dt
 
+                    val calm = calmEventBlend(totalElapsedSec)
+                    val swayRelax = 1f - 0.22f * calm
+                    val fallRelax = 1f - 0.35f * calm
+
                     val macroWind = sin(totalElapsedSec / 38.0f) * 0.012f + sin(totalElapsedSec / 19.0f) * 0.004f
 
                     val expectedRestingCount = (currentElapsedMeditationSeconds / 12).coerceIn(0, maxRestingLeaves)
@@ -320,8 +343,8 @@ fun FallingLeavesEffect(
 
                         // Meditative pendulum swing with gentle aerodynamic drift
                         val swingPhase = totalElapsedSec * leaf.swayFrequency + leaf.swayPhase
-                        val primarySway = sin(swingPhase) * leaf.swayAmplitude
-                        val flutterSway = sin(swingPhase * 2.1f + leaf.tumblePhase) * leaf.swayAmplitude * 0.14f
+                        val primarySway = sin(swingPhase) * leaf.swayAmplitude * swayRelax
+                        val flutterSway = sin(swingPhase * 2.1f + leaf.tumblePhase) * leaf.swayAmplitude * 0.14f * swayRelax
                         val lateralSway = primarySway + flutterSway + macroWind
                         leaf.x = (leaf.originX + lateralSway).coerceIn(0.06f, 0.94f)
 
@@ -340,7 +363,7 @@ fun FallingLeavesEffect(
                         val gustPeriod = 22f + (leaf.swayPhase % 8f)
                         val gustMultiplier = 0.80f + 0.20f * (sin(totalElapsedSec * (6.283f / gustPeriod) + leaf.swayPhase) * 0.5f + 0.5f)
 
-                        leaf.y += leaf.fallSpeed * gustMultiplier * aerodynamicDrag * dt
+                        leaf.y += leaf.fallSpeed * gustMultiplier * aerodynamicDrag * fallRelax * dt
 
                         val floorContactY = groundMap.sampleFloor(leaf.x)
 
@@ -391,13 +414,13 @@ fun FallingLeavesEffect(
 
                             // Cycle falling particle back to top
                             leaf.y = -(Random.nextFloat() * 0.18f + 0.08f)
-                            leaf.originX = Random.nextFloat() * 0.84f + 0.08f
+                            leaf.originX = randomEdgeSpawnX(Random)
                             leaf.x = leaf.originX
                             leaf.rotation = Random.nextFloat() * 360f
                             leaf.spawnElapsedSec = 0f
                         } else if (leaf.y > 1.08f) {
                             leaf.y = -(Random.nextFloat() * 0.18f + 0.08f)
-                            leaf.originX = Random.nextFloat() * 0.84f + 0.08f
+                            leaf.originX = randomEdgeSpawnX(Random)
                             leaf.x = leaf.originX
                             leaf.rotation = Random.nextFloat() * 360f
                             leaf.spawnElapsedSec = 0f
@@ -445,12 +468,13 @@ fun FallingLeavesEffect(
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val t = animClock
+        val calm = calmEventBlend(t)
         val w = size.width
         val h = size.height
         if (w <= 0f || h <= 0f) return@Canvas
 
         val baseDimension = min(w, h)
-        val particleScale = (baseDimension / 390f).coerceIn(0.80f, 1.30f)
+        val particleScale = (baseDimension / 390f).coerceIn(0.80f, 1.15f)
         val breathingWave = (sin(t * 1.3f) * 0.5f + 0.5f)
 
         // Draw order: Background -> Resting pile -> Foreground -> Hero leaf on top
@@ -506,16 +530,25 @@ fun FallingLeavesEffect(
 
             val vanishFade = if (leaf.isVanishing) (1f - (leaf.vanishTimer / 0.4f)).coerceIn(0f, 1f) else 1f
             val baseTargetAlpha = leaf.alpha * ambientAlpha * topFade
-            val alpha = when {
+            val rawAlpha = when {
                 localProgress > 0f -> baseTargetAlpha * (1f - localProgress.pow(1.3f))
                 else -> (baseTargetAlpha * vanishFade).coerceIn(0f, 0.85f)
             }
+            if (rawAlpha < 0.005f) return@forEach
 
-            if (alpha < 0.005f) return@forEach
+            // Airborne leaves fade out near the horizontal center so the drifting
+            // movement never competes with the timer/presets behind the middle.
+            val centerFade = if (!leaf.isResting && !leaf.isSettling) {
+                val dxCenter = abs(px - w / 2f)
+                val edgeProximity = ((w * 0.28f - dxCenter) / (w * 0.28f)).coerceIn(0f, 1f)
+                1f - 0.50f * edgeProximity
+            } else 1f
+            // The rare calm wave makes the canopy glow a touch brighter.
+            val alpha = (rawAlpha * centerFade * (0.85f + 0.25f * calm)).coerceIn(0f, 0.9f)
 
-            // Desaturate / blend background depth layer toward dark ambient
+            // Desaturate / blend background depth layer toward the active theme background
             val drawColor = if (leaf.depth == LeafDepth.BACKGROUND) {
-                lerp(leaf.color, Color(0xFF090D10), 0.35f)
+                lerp(leaf.color, currentTheme.background, 0.35f)
             } else leaf.color
 
             val tumbleScaleX = if (localProgress > 0f) {

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,8 +13,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,23 +24,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SelfImprovement
-import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.outlined.Air
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -48,7 +48,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,32 +55,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.samadhi.meditationtimer.domain.model.BreathingPattern
+import com.samadhi.meditationtimer.ui.components.BuddhaOutlineLogo
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.components.ManualDurationInputDialog
+import com.samadhi.meditationtimer.ui.components.ScreenTimeBanner
 import com.samadhi.meditationtimer.ui.components.ZenBranchSlider
-import com.samadhi.meditationtimer.ui.theme.ZenAmber
-import com.samadhi.meditationtimer.ui.theme.ZenBorder
-import com.samadhi.meditationtimer.ui.theme.ZenObsidian
-import com.samadhi.meditationtimer.ui.theme.ZenSurface
-import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
-import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
-import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
-import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -98,13 +90,15 @@ fun TimerScreen(
     val breathingPatternId by viewModel.selectedBreathingPatternId.collectAsState()
     val breathingDurationMin by viewModel.breathingDurationMinutes.collectAsState()
     val hasSeenDurationHint by viewModel.hasSeenDurationHint.collectAsState()
-    val currentTheme = com.samadhi.meditationtimer.ui.theme.LocalZenTheme.current
+    val isDndGranted by viewModel.isDndGranted.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val colorScheme = MaterialTheme.colorScheme
+    val isBoxMode = config.isBoxBreathingMode
     var leafBurstTrigger by remember { mutableIntStateOf(0) }
-    var sliderDragVelocity by remember { mutableFloatStateOf(0f) }
     var showMeditationDurationDialog by remember { mutableStateOf(false) }
     var showBreathingDurationDialog by remember { mutableStateOf(false) }
+    val setupScroll = rememberScrollState()
 
     val selectedPattern = BreathingPattern.allPatterns.find { it.id == breathingPatternId } ?: BreathingPattern.BOX_BREATHING
 
@@ -121,17 +115,17 @@ fun TimerScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        // 1. Subtle, Dynamic Whole-Screen Swirling Falling Leaves
+    Box(modifier = modifier.fillMaxSize().background(colorScheme.background)) {
+        // Ambient, low-key drifting leaves (kept sparse so they never fight the controls)
         FallingLeavesEffect(
             enabled = config.showLeavesDuringMeditation,
-            leafCount = 26,
+            leafCount = 14,
             triggerBurst = leafBurstTrigger,
-            dragVelocity = sliderDragVelocity,
-            ambientAlpha = 0.38f
+            ambientAlpha = 0.28f,
+            pileUpAtBottom = true,
+            initialSettledLeavesCount = 5
         )
 
-        // 2. Fluid, dynamic viewport-aware container that automatically scales to OS text and DPI settings
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
@@ -140,71 +134,77 @@ fun TimerScreen(
             val screenHeight = maxHeight
             val density = LocalDensity.current
             val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
-
-            // Dynamic scale factor for spacing/paddings on smaller viewports
-            val dynamicScale = (screenHeight / 620.dp).coerceIn(0.72f, 1.05f)
-
-            // Non-linear font scaling helper (Android 14 standard):
-            // Keeps typography bold & comfortable, while preventing massive 200% font blow-out
-            // on extreme accessibility settings that would cause elements to overlap
-            fun adaptiveSp(baseSp: Float, maxFontMultiplier: Float = 1.25f): androidx.compose.ui.unit.TextUnit {
-                val clampedMultiplier = fontScale.coerceIn(0.85f, maxFontMultiplier)
-                val viewportCompression = (screenHeight / 620.dp).coerceIn(0.86f, 1.05f)
-                return (baseSp * viewportCompression * (clampedMultiplier / fontScale)).sp
-            }
-
-            val adaptiveDurationFontSize = adaptiveSp(74f, 1.18f)
-            val showTip = screenHeight >= 500.dp && fontScale <= 1.25f && !hasSeenDurationHint
-            val showExplanations = screenHeight >= 520.dp && fontScale <= 1.30f
+            val dynamicScale = (screenHeight / 620.dp).coerceIn(0.85f, 1.05f)
 
             Column(
                 modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // --- 1. TOP HEADER (BUDDHO TIMER BRANDING) ---
+                // --- 1. COMPACT HEADER ---
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = (2 * dynamicScale).dp, bottom = (2 * dynamicScale).dp),
+                        .padding(top = (2 * dynamicScale).dp, bottom = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start
                 ) {
-                    com.samadhi.meditationtimer.ui.components.BuddhaOutlineLogo(
-                        size = (36.dp * dynamicScale).coerceIn(24.dp, 38.dp),
+                    BuddhaOutlineLogo(
+                        size = 32.dp,
                         tint = null,
                         showEnsoCircle = true
                     )
-                    Spacer(modifier = Modifier.width((10.dp * dynamicScale).coerceIn(6.dp, 12.dp)))
+                    Spacer(modifier = Modifier.width(9.dp))
                     Column {
                         Text(
                             text = "Buddho Timer",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.0.sp,
-                                fontSize = adaptiveSp(16.5f, 1.25f)
+                                letterSpacing = 0.6.sp,
+                                fontSize = spFor(16f, 1.25f)
                             ),
-                            color = ZenTextPrimary
+                            color = colorScheme.onBackground
                         )
                         Text(
-                            text = if (config.isBoxBreathingMode) "Mindful Breathwork • Box Breathing" else "Mindful Stillness • Samadhi",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = adaptiveSp(12f, 1.22f)
-                            ),
-                            color = currentTheme.primaryLight
+                            text = if (isBoxMode) "Mindful Breathwork \u00B7 Box Breathing" else "Mindful Stillness \u00B7 Samadhi",
+                            fontSize = spFor(11.5f, 1.22f),
+                            color = colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .defaultMinSize(minWidth = 44.dp, minHeight = 44.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = "Settings",
+                            tint = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
 
-                // Ambient Mindful Screen Time & Pause Banner (TimeAware-inspired, optional)
+                // --- 2. REMINDER BANNER (compact, optional) ---
                 if (config.showScreenTimeBanner) {
-                    com.samadhi.meditationtimer.ui.components.ScreenTimeBanner(
+                    ScreenTimeBanner(
                         onClick = onOpenScreenTime,
-                        modifier = Modifier.padding(bottom = (3 * dynamicScale).dp)
+                        modifier = Modifier.padding(bottom = (4 * dynamicScale).dp)
                     )
                 }
 
-                // --- 2. DYNAMIC SETUP CONTENT (WEIGHTED MIDDLE ZONE) ---
+                // --- 3. MODE SELECTOR (near the top) ---
+                PracticeModeSelector(
+                    isBoxMode = isBoxMode,
+                    onSelectMode = { box ->
+                        viewModel.toggleBoxBreathingMode(box)
+                        leafBurstTrigger++
+                    },
+                    modifier = Modifier.padding(top = (6 * dynamicScale).dp, bottom = (4 * dynamicScale).dp)
+                )
+
+                // --- 4. SCROLLABLE SETUP CONTENT (centered when there is room) ---
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -212,778 +212,144 @@ fun TimerScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     AnimatedContent(
-                        targetState = config.isBoxBreathingMode,
+                        targetState = isBoxMode,
                         transitionSpec = {
-                            fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(160))
+                            fadeIn(animationSpec = tween(180)) togetherWith fadeOut(animationSpec = tween(140))
                         },
                         label = "PracticeModeSetup",
-                        modifier = Modifier.fillMaxWidth()
-                    ) { isBoxMode ->
-                        if (!isBoxMode) {
-                            // === MEDITATION TIMER SETUP (100% FLUID & NON-SCROLLING) ===
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy((6.dp * dynamicScale).coerceIn(2.dp, 8.dp), Alignment.CenterVertically)
-                            ) {
-                                // Large Bold Duration Display with Click-to-Edit
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(20.dp))
-                                        .clickable {
-                                            viewModel.dismissDurationHint()
-                                            showMeditationDurationDialog = true
-                                        }
-                                        .padding(horizontal = 16.dp, vertical = (1 * dynamicScale).dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            text = "${config.targetDurationMinutes}",
-                                            fontSize = adaptiveDurationFontSize,
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = (-1.5).sp,
-                                            color = MaterialTheme.colorScheme.onBackground,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                        )
-                                        Text(
-                                            text = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
-                                            fontSize = adaptiveSp(13f, 1.22f),
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = 2.5.sp,
-                                            color = currentTheme.primary,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                        )
+                        modifier = Modifier.fillMaxSize()
+                    ) { box ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(setupScroll),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(
+                                (11.dp * dynamicScale).coerceIn(8.dp, 14.dp),
+                                Alignment.CenterVertically
+                            )
+                        ) {
+                            if (!box) {
+                                // ===== MEDITATION SETUP =====
+                                DurationDisplay(
+                                    valueText = "${config.targetDurationMinutes}",
+                                    caption = if (config.targetDurationMinutes == 1) "MINUTE" else "MINUTES",
+                                    showHint = !hasSeenDurationHint,
+                                    onEdit = {
+                                        viewModel.dismissDurationHint()
+                                        showMeditationDurationDialog = true
                                     }
-                                }
+                                )
 
-                                // One-time dismissible coachmark hint (gracefully hides if screen height is constrained)
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = showTip,
-                                    enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(),
-                                    exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically()
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(20.dp))
-                                            .background(currentTheme.surfaceVariant.copy(alpha = 0.92f))
-                                            .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
-                                            .clickable { viewModel.dismissDurationHint() }
-                                            .padding(horizontal = 12.dp, vertical = 3.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.Center
-                                        ) {
-                                            Text(
-                                                text = "Tip: Tap time to enter custom minutes",
-                                                fontSize = adaptiveSp(12f, 1.22f),
-                                                fontWeight = FontWeight.Medium,
-                                                color = currentTheme.textPrimary
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Icon(
-                                                imageVector = Icons.Default.Close,
-                                                contentDescription = "Dismiss tip",
-                                                tint = currentTheme.textSecondary,
-                                                modifier = Modifier.size(12.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // Organic Zen Branch Slider
                                 ZenBranchSlider(
                                     value = config.targetDurationMinutes.toFloat().coerceIn(1f, 120f),
-                                    onValueChange = { newMin ->
-                                        viewModel.updateDurationMinutes(newMin.toInt())
-                                    },
+                                    onValueChange = { newMin -> viewModel.updateDurationMinutes(newMin.toInt()) },
                                     valueRange = 1f..120f,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height((44.dp * dynamicScale).coerceIn(32.dp, 48.dp))
+                                        .height((40.dp * dynamicScale).coerceIn(34.dp, 44.dp))
                                 )
 
-                                // Clean Row of Essential Presets
-                                val meditationPresets = listOf(5, 15, 30, 45, 60)
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy((6.dp * dynamicScale).coerceIn(4.dp, 8.dp))
-                                ) {
-                                    meditationPresets.forEach { duration ->
-                                        val isSelected = config.targetDurationMinutes == duration
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clip(RoundedCornerShape((12.dp * dynamicScale).coerceIn(8.dp, 14.dp)))
-                                                .background(if (isSelected) currentTheme.primary.copy(alpha = 0.22f) else currentTheme.surfaceVariant)
-                                                .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primary else currentTheme.border, RoundedCornerShape((12.dp * dynamicScale).coerceIn(8.dp, 14.dp)))
-                                                .clickable {
-                                                    viewModel.updateDurationMinutes(duration)
-                                                }
-                                                .padding(vertical = (6.dp * dynamicScale).coerceIn(2.5.dp, 7.dp)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "${duration}m",
-                                                fontSize = adaptiveSp(13.5f, 1.22f),
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (isSelected) currentTheme.primary else currentTheme.textSecondary,
-                                                maxLines = 1,
-                                                softWrap = false
-                                            )
-                                        }
+                                PresetRow(
+                                    presets = listOf(5, 15, 30, 45, 60),
+                                    selected = config.targetDurationMinutes,
+                                    onSelect = viewModel::updateDurationMinutes
+                                )
+
+                                SettingSwitchRow(
+                                    label = "Do Not Disturb",
+                                    subtitle = when {
+                                        config.isAutoDndEnabled && !isDndGranted -> "Grant notification access"
+                                        else -> "Mute notifications during your sit"
+                                    },
+                                    subtitleIsWarning = config.isAutoDndEnabled && !isDndGranted,
+                                    checked = config.isAutoDndEnabled,
+                                    onCheckedChange = {
+                                        viewModel.toggleAutoDnd(it)
+                                        leafBurstTrigger++
                                     }
-                                }
-
-                                // Consolidated Zen Settings Card (DND + Overrun)
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp)))
-                                        .background(ZenSurface.copy(alpha = 0.75f))
-                                        .border(1.dp, ZenBorder.copy(alpha = 0.9f), RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp)))
-                                        .padding(horizontal = 12.dp, vertical = (3.dp * dynamicScale).coerceIn(1.5.dp, 5.dp))
-                                ) {
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        // 1. Do Not Disturb Row
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = (3.dp * dynamicScale).coerceIn(1.dp, 4.dp)),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                                                Text(
-                                                    text = "Do Not Disturb",
-                                                    style = MaterialTheme.typography.titleMedium.copy(
-                                                        fontSize = adaptiveSp(13.5f, 1.25f),
-                                                        fontWeight = FontWeight.SemiBold
-                                                    ),
-                                                    color = ZenTextPrimary
-                                                )
-                                                if (showExplanations) {
-                                                    Text(
-                                                        text = "Mute incoming notifications & calls during sit",
-                                                        style = MaterialTheme.typography.bodySmall.copy(
-                                                            fontSize = adaptiveSp(11f, 1.20f)
-                                                        ),
-                                                        color = ZenTextSecondary
-                                                    )
-                                                }
-                                            }
-                                            Switch(
-                                                checked = config.isAutoDndEnabled,
-                                                onCheckedChange = {
-                                                    viewModel.toggleAutoDnd(it)
-                                                    leafBurstTrigger++
-                                                },
-                                                modifier = Modifier.scale((0.92f * dynamicScale).coerceIn(0.75f, 1.0f)),
-                                                colors = SwitchDefaults.colors(
-                                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                                    checkedTrackColor = currentTheme.primary,
-                                                    checkedBorderColor = currentTheme.primary,
-                                                    uncheckedThumbColor = currentTheme.textSecondary,
-                                                    uncheckedTrackColor = currentTheme.surfaceVariant,
-                                                    uncheckedBorderColor = currentTheme.border
-                                                )
-                                            )
-                                        }
-
-                                        // Hairline Zen Divider
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 1.dp)
-                                                .height(0.8.dp)
-                                                .background(ZenBorder.copy(alpha = 0.45f))
-                                        )
-
-                                        // 2. Continue Past Target Time Row
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = (3.dp * dynamicScale).coerceIn(1.dp, 4.dp)),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                                                Text(
-                                                    text = "Continue Past Target Time",
-                                                    style = MaterialTheme.typography.titleMedium.copy(
-                                                        fontSize = adaptiveSp(13.5f, 1.25f),
-                                                        fontWeight = FontWeight.SemiBold
-                                                    ),
-                                                    color = ZenTextPrimary
-                                                )
-                                                if (showExplanations) {
-                                                    Text(
-                                                        text = "Keep counting up after target time is reached",
-                                                        style = MaterialTheme.typography.bodySmall.copy(
-                                                            fontSize = adaptiveSp(11f, 1.20f)
-                                                        ),
-                                                        color = ZenTextSecondary
-                                                    )
-                                                }
-                                            }
-                                            Switch(
-                                                checked = config.isOverrunEnabled,
-                                                onCheckedChange = {
-                                                    viewModel.toggleOverrun(it)
-                                                    leafBurstTrigger++
-                                                },
-                                                modifier = Modifier.scale((0.92f * dynamicScale).coerceIn(0.75f, 1.0f)),
-                                                colors = SwitchDefaults.colors(
-                                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                                    checkedTrackColor = currentTheme.primary,
-                                                    checkedBorderColor = currentTheme.primary,
-                                                    uncheckedThumbColor = currentTheme.textSecondary,
-                                                    uncheckedTrackColor = currentTheme.surfaceVariant,
-                                                    uncheckedBorderColor = currentTheme.border
-                                                )
-                                            )
-                                        }
+                                )
+                                SettingSwitchRow(
+                                    label = "Continue Past Target",
+                                    subtitle = "Keep the timer going past the set time",
+                                    checked = config.isOverrunEnabled,
+                                    onCheckedChange = {
+                                        viewModel.toggleOverrun(it)
+                                        leafBurstTrigger++
                                     }
-                                }
-                            }
-                        } else {
-                            // === BOX BREATHING SETUP (100% FLUID & NON-SCROLLING) ===
-                            val cycleDurationSec = selectedPattern.totalCycleSec
-                            val estimatedCycles = (breathingDurationMin * 60) / cycleDurationSec.coerceAtLeast(1)
+                                )
+                            } else {
+                                // ===== BOX BREATHING SETUP =====
+                                val cycleDurationSec = selectedPattern.totalCycleSec
+                                val estimatedCycles = (breathingDurationMin * 60) / cycleDurationSec.coerceAtLeast(1)
 
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy((6.dp * dynamicScale).coerceIn(2.dp, 8.dp), Alignment.CenterVertically)
-                            ) {
-                                // Large Bold Duration Display with Click-to-Edit
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(20.dp))
-                                        .clickable {
-                                            viewModel.dismissDurationHint()
-                                            showBreathingDurationDialog = true
-                                        }
-                                        .padding(horizontal = 16.dp, vertical = (1 * dynamicScale).dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            text = "$breathingDurationMin",
-                                            fontSize = adaptiveDurationFontSize,
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = (-1.5).sp,
-                                            color = MaterialTheme.colorScheme.onBackground,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                        )
-                                        Text(
-                                            text = "$estimatedCycles CYCLES • $breathingDurationMin MINUTES",
-                                            fontSize = adaptiveSp(12.5f, 1.22f),
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = 1.8.sp,
-                                            color = currentTheme.primary,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                        )
+                                DurationDisplay(
+                                    valueText = "$breathingDurationMin",
+                                    caption = "$estimatedCycles CYCLES \u00B7 $breathingDurationMin MINUTES",
+                                    showHint = !hasSeenDurationHint,
+                                    onEdit = {
+                                        viewModel.dismissDurationHint()
+                                        showBreathingDurationDialog = true
                                     }
-                                }
-
-                                // One-time dismissible coachmark hint
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = showTip,
-                                    enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(),
-                                    exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically()
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(20.dp))
-                                            .background(currentTheme.surfaceVariant.copy(alpha = 0.92f))
-                                            .border(1.dp, currentTheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
-                                            .clickable { viewModel.dismissDurationHint() }
-                                            .padding(horizontal = 12.dp, vertical = 3.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.Center
-                                        ) {
-                                            Text(
-                                                text = "Tip: Tap time to enter custom minutes",
-                                                fontSize = adaptiveSp(12f, 1.22f),
-                                                fontWeight = FontWeight.Medium,
-                                                color = currentTheme.textPrimary
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Icon(
-                                                imageVector = Icons.Default.Close,
-                                                contentDescription = "Dismiss tip",
-                                                tint = currentTheme.textSecondary,
-                                                modifier = Modifier.size(12.dp)
-                                            )
-                                        }
-                                    }
-                                }
+                                )
 
                                 ZenBranchSlider(
                                     value = breathingDurationMin.toFloat().coerceIn(1f, 30f),
-                                    onValueChange = { newMin ->
-                                        viewModel.updateBreathingDurationMinutes(newMin.toInt())
-                                    },
+                                    onValueChange = { newMin -> viewModel.updateBreathingDurationMinutes(newMin.toInt()) },
                                     valueRange = 1f..30f,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height((44.dp * dynamicScale).coerceIn(32.dp, 48.dp))
+                                        .height((40.dp * dynamicScale).coerceIn(34.dp, 44.dp))
                                 )
 
-                                val breathPresets = listOf(2, 5, 10, 15, 20)
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy((6.dp * dynamicScale).coerceIn(4.dp, 8.dp))
-                                ) {
-                                    breathPresets.forEach { dur ->
-                                        val isSelected = breathingDurationMin == dur
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clip(RoundedCornerShape((12.dp * dynamicScale).coerceIn(8.dp, 14.dp)))
-                                                .background(if (isSelected) currentTheme.primary.copy(alpha = 0.22f) else currentTheme.surfaceVariant)
-                                                .border(if (isSelected) 1.5.dp else 1.dp, if (isSelected) currentTheme.primary else currentTheme.border, RoundedCornerShape((12.dp * dynamicScale).coerceIn(8.dp, 14.dp)))
-                                                .clickable {
-                                                    viewModel.updateBreathingDurationMinutes(dur)
-                                                }
-                                                .padding(vertical = (6.dp * dynamicScale).coerceIn(2.5.dp, 7.dp)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "${dur}m",
-                                                fontSize = adaptiveSp(13.5f, 1.22f),
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (isSelected) currentTheme.primary else currentTheme.textSecondary,
-                                                maxLines = 1,
-                                                softWrap = false
-                                            )
-                                        }
+                                PresetRow(
+                                    presets = listOf(2, 5, 10, 15, 20),
+                                    selected = breathingDurationMin,
+                                    onSelect = viewModel::updateBreathingDurationMinutes
+                                )
+
+                                BreathingPatternSelector(
+                                    selectedPattern = selectedPattern,
+                                    onPatternSelected = {
+                                        viewModel.updateBreathingPattern(it)
+                                        leafBurstTrigger++
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                SettingSwitchRow(
+                                    label = "Do Not Disturb",
+                                    subtitle = when {
+                                        config.isAutoDndEnabled && !isDndGranted -> "Grant notification access"
+                                        else -> "Mute notifications during breathwork"
+                                    },
+                                    subtitleIsWarning = config.isAutoDndEnabled && !isDndGranted,
+                                    checked = config.isAutoDndEnabled,
+                                    onCheckedChange = {
+                                        viewModel.toggleAutoDnd(it)
+                                        leafBurstTrigger++
                                     }
-                                }
-
-                                var isPatternDropdownOpen by remember { mutableStateOf(false) }
-
-                                val patternCategory = when (selectedPattern.id) {
-                                    "box" -> "FOCUS & STRESS RESET"
-                                    "478" -> "DEEP SLEEP & RELAXATION"
-                                    "resonant" -> "HEART COHERENCE (5-5)"
-                                    else -> "BEGINNER FRIENDLY"
-                                }
-
-                                Box(modifier = Modifier.fillMaxWidth()) {
-                                    Card(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp)))
-                                            .clickable { isPatternDropdownOpen = true },
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = ZenSurface.copy(alpha = 0.85f)
-                                        ),
-                                        border = BorderStroke(1.2.dp, currentTheme.primary.copy(alpha = 0.55f)),
-                                        shape = RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp))
-                                    ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 12.dp, vertical = (6.dp * dynamicScale).coerceIn(3.dp, 8.dp)),
-                                            verticalArrangement = Arrangement.spacedBy((3.dp * dynamicScale).coerceIn(1.dp, 4.dp))
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Column(modifier = Modifier.weight(1f)) {
-                                                    Text(
-                                                        text = selectedPattern.name,
-                                                        fontSize = adaptiveSp(14.5f, 1.25f),
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = ZenTextPrimary
-                                                    )
-                                                    Text(
-                                                        text = patternCategory,
-                                                        fontSize = adaptiveSp(10.5f, 1.20f),
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        letterSpacing = 0.8.sp,
-                                                        color = currentTheme.primaryLight
-                                                    )
-                                                }
-
-                                                Icon(
-                                                    imageVector = if (isPatternDropdownOpen) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                                    contentDescription = "Select Pattern",
-                                                    tint = currentTheme.primaryLight,
-                                                    modifier = Modifier.size((18.dp * dynamicScale).coerceIn(15.dp, 20.dp))
-                                                )
-                                            }
-
-                                            // Phase Timing Visual Chips
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy((4.dp * dynamicScale).coerceIn(2.dp, 4.dp)),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                when (selectedPattern.id) {
-                                                    "box" -> {
-                                                        PhaseChip("4s Inhale", currentTheme.primary, dynamicScale)
-                                                        PhaseSeparator()
-                                                        PhaseChip("4s Hold", currentTheme.primary, dynamicScale)
-                                                        PhaseSeparator()
-                                                        PhaseChip("4s Exhale", currentTheme.overrunColor, dynamicScale)
-                                                        PhaseSeparator()
-                                                        PhaseChip("4s Hold", currentTheme.secondary, dynamicScale)
-                                                    }
-                                                    "478" -> {
-                                                        PhaseChip("4s Inhale", currentTheme.primary, dynamicScale)
-                                                        PhaseSeparator()
-                                                        PhaseChip("7s Hold", currentTheme.primary, dynamicScale)
-                                                        PhaseSeparator()
-                                                        PhaseChip("8s Exhale", currentTheme.overrunColor, dynamicScale)
-                                                    }
-                                                    "resonant" -> {
-                                                        PhaseChip("5s Inhale", currentTheme.primary, dynamicScale)
-                                                        PhaseSeparator()
-                                                        PhaseChip("5s Exhale", currentTheme.overrunColor, dynamicScale)
-                                                    }
-                                                    else -> {
-                                                        PhaseChip("3s Inhale", currentTheme.primary, dynamicScale)
-                                                        PhaseSeparator()
-                                                        PhaseChip("3s Hold", currentTheme.primary, dynamicScale)
-                                                        PhaseSeparator()
-                                                        PhaseChip("3s Exhale", currentTheme.overrunColor, dynamicScale)
-                                                        PhaseSeparator()
-                                                        PhaseChip("3s Hold", currentTheme.secondary, dynamicScale)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    DropdownMenu(
-                                        expanded = isPatternDropdownOpen,
-                                        onDismissRequest = { isPatternDropdownOpen = false },
-                                        modifier = Modifier
-                                            .fillMaxWidth(0.90f)
-                                            .background(currentTheme.surfaceVariant)
-                                            .border(1.2.dp, currentTheme.primary.copy(alpha = 0.50f), RoundedCornerShape(16.dp))
-                                            .padding(vertical = 4.dp)
-                                    ) {
-                                        BreathingPattern.allPatterns.forEach { item ->
-                                            val isSelected = selectedPattern.id == item.id
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.SpaceBetween
-                                                    ) {
-                                                        Column(
-                                                            modifier = Modifier
-                                                                .weight(1f)
-                                                                .padding(vertical = 2.dp)
-                                                        ) {
-                                                            Text(
-                                                                text = item.name,
-                                                                fontSize = 14.sp,
-                                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                                color = if (isSelected) currentTheme.primary else ZenTextPrimary
-                                                            )
-                                                            Spacer(modifier = Modifier.height(2.dp))
-                                                            Text(
-                                                                text = item.subtitle,
-                                                                fontSize = 11.5.sp,
-                                                                color = if (isSelected) currentTheme.primary else ZenTextSecondary
-                                                            )
-                                                        }
-
-                                                        if (isSelected) {
-                                                            Spacer(modifier = Modifier.width(8.dp))
-                                                            Box(
-                                                                modifier = Modifier
-                                                                    .size(24.dp)
-                                                                    .clip(CircleShape)
-                                                                    .background(currentTheme.primary.copy(alpha = 0.22f)),
-                                                                contentAlignment = Alignment.Center
-                                                            ) {
-                                                                Icon(
-                                                                    imageVector = Icons.Default.PlayArrow,
-                                                                    contentDescription = "Active Pattern",
-                                                                    tint = currentTheme.primary,
-                                                                    modifier = Modifier.size(14.dp)
-                                                                )
-                                                            }
-                                                        }
-                                                    }
-                                                },
-                                                onClick = {
-                                                    viewModel.updateBreathingPattern(item.id)
-                                                    isPatternDropdownOpen = false
-                                                    leafBurstTrigger++
-                                                },
-                                                modifier = Modifier
-                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                                                    .clip(RoundedCornerShape(10.dp))
-                                                    .background(if (isSelected) currentTheme.primary.copy(alpha = 0.18f) else Color.Transparent)
-                                                    .border(
-                                                        if (isSelected) 1.2.dp else 0.dp,
-                                                        if (isSelected) currentTheme.primary else Color.Transparent,
-                                                        RoundedCornerShape(10.dp)
-                                                    )
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // Do Not Disturb Card for Breathwork (matches Pattern Card styling, padding & visual balance)
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp))),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = ZenSurface.copy(alpha = 0.85f)
-                                    ),
-                                    border = BorderStroke(1.2.dp, currentTheme.primary.copy(alpha = 0.40f)),
-                                    shape = RoundedCornerShape((14.dp * dynamicScale).coerceIn(10.dp, 16.dp))
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(
-                                                horizontal = 14.dp,
-                                                vertical = (8.dp * dynamicScale).coerceIn(6.dp, 12.dp)
-                                            ),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.weight(1f).padding(end = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size((34.dp * dynamicScale).coerceIn(28.dp, 36.dp))
-                                                    .clip(CircleShape)
-                                                    .background(
-                                                        if (config.isAutoDndEnabled) currentTheme.primary.copy(alpha = 0.20f)
-                                                        else currentTheme.surfaceVariant
-                                                    ),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.DoNotDisturb,
-                                                    contentDescription = null,
-                                                    tint = if (config.isAutoDndEnabled) currentTheme.primaryLight else ZenTextSecondary,
-                                                    modifier = Modifier.size((18.dp * dynamicScale).coerceIn(15.dp, 20.dp))
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.width(10.dp))
-                                            Column {
-                                                Text(
-                                                    text = "Do Not Disturb",
-                                                    style = MaterialTheme.typography.titleMedium.copy(
-                                                        fontSize = adaptiveSp(14.5f, 1.25f),
-                                                        fontWeight = FontWeight.SemiBold
-                                                    ),
-                                                    color = ZenTextPrimary
-                                                )
-                                                if (showExplanations) {
-                                                    Text(
-                                                        text = "Mute notifications & calls during breathwork",
-                                                        style = MaterialTheme.typography.bodySmall.copy(
-                                                            fontSize = adaptiveSp(11.5f, 1.20f)
-                                                        ),
-                                                        color = ZenTextSecondary
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        Switch(
-                                            checked = config.isAutoDndEnabled,
-                                            onCheckedChange = {
-                                                viewModel.toggleAutoDnd(it)
-                                                leafBurstTrigger++
-                                            },
-                                            modifier = Modifier.scale((0.92f * dynamicScale).coerceIn(0.75f, 1.0f)),
-                                            colors = SwitchDefaults.colors(
-                                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                                checkedTrackColor = currentTheme.primary,
-                                                checkedBorderColor = currentTheme.primary,
-                                                uncheckedThumbColor = currentTheme.textSecondary,
-                                                uncheckedTrackColor = currentTheme.surfaceVariant,
-                                                uncheckedBorderColor = currentTheme.border
-                                            )
-                                        )
-                                    }
-                                }
+                                )
                             }
                         }
                     }
                 }
 
-                // --- 3. BOTTOM CONTROLS (MODE TOGGLE + PRIMARY ACTION BUTTON) ---
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = (4 * dynamicScale).dp, bottom = (2 * dynamicScale).dp),
-                    verticalArrangement = Arrangement.spacedBy((8.dp * dynamicScale).coerceIn(4.dp, 10.dp)),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Practice Mode Segmented Pill Selector
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(currentTheme.surfaceVariant)
-                            .border(1.dp, currentTheme.border, RoundedCornerShape(20.dp))
-                            .padding((3.dp * dynamicScale).coerceIn(2.dp, 4.dp)),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Meditation Option
-                        val isMeditation = !config.isBoxBreathingMode
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(if (isMeditation) currentTheme.primary.copy(alpha = 0.22f) else Color.Transparent)
-                                .border(if (isMeditation) 1.5.dp else 0.dp, if (isMeditation) currentTheme.primary else Color.Transparent, RoundedCornerShape(16.dp))
-                            .clickable {
-                                if (!isMeditation) {
-                                    viewModel.toggleBoxBreathingMode(false)
-                                    sliderDragVelocity = 1.2f
-                                    leafBurstTrigger++
-                                }
-                            }
-                            .padding(
-                                horizontal = (14.dp * dynamicScale).coerceIn(8.dp, 16.dp),
-                                vertical = (5.dp * dynamicScale).coerceIn(3.dp, 7.dp)
-                            ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.SelfImprovement,
-                                    contentDescription = null,
-                                    tint = if (isMeditation) currentTheme.primary else currentTheme.textSecondary,
-                                    modifier = Modifier.size((15.dp * dynamicScale).coerceIn(12.dp, 16.dp))
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Meditation",
-                                    fontSize = adaptiveSp(13.5f, 1.18f),
-                                    fontWeight = if (isMeditation) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isMeditation) currentTheme.primary else currentTheme.textSecondary,
-                                    maxLines = 1,
-                                    softWrap = false
-                                )
-                            }
-                        }
-
-                        // Box Breathing Option
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(if (!isMeditation) currentTheme.primary.copy(alpha = 0.22f) else Color.Transparent)
-                                .border(if (!isMeditation) 1.5.dp else 0.dp, if (!isMeditation) currentTheme.primary else Color.Transparent, RoundedCornerShape(16.dp))
-                            .clickable {
-                                if (isMeditation) {
-                                    viewModel.toggleBoxBreathingMode(true)
-                                    sliderDragVelocity = 1.2f
-                                    leafBurstTrigger++
-                                }
-                            }
-                            .padding(
-                                horizontal = (14.dp * dynamicScale).coerceIn(8.dp, 16.dp),
-                                vertical = (5.dp * dynamicScale).coerceIn(3.dp, 7.dp)
-                            ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Air,
-                                    contentDescription = null,
-                                    tint = if (!isMeditation) currentTheme.primary else currentTheme.textSecondary,
-                                    modifier = Modifier.size((15.dp * dynamicScale).coerceIn(12.dp, 16.dp))
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Box Breathing",
-                                    fontSize = adaptiveSp(13.5f, 1.18f),
-                                    fontWeight = if (!isMeditation) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (!isMeditation) currentTheme.primary else currentTheme.textSecondary,
-                                    maxLines = 1,
-                                    softWrap = false
-                                )
-                            }
-                        }
-                    }
-
-                    // Primary Action Button (Tactile Golden Gradient with subtle glow)
-                    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-                    val buttonGradient = Brush.horizontalGradient(
-                        colors = if (isDark) {
-                            listOf(
-                                currentTheme.primary.copy(alpha = 0.88f),
-                                currentTheme.primary,
-                                Color(0xFFFFD54F)
-                            )
+                // --- 5. PRIMARY START BUTTON (anchored above the bottom navigation) ---
+                PrimaryStartButton(
+                    isBoxMode = isBoxMode,
+                    dynamicScale = dynamicScale,
+                    onPress = {
+                        leafBurstTrigger++
+                        if (isBoxMode) {
+                            onOpenBreathing()
                         } else {
-                            listOf(
-                                currentTheme.primary,
-                                currentTheme.primary.copy(alpha = 0.90f),
-                                currentTheme.primary
-                            )
+                            viewModel.startSession()
+                            onStartSession()
                         }
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height((48.dp * dynamicScale).coerceIn(38.dp, 52.dp))
-                            .shadow(8.dp, RoundedCornerShape(18.dp), spotColor = currentTheme.primary.copy(alpha = 0.40f))
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(buttonGradient)
-                            .border(1.dp, currentTheme.primary.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
-                            .clickable {
-                                sliderDragVelocity = 1.5f
-                                leafBurstTrigger++
-                                if (config.isBoxBreathingMode) {
-                                    onOpenBreathing()
-                                } else {
-                                    viewModel.startSession()
-                                    onStartSession()
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = if (config.isBoxBreathingMode) Icons.Outlined.Air else Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size((20.dp * dynamicScale).coerceIn(16.dp, 22.dp))
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (config.isBoxBreathingMode) "Begin Box Breathing" else "Begin Practice",
-                                fontSize = adaptiveSp(16f, 1.20f),
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.8.sp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                    }
-                }
+                    },
+                    modifier = Modifier.padding(top = (4 * dynamicScale).dp, bottom = 2.dp)
+                )
             }
         }
 
@@ -993,11 +359,9 @@ fun TimerScreen(
                 minMinutes = 1,
                 maxMinutes = 180,
                 title = "Meditation Duration",
-                subtitle = "Enter sit duration in minutes (1–180)",
+                subtitle = "Enter sit duration in minutes (1\u2013180)",
                 onDismiss = { showMeditationDurationDialog = false },
-                onConfirm = { minutes ->
-                    viewModel.updateDurationMinutes(minutes)
-                }
+                onConfirm = { minutes -> viewModel.updateDurationMinutes(minutes) }
             )
         }
 
@@ -1007,34 +371,433 @@ fun TimerScreen(
                 minMinutes = 1,
                 maxMinutes = 60,
                 title = "Breathwork Duration",
-                subtitle = "Enter breathwork duration in minutes (1–60)",
+                subtitle = "Enter breathwork duration in minutes (1\u201360)",
                 onDismiss = { showBreathingDurationDialog = false },
-                onConfirm = { minutes ->
-                    viewModel.updateBreathingDurationMinutes(minutes)
-                }
+                onConfirm = { minutes -> viewModel.updateBreathingDurationMinutes(minutes) }
             )
         }
     }
 }
 
+/** Quiet, theme-aware font helper that respects system font scale without blowing out layouts. */
 @Composable
-private fun PhaseChip(label: String, color: Color, dynamicScale: Float = 1f) {
+private fun spFor(baseSp: Float, maxFontMultiplier: Float = 1.25f, viewportCompression: Float = 1f): TextUnit {
+    val density = LocalDensity.current
+    val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
+    val clampedMultiplier = fontScale.coerceIn(0.85f, maxFontMultiplier)
+    return (baseSp * viewportCompression * (clampedMultiplier / fontScale)).sp
+}
+
+/** Medication / Box Breathing segmented selector, quiet secondary-container style. */
+@Composable
+private fun PracticeModeSelector(
+    isBoxMode: Boolean,
+    onSelectMode: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(24.dp))
+            .background(colorScheme.surfaceContainerHigh)
+            .padding(3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SegmentedOption(
+            label = "Meditation",
+            icon = Icons.Default.SelfImprovement,
+            selected = !isBoxMode,
+            onClick = { if (isBoxMode) onSelectMode(false) },
+            modifier = Modifier.weight(1f)
+        )
+        SegmentedOption(
+            label = "Box Breathing",
+            icon = Icons.Outlined.Air,
+            selected = isBoxMode,
+            onClick = { if (!isBoxMode) onSelectMode(true) },
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun SegmentedOption(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val fg = if (selected) colorScheme.onSecondaryContainer else colorScheme.onSurfaceVariant
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (selected) colorScheme.secondaryContainer else Color.Transparent)
+            .clickable(onClick = onClick)
+            .defaultMinSize(minHeight = 44.dp)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = fg,
+            modifier = Modifier.size(15.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = label,
+            fontSize = spFor(13.5f, 1.18f),
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            color = fg,
+            maxLines = 1,
+            softWrap = false
+        )
+    }
+}
+
+/** Prominent duration number with a subtle pencil edit affordance and a single quiet hint line. */
+@Composable
+private fun DurationDisplay(
+    valueText: String,
+    caption: String,
+    showHint: Boolean,
+    onEdit: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val fontScale = LocalDensity.current.fontScale.coerceIn(0.85f, 2.0f)
+    val durationFont = spFor(56f, 1.18f)
+
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onEdit)
+            .defaultMinSize(minHeight = 44.dp)
+            .padding(horizontal = 12.dp, vertical = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = valueText,
+                fontSize = durationFont,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-1.5).sp,
+                color = colorScheme.onBackground,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Icon(
+                imageVector = Icons.Outlined.Edit,
+                contentDescription = "Edit duration",
+                tint = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                modifier = Modifier.size(17.dp)
+            )
+        }
+        Text(
+            text = caption,
+            fontSize = spFor(11.5f, 1.2f),
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 2.2.sp,
+            color = colorScheme.primary,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
+        if (showHint && fontScale <= 1.3f) {
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "Tap to set a custom time",
+                fontSize = spFor(10.5f, 1.2f),
+                color = colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+/** Evenly spaced duration presets; unselected presets stay visually quiet. */
+@Composable
+private fun PresetRow(
+    presets: List<Int>,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        presets.forEach { value ->
+            val isSelected = selected == value
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        if (isSelected) colorScheme.primary.copy(alpha = 0.16f)
+                        else colorScheme.surfaceContainerHigh
+                    )
+                    .then(
+                        if (isSelected) Modifier.border(1.dp, colorScheme.primary.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
+                        else Modifier
+                    )
+                    .clickable { onSelect(value) }
+                    .defaultMinSize(minHeight = 44.dp)
+                    .padding(vertical = 9.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "${value}m",
+                    fontSize = spFor(13.5f, 1.22f),
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                    color = if (isSelected) colorScheme.primary else colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+        }
+    }
+}
+
+/** Compact setting row: quiet label left, unambiguous theme-aware Switch right. */
+@Composable
+private fun SettingSwitchRow(
+    label: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    subtitleIsWarning: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 48.dp)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontSize = spFor(13.5f, 1.2f),
+                fontWeight = FontWeight.SemiBold,
+                color = colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(1.dp))
+            Text(
+                text = subtitle,
+                fontSize = spFor(11f, 1.2f),
+                color = if (subtitleIsWarning) colorScheme.error else colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = colorScheme.primary,
+                checkedThumbColor = colorScheme.onPrimary,
+                checkedBorderColor = colorScheme.primary,
+                uncheckedThumbColor = colorScheme.onSurfaceVariant,
+                uncheckedTrackColor = colorScheme.surfaceContainerHighest,
+                uncheckedBorderColor = colorScheme.outline
+            )
+        )
+    }
+}
+
+/** Technique card: clear title/category plus wrapping phase chips. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BreathingPatternSelector(
+    selectedPattern: BreathingPattern,
+    onPatternSelected: (String) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    var isDropdownOpen by remember { mutableStateOf(false) }
+
+    val patternCategory = when (selectedPattern.id) {
+        "box" -> "Focus & Stress Reset"
+        "478" -> "Deep Sleep & Relaxation"
+        "resonant" -> "Heart Coherence (5-5)"
+        "gentle_box" -> "Beginner Friendly"
+        else -> "Anti-Autopilot Settling"
+    }
+
+    Box(modifier = modifier) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { isDropdownOpen = true },
+            colors = CardDefaults.cardColors(
+                containerColor = colorScheme.surfaceContainer
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = selectedPattern.name,
+                            fontSize = spFor(14.5f, 1.25f),
+                            fontWeight = FontWeight.SemiBold,
+                            color = colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(1.dp))
+                        Text(
+                            text = patternCategory,
+                            fontSize = spFor(10.5f, 1.2f),
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 0.4.sp,
+                            color = colorScheme.primary
+                        )
+                    }
+                    Icon(
+                        imageVector = if (isDropdownOpen) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = "Select Pattern",
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                // Phase chips wrap cleanly on narrow screens / large fonts
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    when (selectedPattern.id) {
+                        "box" -> {
+                            PhaseChip("4s Inhale", colorScheme.primary)
+                            PhaseChip("4s Hold", colorScheme.primary)
+                            PhaseChip("4s Exhale", colorScheme.tertiary)
+                            PhaseChip("4s Hold", colorScheme.secondary)
+                        }
+                        "478" -> {
+                            PhaseChip("4s Inhale", colorScheme.primary)
+                            PhaseChip("7s Hold", colorScheme.primary)
+                            PhaseChip("8s Exhale", colorScheme.tertiary)
+                        }
+                        "resonant" -> {
+                            PhaseChip("5s Inhale", colorScheme.primary)
+                            PhaseChip("5s Exhale", colorScheme.tertiary)
+                        }
+                        else -> {
+                            PhaseChip(selectedPattern.inhaleSec.toString() + "s Inhale", colorScheme.primary)
+                            if (selectedPattern.holdFullSec > 0) {
+                                PhaseChip(selectedPattern.holdFullSec.toString() + "s Hold", colorScheme.primary)
+                            }
+                            PhaseChip(selectedPattern.exhaleSec.toString() + "s Exhale", colorScheme.tertiary)
+                            if (selectedPattern.holdEmptySec > 0) {
+                                PhaseChip(selectedPattern.holdEmptySec.toString() + "s Hold", colorScheme.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        DropdownMenu(
+            expanded = isDropdownOpen,
+            onDismissRequest = { isDropdownOpen = false },
+            modifier = Modifier
+                .fillMaxWidth(0.90f)
+                .background(colorScheme.surfaceContainerHigh)
+                .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                .padding(vertical = 4.dp)
+        ) {
+            BreathingPattern.allPatterns.forEach { item ->
+                val itemSelected = selectedPattern.id == item.id
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = item.name,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (itemSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                    color = if (itemSelected) colorScheme.primary else colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = item.subtitle,
+                                    fontSize = 11.5.sp,
+                                    color = colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
+                            }
+                            if (itemSelected) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(22.dp)
+                                        .clip(RoundedCornerShape(11.dp))
+                                        .background(colorScheme.primary.copy(alpha = 0.18f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = "Active Pattern",
+                                        tint = colorScheme.primary,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    onClick = {
+                        isDropdownOpen = false
+                        onPatternSelected(item.id)
+                    },
+                    modifier = Modifier
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (itemSelected) colorScheme.primary.copy(alpha = 0.14f) else Color.Transparent)
+                )
+            }
+        }
+    }
+}
+
+/** Slim phase chip (quiet, but clearly readable). */
+@Composable
+private fun PhaseChip(
+    label: String,
+    color: Color
+) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(6.dp))
-            .background(color.copy(alpha = 0.16f))
-            .border(0.8.dp, color.copy(alpha = 0.45f), RoundedCornerShape(6.dp))
-            .padding(
-                horizontal = (5.dp * dynamicScale).coerceIn(3.dp, 6.dp),
-                vertical = (2.dp * dynamicScale).coerceIn(1.dp, 2.5.dp)
-            )
+            .background(color.copy(alpha = 0.14f))
+            .border(1.dp, color.copy(alpha = 0.30f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 7.dp, vertical = 4.dp)
     ) {
-        val density = LocalDensity.current
-        val fontScale = density.fontScale.coerceIn(0.85f, 2.0f)
-        val clampedScale = fontScale.coerceIn(0.85f, 1.20f)
         Text(
             text = label,
-            fontSize = (11.5f * (clampedScale / fontScale)).sp,
+            fontSize = spFor(11f, 1.2f),
             fontWeight = FontWeight.SemiBold,
             color = color,
             maxLines = 1,
@@ -1043,11 +806,51 @@ private fun PhaseChip(label: String, color: Color, dynamicScale: Float = 1f) {
     }
 }
 
+/** Primary action button, gradient derived from the active Material You accent. */
 @Composable
-private fun PhaseSeparator() {
-    Text(
-        text = "➔",
-        fontSize = 10.sp,
-        color = ZenTextMuted
+private fun PrimaryStartButton(
+    isBoxMode: Boolean,
+    dynamicScale: Float,
+    onPress: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val buttonGradient = Brush.verticalGradient(
+        colors = listOf(
+            colorScheme.primary,
+            colorScheme.primary.copy(alpha = 0.82f)
+        )
     )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = (52.dp * dynamicScale).coerceIn(48.dp, 56.dp))
+            .shadow(6.dp, RoundedCornerShape(18.dp), spotColor = colorScheme.primary.copy(alpha = 0.30f))
+            .clip(RoundedCornerShape(18.dp))
+            .background(buttonGradient)
+            .clickable(onClick = onPress)
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = if (isBoxMode) Icons.Outlined.Air else Icons.Default.PlayArrow,
+                contentDescription = null,
+                tint = colorScheme.onPrimary,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isBoxMode) "Begin Box Breathing" else "Begin Practice",
+                fontSize = spFor(16f, 1.2f),
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.8.sp,
+                color = colorScheme.onPrimary
+            )
+        }
+    }
 }

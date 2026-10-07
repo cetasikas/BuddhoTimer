@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.BatteryChargingFull
@@ -63,6 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.samadhi.meditationtimer.data.ScreenTimePreferences
 import com.samadhi.meditationtimer.ui.theme.BambooTealTheme
 import com.samadhi.meditationtimer.ui.theme.GoldenBodhiTheme
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
@@ -85,7 +87,12 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 private data class FeatureHighlight(
     val icon: ImageVector,
@@ -99,7 +106,8 @@ private data class TutorialStep(
     val description: String,
     val icon: ImageVector,
     val features: List<FeatureHighlight> = emptyList(),
-    val isPermissionStep: Boolean = false
+    val isPermissionStep: Boolean = false,
+    val isGoalStep: Boolean = false
 )
 
 private val tutorialSteps = listOf(
@@ -137,6 +145,24 @@ private val tutorialSteps = listOf(
         )
     ),
     TutorialStep(
+        title = "Mindful Screen Time",
+        subtitle = "Awareness, not guilt \u00B7 100% on-device",
+        description = "The Screen tab sits your daily phone use beside your practice. Nothing leaves your phone - no accounts, no analysis, no judgement. Just clarity before habit takes over.",
+        icon = Icons.Default.PhoneAndroid,
+        features = listOf(
+            FeatureHighlight(Icons.Default.SelfImprovement, "Today & Purpose Ratio", "One glance at your time plus how it measures against your meditation sits"),
+            FeatureHighlight(Icons.Default.Insights, "Hourly, Weekly & Beyond", "Peak hours, past-week bars, pickups, top apps, and a month habit calendar"),
+            FeatureHighlight(Icons.Default.NotificationsActive, "Optional Lock Screen Status", "A quiet, ongoing notification in the shade - toggle it anytime in Settings")
+        )
+    ),
+    TutorialStep(
+        title = "Set a Screen Time Intention",
+        subtitle = "Optional \u00B7 change it anytime in Settings or on the Screen tab",
+        description = "Pick a daily target and your dashboard, weekly view, and lock-screen status will all measure the day's progress against it. Nothing is blocked or enforced \u2014 this is awareness, not restriction.",
+        icon = Icons.Default.Insights,
+        isGoalStep = true
+    ),
+    TutorialStep(
         title = "Recommended Permissions",
         subtitle = "Enable for quiet, uninterrupted sits",
         description = "Grant these two permissions so phone calls stay silenced and your timer runs without interruption.",
@@ -168,6 +194,11 @@ fun TutorialOverlay(
 
     var isDndGranted by remember { mutableStateOf(checkDnd()) }
     var isBatteryOptIgnored by remember { mutableStateOf(checkBattery()) }
+
+    // Daily screen time goal, read from the same store the dashboard uses.
+    val screenTimePrefs = remember { ScreenTimePreferences(context) }
+    val screenTimeGoalMinutes by screenTimePrefs.dailyGoalMinutes.collectAsState(initial = 0)
+    val goalScope = rememberCoroutineScope()
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -344,6 +375,78 @@ fun TutorialOverlay(
                             }
                         }
                     }
+                }
+            }
+
+            // Daily Screen Time Goal Picker (On Goal Step)
+            if (step.isGoalStep) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "DAILY SCREEN TIME GOAL",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.4.sp,
+                        color = ZenTextMuted
+                    )
+
+                    ScreenTimePreferences.goalPresets.chunked(3).forEach { row ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            row.forEach { minutes ->
+                                val selected = screenTimeGoalMinutes == minutes
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(11.dp))
+                                        .background(
+                                            if (selected) currentTheme.primary
+                                            else ZenSurfaceVariant.copy(alpha = 0.75f)
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (selected) Color.Transparent else ZenBorder,
+                                            RoundedCornerShape(11.dp)
+                                        )
+                                        .clickable {
+                                            goalScope.launch {
+                                                screenTimePrefs.setDailyGoalMinutes(minutes)
+                                            }
+                                        }
+                                        .padding(vertical = 13.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = ScreenTimePreferences.presetLabel(minutes),
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (selected) ZenObsidian else ZenTextSecondary
+                                    )
+                                }
+                            }
+                            // Keep the final row aligned with the grid above it.
+                            repeat(3 - row.size) {
+                                Box(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    Text(
+                        text = if (screenTimeGoalMinutes == 0) {
+                            "No target set. The dashboard will still show your usage so you can decide later."
+                        } else {
+                            "Your dashboard will show progress toward ${screenTimeGoalMinutes / 60}h of screen time each day."
+                        },
+                        fontSize = 11.sp,
+                        color = ZenTextMuted
+                    )
                 }
             }
 
@@ -549,8 +652,27 @@ fun TutorialOverlay(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                TextButton(onClick = onDismiss) {
-                    Text("Skip", color = ZenTextMuted, fontSize = 13.sp)
+                TextButton(
+                    onClick = {
+                        if (currentStepIndex > 0) {
+                            currentStepIndex--
+                        } else {
+                            onDismiss()
+                        }
+                    }
+                ) {
+                    if (currentStepIndex > 0) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            tint = ZenTextMuted,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Back", color = ZenTextMuted, fontSize = 13.sp)
+                    } else {
+                        Text("Skip", color = ZenTextMuted, fontSize = 13.sp)
+                    }
                 }
 
                 Button(

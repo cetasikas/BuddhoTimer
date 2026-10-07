@@ -1,8 +1,8 @@
-package com.samadhi.meditationtimer.ui.screens.screentime
+﻿package com.samadhi.meditationtimer.ui.screens.screentime
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,18 +19,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Air
-import androidx.compose.material.icons.filled.HourglassBottom
-import androidx.compose.material.icons.filled.LockClock
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SelfImprovement
-import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -45,24 +41,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.samadhi.meditationtimer.service.AppUsage
-import com.samadhi.meditationtimer.service.DayUsage
+import com.samadhi.meditationtimer.data.ScreenTimePreferences
 import com.samadhi.meditationtimer.service.UsageStatsHelper
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
@@ -73,7 +74,6 @@ import com.samadhi.meditationtimer.ui.theme.ZenObsidian
 import com.samadhi.meditationtimer.ui.theme.ZenSage
 import com.samadhi.meditationtimer.ui.theme.ZenSurface
 import com.samadhi.meditationtimer.ui.theme.ZenSurfaceVariant
-import com.samadhi.meditationtimer.ui.theme.ZenTeal
 import com.samadhi.meditationtimer.ui.theme.ZenTextMuted
 import com.samadhi.meditationtimer.ui.theme.ZenTextPrimary
 import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
@@ -82,7 +82,9 @@ import com.samadhi.meditationtimer.ui.theme.ZenTextSecondary
 fun ScreenTimeScreen(
     onNavigateBack: () -> Unit,
     onOpenTimer: () -> Unit = {},
-    viewModel: ScreenTimeViewModel = viewModel(),
+    viewModel: ScreenTimeViewModel = viewModel(
+        viewModelStoreOwner = findViewModelStoreOwner(LocalContext.current)
+    ),
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -152,7 +154,7 @@ fun ScreenTimeScreen(
                                 color = ZenTextPrimary
                             )
                             Text(
-                                text = "AWARENESS • NOT GUILT",
+                                text = "AWARENESS \u00B7 NOT GUILT",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     letterSpacing = 1.6.sp,
                                     fontWeight = FontWeight.SemiBold
@@ -234,8 +236,18 @@ fun ScreenTimeScreen(
                 }
             }
 
-            // Permission Request Card (shown if permission is not yet granted)
-            if (!uiState.hasPermission) {
+            // First-run tracking question, before any permission ask.
+            if (!uiState.trackingPromptAnswered) {
+                item {
+                    TrackingPromptCard(
+                        onEnable = { viewModel.enableTracking() },
+                        onDismiss = { viewModel.dismissTrackingPrompt() }
+                    )
+                }
+            }
+
+            // Permission Request Card (shown once the tracking prompt is answered)
+            if (!uiState.hasPermission && uiState.trackingPromptAnswered) {
                 item {
                     Card(
                         modifier = Modifier
@@ -275,7 +287,7 @@ fun ScreenTimeScreen(
                             )
 
                             Text(
-                                text = "To show your screen time alongside your meditation practice, BuddhoTimer needs Usage Access. All data stays 100% local on your phone — no accounts, no tracking, complete privacy.",
+                                text = "To show your screen time alongside your meditation practice, BuddhoTimer needs Usage Access. All data stays 100% local on your phone \u2014 no accounts, no tracking, complete privacy.",
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 18.sp),
                                 color = ZenTextSecondary,
                                 textAlign = TextAlign.Center
@@ -298,8 +310,9 @@ fun ScreenTimeScreen(
                         }
                     }
                 }
-            } else {
-                // Today's Screen Time Summary (TimeAware Core Visual)
+            } else if (uiState.hasPermission) {
+                if (!uiState.isLoading) {
+                    // Today's Screen Time Summary (TimeAware Core Visual)
                 item {
                     val severity = UsageStatsHelper.getUsageSeverity(uiState.todayScreenTimeMs)
                     val zenLabel = UsageStatsHelper.getZenUsageLabel(uiState.todayScreenTimeMs)
@@ -309,6 +322,8 @@ fun ScreenTimeScreen(
                         2 -> ZenDanger.copy(alpha = 0.9f)
                         else -> ZenDanger
                     }
+                    val goalMinutes = uiState.goalMinutes
+                    val goalMs = goalMinutes * 60_000L
 
                     Card(
                         modifier = Modifier
@@ -366,13 +381,37 @@ fun ScreenTimeScreen(
                                     color = statusColor
                                 )
                             }
+
+                            // Goal glance: remaining time against the chosen intention.
+                            if (goalMinutes > 0) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                val remainingMs = goalMs - uiState.todayScreenTimeMs
+                                Text(
+                                    text = if (remainingMs > 0) {
+                                        "${UsageStatsHelper.formatDuration(remainingMs)} left of your " +
+                                            "${ScreenTimePreferences.presetLabel(goalMinutes)} intention"
+                                    } else {
+                                        "Your ${ScreenTimePreferences.presetLabel(goalMinutes)} intention is met"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
+                                    color = ZenTextMuted
+                                )
+                            }
                         }
                     }
                 }
 
+                // Optional daily goal picker, feeding every chart below.
+                item {
+                    DailyGoalSection(
+                        goalMinutes = uiState.goalMinutes,
+                        onSelect = { minutes -> viewModel.setGoalMinutes(minutes) }
+                    )
+                }
+
                 // Mindful Practice vs Screen Time Comparison Card
                 item {
-                    val totalMeditationMins = uiState.sessionStats.totalPracticeMinutes
+                    val totalMeditationMins = uiState.todayPracticeMinutes
                     val screenTimeMins = uiState.todayScreenTimeMs / 60_000L
 
                     Card(
@@ -407,7 +446,7 @@ fun ScreenTimeScreen(
                                     )
                                 }
 
-                                if (screenTimeMins > 0L && totalMeditationMins > 0L) {
+                                if (screenTimeMins > 0L) {
                                     val sumMins = (screenTimeMins + totalMeditationMins).coerceAtLeast(1L)
                                     val ratio = ((totalMeditationMins.toFloat() / sumMins.toFloat()) * 100).toInt()
                                     Text(
@@ -438,18 +477,18 @@ fun ScreenTimeScreen(
                                 ) {
                                     Column {
                                         Text(
-                                            text = "Practice Sits",
+                                            text = "Practice Today",
                                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                                             color = ZenTextSecondary
                                         )
                                         Spacer(modifier = Modifier.height(4.dp))
                                         Text(
-                                            text = "${uiState.sessionStats.totalSessionsCount} sessions",
+                                            text = "${uiState.todayPracticeCount} sessions",
                                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                                             color = currentTheme.primary
                                         )
                                         Text(
-                                            text = "${totalMeditationMins}m total",
+                                            text = "${totalMeditationMins}m today",
                                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                                             color = ZenTextMuted
                                         )
@@ -487,6 +526,30 @@ fun ScreenTimeScreen(
                             }
                         }
                     }
+                }
+
+                // Hour by hour, today
+                item {
+                    HourlyUsageSection(
+                        hourly = uiState.hourlyToday,
+                        goalMinutes = uiState.goalMinutes
+                    )
+                }
+
+                // Past week, horizontal bars with goal markers
+                item {
+                    WeeklyBarSection(
+                        days = uiState.weeklyDays,
+                        goalMinutes = uiState.goalMinutes
+                    )
+                }
+
+                // Phone pickups, screen off to on
+                item {
+                    PickupsWeekSection(
+                        days = uiState.weeklyDays,
+                        pickupsAvailable = uiState.pickupsAvailable
+                    )
                 }
 
                 // Top Apps Breakdown (TimeAware "Quiet Receipt" Aesthetic)
@@ -527,23 +590,45 @@ fun ScreenTimeScreen(
                                 Spacer(modifier = Modifier.height(14.dp))
 
                                 val maxUsageMs = uiState.topApps.maxOfOrNull { it.durationMs }?.coerceAtLeast(1L) ?: 1L
+                                val todayTotalMs = uiState.todayScreenTimeMs.coerceAtLeast(1L)
 
                                 uiState.topApps.forEachIndexed { index, app ->
                                     val fraction = (app.durationMs.toFloat() / maxUsageMs).coerceIn(0.04f, 1f)
+                                    val sharePercent =
+                                        ((app.durationMs * 100.0) / todayTotalMs).toInt().coerceIn(0, 100)
                                     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(
-                                                text = "${index + 1}. ${app.appName}",
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    fontWeight = FontWeight.Medium,
-                                                    fontSize = 13.5.sp
-                                                ),
-                                                color = ZenTextPrimary
+                                            AppIcon(
+                                                packageName = app.packageName,
+                                                size = 30.dp
                                             )
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = "${index + 1}. ${app.appName}",
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        fontWeight = FontWeight.Medium,
+                                                        fontSize = 13.5.sp
+                                                    ),
+                                                    color = ZenTextPrimary,
+                                                    maxLines = 1
+                                                )
+                                                Text(
+                                                    text = if (app.openCount > 0) {
+                                                        "$sharePercent% of screen time \u00B7 ${app.openCount} opens"
+                                                    } else {
+                                                        "$sharePercent% of your screen time"
+                                                    },
+                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                        fontSize = 10.sp
+                                                    ),
+                                                    color = ZenTextMuted
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             Text(
                                                 text = UsageStatsHelper.formatDuration(app.durationMs),
                                                 style = MaterialTheme.typography.bodyMedium.copy(
@@ -583,72 +668,12 @@ fun ScreenTimeScreen(
                     }
                 }
 
-                // 7-Day Weekly Rhythm (Past 7 Days)
-                if (uiState.weeklyDays.isNotEmpty()) {
-                    item {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp)),
-                            colors = CardDefaults.cardColors(containerColor = ZenSurface.copy(alpha = 0.85f)),
-                            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(ZenBorder)),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(18.dp)) {
-                                Text(
-                                    text = "7-Day Rhythm",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 15.sp
-                                    ),
-                                    color = ZenTextPrimary
-                                )
-                                Spacer(modifier = Modifier.height(14.dp))
-
-                                val maxDayMs = uiState.weeklyDays.maxOfOrNull { it.durationMs }?.coerceAtLeast(3_600_000L) ?: 3_600_000L
-
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(110.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.Bottom
-                                ) {
-                                    uiState.weeklyDays.forEach { day ->
-                                        val barHeightFraction = (day.durationMs.toFloat() / maxDayMs).coerceIn(0.06f, 1f)
-                                        val daySeverity = UsageStatsHelper.getUsageSeverity(day.durationMs)
-                                        val barColor = when (daySeverity) {
-                                            0 -> ZenSage
-                                            1 -> ZenAmber
-                                            else -> ZenDanger
-                                        }
-
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth(0.55f)
-                                                    .height((70 * barHeightFraction).dp)
-                                                    .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                                                    .background(barColor.copy(alpha = 0.85f))
-                                            )
-                                            Spacer(modifier = Modifier.height(6.dp))
-                                            Text(
-                                                text = day.dayName.take(3),
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    fontSize = 10.sp,
-                                                    fontWeight = if (day.dayName == "Today") FontWeight.Bold else FontWeight.Normal
-                                                ),
-                                                color = if (day.dayName == "Today") currentTheme.primaryLight else ZenTextSecondary
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                // Calendar month, kept above the final action.
+                item {
+                    MonthlyCalendarSection(
+                        monthDays = uiState.monthDays,
+                        goalMinutes = uiState.goalMinutes
+                    )
                 }
 
                 // Quick Practice Action
@@ -679,7 +704,81 @@ fun ScreenTimeScreen(
                         )
                     }
                 }
+            } else {
+                item {
+                    LoadingStatsCard()
+                }
+            }
             }
         }
+    }
+}
+
+@Composable
+private fun LoadingStatsCard() {
+    val currentTheme = LocalZenTheme.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(ZenSurfaceVariant.copy(alpha = 0.9f))
+            .padding(vertical = 44.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(26.dp),
+                color = currentTheme.primary,
+                strokeWidth = 2.5.dp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "Reading today's screen time\u2026",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                color = ZenTextMuted
+            )
+        }
+    }
+}
+
+/** Walks up wrapped contexts to the nearest [ViewModelStoreOwner] (the hosting Activity). */
+private tailrec fun findViewModelStoreOwner(context: Context): ViewModelStoreOwner =
+    when (context) {
+        is ViewModelStoreOwner -> context
+        is ContextWrapper -> findViewModelStoreOwner(context.baseContext)
+        else -> error("Context is not a ViewModelStoreOwner")
+    }
+
+/**
+ * Renders an installed app's launcher icon, falling back to a neutral square
+ * when the package cannot be resolved or fails to rasterise.
+ */
+@Composable
+private fun AppIcon(
+    packageName: String,
+    size: Dp
+) {
+    val context = LocalContext.current
+    val bitmap = remember(packageName) {
+        runCatching {
+            val drawable = context.packageManager.getApplicationIcon(packageName)
+            drawable.toBitmap(width = 96, height = 96).asImageBitmap()
+        }.getOrNull()
+    }
+
+    if (bitmap != null) {
+        Image(
+            painter = BitmapPainter(bitmap),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(size)
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(RoundedCornerShape(8.dp))
+                .background(ZenSurfaceVariant)
+        )
     }
 }
