@@ -17,9 +17,11 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
 
-    <!-- Time anchor hourly notifications (Android 12+) -->
+    <!-- Time anchor hourly notifications & meditation reminders (Android 12+).
+         USE_EXACT_ALARM is intentionally NOT declared: it is restricted to
+         alarm-clock/calendar apps and a meditation timer does not qualify.
+         setExact*() calls fall back to inexact alarms when the grant is denied. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <!-- Required on Android 11+ so app labels can be resolved for the packages
          observed in usage stats events. Without this, PackageManager throws
