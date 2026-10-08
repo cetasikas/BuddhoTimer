@@ -50,6 +50,15 @@ object ScreenTimeNotification {
 
     private const val TICK_REQUEST_CODE = 3002
 
+    /**
+     * True while a one-shot refresh tick is armed. `setInexactRepeating` lets
+     * the alarm manager batch and drift the ticks, and a missed screen-off can
+     * leave a repeating chain running idle, so the tick is re-armed one at a
+     * time from the moment it actually fires. The flag keeps overlapping
+     * triggers (screen-on plus the previous tick) from doubling up.
+     */
+    private val tickerArmed = java.util.concurrent.atomic.AtomicBoolean(false)
+
     private const val ACCENT = 0xFF26A69A.toInt()
     private const val OVER = 0xFFE5A93B.toInt()
 
@@ -63,19 +72,25 @@ object ScreenTimeNotification {
         manager(context).cancel(NOTIFICATION_ID)
     }
 
-    /** Repeating refresh while the screen is on; cancelled again on screen off. */
+    /** One-shot refresh about a minute from now; re-armed by each tick. */
     fun scheduleTicker(context: Context) {
         val app = context.applicationContext
+        if (!tickerArmed.compareAndSet(false, true)) return
         val alarm = app.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        alarm.setInexactRepeating(
-            AlarmManager.RTC,
-            System.currentTimeMillis() + 60_000L,
-            60_000L,
-            tickIntent(app)
-        )
+        val triggerAt = System.currentTimeMillis() + 60_000L
+        val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+            alarm.canScheduleExactAlarms()
+        if (exact) {
+            // Exact is fine here: the ticker only exists while the screen is on,
+            // so the device is already awake and the alarm costs no extra wakeups.
+            alarm.setExact(AlarmManager.RTC, triggerAt, tickIntent(app))
+        } else {
+            alarm.setWindow(AlarmManager.RTC, triggerAt, 60_000L, tickIntent(app))
+        }
     }
 
     fun cancelTicker(context: Context) {
+        tickerArmed.set(false)
         val app = context.applicationContext
         val alarm = app.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarm.cancel(tickIntent(app))
@@ -98,12 +113,17 @@ object ScreenTimeNotification {
             Intent.ACTION_SCREEN_OFF -> cancelTicker(app)
 
             TICK_ACTION -> {
+                // This tick consumed the armed one-shot; re-arm for the next
+                // minute only if the screen is still on.
+                tickerArmed.set(false)
                 if (!isEnabled(app)) {
                     cancelTicker(app)
                     cancel(app)
                     return
                 }
                 updateNow(app)
+                val pm = app.getSystemService(Context.POWER_SERVICE) as PowerManager
+                if (pm.isInteractive) scheduleTicker(app)
             }
 
             Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED -> {
