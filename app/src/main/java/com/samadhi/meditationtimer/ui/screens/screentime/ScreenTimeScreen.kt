@@ -544,11 +544,11 @@ fun ScreenTimeScreen(
                     )
                 }
 
-                // Phone pickups, screen off to on
+                // Unlocks: wakes that ended with the keyguard dismissed
                 item {
-                    PickupsWeekSection(
+                    UnlocksWeekSection(
                         days = uiState.weeklyDays,
-                        pickupsAvailable = uiState.pickupsAvailable
+                        unlocksAvailable = uiState.unlocksAvailable
                     )
                 }
 

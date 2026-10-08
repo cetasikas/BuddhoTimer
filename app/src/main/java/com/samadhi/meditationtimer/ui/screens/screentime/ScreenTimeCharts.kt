@@ -70,7 +70,7 @@ import kotlin.math.sqrt
 /**
  * Shared intensity scale for every usage visual on this screen.
  *
- * One scale is used for hourly bars, weekly bars, the month grid and pickups so
+ * One scale is used for hourly bars, weekly bars, the month grid and unlocks so
  * the same shade always means the same amount. The ramp is deliberately bounded:
  * it lightens towards the surface at the low end and saturates towards the theme
  * accent at the high end. There is no red end and no numeric scale, because a
@@ -724,31 +724,31 @@ private fun DayCircle(
 }
 
 /**
- * Week of pickups, coloured by the same intensity scale as the usage charts.
+ * Week of unlocks, coloured by the same intensity scale as the usage charts.
  */
 @Composable
-fun PickupsWeekChart(
+fun UnlocksWeekChart(
     days: List<DayUsage>,
     modifier: Modifier = Modifier
 ) {
     if (days.isEmpty()) return
-    val peak = remember(days) { days.maxOfOrNull { it.pickups }?.coerceAtLeast(1) ?: 1 }
-    val todayPickups = days.lastOrNull()?.pickups ?: 0
+    val peak = remember(days) { days.maxOfOrNull { it.unlocks }?.coerceAtLeast(1) ?: 1 }
+    val todayUnlocks = days.lastOrNull()?.unlocks ?: 0
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                text = "$todayPickups",
+                text = "$todayUnlocks",
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 40.sp,
                     fontFamily = FontFamily.Monospace
                 ),
-                color = usageColor(todayPickups.toFloat() / peak)
+                color = usageColor(todayUnlocks.toFloat() / peak)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (todayPickups == 1) "pickup" else "pickups",
+                text = if (todayUnlocks == 1) "unlock" else "unlocks",
                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
                 color = ZenTextSecondary,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -758,7 +758,7 @@ fun PickupsWeekChart(
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "How many times you picked up your phone and turned the screen on. Darker means more.",
+            text = "How many times you unlocked your phone. Wakes that stayed on the lock screen don't count. Darker means more.",
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
             color = ZenTextMuted
         )
@@ -770,13 +770,13 @@ fun PickupsWeekChart(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             days.forEach { day ->
-                val fraction = (day.pickups.toFloat() / peak).coerceIn(0f, 1f)
+                val fraction = (day.unlocks.toFloat() / peak).coerceIn(0f, 1f)
                 Column(
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = if (day.pickups > 0) "${day.pickups}" else "",
+                        text = if (day.unlocks > 0) "${day.unlocks}" else "",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                         color = ZenTextMuted
                     )
@@ -790,9 +790,9 @@ fun PickupsWeekChart(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height((34f * fraction).coerceAtLeast(if (day.pickups > 0) 3f else 1f).dp)
+                                .height((34f * fraction).coerceAtLeast(if (day.unlocks > 0) 3f else 1f).dp)
                                 .background(
-                                    if (day.pickups > 0) usageColor(fraction) else ZenSurfaceVariant,
+                                    if (day.unlocks > 0) usageColor(fraction) else ZenSurfaceVariant,
                                     RoundedCornerShape(3.dp)
                                 )
                         )
@@ -942,22 +942,22 @@ fun MonthlyCalendarSection(
 }
 
 @Composable
-fun PickupsWeekSection(
+fun UnlocksWeekSection(
     days: List<DayUsage>,
-    pickupsAvailable: Boolean,
+    unlocksAvailable: Boolean,
     modifier: Modifier = Modifier
 ) {
     if (days.isEmpty()) return
     ChartCard(
-        title = "Phone Pickups",
-        subtitle = "SCREEN-OFF TO ON",
+        title = "Unlocks",
+        subtitle = "SCREEN-ON TO UNLOCK",
         modifier = modifier
     ) {
-        if (pickupsAvailable) {
-            PickupsWeekChart(days = days)
+        if (unlocksAvailable) {
+            UnlocksWeekChart(days = days)
         } else {
             Text(
-                text = "Pickup tracking needs Android 10 or newer. Your app-by-app times still work.",
+                text = "Unlock tracking needs Android 10 or newer. Your app-by-app times still work.",
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                 color = ZenTextMuted
             )

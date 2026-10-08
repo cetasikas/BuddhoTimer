@@ -151,7 +151,7 @@ private val tutorialSteps = listOf(
         icon = Icons.Default.PhoneAndroid,
         features = listOf(
             FeatureHighlight(Icons.Default.SelfImprovement, "Today & Purpose Ratio", "One glance at your time plus how it measures against your meditation sits"),
-            FeatureHighlight(Icons.Default.Insights, "Hourly, Weekly & Beyond", "Peak hours, past-week bars, pickups, top apps, and a month habit calendar"),
+            FeatureHighlight(Icons.Default.Insights, "Hourly, Weekly & Beyond", "Peak hours, past-week bars, unlocks, top apps, and a month habit calendar"),
             FeatureHighlight(Icons.Default.NotificationsActive, "Optional Lock Screen Status", "A quiet, ongoing notification in the shade - toggle it anytime in Settings")
         )
     ),

@@ -22,10 +22,10 @@ data class ScreenTimeUiState(
     val todayScreenTimeMs: Long = 0L,
     val topApps: List<AppUsage> = emptyList(),
     val weeklyDays: List<DayUsage> = emptyList(),
-    /** Screen-ons today, i.e. phone pickups. */
-    val todayPickups: Int = 0,
-    /** False on API < 29, where pickups cannot be detected. */
-    val pickupsAvailable: Boolean = false,
+    /** Wakes that ended in an unlock (keyguard dismissed) today. */
+    val todayUnlocks: Int = 0,
+    /** False on API < 29, where unlocks cannot be detected. */
+    val unlocksAvailable: Boolean = false,
     /** Foreground time per hour of today, for the hour-of-day chart. */
     val hourlyToday: List<HourlyUsage> = emptyList(),
     /** Per-day totals for the current calendar month. */
@@ -118,8 +118,8 @@ class ScreenTimeViewModel(application: Application) : AndroidViewModel(applicati
                 todayScreenTimeMs = snapshot?.todayTotalMs ?: 0L,
                 topApps = snapshot?.todayApps ?: emptyList(),
                 weeklyDays = snapshot?.days ?: emptyList(),
-                todayPickups = snapshot?.todayPickups ?: 0,
-                pickupsAvailable = snapshot?.pickupsAvailable ?: false,
+                todayUnlocks = snapshot?.todayUnlocks ?: 0,
+                unlocksAvailable = snapshot?.unlocksAvailable ?: false,
                 hourlyToday = snapshot?.hourlyToday ?: emptyList(),
                 monthDays = snapshot?.monthDays ?: emptyList(),
                 todayPracticeCount = todayPractice.sessionCount,

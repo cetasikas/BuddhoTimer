@@ -42,6 +42,15 @@ object UsageStatsHelper {
 /** Length of a calendar day, used to bound per-day usage queries. */
 private const val DAY_MS = 24L * 60L * 60L * 1000L
 
+/**
+ * How far back the event walk looks beyond a window start, so an app that was
+ * already in the foreground when the window opened (e.g. across midnight)
+ * still has its ACTIVITY_RESUMED on record and its segment is reconstructed.
+ * Segments are clipped back to the window start, so the lookback itself never
+ * leaks time into the totals.
+ */
+private const val LOOKBACK_MS = 6L * 60L * 60L * 1000L
+
 
     /**
      * Returns true if the user has granted Usage Access permission.
@@ -170,8 +179,9 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
 
             var total = 0L
             accumulateForeground(
-                usageStatsManager, from, to, filter::isExcluded,
-                onSegment = { _, segStart, segEnd -> total += segEnd - segStart }
+                usageStatsManager, from - LOOKBACK_MS, to, filter::isExcluded,
+                onSegment = { _, segStart, segEnd -> total += segEnd - segStart },
+                reportFrom = from
             )
             total
         } catch (e: Exception) {
@@ -198,10 +208,11 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
 
             val perApp = mutableMapOf<String, Long>()
             accumulateForeground(
-                usageStatsManager, from, to, filter::isExcluded,
+                usageStatsManager, from - LOOKBACK_MS, to, filter::isExcluded,
                 onSegment = { pkg, segStart, segEnd ->
                     perApp[pkg] = (perApp[pkg] ?: 0L) + (segEnd - segStart)
-                }
+                },
+                reportFrom = from
             )
 
             perApp.entries
@@ -229,7 +240,7 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
      * Midnight-aligned daily totals for the last [days] days, oldest first.
      *
      * Retained for callers that only need the coarse bars; the dashboard uses
-     * [getScreenTimeSnapshot] so that totals and pickups stay consistent.
+     * [getScreenTimeSnapshot] so that totals and unlocks stay consistent.
      */
     fun getWeeklyScreenTime(context: Context): List<DayUsage> {
         return getScreenTimeSnapshot(context, days = 7).days
@@ -246,18 +257,18 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
      *
      * @param days number of calendar days to report, today included
      *
-     * Known limitation: an app that was already in the foreground when the
-     * window opened has no ACTIVITY_RESUMED inside it, so its time until the
-     * next pause goes uncounted. In practice this only affects apps still open
-     * at midnight six days ago, so the error is small and bounded.
+     * The event walk reaches back a few hours before the window it reports on,
+     * so an app that was already in the foreground when the window opened (for
+     * example, still open at midnight) is still reconstructed and credited to
+     * the right day.
      */
     fun getScreenTimeSnapshot(context: Context, days: Int = 7): ScreenTimeSnapshot {
         val empty = ScreenTimeSnapshot(
             days = emptyList(),
             todayTotalMs = 0L,
             todayApps = emptyList(),
-            todayPickups = 0,
-            pickupsAvailable = false
+            todayUnlocks = 0,
+            unlocksAvailable = false
         )
         if (!hasUsageAccessPermission(context)) return empty
 
@@ -275,7 +286,7 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
 
         // ACTIVITY_RESUMED/PAUSED/STOPPED were introduced in API 29. On older
         // releases the event stream carries different type codes, so fall back
-        // to aggregated buckets and report that pickups are unavailable.
+        // to aggregated buckets and report that unlocks are unavailable.
         val base = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             legacySnapshot(context, days)
         } else {
@@ -289,8 +300,10 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
     }
 
     /**
-     * Replays the activity event stream over [from]..[to] and reports each
-     * reconstructed foreground interval via [onSegment].
+     * Replays the activity event stream over [queryFrom]..[to] and reports each
+     * reconstructed foreground interval via [onSegment]. [reportFrom] is the
+     * boundary segments are clipped back to; it defaults to [queryFrom], so
+     * callers that pass a lookback still report exactly their window.
      *
      * Exactly one activity is treated as topmost at a time: ACTIVITY_RESUMED
      * opens a segment and a matching ACTIVITY_PAUSED/STOPPED closes it, so the
@@ -304,15 +317,16 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
      *
      * Events arrive in chronological order, so segments are already sorted.
      * [onEvent], when provided, observes every raw event of the same pass,
-     * letting callers count pickups and app opens without a second query.
+     * letting callers count unlocks and app opens without a second query.
      */
     private fun accumulateForeground(
         usageStatsManager: UsageStatsManager,
-        from: Long,
+        queryFrom: Long,
         to: Long,
         excluded: (String?) -> Boolean,
         onSegment: (packageName: String, segStart: Long, segEnd: Long) -> Unit,
-        onEvent: ((UsageEvents.Event) -> Unit)? = null
+        onEvent: ((UsageEvents.Event) -> Unit)? = null,
+        reportFrom: Long = queryFrom
     ) {
         var currentPkg: String? = null
         var currentClass: String? = null
@@ -320,14 +334,14 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
 
         fun closeSegment(at: Long) {
             val pkg = currentPkg ?: return
-            val start = segStart.coerceAtLeast(from)
+            val start = segStart.coerceAtLeast(reportFrom)
             val end = at.coerceAtMost(to)
             currentPkg = null
             currentClass = null
             if (end > start) onSegment(pkg, start, end)
         }
 
-        val events = usageStatsManager.queryEvents(from, to)
+        val events = usageStatsManager.queryEvents(queryFrom, to)
         val event = UsageEvents.Event()
         while (events.getNextEvent(event)) {
             if (event.timeStamp > to) break
@@ -421,12 +435,13 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
         return try {
             val hours = hourStartsOf(start)
             accumulateForeground(
-                usageStatsManager, start, now, excluded,
+                usageStatsManager, start - LOOKBACK_MS, now, excluded,
                 onSegment = { _, segStart, segEnd ->
                     splitInto(segStart, segEnd, hours) { hour, pieceStart, pieceEnd ->
                         totals[hour] += pieceEnd - pieceStart
                     }
-                }
+                },
+                reportFrom = start
             )
             totals.mapIndexed { hour, ms -> HourlyUsage(hour, ms) }
         } catch (e: Exception) {
@@ -481,12 +496,13 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
                 }.timeInMillis
             }
             accumulateForeground(
-                usageStatsManager, monthStart, now, excluded,
+                usageStatsManager, monthStart - LOOKBACK_MS, now, excluded,
                 onSegment = { _, segStart, segEnd ->
                     splitInto(segStart, segEnd, dayStarts) { slot, pieceStart, pieceEnd ->
                         totals[slot + 1] += pieceEnd - pieceStart
                     }
-                }
+                },
+                reportFrom = monthStart
             )
         } else {
             // Fallback: aggregated buckets queried one day at a time. A single
@@ -527,8 +543,8 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
             days = emptyList(),
             todayTotalMs = 0L,
             todayApps = emptyList(),
-            todayPickups = 0,
-            pickupsAvailable = true
+            todayUnlocks = 0,
+            unlocksAvailable = true
         )
         if (!hasUsageAccessPermission(context)) return empty
 
@@ -551,15 +567,19 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
 
             val dayTotals = LongArray(days)
             val todayAppTotals = mutableMapOf<String, Long>()
-            val dayPickups = IntArray(days)
+            val dayUnlocks = IntArray(days)
             val todayAppOpens = mutableMapOf<String, Int>()
             // Per-package count of currently resumed activities. Apps commonly run
             // several activities, so an open is only a 0 -> 1 transition, otherwise
             // in-app navigation would be counted as a fresh open.
             val resumedActivities = mutableMapOf<String, Int>()
             val todayIdx = days - 1
+            // Whether the current wake (screen on) still has a chance of ending
+            // in an unlock. Saw both SCREEN_INTERACTIVE and the keyguard events
+            // in the per-day walk below so they stay consistent with durations.
+            var unlocking = false
 
-            // One event-stream walk yields durations, pickups and opens together.
+            // One event-stream walk yields durations, unlocks and opens together.
             // The accumulator keeps a single topmost activity, so overlapping
             // resume/stop pairs cannot double-count, and screen-off time stays
             // out because the platform pauses the top activity. The aggregated
@@ -568,7 +588,7 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
             // to the query, which filed today's usage under yesterday.
             accumulateForeground(
                 usageStatsManager,
-                earliest,
+                earliest - LOOKBACK_MS,
                 now,
                 excluded,
                 onSegment = { pkg, segStart, segEnd ->
@@ -581,14 +601,27 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
                     }
                 },
                 onEvent = { event ->
-                    when {
-                        // A pickup is the screen being turned on. These are system
-                        // events with no package name, so they must be handled before
-                        // the package filter, which would otherwise drop them.
-                        event.eventType == UsageEvents.Event.SCREEN_INTERACTIVE -> {
-                            val idx = dayIndexFor(event.timeStamp)
-                            if (idx >= 0) dayPickups[idx]++
+                    when (event.eventType) {
+                        // An unlock is a wake that ends with the keyguard actually
+                        // dismissed, which is what Digital Wellbeing counts.
+                        // KEYGUARD_HIDDEN fires for every unlock style (swipe,
+                        // PIN, biometric), while wakes to glance at the lock
+                        // screen (notifications, the clock) never reach it and
+                        // are reset by SCREEN_NON_INTERACTIVE below. These are
+                        // system events with no package name, so they must be
+                        // handled before the package filter, which would
+                        // otherwise drop them.
+                        UsageEvents.Event.SCREEN_INTERACTIVE -> unlocking = true
+
+                        UsageEvents.Event.KEYGUARD_HIDDEN -> {
+                            if (unlocking) {
+                                val idx = dayIndexFor(event.timeStamp)
+                                if (idx >= 0) dayUnlocks[idx]++
+                                unlocking = false
+                            }
                         }
+
+                        UsageEvents.Event.SCREEN_NON_INTERACTIVE -> unlocking = false
 
                         else -> {
                             val pkg = event.packageName
@@ -619,7 +652,8 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
                             }
                         }
                     }
-                }
+                },
+                reportFrom = earliest
             )
 
             val pm = context.packageManager
@@ -639,7 +673,7 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
                 DayUsage(
                     dayName = dayLabel(i, days, now),
                     durationMs = dayTotals[i],
-                    pickups = dayPickups[i]
+                    unlocks = dayUnlocks[i]
                 )
             }
 
@@ -647,8 +681,8 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
                 days = dayList,
                 todayTotalMs = todayAppTotals.values.sum(),
                 todayApps = todayApps,
-                todayPickups = dayPickups.last(),
-                pickupsAvailable = true
+                todayUnlocks = dayUnlocks.last(),
+                unlocksAvailable = true
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error building screen time snapshot", e)
@@ -737,7 +771,7 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
                 DayUsage(
                     dayName = dayLabel(i, days, now),
                     durationMs = dayMap[dayKey] ?: 0L,
-                    pickups = 0
+                    unlocks = 0
                 )
             }
 
@@ -761,23 +795,24 @@ private const val DAY_MS = 24L * 60L * 60L * 1000L
                 days = dayList,
                 todayTotalMs = dayList.last().durationMs,
                 todayApps = appList,
-                todayPickups = 0,
-                pickupsAvailable = false
+                todayUnlocks = 0,
+                unlocksAvailable = false
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error building legacy snapshot", e)
-            ScreenTimeSnapshot(emptyList(), 0L, emptyList(), 0, pickupsAvailable = false)
+            ScreenTimeSnapshot(emptyList(), 0L, emptyList(), 0, unlocksAvailable = false)
         }
     }
 
     /**
-     * Today's number of screen-ons, i.e. how many times the phone was picked up
-     * and the screen turned on. Deliberately distinct from per-app open counts,
-     * which track returning to a specific app. Returns 0 without permission.
+     * Today's number of unlocks: wakes that ended with the keyguard dismissed,
+     * matching Digital Wellbeing's unlock count rather than the larger number
+     * of screen-ons. Deliberately distinct from per-app open counts, which
+     * track returning to a specific app. Returns 0 without permission.
      */
-    fun getPickupsToday(context: Context): Int {
+    fun getUnlocksToday(context: Context): Int {
         if (!hasUsageAccessPermission(context)) return 0
-        return getScreenTimeSnapshot(context, days = 1).todayPickups
+        return getScreenTimeSnapshot(context, days = 1).todayUnlocks
     }
 
     /**
@@ -890,23 +925,24 @@ data class AppUsage(
 data class DayUsage(
     val dayName: String,
     val durationMs: Long,
-    /** Screen-on events that day, i.e. phone pickups. */
-    val pickups: Int = 0
+    /** Keyguard dismissals that day, i.e. phone unlocks. */
+    val unlocks: Int = 0
 )
 
 /**
  * Authoritative screen time figures for a single query pass.
  *
- * [todayPickups] counts screen-ons (phone pickups). Per-app open counts live on
+ * [todayUnlocks] counts wakes that ended in an unlock (keyguard dismissed),
+ * matching Digital Wellbeing's unlock count. Per-app open counts live on
  * [todayApps] as [AppUsage.openCount] and are tracked separately.
  */
 data class ScreenTimeSnapshot(
     val days: List<DayUsage>,
     val todayTotalMs: Long,
     val todayApps: List<AppUsage>,
-    val todayPickups: Int,
-    /** False on API < 29, where the event stream cannot report pickups. */
-    val pickupsAvailable: Boolean,
+    val todayUnlocks: Int,
+    /** False on API < 29, where the event stream cannot report unlocks. */
+    val unlocksAvailable: Boolean,
     /** Foreground time per hour of today, indexed by hour of day. */
     val hourlyToday: List<HourlyUsage> = emptyList(),
     /** Per-day totals for the current calendar month. */

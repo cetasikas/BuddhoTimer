@@ -1346,8 +1346,9 @@ fun SettingsScreen(
                             } else {
                                 OutlinedButton(
                                     onClick = { context.startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }) },
-                                    modifier = Modifier.height(30.dp),
+                                    modifier = Modifier.wrapContentSize(),
                                     shape = RoundedCornerShape(15.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                     border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary))
                                 ) {
                                     Text("Grant", fontSize = 11.5.sp, color = currentTheme.primaryLight)
