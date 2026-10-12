@@ -22,7 +22,8 @@ data class SessionEntity(
     val overrunSec: Int,
     val rating: Int = 0,
     val notesMarkdown: String = "",
-    val completedSuccessfully: Boolean = true
+    val completedSuccessfully: Boolean = true,
+    val isManual: Boolean = false
 ) {
     fun toDomain(): MeditationSession {
         return MeditationSession(
@@ -34,7 +35,8 @@ data class SessionEntity(
             overrunSec = overrunSec,
             rating = rating,
             notesMarkdown = notesMarkdown,
-            completedSuccessfully = completedSuccessfully
+            completedSuccessfully = completedSuccessfully,
+            isManual = isManual
         )
     }
 
@@ -49,7 +51,8 @@ data class SessionEntity(
                 overrunSec = domain.overrunSec,
                 rating = domain.rating,
                 notesMarkdown = domain.notesMarkdown,
-                completedSuccessfully = domain.completedSuccessfully
+                completedSuccessfully = domain.completedSuccessfully,
+                isManual = domain.isManual
             )
         }
     }

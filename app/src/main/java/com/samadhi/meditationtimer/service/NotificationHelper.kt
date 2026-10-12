@@ -47,18 +47,6 @@ class NotificationHelper(private val context: Context) {
             }
             notificationManager.createNotificationChannel(reminderChannel)
 
-            val timeAnchorChannel = NotificationChannel(
-                CHANNEL_TIME_ANCHOR_ID,
-                "Time Anchors",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Gentle hourly nudges to keep you grounded in the present moment"
-                setShowBadge(false)
-                enableLights(false)
-                enableVibration(false)
-            }
-            notificationManager.createNotificationChannel(timeAnchorChannel)
-
             val completionChannel = NotificationChannel(
                 CHANNEL_COMPLETION_ID,
                 "Session Completion",
@@ -277,43 +265,14 @@ class NotificationHelper(private val context: Context) {
         notificationManager.cancel(NOTIFICATION_BREATHING_ID)
     }
 
-    fun showTimeAnchorNotification(message: String) {
-        val openAppIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-        val openAppPendingIntent = PendingIntent.getActivity(
-            context,
-            3001,
-            openAppIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, CHANNEL_TIME_ANCHOR_ID)
-            .setContentTitle("🌿 Time Anchor")
-            .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentIntent(openAppPendingIntent)
-            .setAutoCancel(true)
-            .setColor(0xFFE5A93B.toInt())
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build()
-
-        notificationManager.notify(NOTIFICATION_TIME_ANCHOR_ID, notification)
-    }
-
     companion object {
         const val CHANNEL_ID = "meditation_timer_channel_v2"
         const val CHANNEL_REMINDERS_ID = "meditation_reminders_channel"
         const val CHANNEL_COMPLETION_ID = "meditation_completion_channel"
-        const val CHANNEL_TIME_ANCHOR_ID = "time_anchor_channel"
         const val NOTIFICATION_ID = 1001
         const val NOTIFICATION_REMINDER_ID = 1002
         const val NOTIFICATION_COMPLETION_ID = 1003
         const val NOTIFICATION_BREATHING_ID = 1005
-        const val NOTIFICATION_TIME_ANCHOR_ID = 1006
 
         fun formatSeconds(totalSeconds: Int): String {
             val mins = totalSeconds / 60

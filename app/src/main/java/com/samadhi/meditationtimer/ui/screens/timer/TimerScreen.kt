@@ -72,7 +72,6 @@ import com.samadhi.meditationtimer.domain.model.BreathingPattern
 import com.samadhi.meditationtimer.ui.components.BuddhaOutlineLogo
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.components.ManualDurationInputDialog
-import com.samadhi.meditationtimer.ui.components.ScreenTimeBanner
 import com.samadhi.meditationtimer.ui.components.ZenBranchSlider
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -83,7 +82,6 @@ fun TimerScreen(
     onOpenWisdom: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenBreathing: () -> Unit,
-    onOpenScreenTime: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val config by viewModel.config.collectAsState()
@@ -186,15 +184,7 @@ fun TimerScreen(
                     }
                 }
 
-                // --- 2. REMINDER BANNER (compact, optional) ---
-                if (config.showScreenTimeBanner) {
-                    ScreenTimeBanner(
-                        onClick = onOpenScreenTime,
-                        modifier = Modifier.padding(bottom = (4 * dynamicScale).dp)
-                    )
-                }
-
-                // --- 3. MODE SELECTOR (near the top) ---
+                // --- 2. MODE SELECTOR (near the top) ---
                 PracticeModeSelector(
                     isBoxMode = isBoxMode,
                     onSelectMode = { box ->

@@ -32,17 +32,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.samadhi.meditationtimer.MeditationApp
+import com.samadhi.meditationtimer.domain.model.MeditationSession
 import com.samadhi.meditationtimer.domain.model.TimerStatus
 import com.samadhi.meditationtimer.service.MeditationTimerService
 import com.samadhi.meditationtimer.ui.components.TutorialOverlay
 import com.samadhi.meditationtimer.ui.navigation.Screen
 import com.samadhi.meditationtimer.ui.screens.breathing.BreathingScreen
-import com.samadhi.meditationtimer.ui.screens.history.HistoryScreen
-import com.samadhi.meditationtimer.ui.screens.history.HistoryViewModel
+import com.samadhi.meditationtimer.ui.screens.journal.EditorRequest
+import com.samadhi.meditationtimer.ui.screens.journal.JournalScreen
+import com.samadhi.meditationtimer.ui.screens.journal.JournalViewModel
+import com.samadhi.meditationtimer.ui.screens.journal.SessionEditorScreen
 import com.samadhi.meditationtimer.ui.screens.session.ActiveSessionScreen
 import com.samadhi.meditationtimer.ui.screens.settings.SettingsScreen
 import com.samadhi.meditationtimer.ui.screens.settings.SettingsViewModel
-import com.samadhi.meditationtimer.ui.screens.summary.SessionSummaryScreen
 import com.samadhi.meditationtimer.ui.screens.timer.TimerScreen
 import com.samadhi.meditationtimer.ui.screens.timer.TimerViewModel
 import com.samadhi.meditationtimer.ui.screens.wisdom.WisdomScreen
@@ -67,12 +69,14 @@ fun MainAppScaffold() {
         val currentTheme = rememberZenTheme()
         val navController = rememberNavController()
         val timerViewModel: TimerViewModel = viewModel()
-        val historyViewModel: HistoryViewModel = viewModel()
+        val journalViewModel: JournalViewModel = viewModel()
         val settingsViewModel: SettingsViewModel = viewModel()
 
         val timerStatus by timerViewModel.timerStatus.collectAsState()
         val timerConfig by timerViewModel.config.collectAsState()
         var completedSessionData by remember { mutableStateOf<TimerStatus.Completed?>(null) }
+        var editorRequest by remember { mutableStateOf<EditorRequest?>(null) }
+        var loggedCompletionMs by remember { mutableStateOf(0L) }
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -89,30 +93,35 @@ fun MainAppScaffold() {
                 }
                 is TimerStatus.Completed -> {
                     completedSessionData = status
-                    appScope.launch {
-                        sessionRepository.recordCompletion(
-                            completedAtMs = status.completedTimeEpochMs,
-                            durationSec = status.actualDurationSec,
-                            isBreathing = false
-                        )
+                    if (status.completedTimeEpochMs != loggedCompletionMs) {
+                        loggedCompletionMs = status.completedTimeEpochMs
+                        appScope.launch {
+                            sessionRepository.recordCompletion(
+                                completedAtMs = status.completedTimeEpochMs,
+                                durationSec = status.actualDurationSec,
+                                isBreathing = false
+                            )
+                        }
+                        if (!timerConfig.showSessionOverview) {
+                            // No reflection screen: log the sit immediately so every session reaches the journal.
+                            journalViewModel.saveSession(
+                                MeditationSession(
+                                    startTimeEpochMs = status.startTimeEpochMs,
+                                    completedTimeEpochMs = status.completedTimeEpochMs,
+                                    targetDurationSec = status.targetDurationSec,
+                                    actualDurationSec = status.actualDurationSec,
+                                    overrunSec = status.overrunSec,
+                                    rating = 0,
+                                    notesMarkdown = "",
+                                    completedSuccessfully = true
+                                )
+                            )
+                        }
                     }
                     if (timerConfig.showSessionOverview) {
                         navController.navigate(Screen.Summary.route) {
                             popUpTo(Screen.Timer.route)
                         }
-                    } else {
-                        // Auto-save completed session in background and stay on active screen in Completed state
-                        val session = com.samadhi.meditationtimer.domain.model.MeditationSession(
-                            startTimeEpochMs = status.startTimeEpochMs,
-                            completedTimeEpochMs = status.completedTimeEpochMs,
-                            targetDurationSec = status.targetDurationSec,
-                            actualDurationSec = status.actualDurationSec,
-                            overrunSec = status.overrunSec,
-                            rating = 3,
-                            notesMarkdown = "",
-                            completedSuccessfully = true
-                        )
-                        historyViewModel.saveSession(session)
                     }
                 }
                 is TimerStatus.Idle -> {
@@ -203,9 +212,6 @@ fun MainAppScaffold() {
                                 },
                                 onOpenBreathing = {
                                     navController.navigate(Screen.Breathing.route)
-                                },
-                                onOpenScreenTime = {
-                                    navController.navigate(Screen.ScreenTime.route)
                                 }
                             )
                         }
@@ -256,43 +262,66 @@ fun MainAppScaffold() {
                                             popUpTo(Screen.Timer.route)
                                         }
                                     } else {
-                                        val session = com.samadhi.meditationtimer.domain.model.MeditationSession(
-                                            startTimeEpochMs = completedStatus.startTimeEpochMs,
-                                            completedTimeEpochMs = completedStatus.completedTimeEpochMs,
-                                            targetDurationSec = completedStatus.targetDurationSec,
-                                            actualDurationSec = completedStatus.actualDurationSec,
-                                            overrunSec = completedStatus.overrunSec,
-                                            rating = 3,
-                                            notesMarkdown = "",
-                                            completedSuccessfully = true
+                                        journalViewModel.saveSession(
+                                            MeditationSession(
+                                                startTimeEpochMs = completedStatus.startTimeEpochMs,
+                                                completedTimeEpochMs = completedStatus.completedTimeEpochMs,
+                                                targetDurationSec = completedStatus.targetDurationSec,
+                                                actualDurationSec = completedStatus.actualDurationSec,
+                                                overrunSec = completedStatus.overrunSec,
+                                                rating = 0,
+                                                notesMarkdown = "",
+                                                completedSuccessfully = true
+                                            )
                                         )
-                                        historyViewModel.saveSession(session)
                                     }
                                 }
                             )
                         }
 
                         composable(Screen.Summary.route) {
-                            SessionSummaryScreen(
-                                completedStatus = completedSessionData,
-                                onSaveSession = { session ->
-                                    historyViewModel.saveSession(session)
-                                    com.samadhi.meditationtimer.service.DndManager(context).restoreDnd()
-                                    MeditationTimerService.resetStatus()
-                                    completedSessionData = null
-                                    navController.navigate(Screen.History.route) {
-                                        popUpTo(Screen.Timer.route)
-                                    }
-                                },
-                                onDiscard = {
-                                    com.samadhi.meditationtimer.service.DndManager(context).restoreDnd()
-                                    MeditationTimerService.resetStatus()
-                                    completedSessionData = null
+                            val status = completedSessionData
+                            if (status == null) {
+                                LaunchedEffect(Unit) {
                                     navController.navigate(Screen.Timer.route) {
                                         popUpTo(Screen.Timer.route) { inclusive = true }
                                     }
                                 }
-                            )
+                            } else {
+                                SessionEditorScreen(
+                                    request = EditorRequest.PostSession(status),
+                                    onSave = { session ->
+                                        journalViewModel.saveSession(session)
+                                        com.samadhi.meditationtimer.service.DndManager(context).restoreDnd()
+                                        MeditationTimerService.resetStatus()
+                                        completedSessionData = null
+                                        navController.navigate(Screen.Journal.route) {
+                                            popUpTo(Screen.Timer.route)
+                                        }
+                                    },
+                                    onDiscard = {
+                                        // The sit still happened: keep it in the journal without a reflection.
+                                        journalViewModel.saveSession(
+                                            MeditationSession(
+                                                startTimeEpochMs = status.startTimeEpochMs,
+                                                completedTimeEpochMs = status.completedTimeEpochMs,
+                                                targetDurationSec = status.targetDurationSec,
+                                                actualDurationSec = status.actualDurationSec,
+                                                overrunSec = status.overrunSec,
+                                                rating = 0,
+                                                notesMarkdown = "",
+                                                completedSuccessfully = true
+                                            )
+                                        )
+                                        com.samadhi.meditationtimer.service.DndManager(context).restoreDnd()
+                                        MeditationTimerService.resetStatus()
+                                        completedSessionData = null
+                                        navController.navigate(Screen.Timer.route) {
+                                            popUpTo(Screen.Timer.route) { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
                         }
 
                         composable(Screen.Wisdom.route) {
@@ -305,8 +334,38 @@ fun MainAppScaffold() {
                             )
                         }
 
-                        composable(Screen.History.route) {
-                            HistoryScreen(viewModel = historyViewModel)
+                        composable(Screen.Journal.route) {
+                            JournalScreen(
+                                viewModel = journalViewModel,
+                                onEditSession = { session ->
+                                    editorRequest = EditorRequest.Edit(session)
+                                    navController.navigate(Screen.JournalEditor.route)
+                                },
+                                onLogManual = {
+                                    editorRequest = EditorRequest.ManualNew
+                                    navController.navigate(Screen.JournalEditor.route)
+                                }
+                            )
+                        }
+
+                        composable(Screen.JournalEditor.route) {
+                            val request = editorRequest
+                            if (request == null) {
+                                LaunchedEffect(Unit) { navController.popBackStack() }
+                            } else {
+                                SessionEditorScreen(
+                                    request = request,
+                                    onSave = { session ->
+                                        journalViewModel.saveSession(session)
+                                        editorRequest = null
+                                        navController.popBackStack()
+                                    },
+                                    onDiscard = {
+                                        editorRequest = null
+                                        navController.popBackStack()
+                                    }
+                                )
+                            }
                         }
 
                         composable(Screen.Settings.route) {
@@ -320,20 +379,6 @@ fun MainAppScaffold() {
                                 },
                                 onShowTutorial = {
                                     showTutorialOverlay = true
-                                },
-                                onOpenScreenTime = {
-                                    navController.navigate(Screen.ScreenTime.route)
-                                }
-                            )
-                        }
-
-                        composable(Screen.ScreenTime.route) {
-                            com.samadhi.meditationtimer.ui.screens.screentime.ScreenTimeScreen(
-                                onNavigateBack = { navController.popBackStack() },
-                                onOpenTimer = {
-                                    navController.navigate(Screen.Timer.route) {
-                                        popUpTo(Screen.Timer.route) { inclusive = true }
-                                    }
                                 }
                             )
                         }

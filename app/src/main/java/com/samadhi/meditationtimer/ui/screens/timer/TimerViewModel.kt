@@ -90,9 +90,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             isCountdownHapticsEnabled = prefs.getBoolean("countdown_haptics", true),
             isCompletionBellEnabled = prefs.getBoolean("completion_bell_enabled", true),
             isStartBellEnabled = prefs.getBoolean("start_bell_enabled", false),
-            showSessionOverview = prefs.getBoolean("show_session_overview", true),
-            showScreenTimeBanner = prefs.getBoolean("show_screen_time_banner", false),
-            showScreenTimeInHistory = prefs.getBoolean("show_screen_time_history", false)
+            showSessionOverview = prefs.getBoolean("show_session_overview", true)
         )
     }
 
@@ -116,22 +114,12 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putBoolean("completion_bell_enabled", newConfig.isCompletionBellEnabled)
             putBoolean("start_bell_enabled", newConfig.isStartBellEnabled)
             putBoolean("show_session_overview", newConfig.showSessionOverview)
-            putBoolean("show_screen_time_banner", newConfig.showScreenTimeBanner)
-            putBoolean("show_screen_time_history", newConfig.showScreenTimeInHistory)
             apply()
         }
     }
 
     fun toggleShowSessionOverview(enabled: Boolean) {
         saveConfig(_config.value.copy(showSessionOverview = enabled))
-    }
-
-    fun toggleShowScreenTimeBanner(enabled: Boolean) {
-        saveConfig(_config.value.copy(showScreenTimeBanner = enabled))
-    }
-
-    fun toggleShowScreenTimeInHistory(enabled: Boolean) {
-        saveConfig(_config.value.copy(showScreenTimeInHistory = enabled))
     }
 
     fun updateDurationMinutes(minutes: Int) {

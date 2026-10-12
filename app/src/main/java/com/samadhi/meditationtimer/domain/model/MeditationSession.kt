@@ -9,7 +9,8 @@ data class MeditationSession(
     val overrunSec: Int,
     val rating: Int = 0,
     val notesMarkdown: String = "",
-    val completedSuccessfully: Boolean = true
+    val completedSuccessfully: Boolean = true,
+    val isManual: Boolean = false
 ) {
     val totalMinutes: Int
         get() = actualDurationSec / 60

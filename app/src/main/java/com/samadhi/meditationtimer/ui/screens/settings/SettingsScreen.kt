@@ -55,7 +55,6 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -93,7 +92,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.samadhi.meditationtimer.data.ScreenTimePreferences
 import com.samadhi.meditationtimer.service.SoundHelper
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.components.ManualDurationInputDialog
@@ -211,7 +209,6 @@ fun SettingsScreen(
     timerViewModel: TimerViewModel,
     onNavigateBack: () -> Unit,
     onShowTutorial: () -> Unit,
-    onOpenScreenTime: () -> Unit = {},
     onSelectTheme: (ZenThemeId) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -233,12 +230,6 @@ fun SettingsScreen(
     var expandedPrep by remember { mutableStateOf(false) }
     var expandedPermissions by remember { mutableStateOf(false) }
     var expandedBackup by remember { mutableStateOf(false) }
-    var expandedTimeAnchor by remember { mutableStateOf(false) }
-
-    // Time Anchor state (TimeAware-inspired)
-    val anchorPrefs = remember { context.getSharedPreferences("time_anchor_prefs", android.content.Context.MODE_PRIVATE) }
-    var anchorEnabled by remember { mutableStateOf(anchorPrefs.getBoolean("time_anchor_enabled", false)) }
-    var anchorIntervalMinutes by remember { mutableIntStateOf(anchorPrefs.getInt("anchor_interval_minutes", 60)) }
 
     // Reminder state
     val reminderPrefs = remember { context.getSharedPreferences("timer_prefs", android.content.Context.MODE_PRIVATE) }
@@ -939,309 +930,6 @@ fun SettingsScreen(
                             ) {
                                 Text("Send Test Reminder Notification", fontSize = 11.5.sp, color = currentTheme.primaryLight)
                             }
-                        }
-                    }
-                }
-
-                // 6b. MINDFUL SCREEN TIME (TimeAware-Inspired, Optional)
-                val screenTimeSummary = if (config.showScreenTimeBanner || config.showScreenTimeInHistory || anchorEnabled) "Configured" else "Off"
-                ExpandableSettingsCard(
-                    title = "Mindful Screen Time",
-                    icon = Icons.Default.HourglassBottom,
-                    summaryValue = screenTimeSummary,
-                    isExpanded = expandedTimeAnchor,
-                    onToggle = { expandedTimeAnchor = !expandedTimeAnchor }
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        // 1. Show Screen Time on Timer Screen
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                                Text("Show on Timer Screen", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("Ambient banner with today's phone time & rotating mindful pause inquiries", fontSize = 11.sp, color = ZenTextSecondary)
-                            }
-                            Switch(
-                                checked = config.showScreenTimeBanner,
-                                onCheckedChange = { timerViewModel.toggleShowScreenTimeBanner(it) },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = ZenObsidian,
-                                    checkedTrackColor = currentTheme.primaryLight,
-                                    checkedBorderColor = currentTheme.primary,
-                                    uncheckedThumbColor = Color(0xFFCBD5E1),
-                                    uncheckedTrackColor = Color(0xFF1E293B),
-                                    uncheckedBorderColor = Color(0xFF475569)
-                                )
-                            )
-                        }
-
-                        // Divider
-                        Box(modifier = Modifier.fillMaxWidth().height(0.6.dp).background(ZenBorder.copy(alpha = 0.5f)))
-
-                        // 2. Show Screen Time in History
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                                Text("Show in Practice History", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("Contrasts weekly phone screen time against meditation practice minutes", fontSize = 11.sp, color = ZenTextSecondary)
-                            }
-                            Switch(
-                                checked = config.showScreenTimeInHistory,
-                                onCheckedChange = { timerViewModel.toggleShowScreenTimeInHistory(it) },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = ZenObsidian,
-                                    checkedTrackColor = currentTheme.primaryLight,
-                                    checkedBorderColor = currentTheme.primary,
-                                    uncheckedThumbColor = Color(0xFFCBD5E1),
-                                    uncheckedTrackColor = Color(0xFF1E293B),
-                                    uncheckedBorderColor = Color(0xFF475569)
-                                )
-                            )
-                        }
-
-                        // Divider
-                        Box(modifier = Modifier.fillMaxWidth().height(0.6.dp).background(ZenBorder.copy(alpha = 0.5f)))
-
-                        // 3. Hourly Time Anchors
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                                Text("Hourly Time Anchor Nudges", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("Gentle recurring check-ins with today's screen time to keep you anchored in reality", fontSize = 11.sp, color = ZenTextSecondary)
-                            }
-                            Switch(
-                                checked = anchorEnabled,
-                                onCheckedChange = { isChecked ->
-                                    if (isChecked && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                                        val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
-                                            context,
-                                            android.Manifest.permission.POST_NOTIFICATIONS
-                                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-
-                                        if (!hasPermission) {
-                                            postNotificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                                            return@Switch
-                                        }
-                                    }
-
-                                    anchorEnabled = isChecked
-                                    anchorPrefs.edit().putBoolean("time_anchor_enabled", isChecked).apply()
-                                    if (isChecked) {
-                                        com.samadhi.meditationtimer.service.screentime.TimeAnchorScheduler.scheduleNext(context)
-                                    } else {
-                                        com.samadhi.meditationtimer.service.screentime.TimeAnchorScheduler.cancel(context)
-                                    }
-                                },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = ZenObsidian,
-                                    checkedTrackColor = currentTheme.primaryLight,
-                                    checkedBorderColor = currentTheme.primary,
-                                    uncheckedThumbColor = Color(0xFFCBD5E1),
-                                    uncheckedTrackColor = Color(0xFF1E293B),
-                                    uncheckedBorderColor = Color(0xFF475569)
-                                )
-                            )
-                        }
-
-                        if (anchorEnabled) {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Nudge Interval", fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = ZenTextSecondary)
-
-                                val anchorIntervalOptions = listOf(30, 60, 120, 180)
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    anchorIntervalOptions.forEach { mins ->
-                                        val isSelected = anchorIntervalMinutes == mins
-                                        val label = if (mins < 60) "${mins}m" else "${mins / 60}h"
-                                        FilterChip(
-                                            selected = isSelected,
-                                            onClick = {
-                                                anchorIntervalMinutes = mins
-                                                anchorPrefs.edit().putInt("anchor_interval_minutes", mins).apply()
-                                                com.samadhi.meditationtimer.service.screentime.TimeAnchorScheduler.scheduleNext(context)
-                                            },
-                                            label = { Text("Every $label", fontSize = 11.5.sp) },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = currentTheme.primary,
-                                                selectedLabelColor = ZenObsidian
-                                            )
-                                        )
-                                    }
-                                }
-
-                                Text(
-                                    text = "🌙 Quiet Hours: 10:00 PM – 7:00 AM (notifications are automatically paused).",
-                                    fontSize = 11.sp,
-                                    color = ZenTextMuted
-                                )
-
-                                OutlinedButton(
-                                    onClick = {
-                                        val screenTimeMs = com.samadhi.meditationtimer.service.UsageStatsHelper.getTodayScreenTimeMs(context)
-                                        val helper = com.samadhi.meditationtimer.service.NotificationHelper(context)
-                                        val durationStr = screenTimeMs?.let { com.samadhi.meditationtimer.service.UsageStatsHelper.formatDuration(it) } ?: "1h 45m"
-                                        helper.showTimeAnchorNotification("2:00 PM — $durationStr on screen today. A breath costs nothing. 🍃")
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp),
-                                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(ZenBorder))
-                                ) {
-                                    Text("Preview Time Anchor Notification", fontSize = 11.5.sp, color = currentTheme.primaryLight)
-                                }
-                            }
-                        }
-
-                        // Divider
-                        Box(modifier = Modifier.fillMaxWidth().height(0.6.dp).background(ZenBorder.copy(alpha = 0.5f)))
-
-                        // 4. Daily Screen Time Goal
-                        val screenTimePrefs = remember { ScreenTimePreferences(context) }
-                        val dailyGoalMinutes by screenTimePrefs.dailyGoalMinutes.collectAsState(initial = 0)
-                        val goalScope = rememberCoroutineScope()
-
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = "Daily Screen Time Goal",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = ZenTextSecondary
-                            )
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                ScreenTimePreferences.goalPresets.forEach { mins ->
-                                    val isSelected = dailyGoalMinutes == mins
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = {
-                                            goalScope.launch {
-                                                screenTimePrefs.setDailyGoalMinutes(mins)
-                                            }
-                                        },
-                                        label = {
-                                            Text(
-                                                text = ScreenTimePreferences.presetLabel(mins),
-                                                fontSize = 11.5.sp
-                                            )
-                                        },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = currentTheme.primary,
-                                            selectedLabelColor = ZenObsidian
-                                        )
-                                    )
-                                }
-                            }
-                            var showGoalEdit by remember { mutableStateOf(false) }
-                            val customGoal = dailyGoalMinutes > 0 &&
-                                dailyGoalMinutes !in ScreenTimePreferences.goalPresets
-                            Text(
-                                text = if (customGoal) {
-                                    "Custom \u00B7 ${ScreenTimePreferences.presetLabel(dailyGoalMinutes)} \u00B7 tap to change"
-                                } else {
-                                    "Set your own amount"
-                                },
-                                fontSize = 11.5.sp,
-                                color = if (customGoal) currentTheme.primary else ZenTextMuted,
-                                modifier = Modifier
-                                    .clickable { showGoalEdit = true }
-                                    .padding(top = 2.dp)
-                            )
-                            if (showGoalEdit) {
-                                ManualDurationInputDialog(
-                                    initialMinutes = if (dailyGoalMinutes > 0) dailyGoalMinutes else 120,
-                                    minMinutes = 5,
-                                    maxMinutes = 24 * 60,
-                                    title = "Set Your Daily Goal",
-                                    subtitle = "Minutes of screen time per day",
-                                    onDismiss = { showGoalEdit = false },
-                                    onConfirm = { mins ->
-                                        goalScope.launch {
-                                            screenTimePrefs.setDailyGoalMinutes(mins)
-                                        }
-                                        showGoalEdit = false
-                                    }
-                                )
-                            }
-                            Text(
-                                text = "Tracked on your Screen Time dashboard for awareness. Nothing is blocked or enforced.",
-                                fontSize = 11.sp,
-                                color = ZenTextMuted
-                            )
-                        }
-
-                        // Divider
-                        Box(modifier = Modifier.fillMaxWidth().height(0.6.dp).background(ZenBorder.copy(alpha = 0.5f)))
-
-                        // 4b. Persistent screen time status notification
-                        val screenTimeNotifEnabled by screenTimePrefs.screenTimeNotificationEnabled.collectAsState(initial = false)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                                Text("Persistent Screen Time Status", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("Shows today's screen time, goal pace and top apps on your lock screen and in the notification shade", fontSize = 11.sp, color = ZenTextSecondary)
-                            }
-                            Switch(
-                                checked = screenTimeNotifEnabled,
-                                onCheckedChange = { isChecked ->
-                                    if (isChecked && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                                        val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
-                                            context,
-                                            android.Manifest.permission.POST_NOTIFICATIONS
-                                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-
-                                        if (!hasPermission) {
-                                            postNotificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                                            return@Switch
-                                        }
-                                    }
-
-                                    goalScope.launch {
-                                        screenTimePrefs.setScreenTimeNotificationEnabled(isChecked)
-                                        if (isChecked) {
-                                            com.samadhi.meditationtimer.service.screentime.ScreenTimeNotification.showOrUpdate(context)
-                                            com.samadhi.meditationtimer.service.screentime.ScreenTimeNotification.scheduleTicker(context)
-                                        } else {
-                                            com.samadhi.meditationtimer.service.screentime.ScreenTimeNotification.cancelTicker(context)
-                                            com.samadhi.meditationtimer.service.screentime.ScreenTimeNotification.cancel(context)
-                                        }
-                                    }
-                                },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = ZenObsidian,
-                                    checkedTrackColor = currentTheme.primaryLight,
-                                    checkedBorderColor = currentTheme.primary,
-                                    uncheckedThumbColor = Color(0xFFCBD5E1),
-                                    uncheckedTrackColor = Color(0xFF1E293B),
-                                    uncheckedBorderColor = Color(0xFF475569)
-                                )
-                            )
-                        }
-
-                        // Divider
-                        Box(modifier = Modifier.fillMaxWidth().height(0.6.dp).background(ZenBorder.copy(alpha = 0.5f)))
-
-                        // 5. View Screen Time Dashboard
-                        OutlinedButton(
-                            onClick = onOpenScreenTime,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(10.dp),
-                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(brush = SolidColor(currentTheme.primary.copy(alpha = 0.6f)))
-                        ) {
-                            Text("Open Screen Time Dashboard 📱", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = currentTheme.primaryLight)
                         }
                     }
                 }

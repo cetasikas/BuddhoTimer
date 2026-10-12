@@ -13,27 +13,11 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <!-- Screen time awareness: requires user to grant manually in Settings → Special App Access → Usage Access -->
-    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermissions" />
-
-    <!-- Time anchor hourly notifications & meditation reminders (Android 12+).
+    <!-- Meditation reminders (Android 12+).
          USE_EXACT_ALARM is intentionally NOT declared: it is restricted to
          alarm-clock/calendar apps and a meditation timer does not qualify.
          setExact*() calls fall back to inexact alarms when the grant is denied. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-
-    <!-- Required on Android 11+ so app labels can be resolved for the packages
-         observed in usage stats events. Without this, PackageManager throws
-         NameNotFoundException for every non-visible package and screen time
-         rows are silently dropped. -->
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent>
-    </queries>
-
 
     <application
         android:name=".MeditationApp"
@@ -83,24 +67,6 @@
             android:name=".service.reminder.BootReceiver"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Time Anchor Broadcast Receiver (hourly mindfulness nudges) -->
-        <receiver
-            android:name=".service.screentime.TimeAnchorReceiver"
-            android:exported="false" />
-
-        <!-- Persistent screen time status: refresh on unlock, minute ticker
-             while the screen is on, and re-post after reboot or update. -->
-        <receiver
-            android:name=".service.screentime.ScreenTimeNotificationReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.SCREEN_ON" />
-                <action android:name="android.intent.action.SCREEN_OFF" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
