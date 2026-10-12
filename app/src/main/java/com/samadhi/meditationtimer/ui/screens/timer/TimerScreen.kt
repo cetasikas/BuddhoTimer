@@ -27,13 +27,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SelfImprovement
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.Air
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -44,6 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -69,6 +74,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.samadhi.meditationtimer.domain.model.BreathingPattern
+import com.samadhi.meditationtimer.domain.model.TimerConfiguration
+import com.samadhi.meditationtimer.service.AmbientSoundEngine
+import com.samadhi.meditationtimer.service.SoundHelper
 import com.samadhi.meditationtimer.ui.components.BuddhaOutlineLogo
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.components.ManualDurationInputDialog
@@ -96,6 +104,7 @@ fun TimerScreen(
     var leafBurstTrigger by remember { mutableIntStateOf(0) }
     var showMeditationDurationDialog by remember { mutableStateOf(false) }
     var showBreathingDurationDialog by remember { mutableStateOf(false) }
+    var showAmbientDialog by remember { mutableStateOf(false) }
     val setupScroll = rememberScrollState()
 
     val selectedPattern = BreathingPattern.allPatterns.find { it.id == breathingPatternId } ?: BreathingPattern.BOX_BREATHING
@@ -169,6 +178,21 @@ fun TimerScreen(
                         )
                     }
                     Spacer(modifier = Modifier.weight(1f))
+                    if (config.showTimerAmbientShortcut) {
+                        IconButton(
+                            onClick = { showAmbientDialog = true },
+                            modifier = Modifier
+                                .size(44.dp)
+                                .defaultMinSize(minWidth = 44.dp, minHeight = 44.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.MusicNote,
+                                contentDescription = "Ambient sound",
+                                tint = if (config.ambientSoundsEnabled) colorScheme.primary else colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
                     IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier
@@ -366,6 +390,310 @@ fun TimerScreen(
                 onConfirm = { minutes -> viewModel.updateBreathingDurationMinutes(minutes) }
             )
         }
+
+        if (showAmbientDialog) {
+            AmbientSoundPickerDialog(
+                config = config,
+                onToggleEnabled = { viewModel.toggleAmbientSounds(it) },
+                onSelectSound = { title, res -> viewModel.updateAmbientSound(title, res) },
+                onSelectGuidedMeditation = { title, res -> viewModel.updateGuidedMeditation(title, res) },
+                onDismiss = { showAmbientDialog = false }
+            )
+        }
+    }
+}
+
+/** In-place ambient audio control surfaced from the timer setup music icon. */
+@Composable
+private fun AmbientSoundPickerDialog(
+    config: TimerConfiguration,
+    onToggleEnabled: (Boolean) -> Unit,
+    onSelectSound: (String, String) -> Unit,
+    onSelectGuidedMeditation: (String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    val previewEngine = remember { AmbientSoundEngine(context) }
+    var previewingId by remember { mutableStateOf<String?>(null) }
+    var expandedSection by remember { mutableStateOf<String?>(null) }
+    DisposableEffect(Unit) {
+        onDispose { previewEngine.stop() }
+    }
+    fun stopPreview() {
+        previewEngine.stop()
+        previewingId = null
+    }
+
+    AlertDialog(
+        onDismissRequest = {
+            stopPreview()
+            onDismiss()
+        },
+        containerColor = colorScheme.surfaceContainerHigh,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.MusicNote,
+                    contentDescription = null,
+                    tint = colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Meditation Audio",
+                    fontSize = spFor(17f, 1.2f),
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Play during practice",
+                            fontSize = spFor(13.5f, 1.2f),
+                            fontWeight = FontWeight.SemiBold,
+                            color = colorScheme.onSurface
+                        )
+                        Text(
+                            text = if (config.ambientSoundsEnabled) "Ambience plays softly in the background" else "Off",
+                            fontSize = spFor(11f, 1.2f),
+                            color = colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = config.ambientSoundsEnabled,
+                        onCheckedChange = {
+                            onToggleEnabled(it)
+                            if (!it) stopPreview()
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedTrackColor = colorScheme.primary,
+                            checkedThumbColor = colorScheme.onPrimary,
+                            uncheckedThumbColor = colorScheme.onSurfaceVariant,
+                            uncheckedTrackColor = colorScheme.surfaceContainerHighest
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                AudioSectionHeader(
+                    title = "AMBIENT SOUNDS",
+                    subtitle = config.ambientSoundName,
+                    expanded = expandedSection == "ambient",
+                    onClick = { expandedSection = if (expandedSection == "ambient") null else "ambient" }
+                )
+
+                if (expandedSection == "ambient") {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    SoundHelper.ambientSoundOptions.forEach { option ->
+                        val isSelected = config.meditationAudioMode == "ambient" && config.ambientSoundResName == option.id
+                        val isPreviewing = previewingId == option.id
+                        val canPreview = option.id != AmbientSoundEngine.TYPE_SILENCE
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    if (isSelected) colorScheme.primary.copy(alpha = 0.14f)
+                                    else Color.Transparent
+                                )
+                                .clickable {
+                                    stopPreview()
+                                    onSelectSound(option.title, option.id)
+                                }
+                                .defaultMinSize(minHeight = 48.dp)
+                                .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = option.title,
+                                    fontSize = spFor(13.5f, 1.2f),
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                    color = if (isSelected) colorScheme.primary else colorScheme.onSurface
+                                )
+                                Text(
+                                    text = option.description,
+                                    fontSize = spFor(11f, 1.2f),
+                                    color = colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
+                            }
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            if (canPreview) {
+                                IconButton(
+                                    onClick = {
+                                        if (isPreviewing) {
+                                            stopPreview()
+                                        } else {
+                                            previewEngine.stop()
+                                            previewEngine.start(option.id)
+                                            previewingId = option.id
+                                        }
+                                    },
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isPreviewing) Icons.Default.Stop else Icons.Default.PlayArrow,
+                                        contentDescription = if (isPreviewing) "Stop preview" else "Preview",
+                                        tint = colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                AudioSectionHeader(
+                    title = "GUIDED MEDITATIONS",
+                    subtitle = config.guidedMeditationName,
+                    expanded = expandedSection == "guided",
+                    onClick = { expandedSection = if (expandedSection == "guided") null else "guided" }
+                )
+
+                if (expandedSection == "guided") {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    SoundHelper.guidedMeditationOptions.forEach { option ->
+                        val isSelected = config.meditationAudioMode == "guided" && config.guidedMeditationResName == option.id
+                        val isPreviewing = previewingId == option.id
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    if (isSelected) colorScheme.primary.copy(alpha = 0.14f)
+                                    else Color.Transparent
+                                )
+                                .clickable {
+                                    stopPreview()
+                                    onSelectGuidedMeditation(option.title, option.id)
+                                }
+                                .defaultMinSize(minHeight = 48.dp)
+                                .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = option.title,
+                                    fontSize = spFor(13.5f, 1.2f),
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                    color = if (isSelected) colorScheme.primary else colorScheme.onSurface
+                                )
+                                Text(
+                                    text = option.description,
+                                    fontSize = spFor(11f, 1.2f),
+                                    color = colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
+                            }
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    if (isPreviewing) {
+                                        stopPreview()
+                                    } else {
+                                        previewEngine.stop()
+                                        previewEngine.start(option.id, loop = false)
+                                        previewingId = option.id
+                                    }
+                                },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isPreviewing) Icons.Default.Stop else Icons.Default.PlayArrow,
+                                    contentDescription = if (isPreviewing) "Stop preview" else "Preview",
+                                    tint = colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                stopPreview()
+                onDismiss()
+            }) {
+                Text(
+                    text = "Done",
+                    color = colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    )
+}
+
+@Composable
+private fun AudioSectionHeader(
+    title: String,
+    subtitle: String,
+    expanded: Boolean,
+    onClick: () -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(colorScheme.surfaceContainer)
+            .clickable(onClick = onClick)
+            .defaultMinSize(minHeight = 52.dp)
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = spFor(10.5f, 1.2f),
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.4.sp,
+                color = colorScheme.primary
+            )
+            Text(
+                text = subtitle,
+                fontSize = spFor(11f, 1.2f),
+                color = colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+        }
+        Icon(
+            imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+            contentDescription = if (expanded) "Collapse" else "Expand",
+            tint = colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 

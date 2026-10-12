@@ -35,7 +35,11 @@ data class TimerConfiguration(
     val showSessionOverview: Boolean = true,
     val ambientSoundsEnabled: Boolean = false,
     val ambientSoundName: String = "Silence",
-    val ambientSoundResName: String = "silence"
+    val ambientSoundResName: String = "silence",
+    val meditationAudioMode: String = "ambient",
+    val guidedMeditationName: String = "Guided Metta",
+    val guidedMeditationResName: String = "guided_thanissaro_metta",
+    val showTimerAmbientShortcut: Boolean = true
 ) {
     val targetDurationSeconds: Int
         get() = if (isOpenEnded) 0 else targetDurationMinutes * 60

@@ -13,7 +13,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object ActiveSession : Screen("active_session", "Session")
     object Summary : Screen("summary", "Reflection")
     object Breathing : Screen("breathing", "Breathing", Icons.Outlined.Air)
-    object Wisdom : Screen("wisdom", "Wisdom", Icons.AutoMirrored.Outlined.MenuBook)
+    object Wisdom : Screen("wisdom", "Teachings", Icons.AutoMirrored.Outlined.MenuBook)
     object Journal : Screen("journal", "Journal", Icons.Outlined.History)
     object JournalEditor : Screen("journal_editor", "Entry")
     object Settings : Screen("settings", "Settings", Icons.Outlined.Settings)

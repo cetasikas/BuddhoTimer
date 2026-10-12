@@ -34,6 +34,7 @@ class MeditationTimerService : Service() {
     private lateinit var wakeLockHelper: WakeLockHelper
     private lateinit var soundHelper: SoundHelper
     private lateinit var dndManager: DndManager
+    private lateinit var ambientEngine: AmbientSoundEngine
 
     private var startTimeEpochMs: Long = 0L
     private var targetDurationSec: Int = 0
@@ -46,6 +47,10 @@ class MeditationTimerService : Service() {
     private var isCompletionBellEnabledForSession: Boolean = false
     private var isStartBellEnabledForSession: Boolean = false
     private var hasChimedForOverrun: Boolean = false
+    private var ambientEnabledForSession: Boolean = false
+    private var ambientTypeForSession: String = AmbientSoundEngine.TYPE_SILENCE
+    private var meditationAudioModeForSession: String = "ambient"
+    private var guidedMeditationForSession: String = AmbientSoundEngine.TYPE_GUIDED_THANISSARO_METTA
 
     private var sessionActiveStartRealtimeMs: Long = 0L
     private var baseElapsedSec: Int = 0
@@ -63,6 +68,7 @@ class MeditationTimerService : Service() {
         wakeLockHelper = WakeLockHelper(this)
         soundHelper = SoundHelper(this)
         dndManager = DndManager(this)
+        ambientEngine = AmbientSoundEngine(this)
         Log.d(TAG, "MeditationTimerService created")
     }
 
@@ -82,9 +88,14 @@ class MeditationTimerService : Service() {
                 val isStartBell = intent.getBooleanExtra(EXTRA_START_BELL, false)
                 val initialElapsedSec = intent.getIntExtra(EXTRA_INITIAL_ELAPSED_SEC, 0)
                 val initialStartTimeMs = intent.getLongExtra(EXTRA_INITIAL_START_TIME_MS, 0L)
+                val ambientEnabled = intent.getBooleanExtra(EXTRA_AMBIENT_ENABLED, false)
+                val ambientSound = intent.getStringExtra(EXTRA_AMBIENT_SOUND) ?: AmbientSoundEngine.TYPE_SILENCE
+                val meditationAudioMode = intent.getStringExtra(EXTRA_MEDITATION_AUDIO_MODE) ?: "ambient"
+                val guidedMeditation = intent.getStringExtra(EXTRA_GUIDED_MEDITATION) ?: AmbientSoundEngine.TYPE_GUIDED_THANISSARO_METTA
                 startTimer(
                     targetSec, prepSec, autoDnd, openEnded, isOverrunEnabled, soundBell,
-                    mindfulnessIntervalMin, completionBell, isStartBell, initialElapsedSec, initialStartTimeMs
+                    mindfulnessIntervalMin, completionBell, isStartBell, initialElapsedSec, initialStartTimeMs,
+                    ambientEnabled, ambientSound, meditationAudioMode, guidedMeditation
                 )
             }
             ACTION_ADJUST_TIME -> {
@@ -164,7 +175,11 @@ class MeditationTimerService : Service() {
         completionBell: Boolean,
         isStartBell: Boolean,
         initialElapsedSec: Int = 0,
-        initialStartTimeMs: Long = 0L
+        initialStartTimeMs: Long = 0L,
+        ambientEnabled: Boolean = false,
+        ambientSound: String = AmbientSoundEngine.TYPE_SILENCE,
+        meditationAudioMode: String = "ambient",
+        guidedMeditation: String = AmbientSoundEngine.TYPE_GUIDED_THANISSARO_METTA
     ) {
         targetDurationSec = targetSec
         prepTimeSec = prepSec
@@ -174,6 +189,10 @@ class MeditationTimerService : Service() {
         soundBellResName = soundBell
         isCompletionBellEnabledForSession = completionBell
         isStartBellEnabledForSession = isStartBell
+        ambientEnabledForSession = ambientEnabled
+        ambientTypeForSession = ambientSound
+        meditationAudioModeForSession = meditationAudioMode
+        guidedMeditationForSession = guidedMeditation
         elapsedSeconds = initialElapsedSec
         baseElapsedSec = initialElapsedSec
         overrunSeconds = 0
@@ -248,6 +267,15 @@ class MeditationTimerService : Service() {
             // Beginning chime
             if (isStartBellEnabledForSession) {
                 soundHelper.playChime(soundBellResName, serviceScope)
+            }
+
+            // Ambient background soundscape
+            if (ambientEnabledForSession && (meditationAudioModeForSession == "guided" || ambientTypeForSession != AmbientSoundEngine.TYPE_SILENCE)) {
+                if (meditationAudioModeForSession == "guided") {
+                    ambientEngine.start(guidedMeditationForSession, loop = false)
+                } else {
+                    ambientEngine.start(ambientTypeForSession)
+                }
             }
 
             // 4. Active Session Loop with Monotonic Clock
@@ -347,6 +375,7 @@ class MeditationTimerService : Service() {
         val current = _timerStatus.value
         if (current is TimerStatus.Running) {
             timerJob?.cancel()
+            ambientEngine.pause()
             baseElapsedSec = elapsedSeconds
             _timerStatus.value = TimerStatus.Paused(
                 remainingSeconds = current.remainingSeconds,
@@ -375,6 +404,7 @@ class MeditationTimerService : Service() {
         if (current is TimerStatus.Paused) {
             wakeLockHelper.acquireWakeLock()
             sessionActiveStartRealtimeMs = SystemClock.elapsedRealtime()
+            ambientEngine.resume()
 
             val resumeNow = System.currentTimeMillis()
             val resumeChrono = when {
@@ -460,6 +490,7 @@ class MeditationTimerService : Service() {
 
     private fun finishTimer(showNotificationIfBackground: Boolean = true) {
         timerJob?.cancel()
+        ambientEngine.stop()
         val completedMs = System.currentTimeMillis()
 
         _timerStatus.value = TimerStatus.Completed(
@@ -496,6 +527,7 @@ class MeditationTimerService : Service() {
     }
 
     private fun cleanupAndStop() {
+        ambientEngine.stop()
         if (isDndEnabledForSession) {
             dndManager.restoreDnd()
         }
@@ -583,6 +615,10 @@ class MeditationTimerService : Service() {
         const val EXTRA_ADJUST_SEC = "extra_adjust_sec"
         const val EXTRA_INITIAL_ELAPSED_SEC = "extra_initial_elapsed_sec"
         const val EXTRA_INITIAL_START_TIME_MS = "extra_initial_start_time_ms"
+        const val EXTRA_AMBIENT_ENABLED = "extra_ambient_enabled"
+        const val EXTRA_AMBIENT_SOUND = "extra_ambient_sound"
+        const val EXTRA_MEDITATION_AUDIO_MODE = "extra_meditation_audio_mode"
+        const val EXTRA_GUIDED_MEDITATION = "extra_guided_meditation"
 
         private val _timerStatus = MutableStateFlow<TimerStatus>(TimerStatus.Idle)
         val timerStatus: StateFlow<TimerStatus> = _timerStatus.asStateFlow()

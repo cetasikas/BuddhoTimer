@@ -3,6 +3,7 @@
     <string name="timer_tab">Timer</string>
     <string name="history_tab">History</string>
     <string name="settings_tab">Settings</string>
+    <string name="practice_widget_description">Today\'s meditation rhythm</string>
     
     <!-- Timer -->
     <string name="start_session">Begin Practice</string>

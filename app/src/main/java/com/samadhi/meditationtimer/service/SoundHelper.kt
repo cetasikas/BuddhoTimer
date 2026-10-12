@@ -408,10 +408,20 @@ class SoundHelper(private val context: Context) {
         )
 
         val ambientSoundOptions = listOf(
-            AmbientSoundOption(SOUND_AMBIENT_SILENCE, "Silence", "No ambient sound"),
-            SoundOption(SOUND_CHIME, "Gentle Chime Loop", "Soft ambient backdrop (calm)"),
-            SoundOption(SOUND_SINGING_BOWL, "Singing Bowl Room", "Gentle room tone"),
-            SoundOption(SOUND_ZEN_TONE, "Zen Tone", "Subtle ambient tone")
+            AmbientSoundOption(AmbientSoundEngine.TYPE_SILENCE, "None", "No ambient background"),
+            AmbientSoundOption(AmbientSoundEngine.TYPE_RAIN, "Gentle Rain", "Soft rainfall on a quiet day"),
+            AmbientSoundOption(AmbientSoundEngine.TYPE_OCEAN, "Ocean Waves", "Rolling surf on the shore"),
+            AmbientSoundOption(AmbientSoundEngine.TYPE_STREAM, "Forest Stream", "Small mountain stream over stones"),
+            AmbientSoundOption(AmbientSoundEngine.TYPE_CHANT, "Om Mani Padme Hum", "Temple chanting of the compassionate mantra"),
+            AmbientSoundOption(AmbientSoundEngine.TYPE_NOISE, "Warm Brown Noise", "Deep, soothing low hush for relaxation")
+        )
+
+        val guidedMeditationOptions = listOf(
+            GuidedMeditationOption(AmbientSoundEngine.TYPE_GUIDED_THANISSARO_METTA, "Guided Metta", "Thanissaro Bhikkhu - 4 minutes"),
+            GuidedMeditationOption(AmbientSoundEngine.TYPE_GUIDED_THANISSARO_BREATH, "Guided Breath", "Thanissaro Bhikkhu - 12 minutes"),
+            GuidedMeditationOption(AmbientSoundEngine.TYPE_GUIDED_SUNDARA_INTRO, "Intro Meditation", "Ajahn Sundara - 9 minutes"),
+            GuidedMeditationOption(AmbientSoundEngine.TYPE_GUIDED_GLORIA_SHORT, "Guided Meditation", "Gloria Taraniya Ambrosia - 5 minutes"),
+            GuidedMeditationOption(AmbientSoundEngine.TYPE_GUIDED_GIL_SHORT, "Guided Meditation", "Gil Fronsdal - 6 minutes")
         )
     }
 }
@@ -423,6 +433,12 @@ data class SoundOption(
 )
 
 data class AmbientSoundOption(
+    val id: String,
+    val title: String,
+    val description: String
+)
+
+data class GuidedMeditationOption(
     val id: String,
     val title: String,
     val description: String

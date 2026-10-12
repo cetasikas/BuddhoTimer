@@ -127,7 +127,7 @@ fun WisdomScreen(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "MEDITATION GUIDES",
+                        text = "TEACHINGS",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 2.sp
@@ -135,7 +135,7 @@ fun WisdomScreen(
                         color = ZenTextPrimary
                     )
                     Text(
-                        text = "Tap any topic below to view simple instructions",
+                        text = "Tap any topic below for simple practice instructions",
                         style = MaterialTheme.typography.bodySmall,
                         color = ZenTextSecondary
                     )

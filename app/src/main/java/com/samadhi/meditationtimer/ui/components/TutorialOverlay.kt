@@ -111,7 +111,7 @@ private val tutorialSteps = listOf(
         features = listOf(
             FeatureHighlight(Icons.Default.SelfImprovement, "Flexible Timer", "Set any duration · continuous timing · prep countdown"),
             FeatureHighlight(Icons.Default.Air, "Box Breathing & Buddho", "Visual breath pacing with the classic forest-tradition anchor"),
-            FeatureHighlight(Icons.Default.AutoAwesome, "Buddhist Wisdom Library", "Teachings from Ajahn Brahm, Thich Nhat Hanh & more")
+            FeatureHighlight(Icons.Default.AutoAwesome, "Buddhist Teachings", "Guidance from Ajahn Brahm, Thich Nhat Hanh & more")
         )
     ),
     TutorialStep(

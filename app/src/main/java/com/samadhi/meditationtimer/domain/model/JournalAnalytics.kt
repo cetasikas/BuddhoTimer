@@ -56,7 +56,7 @@ data class JournalAnalytics(
             "Late"       // 21:00 - 23:59
         )
 
-        fun from(sessions: List<MeditationSession>): JournalAnalytics {
+        fun from(sessions: List<MeditationSession>, restDays: Set<LocalDate> = emptySet()): JournalAnalytics {
             val zone = ZoneId.systemDefault()
             val today = LocalDate.now()
             val thisWeekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
@@ -69,7 +69,8 @@ data class JournalAnalytics(
                 Instant.ofEpochMilli(session.completedTimeEpochMs).atZone(zone).toLocalDate()
 
             val uniqueDates = sessions.map { localDate(it) }.distinct().sortedDescending()
-            val (currentStreak, longestStreak) = calculateStreaks(uniqueDates, today)
+            val streakDates = (uniqueDates + restDays).distinct().sortedDescending()
+            val (currentStreak, longestStreak) = calculateStreaks(streakDates, today)
 
             val thisWeekMinutes = sessions
                 .filter { !localDate(it).isBefore(thisWeekStart) }

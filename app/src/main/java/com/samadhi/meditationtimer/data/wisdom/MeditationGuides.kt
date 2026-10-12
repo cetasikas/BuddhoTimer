@@ -214,7 +214,7 @@ object MeditationGuides {
             id = 17,
             quote = "When you sit, just sit. When you walk, just walk. Above all, don't wobble.",
             author = "Yunmen Wenyan",
-            sourceOrTradition = "Zen Wisdom"
+            sourceOrTradition = "Zen Teaching"
         ),
         WisdomQuote(
             id = 18,

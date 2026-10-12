@@ -49,6 +49,7 @@ import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
@@ -223,6 +224,7 @@ fun SettingsScreen(
 
     // Expandable accordion states (Default compact/collapsed)
     var expandedChime by remember { mutableStateOf(false) }
+    var expandedAmbient by remember { mutableStateOf(false) }
     var expandedInterval by remember { mutableStateOf(false) }
     var expandedDisplay by remember { mutableStateOf(false) }
     var expandedOverview by remember { mutableStateOf(false) }
@@ -534,6 +536,61 @@ fun SettingsScreen(
                     }
                 }
 
+                // 2. MEDITATION AUDIO
+                ExpandableSettingsCard(
+                    title = "Meditation Audio",
+                    icon = Icons.Default.GraphicEq,
+                    summaryValue = if (config.showTimerAmbientShortcut) "Shortcut on" else "Shortcut hidden",
+                    isExpanded = expandedAmbient,
+                    onToggle = { expandedAmbient = !expandedAmbient }
+                ) {
+                    Column {
+                        Text(
+                            text = "Ambient soundscapes and guided meditations are chosen right from the timer screen. Tap the music icon beside the start button to enable, switch or preview them during setup.",
+                            fontSize = 11.5.sp,
+                            color = ZenTextSecondary
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Timer-screen shortcut visibility
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(ZenSurfaceVariant.copy(alpha = 0.5f))
+                                .border(1.dp, ZenBorder, RoundedCornerShape(12.dp))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                Text(
+                                    text = "Shortcut on Timer Screen",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ZenTextPrimary
+                                )
+                                Text(
+                                    text = if (config.showTimerAmbientShortcut) "Music icon shown on the meditation setup screen" else "Hidden",
+                                    fontSize = 11.sp,
+                                    color = ZenTextSecondary
+                                )
+                            }
+                            Switch(
+                                checked = config.showTimerAmbientShortcut,
+                                onCheckedChange = { timerViewModel.toggleTimerAmbientShortcut(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ZenObsidian,
+                                    checkedTrackColor = currentTheme.primary,
+                                    uncheckedThumbColor = ZenTextMuted,
+                                    uncheckedTrackColor = ZenSurfaceVariant
+                                )
+                            )
+                        }
+                    }
+                }
+
                 // 3. MINDFULNESS INTERVAL BELL
                 val intervalSummary = if (config.mindfulnessIntervalMinutes == 0) "Off" else "${config.mindfulnessIntervalMinutes}m"
                 ExpandableSettingsCard(
@@ -709,7 +766,7 @@ fun SettingsScreen(
                                 Spacer(modifier = Modifier.height(3.dp))
                                 Text(
                                     if (config.showSessionOverview)
-                                        "Displays wisdom quote, mood rating, and reflection journal when practice completes."
+                                        "Displays a teaching quote, mood rating, and reflection journal when practice completes."
                                     else
                                         "Sessions auto-save in the background and you remain peacefully on the meditation screen until you choose to exit.",
                                     fontSize = 11.5.sp,
@@ -750,7 +807,7 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                                 Text("Mindfulness & Meditation Reminders", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ZenTextPrimary)
-                                Text("Gentle reminders to pause, meditate, and reflect on words of wisdom", fontSize = 11.sp, color = ZenTextSecondary)
+                                Text("Gentle reminders to pause, meditate, and reflect on a short teaching", fontSize = 11.sp, color = ZenTextSecondary)
                             }
                             Switch(
                                 checked = reminderEnabled,
@@ -854,7 +911,7 @@ fun SettingsScreen(
                                         .padding(horizontal = 12.dp, vertical = 8.dp)
                                 ) {
                                     Text(
-                                        text = "Receive 3 surprise meditation reminders spread throughout the day during waking hours (morning, afternoon, and evening) with inspiring words of wisdom.",
+                                        text = "Receive 3 surprise meditation reminders spread throughout the day during waking hours (morning, afternoon, and evening) with a short teaching.",
                                         fontSize = 11.5.sp,
                                         color = ZenTextSecondary,
                                         lineHeight = 16.sp

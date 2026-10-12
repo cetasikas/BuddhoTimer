@@ -68,6 +68,35 @@ class BackupManager(
         }
     }
 
+    suspend fun exportJournalMarkdown(uri: Uri): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val sessions = sessionRepository.getAllSessionsFlow().first()
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                OutputStreamWriter(outputStream).use { writer ->
+                    writer.write("# Buddho Timer Journal\n\n")
+                    writer.write("Exported ${DateTimeFormatter.ISO_INSTANT.format(Instant.now())}\n\n")
+                    sessions.forEach { s ->
+                        val completed = DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(s.completedTimeEpochMs))
+                        writer.write("## $completed\n\n")
+                        writer.write("- Duration: ${s.actualDurationSec / 60} min\n")
+                        writer.write("- Target: ${s.targetDurationSec / 60} min\n")
+                        writer.write("- Overrun: ${s.overrunSec / 60} min\n")
+                        writer.write("- Mood: ${if (s.rating > 0) s.rating.toString() else "unrated"}\n")
+                        writer.write("- Type: ${if (s.isManual) "manual" else "timer"}\n\n")
+                        if (s.notesMarkdown.isNotBlank()) {
+                            writer.write(s.notesMarkdown.trim())
+                            writer.write("\n\n")
+                        }
+                    }
+                }
+            } ?: return@withContext Result.failure(Exception("Failed to open output stream for URI: $uri"))
+
+            Result.success(sessions.size)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun importFromJson(uri: Uri, overwrite: Boolean = false): Result<Int> = withContext(Dispatchers.IO) {
         try {
             val stringBuilder = StringBuilder()

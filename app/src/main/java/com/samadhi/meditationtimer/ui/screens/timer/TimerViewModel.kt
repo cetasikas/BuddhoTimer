@@ -41,7 +41,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
     private val _isBatteryOptIgnored = MutableStateFlow(checkBatteryOptimization())
     val isBatteryOptIgnored: StateFlow<Boolean> = _isBatteryOptIgnored.asStateFlow()
 
-    // Pre-session wisdom quote
+    // Pre-session teaching quote
     private val _currentQuote = MutableStateFlow(getRandomQuote())
     val currentQuote: StateFlow<WisdomQuote> = _currentQuote.asStateFlow()
 
@@ -93,7 +93,11 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             showSessionOverview = prefs.getBoolean("show_session_overview", true),
             ambientSoundsEnabled = prefs.getBoolean("ambient_sounds_enabled", false),
             ambientSoundName = prefs.getString("ambient_sound_name", "Silence") ?: "Silence",
-            ambientSoundResName = prefs.getString("ambient_sound_res", "silence") ?: "silence"
+            ambientSoundResName = prefs.getString("ambient_sound_res", "silence") ?: "silence",
+            meditationAudioMode = prefs.getString("meditation_audio_mode", "ambient") ?: "ambient",
+            guidedMeditationName = prefs.getString("guided_meditation_name", "Guided Metta") ?: "Guided Metta",
+            guidedMeditationResName = prefs.getString("guided_meditation_res", "guided_thanissaro_metta") ?: "guided_thanissaro_metta",
+            showTimerAmbientShortcut = prefs.getBoolean("show_timer_ambient_shortcut", true)
         )
     }
 
@@ -120,6 +124,10 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putBoolean("ambient_sounds_enabled", newConfig.ambientSoundsEnabled)
             putString("ambient_sound_name", newConfig.ambientSoundName)
             putString("ambient_sound_res", newConfig.ambientSoundResName)
+            putString("meditation_audio_mode", newConfig.meditationAudioMode)
+            putString("guided_meditation_name", newConfig.guidedMeditationName)
+            putString("guided_meditation_res", newConfig.guidedMeditationResName)
+            putBoolean("show_timer_ambient_shortcut", newConfig.showTimerAmbientShortcut)
             apply()
         }
     }
@@ -129,7 +137,15 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateAmbientSound(name: String, resName: String) {
-        saveConfig(_config.value.copy(ambientSoundName = name, ambientSoundResName = resName))
+        saveConfig(_config.value.copy(ambientSoundName = name, ambientSoundResName = resName, meditationAudioMode = "ambient"))
+    }
+
+    fun updateGuidedMeditation(name: String, resName: String) {
+        saveConfig(_config.value.copy(guidedMeditationName = name, guidedMeditationResName = resName, meditationAudioMode = "guided"))
+    }
+
+    fun toggleTimerAmbientShortcut(enabled: Boolean) {
+        saveConfig(_config.value.copy(showTimerAmbientShortcut = enabled))
     }
 
     fun toggleShowSessionOverview(enabled: Boolean) {
@@ -234,6 +250,10 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_MINDFULNESS_INTERVAL_MIN, currentConfig.mindfulnessIntervalMinutes)
             putExtra(MeditationTimerService.EXTRA_COMPLETION_BELL, currentConfig.isCompletionBellEnabled)
             putExtra(MeditationTimerService.EXTRA_START_BELL, currentConfig.isStartBellEnabled)
+            putExtra(MeditationTimerService.EXTRA_AMBIENT_ENABLED, currentConfig.ambientSoundsEnabled)
+            putExtra(MeditationTimerService.EXTRA_AMBIENT_SOUND, currentConfig.ambientSoundResName)
+            putExtra(MeditationTimerService.EXTRA_MEDITATION_AUDIO_MODE, currentConfig.meditationAudioMode)
+            putExtra(MeditationTimerService.EXTRA_GUIDED_MEDITATION, currentConfig.guidedMeditationResName)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -260,6 +280,10 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_START_BELL, false)
             putExtra(MeditationTimerService.EXTRA_INITIAL_ELAPSED_SEC, initialElapsedSec)
             putExtra(MeditationTimerService.EXTRA_INITIAL_START_TIME_MS, initialStartTimeMs)
+            putExtra(MeditationTimerService.EXTRA_AMBIENT_ENABLED, currentConfig.ambientSoundsEnabled)
+            putExtra(MeditationTimerService.EXTRA_AMBIENT_SOUND, currentConfig.ambientSoundResName)
+            putExtra(MeditationTimerService.EXTRA_MEDITATION_AUDIO_MODE, currentConfig.meditationAudioMode)
+            putExtra(MeditationTimerService.EXTRA_GUIDED_MEDITATION, currentConfig.guidedMeditationResName)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -284,6 +308,10 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_START_BELL, false)
             putExtra(MeditationTimerService.EXTRA_INITIAL_ELAPSED_SEC, initialElapsedSec)
             putExtra(MeditationTimerService.EXTRA_INITIAL_START_TIME_MS, initialStartTimeMs)
+            putExtra(MeditationTimerService.EXTRA_AMBIENT_ENABLED, currentConfig.ambientSoundsEnabled)
+            putExtra(MeditationTimerService.EXTRA_AMBIENT_SOUND, currentConfig.ambientSoundResName)
+            putExtra(MeditationTimerService.EXTRA_MEDITATION_AUDIO_MODE, currentConfig.meditationAudioMode)
+            putExtra(MeditationTimerService.EXTRA_GUIDED_MEDITATION, currentConfig.guidedMeditationResName)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

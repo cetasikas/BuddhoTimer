@@ -350,7 +350,7 @@ private fun WisdomCard(quote: com.samadhi.meditationtimer.data.wisdom.WisdomQuot
                     Text(text = "\uD83E\uDEB7", fontSize = 12.sp)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "WORDS OF WISDOM",
+                        text = "TEACHING",
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
