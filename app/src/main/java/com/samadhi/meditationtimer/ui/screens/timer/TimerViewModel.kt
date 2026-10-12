@@ -90,7 +90,10 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             isCountdownHapticsEnabled = prefs.getBoolean("countdown_haptics", true),
             isCompletionBellEnabled = prefs.getBoolean("completion_bell_enabled", true),
             isStartBellEnabled = prefs.getBoolean("start_bell_enabled", false),
-            showSessionOverview = prefs.getBoolean("show_session_overview", true)
+            showSessionOverview = prefs.getBoolean("show_session_overview", true),
+            ambientSoundsEnabled = prefs.getBoolean("ambient_sounds_enabled", false),
+            ambientSoundName = prefs.getString("ambient_sound_name", "Silence") ?: "Silence",
+            ambientSoundResName = prefs.getString("ambient_sound_res", "silence") ?: "silence"
         )
     }
 
@@ -114,8 +117,19 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putBoolean("completion_bell_enabled", newConfig.isCompletionBellEnabled)
             putBoolean("start_bell_enabled", newConfig.isStartBellEnabled)
             putBoolean("show_session_overview", newConfig.showSessionOverview)
+            putBoolean("ambient_sounds_enabled", newConfig.ambientSoundsEnabled)
+            putString("ambient_sound_name", newConfig.ambientSoundName)
+            putString("ambient_sound_res", newConfig.ambientSoundResName)
             apply()
         }
+    }
+
+    fun toggleAmbientSounds(enabled: Boolean) {
+        saveConfig(_config.value.copy(ambientSoundsEnabled = enabled))
+    }
+
+    fun updateAmbientSound(name: String, resName: String) {
+        saveConfig(_config.value.copy(ambientSoundName = name, ambientSoundResName = resName))
     }
 
     fun toggleShowSessionOverview(enabled: Boolean) {

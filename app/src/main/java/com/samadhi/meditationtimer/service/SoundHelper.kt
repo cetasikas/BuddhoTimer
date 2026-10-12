@@ -388,6 +388,7 @@ class SoundHelper(private val context: Context) {
         const val SOUND_ZEN_TONE = "zen_tone"
         const val SOUND_CHIME = "chime"
         const val SOUND_SILENT_HAPTIC = "silent_haptic"
+        const val SOUND_AMBIENT_SILENCE = "silence"
 
         // Legacy aliases
         const val SOUND_PV_BELL_MEDIUM = SOUND_MINDFULNESS_BELL
@@ -405,10 +406,23 @@ class SoundHelper(private val context: Context) {
             SoundOption(SOUND_CHIME, "Mindful Chime", "Quick soothing acoustic chime (1.6s)"),
             SoundOption(SOUND_SILENT_HAPTIC, "Silent Retreat (Haptic Only)", "Gentle soothing vibration without audio")
         )
+
+        val ambientSoundOptions = listOf(
+            AmbientSoundOption(SOUND_AMBIENT_SILENCE, "Silence", "No ambient sound"),
+            SoundOption(SOUND_CHIME, "Gentle Chime Loop", "Soft ambient backdrop (calm)"),
+            SoundOption(SOUND_SINGING_BOWL, "Singing Bowl Room", "Gentle room tone"),
+            SoundOption(SOUND_ZEN_TONE, "Zen Tone", "Subtle ambient tone")
+        )
     }
 }
 
 data class SoundOption(
+    val id: String,
+    val title: String,
+    val description: String
+)
+
+data class AmbientSoundOption(
     val id: String,
     val title: String,
     val description: String
