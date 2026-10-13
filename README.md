@@ -76,3 +76,17 @@ meditation-timer-app/app/src/main/java/com/samadhi/meditationtimer/
 3. Sync Gradle and run on a physical device or emulator running **Android 8.0+ (API 26+)**.
 
 Release signing keys are intentionally not included. Use your own local signing configuration for release builds.
+
+---
+
+## License
+
+The source code is released under the Apache License 2.0. You may use,
+modify, and redistribute it, including in other open source projects, as long
+as you preserve the license notice and provide appropriate attribution to
+Buddho Timer and its contributors.
+
+Bundled third-party assets, including meditation audio and ambient sounds, are
+not relicensed by this repository. They remain under their original licenses
+and attribution requirements. Check the source comments near the audio loading
+code before redistributing those files.
