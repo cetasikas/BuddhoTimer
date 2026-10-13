@@ -1,6 +1,6 @@
-# Buddho Meditation Timer (Android)
+# Buddho Meditation Timer
 
-A production-ready, standalone Android application written in **Kotlin** and **Jetpack Compose** following **Clean Architecture (MVVM + Repository pattern)**.
+A standalone Android meditation timer written in **Kotlin** and **Jetpack Compose**.
 
 Designed specifically for deep mindfulness and meditation practice sessions with background persistence, overrun tracking ("Samadhi mode"), automatic Do Not Disturb (DND) integration, Room database storage, and Markdown journal reflections.
 
@@ -71,6 +71,8 @@ meditation-timer-app/app/src/main/java/com/samadhi/meditationtimer/
 
 ## Build & Run
 
-1. Open `meditation-timer-app` in **Android Studio (Hedgehog / Iguana / Jellyfish / Ladybug or newer)**.
+1. Open this repository in **Android Studio**.
 2. Ensure JDK 17+ is configured.
-3. Sync Gradle and run on a physical device or emulator running **Android 8.0+ (API 26+)** through **Android 14+ (API 34)**.
+3. Sync Gradle and run on a physical device or emulator running **Android 8.0+ (API 26+)**.
+
+Release signing keys are intentionally not included. Use your own local signing configuration for release builds.

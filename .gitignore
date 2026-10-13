@@ -13,7 +13,7 @@ app/build/
 *.aab
 .kotlin/
 
-# Signing secrets (see keystore.properties.example)
+# Local signing secrets
 keystore.properties
 app/keystore/
 

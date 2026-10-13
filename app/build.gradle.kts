@@ -6,21 +6,6 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
-import java.io.FileInputStream
-import java.util.Properties
-
-// Signing secrets never live in VCS. Populate keystore.properties (see
-// keystore.properties.example) or export BUDDHO_* environment variables.
-val keystoreLocal = Properties().apply {
-    val propsFile = rootProject.file("keystore.properties")
-    if (propsFile.exists()) load(FileInputStream(propsFile))
-}
-
-fun signingSecret(key: String, env: String): String =
-    keystoreLocal.getProperty(key)?.takeIf { it.isNotBlank() }
-        ?: System.getenv(env)?.takeIf { it.isNotBlank() }
-        ?: error("Missing signing secret '$key': set it in keystore.properties or export $env")
-
 android {
     namespace = "com.samadhi.meditationtimer"
     compileSdk = 36
@@ -43,17 +28,6 @@ android {
         }
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file(signingSecret("storeFile", "BUDDHO_STORE_FILE"))
-            storePassword = signingSecret("storePassword", "BUDDHO_STORE_PASSWORD")
-            keyAlias = signingSecret("keyAlias", "BUDDHO_KEY_ALIAS")
-            keyPassword = signingSecret("keyPassword", "BUDDHO_KEY_PASSWORD")
-            enableV1Signing = true
-            enableV2Signing = true
-        }
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -65,12 +39,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
-            signingConfig = signingConfigs.getByName("release")
         }
     }
 
