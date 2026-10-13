@@ -66,6 +66,7 @@ import com.samadhi.meditationtimer.domain.model.MeditationSession
 import com.samadhi.meditationtimer.service.NotificationHelper
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.components.MarkdownRenderer
+import com.samadhi.meditationtimer.ui.components.TempleScreenHeader
 import com.samadhi.meditationtimer.ui.components.moodOptions
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
@@ -126,15 +127,9 @@ fun JournalScreen(
         ) {
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Journal",
-                    style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
-                    color = ZenTextPrimary
-                )
-                Text(
-                    text = "Reflect on your consistency and insights",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = ZenTextSecondary
+                TempleScreenHeader(
+                    title = "Journal",
+                    subtitle = "Practice notes, rhythm, and reflection"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 

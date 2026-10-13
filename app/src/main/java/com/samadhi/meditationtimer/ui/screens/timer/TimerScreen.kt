@@ -394,6 +394,7 @@ fun TimerScreen(
         if (showAmbientDialog) {
             AmbientSoundPickerDialog(
                 config = config,
+                isBoxMode = isBoxMode,
                 onToggleEnabled = { viewModel.toggleAmbientSounds(it) },
                 onSelectSound = { title, res -> viewModel.updateAmbientSound(title, res) },
                 onSelectGuidedMeditation = { title, res -> viewModel.updateGuidedMeditation(title, res) },
@@ -407,6 +408,7 @@ fun TimerScreen(
 @Composable
 private fun AmbientSoundPickerDialog(
     config: TimerConfiguration,
+    isBoxMode: Boolean,
     onToggleEnabled: (Boolean) -> Unit,
     onSelectSound: (String, String) -> Unit,
     onSelectGuidedMeditation: (String, String) -> Unit,
@@ -441,7 +443,7 @@ private fun AmbientSoundPickerDialog(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Meditation Audio",
+                    text = "Soundscape",
                     fontSize = spFor(17f, 1.2f),
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface
@@ -460,13 +462,17 @@ private fun AmbientSoundPickerDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Play during practice",
+                            text = if (isBoxMode) "Ambient during breathwork" else "Play during practice",
                             fontSize = spFor(13.5f, 1.2f),
                             fontWeight = FontWeight.SemiBold,
                             color = colorScheme.onSurface
                         )
                         Text(
-                            text = if (config.ambientSoundsEnabled) "Ambience plays softly in the background" else "Off",
+                            text = when {
+                                !config.ambientSoundsEnabled -> "Off"
+                                config.meditationAudioMode == "guided" && !isBoxMode -> "Guided meditation starts with the session"
+                                else -> "Ambient sound plays softly in the background"
+                            },
                             fontSize = spFor(11f, 1.2f),
                             color = colorScheme.onSurfaceVariant
                         )
@@ -564,79 +570,88 @@ private fun AmbientSoundPickerDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                if (!isBoxMode) {
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                AudioSectionHeader(
-                    title = "GUIDED MEDITATIONS",
-                    subtitle = config.guidedMeditationName,
-                    expanded = expandedSection == "guided",
-                    onClick = { expandedSection = if (expandedSection == "guided") null else "guided" }
-                )
+                    AudioSectionHeader(
+                        title = "GUIDED MEDITATIONS",
+                        subtitle = config.guidedMeditationName,
+                        expanded = expandedSection == "guided",
+                        onClick = { expandedSection = if (expandedSection == "guided") null else "guided" }
+                    )
 
-                if (expandedSection == "guided") {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    SoundHelper.guidedMeditationOptions.forEach { option ->
-                        val isSelected = config.meditationAudioMode == "guided" && config.guidedMeditationResName == option.id
-                        val isPreviewing = previewingId == option.id
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    if (isSelected) colorScheme.primary.copy(alpha = 0.14f)
-                                    else Color.Transparent
-                                )
-                                .clickable {
-                                    stopPreview()
-                                    onSelectGuidedMeditation(option.title, option.id)
-                                }
-                                .defaultMinSize(minHeight = 48.dp)
-                                .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = option.title,
-                                    fontSize = spFor(13.5f, 1.2f),
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                                    color = if (isSelected) colorScheme.primary else colorScheme.onSurface
-                                )
-                                Text(
-                                    text = option.description,
-                                    fontSize = spFor(11f, 1.2f),
-                                    color = colorScheme.onSurfaceVariant,
-                                    maxLines = 1
-                                )
-                            }
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = colorScheme.primary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            IconButton(
-                                onClick = {
-                                    if (isPreviewing) {
+                    if (expandedSection == "guided") {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        SoundHelper.guidedMeditationOptions.forEach { option ->
+                            val isSelected = config.meditationAudioMode == "guided" && config.guidedMeditationResName == option.id
+                            val isPreviewing = previewingId == option.id
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        if (isSelected) colorScheme.primary.copy(alpha = 0.14f)
+                                        else Color.Transparent
+                                    )
+                                    .clickable {
                                         stopPreview()
-                                    } else {
-                                        previewEngine.stop()
-                                        previewEngine.start(option.id, loop = false)
-                                        previewingId = option.id
+                                        onSelectGuidedMeditation(option.title, option.id)
                                     }
-                                },
-                                modifier = Modifier.size(40.dp)
+                                    .defaultMinSize(minHeight = 48.dp)
+                                    .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = if (isPreviewing) Icons.Default.Stop else Icons.Default.PlayArrow,
-                                    contentDescription = if (isPreviewing) "Stop preview" else "Preview",
-                                    tint = colorScheme.primary,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = option.title,
+                                        fontSize = spFor(13.5f, 1.2f),
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                        color = if (isSelected) colorScheme.primary else colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = option.description,
+                                        fontSize = spFor(11f, 1.2f),
+                                        color = colorScheme.onSurfaceVariant,
+                                        maxLines = 1
+                                    )
+                                }
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        if (isPreviewing) {
+                                            stopPreview()
+                                        } else {
+                                            previewEngine.stop()
+                                            previewEngine.start(option.id, loop = false)
+                                            previewingId = option.id
+                                        }
+                                    },
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isPreviewing) Icons.Default.Stop else Icons.Default.PlayArrow,
+                                        contentDescription = if (isPreviewing) "Stop preview" else "Preview",
+                                        tint = colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         }
                     }
+                } else {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Guided meditations are hidden during box breathing so the breath cadence stays clear.",
+                        fontSize = spFor(11f, 1.2f),
+                        color = colorScheme.onSurfaceVariant
+                    )
                 }
             }
         },

@@ -107,6 +107,11 @@ class MeditationTimerService : Service() {
                 isOverrunEnabledForSession = enabled
                 soundHelper.triggerSoftTouchHaptic()
             }
+            ACTION_SET_AMBIENT -> {
+                val enabled = intent.getBooleanExtra(EXTRA_AMBIENT_ENABLED, false)
+                val ambientSound = intent.getStringExtra(EXTRA_AMBIENT_SOUND) ?: ambientTypeForSession
+                setAmbientPlayback(enabled, ambientSound)
+            }
             ACTION_PAUSE -> pauseTimer()
             ACTION_RESUME -> resumeTimer()
             ACTION_FINISH -> finishTimer()
@@ -269,13 +274,11 @@ class MeditationTimerService : Service() {
                 soundHelper.playChime(soundBellResName, serviceScope)
             }
 
-            // Ambient background soundscape
-            if (ambientEnabledForSession && (meditationAudioModeForSession == "guided" || ambientTypeForSession != AmbientSoundEngine.TYPE_SILENCE)) {
-                if (meditationAudioModeForSession == "guided") {
-                    ambientEngine.start(guidedMeditationForSession, loop = false)
-                } else {
-                    ambientEngine.start(ambientTypeForSession)
-                }
+            // Guided meditations play once. Ambient soundscapes can be toggled during the session.
+            if (ambientEnabledForSession && meditationAudioModeForSession == "guided") {
+                ambientEngine.start(guidedMeditationForSession, loop = false)
+            } else if (ambientEnabledForSession && ambientTypeForSession != AmbientSoundEngine.TYPE_SILENCE) {
+                ambientEngine.start(ambientTypeForSession)
             }
 
             // 4. Active Session Loop with Monotonic Clock
@@ -397,6 +400,18 @@ class MeditationTimerService : Service() {
             )
             wakeLockHelper.releaseWakeLock()
         }
+    }
+
+    private fun setAmbientPlayback(enabled: Boolean, ambientSound: String) {
+        ambientEnabledForSession = enabled
+        ambientTypeForSession = ambientSound
+        meditationAudioModeForSession = "ambient"
+        if (enabled && ambientSound != AmbientSoundEngine.TYPE_SILENCE) {
+            ambientEngine.start(ambientSound)
+        } else {
+            ambientEngine.stop()
+        }
+        soundHelper.triggerSoftTouchHaptic()
     }
 
     private fun resumeTimer() {
@@ -602,6 +617,7 @@ class MeditationTimerService : Service() {
         const val ACTION_CANCEL = "com.samadhi.meditationtimer.action.CANCEL"
         const val ACTION_ADJUST_TIME = "com.samadhi.meditationtimer.action.ADJUST_TIME"
         const val ACTION_SET_OVERRUN = "com.samadhi.meditationtimer.action.SET_OVERRUN"
+        const val ACTION_SET_AMBIENT = "com.samadhi.meditationtimer.action.SET_AMBIENT"
 
         const val EXTRA_TARGET_SEC = "extra_target_sec"
         const val EXTRA_PREP_SEC = "extra_prep_sec"

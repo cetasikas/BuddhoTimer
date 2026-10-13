@@ -39,6 +39,8 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DoNotDisturb
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.ui.graphics.SolidColor
@@ -609,6 +611,14 @@ fun ActiveSessionScreen(
                                             )
                                         }
 
+                                        AmbientSessionToggle(
+                                            enabled = config.ambientSoundsEnabled && config.meditationAudioMode == "ambient",
+                                            visible = config.ambientSoundResName != "silence" && config.meditationAudioMode != "guided",
+                                            size = 44.dp,
+                                            iconSize = 18.dp,
+                                            onToggle = { viewModel.setAmbientDuringSession(!(config.ambientSoundsEnabled && config.meditationAudioMode == "ambient")) }
+                                        )
+
                                         IconButton(
                                             onClick = {
                                                 leavesBurstTrigger++
@@ -923,6 +933,14 @@ fun ActiveSessionScreen(
                                             modifier = Modifier.size((18.dp * dynamicScale).coerceIn(15.dp, 22.dp))
                                         )
                                     }
+
+                                    AmbientSessionToggle(
+                                        enabled = config.ambientSoundsEnabled && config.meditationAudioMode == "ambient",
+                                        visible = config.ambientSoundResName != "silence" && config.meditationAudioMode != "guided",
+                                        size = (46.dp * dynamicScale).coerceIn(36.dp, 52.dp),
+                                        iconSize = (18.dp * dynamicScale).coerceIn(15.dp, 22.dp),
+                                        onToggle = { viewModel.setAmbientDuringSession(!(config.ambientSoundsEnabled && config.meditationAudioMode == "ambient")) }
+                                    )
 
                                     IconButton(
                                         onClick = {
@@ -1270,6 +1288,40 @@ fun ActiveSessionScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AmbientSessionToggle(
+    enabled: Boolean,
+    visible: Boolean,
+    size: androidx.compose.ui.unit.Dp,
+    iconSize: androidx.compose.ui.unit.Dp,
+    onToggle: () -> Unit
+) {
+    if (!visible) return
+    val currentTheme = LocalZenTheme.current
+    IconButton(
+        onClick = onToggle,
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(
+                if (enabled) currentTheme.primary.copy(alpha = 0.22f)
+                else ZenSurface.copy(alpha = 0.70f)
+            )
+            .border(
+                1.dp,
+                if (enabled) currentTheme.primaryLight.copy(alpha = 0.6f) else ZenBorder,
+                CircleShape
+            )
+    ) {
+        Icon(
+            imageVector = if (enabled) Icons.Default.MusicNote else Icons.Default.MusicOff,
+            contentDescription = if (enabled) "Turn ambient sound off" else "Turn ambient sound on",
+            tint = if (enabled) currentTheme.primaryLight else ZenTextMuted,
+            modifier = Modifier.size(iconSize)
+        )
     }
 }
 

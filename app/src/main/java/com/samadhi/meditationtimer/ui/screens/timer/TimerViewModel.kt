@@ -136,8 +136,36 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
         saveConfig(_config.value.copy(ambientSoundsEnabled = enabled))
     }
 
+    fun setAmbientDuringSession(enabled: Boolean) {
+        val current = _config.value
+        val next = current.copy(ambientSoundsEnabled = enabled, meditationAudioMode = "ambient")
+        saveConfig(next)
+        val intent = Intent(context, MeditationTimerService::class.java).apply {
+            action = MeditationTimerService.ACTION_SET_AMBIENT
+            putExtra(MeditationTimerService.EXTRA_AMBIENT_ENABLED, enabled)
+            putExtra(MeditationTimerService.EXTRA_AMBIENT_SOUND, next.ambientSoundResName)
+        }
+        context.startService(intent)
+    }
+
     fun updateAmbientSound(name: String, resName: String) {
         saveConfig(_config.value.copy(ambientSoundName = name, ambientSoundResName = resName, meditationAudioMode = "ambient"))
+    }
+
+    fun updateAmbientSoundDuringSession(name: String, resName: String) {
+        val next = _config.value.copy(
+            ambientSoundName = name,
+            ambientSoundResName = resName,
+            meditationAudioMode = "ambient",
+            ambientSoundsEnabled = resName != "silence"
+        )
+        saveConfig(next)
+        val intent = Intent(context, MeditationTimerService::class.java).apply {
+            action = MeditationTimerService.ACTION_SET_AMBIENT
+            putExtra(MeditationTimerService.EXTRA_AMBIENT_ENABLED, next.ambientSoundsEnabled)
+            putExtra(MeditationTimerService.EXTRA_AMBIENT_SOUND, resName)
+        }
+        context.startService(intent)
     }
 
     fun updateGuidedMeditation(name: String, resName: String) {
@@ -186,7 +214,13 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun toggleBoxBreathingMode(isBoxBreathing: Boolean) {
-        saveConfig(_config.value.copy(isBoxBreathingMode = isBoxBreathing))
+        val current = _config.value
+        saveConfig(
+            current.copy(
+                isBoxBreathingMode = isBoxBreathing,
+                meditationAudioMode = if (isBoxBreathing && current.meditationAudioMode == "guided") "ambient" else current.meditationAudioMode
+            )
+        )
     }
 
     fun toggleAutoDnd(enabled: Boolean) {
@@ -239,6 +273,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startSession() {
         val currentConfig = _config.value
+        val audioMode = if (currentConfig.isBoxBreathingMode && currentConfig.meditationAudioMode == "guided") "ambient" else currentConfig.meditationAudioMode
         val intent = Intent(context, MeditationTimerService::class.java).apply {
             action = MeditationTimerService.ACTION_START
             putExtra(MeditationTimerService.EXTRA_TARGET_SEC, currentConfig.targetDurationSeconds)
@@ -252,7 +287,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_START_BELL, currentConfig.isStartBellEnabled)
             putExtra(MeditationTimerService.EXTRA_AMBIENT_ENABLED, currentConfig.ambientSoundsEnabled)
             putExtra(MeditationTimerService.EXTRA_AMBIENT_SOUND, currentConfig.ambientSoundResName)
-            putExtra(MeditationTimerService.EXTRA_MEDITATION_AUDIO_MODE, currentConfig.meditationAudioMode)
+            putExtra(MeditationTimerService.EXTRA_MEDITATION_AUDIO_MODE, audioMode)
             putExtra(MeditationTimerService.EXTRA_GUIDED_MEDITATION, currentConfig.guidedMeditationResName)
         }
 
@@ -265,6 +300,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
 
     fun continueSession(initialElapsedSec: Int = 0, initialStartTimeMs: Long = 0L, addMinutes: Int = 5) {
         val currentConfig = _config.value
+        val audioMode = if (currentConfig.isBoxBreathingMode && currentConfig.meditationAudioMode == "guided") "ambient" else currentConfig.meditationAudioMode
         val targetSec = if (addMinutes > 0) initialElapsedSec + (addMinutes * 60) else 0
         val isOpen = addMinutes <= 0
         val intent = Intent(context, MeditationTimerService::class.java).apply {
@@ -282,7 +318,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_INITIAL_START_TIME_MS, initialStartTimeMs)
             putExtra(MeditationTimerService.EXTRA_AMBIENT_ENABLED, currentConfig.ambientSoundsEnabled)
             putExtra(MeditationTimerService.EXTRA_AMBIENT_SOUND, currentConfig.ambientSoundResName)
-            putExtra(MeditationTimerService.EXTRA_MEDITATION_AUDIO_MODE, currentConfig.meditationAudioMode)
+            putExtra(MeditationTimerService.EXTRA_MEDITATION_AUDIO_MODE, audioMode)
             putExtra(MeditationTimerService.EXTRA_GUIDED_MEDITATION, currentConfig.guidedMeditationResName)
         }
 
@@ -295,6 +331,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
 
     fun continueSessionWithTarget(targetSec: Int, initialElapsedSec: Int, initialStartTimeMs: Long) {
         val currentConfig = _config.value
+        val audioMode = if (currentConfig.isBoxBreathingMode && currentConfig.meditationAudioMode == "guided") "ambient" else currentConfig.meditationAudioMode
         val intent = Intent(context, MeditationTimerService::class.java).apply {
             action = MeditationTimerService.ACTION_START
             putExtra(MeditationTimerService.EXTRA_TARGET_SEC, targetSec)
@@ -310,7 +347,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             putExtra(MeditationTimerService.EXTRA_INITIAL_START_TIME_MS, initialStartTimeMs)
             putExtra(MeditationTimerService.EXTRA_AMBIENT_ENABLED, currentConfig.ambientSoundsEnabled)
             putExtra(MeditationTimerService.EXTRA_AMBIENT_SOUND, currentConfig.ambientSoundResName)
-            putExtra(MeditationTimerService.EXTRA_MEDITATION_AUDIO_MODE, currentConfig.meditationAudioMode)
+            putExtra(MeditationTimerService.EXTRA_MEDITATION_AUDIO_MODE, audioMode)
             putExtra(MeditationTimerService.EXTRA_GUIDED_MEDITATION, currentConfig.guidedMeditationResName)
         }
 

@@ -62,6 +62,7 @@ import com.samadhi.meditationtimer.R
 import com.samadhi.meditationtimer.data.wisdom.MeditationGuides
 import com.samadhi.meditationtimer.data.wisdom.TopicCardData
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
+import com.samadhi.meditationtimer.ui.components.TempleScreenHeader
 import com.samadhi.meditationtimer.ui.theme.LocalZenTheme
 import com.samadhi.meditationtimer.ui.theme.ZenAmber
 import com.samadhi.meditationtimer.ui.theme.ZenBorder
@@ -103,44 +104,11 @@ fun WisdomScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Header Row with Back Button
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                IconButton(
-                    onClick = onNavigateBack,
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(ZenSurface.copy(alpha = 0.75f))
-                        .border(1.dp, ZenBorder, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = currentTheme.primaryLight,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "TEACHINGS",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp
-                        ),
-                        color = ZenTextPrimary
-                    )
-                    Text(
-                        text = "Tap any topic below for simple practice instructions",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = ZenTextSecondary
-                    )
-                }
-            }
+            TempleScreenHeader(
+                title = "Teachings",
+                subtitle = "Simple practice instructions",
+                onNavigateBack = onNavigateBack
+            )
 
             Spacer(modifier = Modifier.height(18.dp))
 

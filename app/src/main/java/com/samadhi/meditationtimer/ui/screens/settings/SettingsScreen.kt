@@ -96,6 +96,7 @@ import androidx.compose.ui.unit.sp
 import com.samadhi.meditationtimer.service.SoundHelper
 import com.samadhi.meditationtimer.ui.components.FallingLeavesEffect
 import com.samadhi.meditationtimer.ui.components.ManualDurationInputDialog
+import com.samadhi.meditationtimer.ui.components.TempleScreenHeader
 import com.samadhi.meditationtimer.ui.screens.timer.TimerViewModel
 import com.samadhi.meditationtimer.ui.theme.BambooTealTheme
 import com.samadhi.meditationtimer.ui.theme.GoldenBodhiTheme
@@ -304,88 +305,48 @@ fun SettingsScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Navigation Header with Back Button & Donate in Top Right
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    IconButton(
-                        onClick = onNavigateBack,
+            TempleScreenHeader(
+                title = "Settings",
+                subtitle = "Preferences and stillness",
+                onNavigateBack = onNavigateBack,
+                trailing = {
+                    Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(ZenSurface.copy(alpha = 0.75f))
-                            .border(1.dp, ZenBorder, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = currentTheme.primaryLight,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column {
-                        Text(
-                            text = "Settings",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp
-                            ),
-                            color = ZenTextPrimary
-                        )
-                        Text(
-                            text = "Preferences & Stillness",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = ZenTextSecondary
-                        )
-                    }
-                }
-
-                // Support Button in Top Right of Settings
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(ZenSurface.copy(alpha = 0.85f))
-                        .border(1.dp, currentTheme.primary.copy(alpha = 0.45f), RoundedCornerShape(20.dp))
-                        .clickable {
-                            val intent = android.content.Intent(
-                                android.content.Intent.ACTION_VIEW,
-                                android.net.Uri.parse("https://cetasikas.github.io/buddho-timer/")
-                            ).apply {
-                                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(ZenSurface.copy(alpha = 0.85f))
+                            .border(1.dp, currentTheme.primary.copy(alpha = 0.45f), RoundedCornerShape(20.dp))
+                            .clickable {
+                                val intent = android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse("https://cetasikas.github.io/BuddhoTimer/")
+                                ).apply {
+                                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                context.startActivity(intent)
                             }
-                            context.startActivity(intent)
-                        }
-                        .padding(horizontal = 12.dp, vertical = 7.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                            contentDescription = "Support & Docs",
-                            tint = currentTheme.primaryLight,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = "Support",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = currentTheme.primaryLight
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
+                                contentDescription = "Support & Docs",
+                                tint = currentTheme.primaryLight,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = "Support",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = currentTheme.primaryLight
+                            )
+                        }
                     }
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(18.dp))
 
