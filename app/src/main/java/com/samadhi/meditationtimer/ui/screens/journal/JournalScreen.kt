@@ -90,6 +90,7 @@ fun JournalScreen(
     viewModel: JournalViewModel,
     onEditSession: (MeditationSession) -> Unit,
     onLogManual: () -> Unit,
+    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val currentTheme = LocalZenTheme.current
@@ -129,7 +130,8 @@ fun JournalScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 TempleScreenHeader(
                     title = "Journal",
-                    subtitle = "Practice notes, rhythm, and reflection"
+                    subtitle = "Practice notes, rhythm, and reflection",
+                    onNavigateBack = onNavigateBack
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 

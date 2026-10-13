@@ -344,6 +344,11 @@ fun MainAppScaffold() {
                                 onLogManual = {
                                     editorRequest = EditorRequest.ManualNew
                                     navController.navigate(Screen.JournalEditor.route)
+                                },
+                                onNavigateBack = {
+                                    if (!navController.popBackStack()) {
+                                        navController.navigate(Screen.Timer.route)
+                                    }
                                 }
                             )
                         }
