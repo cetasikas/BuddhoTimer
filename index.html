@@ -228,6 +228,43 @@
             border: 1px solid var(--line);
         }
 
+        .shots {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .shot {
+            margin: 0;
+            aspect-ratio: 9 / 19.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+            color: var(--faint);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            text-align: center;
+            padding: 12px;
+        }
+
+        .shot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .shot.placeholder {
+            border-style: dashed;
+            border-color: var(--border);
+        }
+
         footer {
             padding: 38px 0 48px;
             border-top: 1px solid var(--line);
@@ -240,6 +277,7 @@
             nav { flex-wrap: wrap; }
             .hero { padding-top: 58px; }
             .grid, .privacy ul { grid-template-columns: 1fr; }
+            .shots { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -251,9 +289,10 @@
                 <span>Buddho Timer</span>
             </a>
             <nav>
+                <a href="#screenshots">Screenshots</a>
                 <a href="#features">Features</a>
                 <a href="#privacy">Privacy</a>
-                <a href="#download">Download</a>
+                <a href="#download">Install</a>
                 <a href="https://github.com/cetasikas/BuddhoTimer">GitHub</a>
             </nav>
         </header>
@@ -291,6 +330,21 @@
                 </div>
             </section>
 
+            <section id="screenshots">
+                <div class="section-head">
+                    <div class="label">Screenshots</div>
+                    <h2>A calm, uncluttered interface.</h2>
+                    <p>No dashboards, no streaks, no pressure — just the tools for a steady sit.</p>
+                </div>
+                <div class="shots">
+                    <!-- Replace each placeholder with: <img src="docs/screenshots/FILE.png" alt="ALT"> -->
+                    <figure class="shot placeholder"><span>Timer</span></figure>
+                    <figure class="shot placeholder"><span>Active session</span></figure>
+                    <figure class="shot placeholder"><span>Journal</span></figure>
+                    <figure class="shot placeholder"><span>Teachings</span></figure>
+                </div>
+            </section>
+
             <section id="privacy">
                 <div class="privacy">
                     <div class="label">Privacy</div>
@@ -308,13 +362,21 @@
             </section>
 
             <section id="download">
+                <div class="section-head">
+                    <div class="label">Install</div>
+                    <h2>Get Buddho Timer</h2>
+                    <p>Signed APK releases. Keep it updated automatically with Obtainium.</p>
+                </div>
                 <div class="release">
                     <div>
                         <div class="label">Latest release</div>
                         <h2>Buddho Timer 2.33.1</h2>
                         <p>Cleaner section headers and a working back arrow on the Journal screen.</p>
                     </div>
-                    <a class="button primary" href="https://github.com/cetasikas/BuddhoTimer/releases/latest">Download from GitHub</a>
+                    <div class="actions">
+                        <a class="button primary" href="https://github.com/cetasikas/BuddhoTimer/releases/latest">Download APK</a>
+                        <a class="button secondary" href="https://apps.obtainium.imranr.dev/redirect?r=obtainium%3A%2F%2Fadd%2Fhttps%3A%2F%2Fgithub.com%2Fcetasikas%2FBuddhoTimer">Add to Obtainium</a>
+                    </div>
                 </div>
             </section>
         </main>

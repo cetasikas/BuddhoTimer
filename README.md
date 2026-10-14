@@ -10,6 +10,7 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-1E293B?style=flat-square)](LICENSE)
 [![Privacy](https://img.shields.io/badge/Privacy-Offline_First-0E1420?style=flat-square)](#privacy)
 [![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](#build-from-source)
+[![Get it on Obtainium](https://img.shields.io/badge/Get_it_on-Obtainium-7C3AED?style=flat-square)](https://apps.obtainium.imranr.dev/redirect?r=obtainium%3A%2F%2Fadd%2Fhttps%3A%2F%2Fgithub.com%2Fcetasikas%2FBuddhoTimer)
 
 Buddho Timer is a quiet meditation app for people who want a reliable timer, local journaling, gentle teachings, and no account, ads, analytics, or cloud dependency.
 
@@ -18,6 +19,22 @@ Buddho Timer is a quiet meditation app for people who want a reliable timer, loc
 </div>
 
 ---
+
+## Screenshots
+
+<!--
+Real captures go in docs/screenshots/ (see docs/screenshots/README.md).
+Once added, uncomment the block below.
+
+<p align="center">
+  <img src="docs/screenshots/timer.png" alt="Meditation timer" width="200">
+  <img src="docs/screenshots/session.png" alt="Active session" width="200">
+  <img src="docs/screenshots/journal.png" alt="Journal" width="200">
+  <img src="docs/screenshots/teachings.png" alt="Teachings" width="200">
+</p>
+-->
+
+_Screenshots coming soon._
 
 ## What It Does
 
@@ -50,13 +67,25 @@ Buddho Timer is offline-first by design.
 - No required server.
 - Your journal entries stay on your device unless you export or back them up yourself.
 
-## Download
+## Install
 
-The latest public APK is available on the GitHub Releases page:
+### Obtainium (recommended, auto-updates)
+
+Buddho Timer ships signed APKs on GitHub Releases, so [Obtainium](https://github.com/ImranR98/Obtainium) can track this repository and notify you when a new version is published.
+
+[![Get it on Obtainium](https://img.shields.io/badge/Get_it_on-Obtainium-7C3AED?style=flat-square)](https://apps.obtainium.imranr.dev/redirect?r=obtainium%3A%2F%2Fadd%2Fhttps%3A%2F%2Fgithub.com%2Fcetasikas%2FBuddhoTimer)
+
+Already have Obtainium? Add this source URL directly:
+
+`https://github.com/cetasikas/BuddhoTimer`
+
+### Direct APK
+
+Prefer to install manually? Download the latest signed APK from GitHub Releases:
 
 `https://github.com/cetasikas/BuddhoTimer/releases/latest`
 
-Android may warn that the APK was downloaded outside an app store. Only install releases from this repository if you trust this source.
+Android may warn that the APK was installed outside an app store. Only install releases from this repository if you trust this source.
 
 ## Build From Source
 
